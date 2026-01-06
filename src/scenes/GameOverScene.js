@@ -10,29 +10,29 @@ export default class GameOverScene extends Phaser.Scene {
     constructor() {
         super('GameOverScene');
     }
-    
+
     init(data) {
         this.finalScore = data.score || 0;
         this.highScore = data.highScore || 0;
         this.isNewHighScore = this.finalScore > this.highScore;
     }
-    
+
     create() {
         this.createBackground();
         this.createTitle();
         this.createScoreDisplay();
         this.createHighScoreDisplay();
         this.createRestartPrompt();
-        
+
         this.input.keyboard.once('keydown-SPACE', () => {
             this.scene.start('MenuScene');
         });
-        
+
         this.input.keyboard.once('keydown-ESC', () => {
             this.scene.start('MenuScene');
         });
     }
-    
+
     /**
      * Create background
      */
@@ -45,7 +45,7 @@ export default class GameOverScene extends Phaser.Scene {
             colors.background
         );
     }
-    
+
     /**
      * Create game over title
      */
@@ -64,7 +64,7 @@ export default class GameOverScene extends Phaser.Scene {
             }
         );
         titleText.setOrigin(0.5);
-        
+
         // Add shake animation
         this.tweens.add({
             targets: titleText,
@@ -78,7 +78,7 @@ export default class GameOverScene extends Phaser.Scene {
             }
         });
     }
-    
+
     /**
      * Create score display
      */
@@ -96,14 +96,14 @@ export default class GameOverScene extends Phaser.Scene {
         );
         scoreText.setOrigin(0.5);
     }
-    
+
     /**
      * Create high score display
      */
     createHighScoreDisplay() {
         let highScoreText;
         let color = uiConfig.colors.primary;
-        
+
         if (this.isNewHighScore) {
             highScoreText = this.add.text(
                 this.scale.width / 2,
@@ -116,7 +116,7 @@ export default class GameOverScene extends Phaser.Scene {
                     fontStyle: 'bold'
                 }
             );
-            
+
             // Add celebration animation
             this.tweens.add({
                 targets: highScoreText,
@@ -137,10 +137,10 @@ export default class GameOverScene extends Phaser.Scene {
                 }
             );
         }
-        
+
         highScoreText.setOrigin(0.5);
     }
-    
+
     /**
      * Create restart prompt with animation
      */
@@ -156,7 +156,7 @@ export default class GameOverScene extends Phaser.Scene {
             }
         );
         restartText.setOrigin(0.5);
-        
+
         this.tweens.add({
             targets: restartText,
             alpha: { from: 1, to: 0.3 },

@@ -10,32 +10,32 @@ export default class WinScene extends Phaser.Scene {
     constructor() {
         super('WinScene');
     }
-    
+
     init(data) {
         this.score = data.score || 0;
         this.level = data.level || 1;
         this.highScore = data.highScore || 0;
     }
-    
+
     create() {
         this.createBackground();
         this.createTitle();
         this.createScoreDisplay();
         this.createLevelDisplay();
         this.createNextPrompt();
-        
+
         this.input.keyboard.once('keydown-SPACE', () => {
-            this.scene.start('GameScene', { 
-                score: this.score, 
-                level: this.level 
+            this.scene.start('GameScene', {
+                score: this.score,
+                level: this.level
             });
         });
-        
+
         this.input.keyboard.once('keydown-ESC', () => {
             this.scene.start('MenuScene');
         });
     }
-    
+
     /**
      * Create background
      */
@@ -48,7 +48,7 @@ export default class WinScene extends Phaser.Scene {
             colors.background
         );
     }
-    
+
     /**
      * Create level complete title
      */
@@ -67,7 +67,7 @@ export default class WinScene extends Phaser.Scene {
             }
         );
         titleText.setOrigin(0.5);
-        
+
         // Add celebration animation
         this.tweens.add({
             targets: titleText,
@@ -85,7 +85,7 @@ export default class WinScene extends Phaser.Scene {
             }
         });
     }
-    
+
     /**
      * Create score display
      */
@@ -102,7 +102,7 @@ export default class WinScene extends Phaser.Scene {
             }
         );
         scoreText.setOrigin(0.5);
-        
+
         const highScoreText = this.add.text(
             this.scale.width / 2,
             this.scale.height * 0.48,
@@ -115,7 +115,7 @@ export default class WinScene extends Phaser.Scene {
         );
         highScoreText.setOrigin(0.5);
     }
-    
+
     /**
      * Create next level display
      */
@@ -132,7 +132,7 @@ export default class WinScene extends Phaser.Scene {
             }
         );
         levelText.setOrigin(0.5);
-        
+
         // Add level progression info
         const infoText = this.add.text(
             this.scale.width / 2,
@@ -146,7 +146,7 @@ export default class WinScene extends Phaser.Scene {
         );
         infoText.setOrigin(0.5);
     }
-    
+
     /**
      * Create continue prompt with animation
      */
@@ -163,7 +163,7 @@ export default class WinScene extends Phaser.Scene {
             }
         );
         nextText.setOrigin(0.5);
-        
+
         this.tweens.add({
             targets: nextText,
             alpha: { from: 1, to: 0.3 },

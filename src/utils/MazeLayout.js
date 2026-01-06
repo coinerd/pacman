@@ -101,13 +101,13 @@ export function getCenterPixel(gridX, gridY) {
 export function getValidDirections(maze, gridX, gridY, allowReverse = true) {
     const validDirs = [];
     const { UP, DOWN, LEFT, RIGHT } = { UP: { x: 0, y: -1 }, DOWN: { x: 0, y: 1 }, LEFT: { x: -1, y: 0 }, RIGHT: { x: 1, y: 0 } };
-    
+
     const directions = [UP, DOWN, LEFT, RIGHT];
-    
+
     for (const dir of directions) {
         const newX = gridX + dir.x;
         const newY = gridY + dir.y;
-        
+
         // Allow tunnel wrapping (movement outside maze boundaries on left/right edges)
         if (newY >= 0 && newY < maze.length) {
             if (newX < 0 || newX >= maze[0].length) {
@@ -120,7 +120,7 @@ export function getValidDirections(maze, gridX, gridY, allowReverse = true) {
             }
         }
     }
-    
+
     return validDirs;
 }
 

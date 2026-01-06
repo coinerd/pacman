@@ -6,7 +6,7 @@ export class PelletPool {
         this.scene = scene;
         this.available = [];
         this.active = [];
-        this.initialSize = 50;
+        this.initialSize = 300;
     }
 
     init() {

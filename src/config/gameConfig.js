@@ -10,7 +10,8 @@ export const gameConfig = {
     mazePadding: 0,
     mazeWidth: 28,
     mazeHeight: 31,
-    targetFPS: 60
+    targetFPS: 60,
+    tunnelRow: 14
 };
 
 export const colors = {
@@ -96,10 +97,10 @@ export const levelConfig = {
 };
 
 export const ghostStartPositions = {
-    blinky: { x: 1, y: 1 },
-    pinky: { x: 26, y: 1 },
-    inky: { x: 1, y: 25 },
-    clyde: { x: 26, y: 25 }
+    blinky: { x: 2, y: 1 },
+    pinky: { x: 24, y: 1 },
+    inky: { x: 2, y: 25 },
+    clyde: { x: 24, y: 25 }
 };
 
 
@@ -111,10 +112,10 @@ export const ghostHouse = {
 export const pacmanStartPosition = { x: 13, y: 23 };
 
 export const powerPelletPositions = [
-    { x: 1, y: 6 },
-    { x: 26, y: 6 },
-    { x: 1, y: 26 },
-    { x: 26, y: 26 }
+    { x: 1, y: 14 },
+    { x: 26, y: 14 },
+    { x: 1, y: 39 },
+    { x: 26, y: 39 }
 ];
 
 export const scatterTargets = {
@@ -208,4 +209,14 @@ export const uiConfig = {
         danger: '#FF0000',
         info: '#00BFFF'
     }
+};
+
+/**
+ * Physics configuration for grid-centered movement
+ * Fixed timestep ensures consistent physics regardless of frame rate
+ */
+export const physicsConfig = {
+    FIXED_DT: 1 / 60,
+    MAX_DT: 0.1,
+    EPS: 2
 };

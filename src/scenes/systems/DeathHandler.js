@@ -35,7 +35,7 @@ export class DeathHandler {
      * @returns {boolean} True if death animation complete
      */
     update(delta) {
-        if (!this.isDying) return false;
+        if (!this.isDying) {return false;}
 
         this.deathTimer += delta;
 
@@ -46,6 +46,7 @@ export class DeathHandler {
             if (this.gameState.lives <= 0) {
                 this.scene.gameFlowController.handleGameOver();
             } else {
+                this.gameState.lives--;
                 this.scene.resetPositions();
                 this.scene.uiController.showReadyMessage();
             }

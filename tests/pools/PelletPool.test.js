@@ -17,7 +17,7 @@ describe('PelletPool', () => {
 
     describe('initialization', () => {
         test('should create initial pool size', () => {
-            expect(pool.available.length).toBe(50);
+            expect(pool.available.length).toBe(300);
             expect(pool.active.length).toBe(0);
         });
 
@@ -35,7 +35,7 @@ describe('PelletPool', () => {
 
             expect(pellet).toBeDefined();
             expect(pellet.visible).toBe(true);
-            expect(pool.available.length).toBe(49);
+            expect(pool.available.length).toBe(299);
             expect(pool.active.length).toBe(1);
         });
 
@@ -52,7 +52,7 @@ describe('PelletPool', () => {
             const pellet = pool.get(5, 5);
             pool.release(pellet);
 
-            expect(pool.available.length).toBe(50);
+            expect(pool.available.length).toBe(300);
             expect(pool.active.length).toBe(0);
             expect(pellet.visible).toBe(false);
         });
@@ -67,11 +67,11 @@ describe('PelletPool', () => {
 
     describe('exhaustion', () => {
         test('should return null when pool exhausted', () => {
-            for (let i = 0; i < 50; i++) {
+            for (let i = 0; i < 300; i++) {
                 pool.get(i, i);
             }
 
-            const pellet = pool.get(51, 51);
+            const pellet = pool.get(301, 301);
 
             expect(pellet).toBeNull();
         });
@@ -87,7 +87,7 @@ describe('PelletPool', () => {
 
             expect(count).toBe(10);
             expect(pool.active.length).toBe(0);
-            expect(pool.available.length).toBe(50);
+            expect(pool.available.length).toBe(300);
         });
     });
 

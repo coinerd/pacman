@@ -4,10 +4,21 @@
  */
 
 import { BaseEntity } from './BaseEntity.js';
-import { gameConfig, colors, directions, ghostModes, animationConfig, levelConfig } from '../config/gameConfig.js';
+import { gameConfig, colors, directions, ghostModes, animationConfig, levelConfig, ghostSpeedMultipliers } from '../config/gameConfig.js';
 import { getCenterPixel, getValidDirections, getDistance } from '../utils/MazeLayout.js';
+import { handlePortalTraversal } from '../utils/WarpTunnel.js';
 
 export default class Ghost extends BaseEntity {
+
+    /**
+     * Creates a new Ghost instance.
+     *
+     * @param {Phaser.Scene} scene - The scene this ghost belongs to
+     * @param {number} x - Initial grid X position
+     * @param {number} y - Initial grid Y position
+     * @param {string} type - Ghost type: 'blinky' | 'pinky' | 'inky' | 'clyde'
+     * @param {number} color - Ghost color (hex integer)
+     */
     constructor(scene, x, y, type, color) {
         const radius = gameConfig.tileSize * 0.4;
         super(scene, x, y, radius, color);
@@ -21,8 +32,12 @@ export default class Ghost extends BaseEntity {
         this.speed = baseLevelSpeed * levelConfig.ghostSpeedMultiplier;
         this.baseSpeed = this.speed;
 
+        this.prevX = this.x;
+        this.prevY = this.y;
+
+        this.nextDirection = directions.NONE;
+
         this.mode = ghostModes.SCATTER;
-        this.modeTimer = 0;
         this.targetX = 0;
         this.targetY = 0;
 
@@ -32,9 +47,21 @@ export default class Ghost extends BaseEntity {
         this.isBlinking = false;
         this.blinkTimer = 0;
 
-        this.isInHouse = false;
+        this.houseTimer = 0;
+        this.inGhostHouse = false;
     }
 
+    /**
+     * Updates ghost state and movement.
+     *
+     * Behavior:
+     * - If eaten: Updates house timer and handles return to playfield
+     * - If not eaten: Updates frightened state and moves ghost
+     *
+     * @param {number} delta - Time since last frame in milliseconds
+     * @param {number[][]} maze - 2D maze array
+     * @param {Pacman} pacman - Pacman entity for AI targeting
+     */
     update(delta, maze, pacman) {
         if (this.isEaten) {
             this.updateEaten(delta, maze);
@@ -45,48 +72,98 @@ export default class Ghost extends BaseEntity {
         this.updateVisuals();
     }
 
+    /**
+     * Moves ghost based on current direction and speed.
+     *
+     * Behavior:
+     * - Updates ghost position in maze
+     * - Handles tunnel wrapping
+     * - Makes AI decisions at intersections
+     * - Applies buffered direction changes
+     *
+     * @param {number} delta - Time since last frame in milliseconds
+     * @param {number[][]} maze - 2D maze array
+     * @param {Pacman} pacman - Pacman entity for AI targeting
+     */
     moveGhost(delta, maze, pacman) {
-        this.updateMovement(delta, maze);
+        this.isMoving = this.direction !== directions.NONE;
 
-        if (this.scene.ghostAISystem) {
-            const oldDir = this.direction;
-            this.scene.ghostAISystem.chooseDirection(this, maze);
+        let speed = this.speed;
+        if (this.gridY === gameConfig.tunnelRow) {
+            speed = this.speed * ghostSpeedMultipliers.tunnel;
+        }
 
-            if (oldDir.x !== this.direction.x || oldDir.y !== this.direction.y) {
-                this.snapToCurrentCenter();
+        const moveStep = speed * (delta / 1000);
+
+        if (this.isMoving) {
+            this.prevX = this.x;
+            this.prevY = this.y;
+            this.x += this.direction.x * moveStep;
+            this.y += this.direction.y * moveStep;
+            handlePortalTraversal(this, gameConfig.tileSize);
+        }
+
+        const gridPos = { x: Math.floor(this.x / gameConfig.tileSize), y: Math.floor(this.y / gameConfig.tileSize) };
+        const centerPixel = { x: gridPos.x * gameConfig.tileSize + gameConfig.tileSize / 2, y: gridPos.y * gameConfig.tileSize + gameConfig.tileSize / 2 };
+        const distToCenter = Math.sqrt(Math.pow(this.x - centerPixel.x, 2) + Math.pow(this.y - centerPixel.y, 2));
+        const isAtCenter = distToCenter < moveStep;
+
+        if (isAtCenter) {
+            this.gridX = gridPos.x;
+            this.gridY = gridPos.y;
+
+            if (this.scene.ghostAISystem) {
+                const oldDir = this.direction;
+                this.scene.ghostAISystem.chooseDirection(this, maze);
+
+                // Apply buffered direction if valid
+                if (this.nextDirection !== directions.NONE) {
+                    this.direction = this.nextDirection;
+                    this.nextDirection = directions.NONE;
+                }
+
+                if (oldDir.x !== this.direction.x || oldDir.y !== this.direction.y) {
+                    this.x = centerPixel.x;
+                    this.y = centerPixel.y;
+                }
+
+                if (!this.canMoveInDirection(this.direction, maze)) {
+                    this.isMoving = false;
+                    this.direction = directions.NONE;
+                }
             }
         }
     }
 
+    /**
+     * Snaps ghost position to center of current grid cell
+     *
+     * Used to ensure precise positioning after manual movement or state changes
+     */
     snapToCurrentCenter() {
         const centerPixel = getCenterPixel(this.gridX, this.gridY);
         this.x = centerPixel.x;
         this.y = centerPixel.y;
     }
 
-    update(delta, maze, pacman) {
-        if (this.isEaten) {
-            this.updateEaten(delta, maze);
-        } else {
-            this.updateFrightened(delta);
-            this.moveGhost(delta, maze, pacman);
-        }
-        this.updateVisuals();
+    /**
+     * Placeholder for intersection decision logic
+     *
+     * Currently empty - decisions are handled by GhostAISystem
+     *
+     * @param {number[][]} maze - 2D maze array (not used)
+     */
+    makeDecisionAtIntersection(maze) {
     }
 
-    moveGhost(delta, maze, pacman) {
-        this.updateMovement(delta, maze);
-
-        if (this.scene.ghostAISystem) {
-            const oldDir = this.direction;
-            this.scene.ghostAISystem.chooseDirection(this, maze);
-
-            if (oldDir.x !== this.direction.x || oldDir.y !== this.direction.y) {
-                this.snapToCurrentCenter();
-            }
-        }
-    }
-
+    /**
+     * Updates ghost visual appearance based on state.
+     *
+     * Behavior:
+     * - If frightened: Shows blue color with blinking effect
+     * - If eaten: Shows white translucent appearance
+     * - Otherwise: Shows ghost's normal color
+     */
     updateVisuals() {
         if (this.isFrightened) {
             if (this.isBlinking && Math.floor(this.blinkTimer / animationConfig.ghostBlinkSpeed) % 2 === 0) {
@@ -101,13 +178,24 @@ export default class Ghost extends BaseEntity {
         }
     }
 
+    /**
+     * Updates frightened state timer and blinking effect.
+     *
+     * Behavior:
+     * - Decrements frightened timer
+     * - Activates blinking when timer < 2 seconds
+     * - Returns to normal state when timer expires
+     *
+     * @param {number} delta - Time since last frame in milliseconds
+     */
     updateFrightened(delta) {
         if (this.isFrightened) {
             this.frightenedTimer -= delta;
             this.blinkTimer += delta;
-            if (this.frightenedTimer <= 2000) this.isBlinking = true;
-            else this.isBlinking = false;
+            if (this.frightenedTimer <= 2000) {this.isBlinking = true;}
+            else {this.isBlinking = false;}
             if (this.frightenedTimer <= 0) {
+                this.frightenedTimer = 0;
                 this.isFrightened = false;
                 this.isBlinking = false;
                 this.speed = this.baseSpeed;
@@ -115,15 +203,42 @@ export default class Ghost extends BaseEntity {
         }
     }
 
+    /**
+     * Returns the opposite direction of the given direction.
+     *
+     * @param {Object} direction - Direction object with x and y properties
+     * @param {number} direction.x - Horizontal direction (-1, 0, 1)
+     * @param {number} direction.y - Vertical direction (-1, 0, 1)
+     * @returns {Object} Opposite direction object
+     */
     getReverseDirection(direction) {
-        if (direction.x === 1) return directions.LEFT;
-        if (direction.x === -1) return directions.RIGHT;
-        if (direction.y === 1) return directions.UP;
-        if (direction.y === -1) return directions.DOWN;
+        if (direction.x === 1) {return directions.LEFT;}
+        if (direction.x === -1) {return directions.RIGHT;}
+        if (direction.y === 1) {return directions.UP;}
+        if (direction.y === -1) {return directions.DOWN;}
         return directions.NONE;
     }
 
+    /**
+     * Updates eaten ghost state, returning to ghost house.
+     *
+     * Behavior:
+     * - If in ghost house: Waits for timer then resets
+     * - Otherwise: Moves to ghost house entrance (13, 14)
+     *
+     * @param {number} delta - Time since last frame in milliseconds
+     * @param {number[][]} maze - 2D maze array
+     */
     updateEaten(delta, maze) {
+        if (this.inGhostHouse) {
+            this.houseTimer -= delta;
+            if (this.houseTimer <= 0) {
+                this.houseTimer = 0;
+                this.reset();
+            }
+            return;
+        }
+
         const targetX = 13;
         const targetY = 14;
         const speed = this.speed * 2;
@@ -137,7 +252,11 @@ export default class Ghost extends BaseEntity {
             this.gridX = gridPos.x;
             this.gridY = gridPos.y;
             if (this.gridX === targetX && this.gridY === targetY) {
-                this.isEaten = false;
+                this.inGhostHouse = true;
+                this.houseTimer = 2000;
+                this.direction = directions.NONE;
+                this.x = centerPixel.x;
+                this.y = centerPixel.y;
                 return;
             }
             this.chooseDirectionToTarget(maze, targetX, targetY);
@@ -146,13 +265,22 @@ export default class Ghost extends BaseEntity {
         if (this.direction !== directions.NONE) {
             this.x += this.direction.x * moveStep;
             this.y += this.direction.y * moveStep;
-            this.handleTunnelWrap();
         }
     }
 
+    /**
+     * Chooses direction to reach target position.
+     *
+     * Evaluates all valid directions and selects the one that minimizes
+     * distance to the target position.
+     *
+     * @param {number[][]} maze - 2D maze array
+     * @param {number} targetX - Target grid X position
+     * @param {number} targetY - Target grid Y position
+     */
     chooseDirectionToTarget(maze, targetX, targetY) {
         const validDirs = getValidDirections(maze, this.gridX, this.gridY);
-        if (validDirs.length === 0) return;
+        if (validDirs.length === 0) {return;}
         let bestDir = validDirs[0];
         let bestDist = Infinity;
         for (const dir of validDirs) {
@@ -162,22 +290,51 @@ export default class Ghost extends BaseEntity {
         this.direction = bestDir;
     }
 
+    /**
+     * Activates frightened state for specified duration.
+     *
+     * Behavior:
+     * - Sets ghost to frightened state
+     * - Reduces speed by 50%
+     * - Reverses current direction
+     *
+     * @param {number} duration - Duration of frightened state in milliseconds
+     */
     setFrightened(duration) {
         this.isFrightened = true;
         this.frightenedTimer = duration;
         this.isBlinking = false;
         this.speed = this.baseSpeed * 0.5;
-        if (this.direction !== directions.NONE) this.direction = this.getReverseDirection(this.direction);
+        if (this.direction !== directions.NONE) {this.direction = this.getReverseDirection(this.direction);}
     }
 
+    /**
+     * Marks ghost as eaten.
+     *
+     * Sets ghost state to eaten and clears frightened state,
+     * causing ghost to return to ghost house.
+     */
     eat() { this.isEaten = true; this.isFrightened = false; }
 
+    /**
+     * Resets ghost to initial state.
+     *
+     * Resets all properties to their starting values, including
+     * position, direction, and state flags.
+     */
     reset() {
-        this.gridX = this.startGridX; this.gridY = this.startGridY;
+        this.gridX = this.startGridX;
+        this.gridY = this.startGridY;
         this.direction = directions.NONE;
-        this.isEaten = false; this.isFrightened = false;
+        this.isEaten = false;
+        this.isFrightened = false;
+        this.inGhostHouse = false;
+        this.houseTimer = 0;
+        this.mode = ghostModes.SCATTER;
         const pixel = getCenterPixel(this.gridX, this.gridY);
-        this.x = pixel.x; this.y = pixel.y;
+        this.x = pixel.x;
+        this.y = pixel.y;
+        this.speed = this.baseSpeed;
     }
 
     /**

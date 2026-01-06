@@ -10,23 +10,23 @@ export default class PauseScene extends Phaser.Scene {
     constructor() {
         super('PauseScene');
     }
-    
+
     create() {
         this.createOverlay();
         this.createTitle();
         this.createInstructions();
         this.createControls();
-        
+
         this.input.keyboard.once('keydown-P', () => {
             this.scene.resume('GameScene');
             this.scene.stop();
         });
-        
+
         this.input.keyboard.once('keydown-SPACE', () => {
             this.scene.resume('GameScene');
             this.scene.stop();
         });
-        
+
         this.input.keyboard.once('keydown-ESC', () => {
             this.scene.stop();
             const gameScene = this.scene.get('GameScene');
@@ -36,7 +36,7 @@ export default class PauseScene extends Phaser.Scene {
             this.scene.start('MenuScene');
         });
     }
-    
+
     /**
      * Create semi-transparent overlay
      */
@@ -50,7 +50,7 @@ export default class PauseScene extends Phaser.Scene {
             0.7
         );
     }
-    
+
     /**
      * Create pause title
      */
@@ -70,7 +70,7 @@ export default class PauseScene extends Phaser.Scene {
         );
         titleText.setOrigin(0.5);
     }
-    
+
     /**
      * Create instructions
      */
@@ -79,7 +79,7 @@ export default class PauseScene extends Phaser.Scene {
             'Press P or SPACE to Resume',
             'Press ESC to Return to Menu'
         ];
-        
+
         let y = this.scale.height * 0.5;
         for (const instruction of instructions) {
             const text = this.add.text(
@@ -96,7 +96,7 @@ export default class PauseScene extends Phaser.Scene {
             y += 40;
         }
     }
-    
+
     /**
      * Create controls display
      */
@@ -106,7 +106,7 @@ export default class PauseScene extends Phaser.Scene {
             'P - Pause/Resume',
             'ESC - Return to Menu'
         ];
-        
+
         let y = this.scale.height * 0.7;
         for (const control of controls) {
             this.add.text(

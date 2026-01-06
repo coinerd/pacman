@@ -1,0 +1,25 @@
+#!/bin/sh
+
+echo "Running pre-commit checks..."
+
+# Run lint (no fix - user should manually fix issues)
+echo "Checking code style with ESLint..."
+npm run lint
+
+if [ $? -ne 0 ]; then
+    echo "❌ ESLint check failed. Please fix the linting errors before committing."
+    echo "Run 'npm run lint:fix' to automatically fix linting issues."
+    exit 1
+fi
+
+# Run tests
+echo "Running tests..."
+npm test
+
+if [ $? -ne 0 ]; then
+    echo "❌ Tests failed. Please fix the failing tests before committing."
+    exit 1
+fi
+
+echo "✅ Pre-commit checks passed."
+exit 0

@@ -16,8 +16,8 @@ export class SoundManager {
      * Must be called after user interaction due to browser autoplay policies
      */
     initialize() {
-        if (this.initialized) return;
-        
+        if (this.initialized) {return;}
+
         try {
             this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
             this.initialized = true;
@@ -34,7 +34,7 @@ export class SoundManager {
      * @param {string} type - Waveform type ('sine', 'square', 'sawtooth', 'triangle')
      */
     playTone(frequency, duration, type = 'square') {
-        if (!this.enabled || !this.audioContext) return;
+        if (!this.enabled || !this.audioContext) {return;}
 
         try {
             const oscillator = this.audioContext.createOscillator();
@@ -60,7 +60,7 @@ export class SoundManager {
      * Play waka-waka sound when eating pellets
      */
     playWakaWaka() {
-        if (!this.enabled) return;
+        if (!this.enabled) {return;}
         this.playTone(400, 0.1, 'triangle');
     }
 
@@ -68,7 +68,7 @@ export class SoundManager {
      * Play power pellet activation sound
      */
     playPowerPellet() {
-        if (!this.enabled) return;
+        if (!this.enabled) {return;}
         this.playTone(600, 0.3, 'square');
         setTimeout(() => this.playTone(800, 0.2, 'square'), 100);
     }
@@ -77,7 +77,7 @@ export class SoundManager {
      * Play ghost eaten sound
      */
     playGhostEaten() {
-        if (!this.enabled) return;
+        if (!this.enabled) {return;}
         this.playTone(800, 0.2, 'square');
         setTimeout(() => this.playTone(1000, 0.15, 'square'), 150);
     }
@@ -86,7 +86,7 @@ export class SoundManager {
      * Play death sound
      */
     playDeath() {
-        if (!this.enabled) return;
+        if (!this.enabled) {return;}
         const frequencies = [400, 350, 300, 250, 200, 150, 100];
         frequencies.forEach((freq, index) => {
             setTimeout(() => this.playTone(freq, 0.15, 'sawtooth'), index * 100);
@@ -97,7 +97,7 @@ export class SoundManager {
      * Play level complete sound
      */
     playLevelComplete() {
-        if (!this.enabled) return;
+        if (!this.enabled) {return;}
         const frequencies = [523, 659, 784, 1047];
         frequencies.forEach((freq, index) => {
             setTimeout(() => this.playTone(freq, 0.2, 'sine'), index * 150);
@@ -108,7 +108,7 @@ export class SoundManager {
      * Play fruit eaten sound
      */
     playFruitEat() {
-        if (!this.enabled) return;
+        if (!this.enabled) {return;}
         this.playTone(500, 0.15, 'sine');
         setTimeout(() => this.playTone(700, 0.15, 'sine'), 100);
     }

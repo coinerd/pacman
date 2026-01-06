@@ -12,6 +12,13 @@ import GameOverScene from './scenes/GameOverScene.js';
 import WinScene from './scenes/WinScene.js';
 import SettingsScene from './scenes/SettingsScene.js';
 
+const args = window.location.search.substring(1).split('&');
+const isDemo = args.some(arg => arg === 'demo');
+
+if (isDemo) {
+    window.DEBUG = true;
+}
+
 const config = {
     type: Phaser.AUTO,
     width: gameConfig.width,
@@ -41,6 +48,7 @@ const config = {
 
 const game = new Phaser.Game(config);
 window.game = game;
+window.game.isDemo = isDemo;
 
 
 

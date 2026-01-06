@@ -1,0 +1,481 @@
+import Pacman from '../../src/entities/Pacman.js';
+import { gameConfig, directions } from '../../src/config/gameConfig.js';
+import { createMockScene, createSimpleMaze } from '../utils/testHelpers.js';
+import { tileCenter, distanceToTileCenter } from '../../src/utils/TileMovement.js';
+
+describe('Pacman - Grid Movement', () => {
+    let mockScene;
+    let pacman;
+    let maze;
+
+    beforeEach(() => {
+        mockScene = createMockScene();
+        mockScene.gameState = { level: 1 };
+        maze = createSimpleMaze(10, 10);
+        pacman = new Pacman(mockScene, 5, 5);
+    });
+
+    describe('tile-center snapping', () => {
+        test('updates grid position when at tile center', () => {
+            pacman.x = 100;
+            pacman.y = 100;
+            pacman.direction = directions.RIGHT;
+            pacman.speed = 100;
+
+            pacman.update(20, maze);
+
+            expect(pacman.gridX).toBe(5);
+            expect(pacman.gridY).toBe(5);
+        });
+
+        test('detects being at tile center', () => {
+            pacman.x = 100;
+            pacman.y = 100;
+            pacman.direction = directions.RIGHT;
+            pacman.speed = 100;
+
+            pacman.update(20, maze);
+
+            const gridPos = { x: Math.floor(pacman.x / gameConfig.tileSize), y: Math.floor(pacman.y / gameConfig.tileSize) };
+            const centerPixel = { x: gridPos.x * gameConfig.tileSize + gameConfig.tileSize / 2, y: gridPos.y * gameConfig.tileSize + gameConfig.tileSize / 2 };
+            const distToCenter = Math.sqrt(Math.pow(pacman.x - centerPixel.x, 2) + Math.pow(pacman.y - centerPixel.y, 2));
+
+            expect(distToCenter).toBeLessThan(pacman.speed * (20 / 1000));
+        });
+
+        test('continues past center without snapping', () => {
+            pacman.x = 100;
+            pacman.y = 100;
+            pacman.direction = directions.RIGHT;
+            pacman.speed = 100;
+
+            pacman.update(50, maze);
+
+            const center = tileCenter(5, 5);
+            const hasPassedCenter = pacman.x > center.x;
+
+            expect(hasPassedCenter).toBe(true);
+        });
+
+        test('works correctly for horizontal movement', () => {
+            pacman.x = 100;
+            pacman.y = 100;
+            pacman.direction = directions.RIGHT;
+            pacman.speed = 120;
+
+            pacman.update(20, maze);
+
+            const gridPos = { x: Math.floor(pacman.x / gameConfig.tileSize), y: Math.floor(pacman.y / gameConfig.tileSize) };
+            const centerPixel = { x: gridPos.x * gameConfig.tileSize + gameConfig.tileSize / 2, y: gridPos.y * gameConfig.tileSize + gameConfig.tileSize / 2 };
+            const distToCenter = Math.sqrt(Math.pow(pacman.x - centerPixel.x, 2) + Math.pow(pacman.y - centerPixel.y, 2));
+
+            expect(distToCenter).toBeLessThan(pacman.speed * (20 / 1000));
+        });
+    });
+
+    describe('direction changes only at tile center', () => {
+        test('does not change direction when not at center', () => {
+            pacman.x = 95;
+            pacman.y = 100;
+            pacman.direction = directions.RIGHT;
+            pacman.setDirection(directions.UP);
+            pacman.isMoving = true;
+
+            pacman.update(10, maze);
+
+            expect(pacman.direction).toBe(directions.RIGHT);
+        });
+
+        test('changes direction when at tile center', () => {
+            pacman.x = 100;
+            pacman.y = 100;
+            pacman.direction = directions.RIGHT;
+            pacman.setDirection(directions.UP);
+            pacman.isMoving = true;
+
+            maze[5][5] = 0;
+            maze[4][5] = 0;
+
+            pacman.update(20, maze);
+
+            expect(pacman.direction).toBe(directions.UP);
+        });
+
+        test('waits until center to apply buffered direction', () => {
+            pacman.x = 95;
+            pacman.y = 100;
+            pacman.direction = directions.RIGHT;
+            pacman.setDirection(directions.UP);
+            pacman.isMoving = true;
+
+            maze[5][5] = 0;
+            maze[4][5] = 0;
+
+            pacman.update(10, maze);
+
+            expect(pacman.direction).toBe(directions.RIGHT);
+            expect(pacman.nextDirection).toBe(directions.UP);
+
+            pacman.update(20, maze);
+
+            expect(pacman.direction).toBe(directions.UP);
+            expect(pacman.nextDirection).toBe(directions.NONE);
+        });
+
+        test('cannot turn into wall even at center', () => {
+            pacman.x = 100;
+            pacman.y = 100;
+            pacman.direction = directions.RIGHT;
+            pacman.setDirection(directions.UP);
+            pacman.isMoving = true;
+
+            maze[5][5] = 0;
+            maze[4][5] = 1;
+
+            pacman.update(20, maze);
+
+            expect(pacman.direction).toBe(directions.RIGHT);
+        });
+    });
+
+    describe('buffered input handling', () => {
+        test('stores nextDirection when not at center', () => {
+            pacman.x = 95;
+            pacman.y = 100;
+            pacman.direction = directions.RIGHT;
+
+            pacman.setDirection(directions.UP);
+
+            expect(pacman.nextDirection).toBe(directions.UP);
+            expect(pacman.direction).toBe(directions.RIGHT);
+        });
+
+        test('applies buffered direction at tile center', () => {
+            pacman.x = 95;
+            pacman.y = 100;
+            pacman.direction = directions.RIGHT;
+            pacman.setDirection(directions.UP);
+            pacman.isMoving = true;
+
+            maze[5][5] = 0;
+            maze[4][5] = 0;
+
+            pacman.update(30, maze);
+
+            expect(pacman.direction).toBe(directions.UP);
+            expect(pacman.nextDirection).toBe(directions.NONE);
+        });
+
+        test('replaces buffered direction with new input', () => {
+            pacman.x = 95;
+            pacman.y = 100;
+            pacman.direction = directions.RIGHT;
+            pacman.setDirection(directions.UP);
+
+            expect(pacman.nextDirection).toBe(directions.UP);
+
+            pacman.setDirection(directions.DOWN);
+
+            expect(pacman.nextDirection).toBe(directions.DOWN);
+        });
+
+        test('clears nextDirection after applying', () => {
+            pacman.x = 100;
+            pacman.y = 100;
+            pacman.direction = directions.RIGHT;
+            pacman.setDirection(directions.UP);
+            pacman.isMoving = true;
+
+            maze[5][5] = 0;
+            maze[4][5] = 0;
+
+            pacman.update(20, maze);
+
+            expect(pacman.nextDirection).toBe(directions.NONE);
+        });
+    });
+
+    describe('wall collision prevents movement', () => {
+        test('cannot move right into wall', () => {
+            maze = [
+                [1, 1, 1],
+                [1, 0, 1],
+                [1, 1, 1]
+            ];
+            pacman.gridX = 1;
+            pacman.gridY = 1;
+            pacman.x = 50;
+            pacman.y = 50;
+            pacman.direction = directions.RIGHT;
+            pacman.isMoving = true;
+
+            pacman.update(100, maze);
+
+            expect(pacman.x).toBeLessThan(70);
+        });
+
+        test('cannot move left into wall', () => {
+            maze = [
+                [1, 1, 1],
+                [1, 0, 1],
+                [1, 1, 1]
+            ];
+            pacman.gridX = 1;
+            pacman.gridY = 1;
+            pacman.x = 50;
+            pacman.y = 50;
+            pacman.direction = directions.LEFT;
+            pacman.isMoving = true;
+
+            pacman.update(100, maze);
+
+            expect(pacman.x).toBeGreaterThan(30);
+        });
+
+        test('cannot move up into wall', () => {
+            maze = [
+                [1, 1, 1],
+                [1, 0, 1],
+                [1, 1, 1]
+            ];
+            pacman.gridX = 1;
+            pacman.gridY = 1;
+            pacman.x = 50;
+            pacman.y = 50;
+            pacman.direction = directions.UP;
+            pacman.isMoving = true;
+
+            pacman.update(100, maze);
+
+            expect(pacman.y).toBeGreaterThan(30);
+        });
+
+        test('cannot move down into wall', () => {
+            maze = [
+                [1, 1, 1],
+                [1, 0, 1],
+                [1, 1, 1]
+            ];
+            pacman.gridX = 1;
+            pacman.gridY = 1;
+            pacman.x = 50;
+            pacman.y = 50;
+            pacman.direction = directions.DOWN;
+            pacman.isMoving = true;
+
+            pacman.update(100, maze);
+
+            expect(pacman.y).toBeLessThan(70);
+        });
+
+        test('stops moving when blocked by wall', () => {
+            maze = [
+                [1, 1, 1],
+                [1, 0, 1],
+                [1, 1, 1]
+            ];
+            pacman.gridX = 1;
+            pacman.gridY = 1;
+            pacman.x = 50;
+            pacman.y = 50;
+            pacman.direction = directions.RIGHT;
+            pacman.isMoving = true;
+
+            pacman.update(100, maze);
+
+            expect(pacman.isMoving).toBe(false);
+        });
+    });
+
+    describe('movement stops when direction is blocked', () => {
+        test('sets isMoving to false when blocked', () => {
+            maze = [
+                [1, 1, 1],
+                [1, 0, 1],
+                [1, 1, 1]
+            ];
+            pacman.gridX = 1;
+            pacman.gridY = 1;
+            pacman.x = 50;
+            pacman.y = 50;
+            pacman.direction = directions.RIGHT;
+            pacman.isMoving = true;
+
+            pacman.update(100, maze);
+
+            expect(pacman.isMoving).toBe(false);
+        });
+
+        test('resets direction to NONE when blocked', () => {
+            maze = [
+                [1, 1, 1],
+                [1, 0, 1],
+                [1, 1, 1]
+            ];
+            pacman.gridX = 1;
+            pacman.gridY = 1;
+            pacman.x = 50;
+            pacman.y = 50;
+            pacman.direction = directions.RIGHT;
+            pacman.isMoving = true;
+
+            pacman.update(100, maze);
+
+            expect(pacman.direction).toBe(directions.NONE);
+        });
+
+        test('continues moving if direction is clear', () => {
+            pacman.gridX = 5;
+            pacman.gridY = 5;
+            pacman.x = 100;
+            pacman.y = 100;
+            pacman.direction = directions.RIGHT;
+            pacman.isMoving = true;
+
+            pacman.update(50, maze);
+
+            expect(pacman.isMoving).toBe(true);
+            expect(pacman.x).toBeGreaterThan(100);
+        });
+    });
+
+    describe('entity grid position updates correctly', () => {
+        test('updates gridX after moving right past center', () => {
+            pacman.gridX = 5;
+            pacman.gridY = 5;
+            pacman.x = 100;
+            pacman.y = 100;
+            pacman.direction = directions.RIGHT;
+            pacman.isMoving = true;
+
+            pacman.update(50, maze);
+
+            expect(pacman.gridX).toBe(6);
+        });
+
+        test('updates gridY after moving up past center', () => {
+            pacman.gridX = 5;
+            pacman.gridY = 5;
+            pacman.x = 100;
+            pacman.y = 100;
+            pacman.direction = directions.UP;
+            pacman.isMoving = true;
+
+            pacman.update(50, maze);
+
+            expect(pacman.gridY).toBe(4);
+        });
+
+        test('grid position matches floor of pixel position', () => {
+            pacman.x = 110;
+            pacman.y = 110;
+            pacman.direction = directions.RIGHT;
+            pacman.speed = 100;
+
+            pacman.update(100, maze);
+
+            const expectedGridX = Math.floor(pacman.x / gameConfig.tileSize);
+            const expectedGridY = Math.floor(pacman.y / gameConfig.tileSize);
+
+            expect(pacman.gridX).toBe(expectedGridX);
+            expect(pacman.gridY).toBe(expectedGridY);
+        });
+
+        test('grid position updates only when crossing center', () => {
+            pacman.x = 95;
+            pacman.y = 100;
+            pacman.direction = directions.RIGHT;
+            pacman.speed = 100;
+            const initialGridX = pacman.gridX;
+
+            pacman.update(10, maze);
+
+            expect(pacman.gridX).toBe(initialGridX);
+
+            pacman.update(20, maze);
+
+            expect(pacman.gridX).toBeGreaterThan(initialGridX);
+        });
+    });
+
+    describe('buffered input with wall collision', () => {
+        test('discards buffered direction if blocked', () => {
+            maze[5][5] = 0;
+            maze[4][5] = 1;
+
+            pacman.x = 100;
+            pacman.y = 100;
+            pacman.direction = directions.RIGHT;
+            pacman.setDirection(directions.UP);
+            pacman.isMoving = true;
+
+            pacman.update(20, maze);
+
+            expect(pacman.direction).toBe(directions.RIGHT);
+            expect(pacman.nextDirection).toBe(directions.UP);
+        });
+
+        test('keeps buffered direction for later opportunity', () => {
+            maze[5][5] = 0;
+            maze[4][5] = 1;
+            maze[5][6] = 0;
+
+            pacman.x = 100;
+            pacman.y = 100;
+            pacman.direction = directions.RIGHT;
+            pacman.setDirection(directions.UP);
+            pacman.isMoving = true;
+
+            pacman.update(20, maze);
+
+            expect(pacman.nextDirection).toBe(directions.UP);
+        });
+    });
+
+    describe('edge cases', () => {
+        test('can reverse direction immediately', () => {
+            pacman.x = 100;
+            pacman.y = 100;
+            pacman.direction = directions.RIGHT;
+            pacman.isMoving = true;
+
+            pacman.setDirection(directions.LEFT);
+
+            expect(pacman.direction).toBe(directions.LEFT);
+            expect(pacman.nextDirection).toBe(directions.NONE);
+        });
+
+        test('handles NONE direction correctly', () => {
+            pacman.x = 100;
+            pacman.y = 100;
+            pacman.direction = directions.NONE;
+            pacman.isMoving = false;
+
+            pacman.update(20, maze);
+
+            expect(pacman.x).toBe(100);
+            expect(pacman.y).toBe(100);
+        });
+
+        test('stops exactly at tile center when blocked', () => {
+            maze = [
+                [1, 1, 1],
+                [1, 0, 1],
+                [1, 1, 1]
+            ];
+            pacman.gridX = 1;
+            pacman.gridY = 1;
+            pacman.x = 50;
+            pacman.y = 50;
+            pacman.direction = directions.RIGHT;
+            pacman.isMoving = true;
+
+            pacman.update(200, maze);
+
+            const center = tileCenter(1, 1);
+            const isAtCenter = Math.abs(pacman.x - center.x) < 2 && Math.abs(pacman.y - center.y) < 2;
+
+            expect(isAtCenter).toBe(true);
+        });
+    });
+});

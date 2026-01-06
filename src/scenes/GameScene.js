@@ -9,9 +9,9 @@ import {
     colors,
     directions,
     pacmanStartPosition,
-    powerPelletPositions,
     fruitConfig,
-    animationConfig
+    animationConfig,
+    physicsConfig
 } from '../config/gameConfig.js';
 import {
     createMazeData,
@@ -38,6 +38,8 @@ import { PowerPelletPool } from '../pools/PowerPelletPool.js';
 import { AchievementSystem } from '../systems/AchievementSystem.js';
 import { DebugOverlay } from '../systems/DebugOverlay.js';
 import { ReplaySystem } from '../systems/ReplaySystem.js';
+import { PacmanAI } from '../systems/PacmanAI.js';
+import { FixedTimeStepLoop } from '../systems/FixedTimeStepLoop.js';
 import { gameEvents, GAME_EVENTS } from '../core/EventBus.js';
 
 export default class GameScene extends Phaser.Scene {
@@ -112,12 +114,19 @@ export default class GameScene extends Phaser.Scene {
         this.ghostAISystem = new GhostAISystem();
         this.ghostAISystem.setGhosts(this.ghosts);
 
+        this.pacmanAI = new PacmanAI();
+
         this.debugOverlay = new DebugOverlay(this);
         if (this.settings.showFps) {
             this.debugOverlay.setVisible(true);
         }
 
         this.setupTouchControls();
+
+        this.fixedTimeStepLoop = new FixedTimeStepLoop(() => {
+            this.fixedUpdate();
+        });
+
         this.setupEventListeners();
 
         this.levelManager.applySettings();
@@ -297,19 +306,34 @@ export default class GameScene extends Phaser.Scene {
             return;
         }
 
-        this.inputController.handleInput();
-        this.pacman.update(delta, this.maze);
-
-        for (const ghost of this.ghosts) {
-            ghost.update(delta, this.maze, this.pacman);
+        if (this.sys.game.isDemo) {
+            this.pacmanAI.update(this.pacman, this.maze, this.ghosts);
+        } else {
+            this.inputController.handleInput();
         }
 
-        this.ghostAISystem.update(delta, this.maze, this.pacman);
-        this.handleCollisions();
-        this.updateFruit(delta);
+        const deltaInSeconds = delta / 1000;
+        this.fixedTimeStepLoop.update(deltaInSeconds);
+
         this.uiController.update();
         this.debugOverlay.update(time, delta);
-        this.replaySystem.update(delta);
+    }
+
+    /**
+     * Fixed timestep update callback (60 Hz)
+     * All physics and game logic updates happen here
+     */
+    fixedUpdate() {
+        this.pacman.update(physicsConfig.FIXED_DT, this.maze);
+
+        for (const ghost of this.ghosts) {
+            ghost.update(physicsConfig.FIXED_DT, this.maze, this.pacman);
+        }
+
+        this.ghostAISystem.update(physicsConfig.FIXED_DT, this.maze, this.pacman);
+        this.handleCollisions();
+        this.updateFruit(physicsConfig.FIXED_DT);
+        this.replaySystem.update(physicsConfig.FIXED_DT);
     }
 
     /**
@@ -376,7 +400,7 @@ export default class GameScene extends Phaser.Scene {
      */
     checkFruitSpawn() {
         const totalPellets = countPellets(this.maze);
-        const initialPellets = this.pelletSprites.length + this.powerPelletSprites.length;
+        const initialPellets = this.pelletPool.getActiveCount() + this.powerPelletPool.getActiveCount();
         const eatenPercentage = ((initialPellets - totalPellets) / initialPellets) * 100;
 
         if (eatenPercentage >= fruitConfig.pelletThreshold && !this.fruit.active) {
@@ -388,6 +412,13 @@ export default class GameScene extends Phaser.Scene {
     updateFruit(delta) {
         if (this.fruit.active) {
             this.fruit.update(delta);
+        }
+    }
+
+    resetPositions() {
+        this.pacman.resetPosition(pacmanStartPosition.x, pacmanStartPosition.y);
+        for (const ghost of this.ghosts) {
+            ghost.reset();
         }
     }
 

@@ -25,7 +25,9 @@ export class LevelManager {
         const speedMultiplier = 1 + (level - 1) * 0.05;
 
         for (const ghost of this.scene.ghosts) {
-            ghost.setSpeedMultiplier(speedMultiplier);
+            if (!ghost.isEaten) {
+                ghost.setSpeedMultiplier(speedMultiplier);
+            }
         }
 
         this.currentFrightenedDuration = Math.max(

@@ -32,8 +32,5 @@ export default {
   transformIgnorePatterns: [
     'node_modules/(?!(phaser))/'
   ],
-  transformIgnorePatterns: [
-    'node_modules/(?!(phaser))/'
-  ],
   verbose: true
 };

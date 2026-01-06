@@ -1,7 +1,14 @@
 import { ghostModes, directions, scatterTargets } from '../config/gameConfig.js';
 import { getDistance, getValidDirections } from '../utils/MazeLayout.js';
 
+/**
+ * Ghost AI System
+ * Manages ghost mode cycles, target selection, and direction choice
+ */
 export class GhostAISystem {
+    /**
+     * Creates a new GhostAISystem instance
+     */
     constructor() {
         this.ghosts = [];
         this.globalModeTimer = 0;
@@ -21,10 +28,20 @@ export class GhostAISystem {
         ];
     }
 
+    /**
+     * Sets the ghosts to be managed by this AI system
+     * @param {Ghost[]} ghosts - Array of ghost entities
+     */
     setGhosts(ghosts) {
         this.ghosts = ghosts;
     }
 
+    /**
+     * Updates all ghosts AI based on current game state
+     * @param {number} delta - Time elapsed since last update in milliseconds
+     * @param {MazeLayout} maze - Current maze layout for collision detection
+     * @param {Pacman} pacman - Pacman entity for targeting
+     */
     update(delta, maze, pacman) {
         this.updateGlobalMode(delta);
 
@@ -41,9 +58,13 @@ export class GhostAISystem {
         }
     }
 
+    /**
+     * Updates the global ghost mode based on cycle timers
+     * @param {number} delta - Time elapsed since last update in milliseconds
+     */
     updateGlobalMode(delta) {
         const currentCycle = this.cycles[this.cycleIndex];
-        if (currentCycle.duration === -1) return;
+        if (currentCycle.duration === -1) {return;}
 
         this.globalModeTimer += delta;
 
@@ -54,6 +75,11 @@ export class GhostAISystem {
         }
     }
 
+    /**
+     * Updates the target position for a ghost based on its type and current mode
+     * @param {Ghost} ghost - The ghost entity to update
+     * @param {Pacman} pacman - Pacman entity for targeting
+     */
     updateGhostTarget(ghost, pacman) {
         if (ghost.isEaten) {
             ghost.targetX = 13; // Ghost house entrance
@@ -67,21 +93,26 @@ export class GhostAISystem {
         }
 
         switch (ghost.type) {
-            case 'blinky':
-                this.updateBlinkyTarget(ghost, pacman);
-                break;
-            case 'pinky':
-                this.updatePinkyTarget(ghost, pacman);
-                break;
-            case 'inky':
-                this.updateInkyTarget(ghost, pacman);
-                break;
-            case 'clyde':
-                this.updateClydeTarget(ghost, pacman);
-                break;
+        case 'blinky':
+            this.updateBlinkyTarget(ghost, pacman);
+            break;
+        case 'pinky':
+            this.updatePinkyTarget(ghost, pacman);
+            break;
+        case 'inky':
+            this.updateInkyTarget(ghost, pacman);
+            break;
+        case 'clyde':
+            this.updateClydeTarget(ghost, pacman);
+            break;
         }
     }
 
+    /**
+     * Updates Blinky's target position based on mode
+     * @param {Ghost} ghost - Blinky ghost entity
+     * @param {Pacman} pacman - Pacman entity for targeting
+     */
     updateBlinkyTarget(ghost, pacman) {
         if (ghost.mode === ghostModes.SCATTER) {
             ghost.targetX = scatterTargets.blinky.x;
@@ -92,6 +123,11 @@ export class GhostAISystem {
         }
     }
 
+    /**
+     * Updates Pinky's target position (4 tiles ahead of Pacman in chase mode)
+     * @param {Ghost} ghost - Pinky ghost entity
+     * @param {Pacman} pacman - Pacman entity for targeting
+     */
     updatePinkyTarget(ghost, pacman) {
         if (ghost.mode === ghostModes.SCATTER) {
             ghost.targetX = scatterTargets.pinky.x;
@@ -108,6 +144,11 @@ export class GhostAISystem {
         }
     }
 
+    /**
+     * Updates Inky's target position (vector from Blinky through 2 tiles ahead of Pacman)
+     * @param {Ghost} ghost - Inky ghost entity
+     * @param {Pacman} pacman - Pacman entity for targeting
+     */
     updateInkyTarget(ghost, pacman) {
         if (ghost.mode === ghostModes.SCATTER) {
             ghost.targetX = scatterTargets.inky.x;
@@ -134,6 +175,11 @@ export class GhostAISystem {
         }
     }
 
+    /**
+     * Updates Clyde's target position (chases Pacman unless too close, then retreats)
+     * @param {Ghost} ghost - Clyde ghost entity
+     * @param {Pacman} pacman - Pacman entity for targeting
+     */
     updateClydeTarget(ghost, pacman) {
         if (ghost.mode === ghostModes.SCATTER) {
             ghost.targetX = scatterTargets.clyde.x;
@@ -151,20 +197,30 @@ export class GhostAISystem {
         }
     }
 
+    /**
+     * Finds a ghost by its type
+     * @param {string} type - The ghost type ('blinky', 'pinky', 'inky', or 'clyde')
+     * @returns {Ghost|null} The ghost entity or null if not found
+     */
     getGhostByType(type) {
         return this.ghosts.find(ghost => ghost.type === type);
     }
 
+    /**
+     * Chooses the next direction for a ghost based on its target and current state
+     * @param {Ghost} ghost - The ghost entity to choose direction for
+     * @param {MazeLayout} maze - Current maze layout for collision detection
+     */
     chooseDirection(ghost, maze) {
         const validDirs = getValidDirections(maze, ghost.gridX, ghost.gridY);
 
         if (validDirs.length === 0) {
-            ghost.direction = directions.NONE;
+            ghost.nextDirection = directions.NONE;
             return;
         }
 
         if (validDirs.length === 1) {
-            ghost.direction = validDirs[0];
+            ghost.nextDirection = validDirs[0];
             return;
         }
 
@@ -184,7 +240,7 @@ export class GhostAISystem {
         if (ghost.isFrightened) {
             // Frightened ghosts choose pseudorandomly at intersections
             const randomIndex = Math.floor(Math.random() * filteredDirs.length);
-            ghost.direction = filteredDirs[randomIndex];
+            ghost.nextDirection = filteredDirs[randomIndex];
         } else {
             // Intersection decision: choose the direction that minimizes distance to target
             let bestDir = filteredDirs[0];
@@ -201,25 +257,26 @@ export class GhostAISystem {
                 }
             }
 
-            ghost.direction = bestDir;
+            ghost.nextDirection = bestDir;
+        }
+
+        // Apply direction immediately if ghost is not moving
+        if (ghost.direction === directions.NONE && ghost.nextDirection !== directions.NONE) {
+            ghost.direction = ghost.nextDirection;
+            ghost.nextDirection = directions.NONE;
         }
     }
 
+    /**
+     * Returns the reverse of the given direction
+     * @param {Object} direction - Direction object with x and y properties
+     * @returns {Object} The opposite direction
+     */
     getReverseDirection(direction) {
-        if (direction.x === 1) return directions.LEFT;
-        if (direction.x === -1) return directions.RIGHT;
-        if (direction.y === 1) return directions.UP;
-        if (direction.y === -1) return directions.DOWN;
+        if (direction.x === 1) {return directions.LEFT;}
+        if (direction.x === -1) {return directions.RIGHT;}
+        if (direction.y === 1) {return directions.UP;}
+        if (direction.y === -1) {return directions.DOWN;}
         return directions.NONE;
-    }
-
-    reset() {
-        this.globalModeTimer = 0;
-        this.globalMode = ghostModes.SCATTER;
-        this.cycleIndex = 0;
-        for (const ghost of this.ghosts) {
-            ghost.mode = ghostModes.SCATTER;
-            ghost.modeTimer = 0;
-        }
     }
 }

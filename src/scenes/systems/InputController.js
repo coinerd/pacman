@@ -48,6 +48,8 @@ export class InputController {
      * Handle directional input
      */
     handleInput() {
+        if (this.pacman.isDying) {return;}
+
         let newDirection = null;
 
         if (this.cursors.left.isDown || this.wasd.A.isDown) {

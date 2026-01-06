@@ -156,10 +156,10 @@ export class UIController {
      * Cleanup UI elements
      */
     cleanup() {
-        if (this.scoreText) this.scoreText.destroy();
-        if (this.highScoreText) this.highScoreText.destroy();
-        if (this.livesText) this.livesText.destroy();
-        if (this.levelText) this.levelText.destroy();
-        if (this.messageContainer) this.messageContainer.destroy();
+        if (this.scoreText) {this.scoreText.destroy();}
+        if (this.highScoreText) {this.highScoreText.destroy();}
+        if (this.livesText) {this.livesText.destroy();}
+        if (this.levelText) {this.levelText.destroy();}
+        if (this.messageContainer) {this.messageContainer.destroy();}
     }
 }
