@@ -113,12 +113,20 @@ export default class Ghost extends BaseEntity {
                 this.y = centerPixel.y;
             }
         }
+        if (shouldHoldAtCenter) {
+            const centerPixel = getCenterPixel(this.gridX, this.gridY);
+            this.x = centerPixel.x;
+            this.y = centerPixel.y;
+            snappedAtCenter = true;
+        }
 
         const oldSpeed = this.speed;
         this.speed = speed;
         this.prevX = this.x;
         this.prevY = this.y;
-        performGridMovementStep(this, maze, delta);
+        if (!snappedAtCenter) {
+            performGridMovementStep(this, maze, delta);
+        }
         this.speed = oldSpeed;
         this.handleTunnelWrap();
         handlePortalTraversal(this, gameConfig.tileSize);
