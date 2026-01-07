@@ -21,12 +21,17 @@ export class FixedTimeStepLoop {
      * @param {number} realDt - Real time elapsed since last frame (seconds)
      */
     update(realDt) {
-        const clampedDt = Math.min(realDt, physicsConfig.MAX_DT);
+        const clampThreshold = physicsConfig.MAX_DT * 2;
+        const clampedDt = realDt > clampThreshold ? physicsConfig.MAX_DT : realDt;
         this.accumulator += clampedDt;
 
         while (this.accumulator >= physicsConfig.FIXED_DT) {
             this.callback();
             this.accumulator -= physicsConfig.FIXED_DT;
+        }
+
+        if (this.accumulator < Number.EPSILON) {
+            this.accumulator = 0;
         }
     }
 

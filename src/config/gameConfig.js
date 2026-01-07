@@ -109,7 +109,7 @@ export const ghostHouse = {
     center: { x: 13, y: 14 }
 };
 
-export const pacmanStartPosition = { x: 13, y: 23 };
+export const pacmanStartPosition = { x: 13, y: 22 };
 
 export const powerPelletPositions = [
     { x: 1, y: 14 },
