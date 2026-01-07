@@ -86,7 +86,7 @@ export function performGridMovementStep(entity, maze, delta) {
     const currentTile = worldToTile(entity.x, entity.y);
     const distToCenter = distanceToTileCenter(entity.x, entity.y, currentTile.x, currentTile.y);
 
-    const moveDist = entity.speed * (delta / 1000);
+    const moveDist = entity.speed * delta;
 
     if (distToCenter <= EPS) {
         const center = tileCenter(currentTile.x, currentTile.y);

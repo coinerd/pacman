@@ -246,7 +246,7 @@ export default class Ghost extends BaseEntity {
         const targetX = 13;
         const targetY = 14;
         const speed = this.speed * 2;
-        const moveStep = speed * (delta / 1000);
+        const moveStep = speed * delta;
 
         const gridPos = { x: Math.floor(this.x / gameConfig.tileSize), y: Math.floor(this.y / gameConfig.tileSize) };
         const centerPixel = getCenterPixel(gridPos.x, gridPos.y);

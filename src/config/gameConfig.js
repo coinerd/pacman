@@ -151,13 +151,13 @@ export const fruitConfig = {
  * Animation timing configuration
  */
 export const animationConfig = {
-    pacmanMouthSpeed: 0.15,
-    pacmanDeathSpeed: 0.3,
-    powerPelletPulseSpeed: 500,
-    ghostBlinkSpeed: 200,
-    textFadeSpeed: 800,
-    countdownDuration: 3000,
-    deathPauseDuration: 2000
+    pacmanMouthSpeed: 15,  // degrees per second
+    pacmanDeathSpeed: 30,  // degrees per second
+    powerPelletPulseSpeed: 500,  // milliseconds (Phaser tween duration)
+    ghostBlinkSpeed: 200,  // milliseconds (not currently used)
+    textFadeSpeed: 800,  // milliseconds (not currently used)
+    countdownDuration: 3000,  // milliseconds (Phaser delayedCall duration)
+    deathPauseDuration: 2  // seconds (accumulated with delta in seconds)
 };
 
 /**

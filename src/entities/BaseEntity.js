@@ -24,7 +24,7 @@ export class BaseEntity extends Phaser.GameObjects.Arc {
     }
 
     updateMovement(delta, maze) {
-        const moveStep = this.speed * (delta / 1000);
+        const moveStep = this.speed * delta;
 
         if (this.isMoving && this.direction !== directions.NONE) {
             this.x += this.direction.x * moveStep;
