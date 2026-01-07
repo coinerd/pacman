@@ -126,7 +126,10 @@ export function performGridMovementStep(entity, maze, delta) {
     );
 
     if (shouldSnapToCenter) {
+        const shouldPauseAtCenter = distToCenter <= EPS && moveDist <= EPS && typeof entity.type === 'string';
         if (distToCenter <= EPS && distToCenter > 0) {
+            remainingDist = 0;
+        } else if (shouldPauseAtCenter) {
             remainingDist = 0;
         } else if (distToCenter > EPS) {
             remainingDist = Math.max(0, remainingDist - distToCenter);

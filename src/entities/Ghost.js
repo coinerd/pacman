@@ -97,10 +97,6 @@ export default class Ghost extends BaseEntity {
         }
 
         const isAtCenter = isAtTileCenter(this.x, this.y, this.gridX, this.gridY);
-        let snappedAtCenter = false;
-        const shouldHoldAtCenter = isAtCenter
-            && !this.scene.ghostAISystem
-            && delta <= gameConfig.tileSize;
 
         if (isAtCenter && this.scene.ghostAISystem) {
             const oldDir = this.direction;
@@ -115,7 +111,6 @@ export default class Ghost extends BaseEntity {
                 const centerPixel = getCenterPixel(this.gridX, this.gridY);
                 this.x = centerPixel.x;
                 this.y = centerPixel.y;
-                snappedAtCenter = true;
             }
         }
         if (shouldHoldAtCenter) {
