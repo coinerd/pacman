@@ -6,7 +6,6 @@
 import { BaseEntity } from './BaseEntity.js';
 import { gameConfig, colors, directions, ghostModes, animationConfig, levelConfig, ghostSpeedMultipliers } from '../config/gameConfig.js';
 import { getCenterPixel, getValidDirections, getDistance } from '../utils/MazeLayout.js';
-import { handlePortalTraversal } from '../utils/WarpTunnel.js';
 import { performGridMovementStep, isAtTileCenter } from '../utils/TileMovement.js';
 
 export default class Ghost extends BaseEntity {
@@ -33,9 +32,6 @@ export default class Ghost extends BaseEntity {
         this.speed = baseLevelSpeed * levelConfig.ghostSpeedMultiplier;
         this.baseSpeed = this.speed;
         this.initialBaseSpeed = this.baseSpeed;
-
-        this.prevX = this.x;
-        this.prevY = this.y;
 
         this.nextDirection = directions.NONE;
 
@@ -131,7 +127,6 @@ export default class Ghost extends BaseEntity {
         }
         this.speed = oldSpeed;
         this.handleTunnelWrap();
-        handlePortalTraversal(this, gameConfig.tileSize);
     }
 
     /**
@@ -324,6 +319,8 @@ export default class Ghost extends BaseEntity {
     reset() {
         this.gridX = this.startGridX;
         this.gridY = this.startGridY;
+        this.prevGridX = this.startGridX;
+        this.prevGridY = this.startGridY;
         this.direction = directions.NONE;
         this.isEaten = false;
         this.isFrightened = false;
@@ -333,6 +330,8 @@ export default class Ghost extends BaseEntity {
         const pixel = getCenterPixel(this.gridX, this.gridY);
         this.x = pixel.x;
         this.y = pixel.y;
+        this.prevX = this.x;
+        this.prevY = this.y;
         this.speed = this.baseSpeed;
     }
 

@@ -16,31 +16,13 @@ export class BaseEntity extends Phaser.GameObjects.Arc {
         this.gridY = gridY;
         this.prevGridX = gridX;
         this.prevGridY = gridY;
+        this.prevX = this.x;
+        this.prevY = this.y;
         this.direction = directions.NONE;
         this.speed = 100;
         this.isMoving = false;
         this.radius = radius;
         this.color = color;
-    }
-
-    updateMovement(delta, maze) {
-        const moveStep = this.speed * (delta / 1000);
-
-        if (this.isMoving && this.direction !== directions.NONE) {
-            this.x += this.direction.x * moveStep;
-            this.y += this.direction.y * moveStep;
-            this.handleTunnelWrap();
-        }
-
-        const gridPos = { x: Math.floor(this.x / gameConfig.tileSize), y: Math.floor(this.y / gameConfig.tileSize) };
-        const centerPixel = getCenterPixel(gridPos.x, gridPos.y);
-        const distToCenter = Math.sqrt(Math.pow(this.x - centerPixel.x, 2) + Math.pow(this.y - centerPixel.y, 2));
-
-        if (distToCenter < Math.max(moveStep, 1)) {
-            this.gridX = gridPos.x;
-            this.gridY = gridPos.y;
-            this.makeDecisionAtIntersection(maze);
-        }
     }
 
     makeDecisionAtIntersection(maze) {
@@ -89,6 +71,8 @@ export class BaseEntity extends Phaser.GameObjects.Arc {
         const pixel = getCenterPixel(gridX, gridY);
         this.x = pixel.x;
         this.y = pixel.y;
+        this.prevX = this.x;
+        this.prevY = this.y;
     }
 
     setSpeed(speed) {

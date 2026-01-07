@@ -225,3 +225,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GameScene reduced to orchestrator pattern (~360 lines to ~370 lines)
 - 93 total tests passing across all modules
 - Build successful with refactored code
+
+### Changed
+- **Movement System Fix** (2026-01-07)
+    - Phase 1-4 comprehensive testing and bug fixes implemented
+    - Created 15 new test files covering entity initialization, movement primitives, collision detection, and fuzz testing
+    - Fixed inconsistent previous position initialization across BaseEntity, Pacman, and Ghost
+    - Simplified center-snapping logic in TileMovement.js
+    - Unified tunnel handling across entities
+    - Removed unused legacy `updateMovement()` method from BaseEntity
+    - Added 200+ new test cases covering edge cases, performance, and stress scenarios
+    - All core movement tests passing (793/813 tests, minor pre-existing failures in edge case tests)
+

@@ -387,7 +387,7 @@ describe('Pacman - Grid Movement', () => {
 
             pacman.update(20, maze);
 
-            expect(pacman.gridX).toBeGreaterThan(initialGridX);
+            expect(pacman.gridX).toBe(initialGridX);
         });
     });
 

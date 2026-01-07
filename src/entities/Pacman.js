@@ -1,6 +1,5 @@
 import { BaseEntity } from './BaseEntity.js';
 import { gameConfig, colors, directions, animationConfig, levelConfig } from '../config/gameConfig.js';
-import { handlePortalTraversal } from '../utils/WarpTunnel.js';
 import { performGridMovementStep, isAtTileCenter } from '../utils/TileMovement.js';
 
 export default class Pacman extends BaseEntity {
@@ -11,11 +10,6 @@ export default class Pacman extends BaseEntity {
         const baseLevelSpeed = levelConfig.baseSpeed + (scene.gameState.level - 1) * levelConfig.speedIncreasePerLevel;
         this.speed = baseLevelSpeed * levelConfig.pacmanSpeedMultiplier;
         this.baseSpeed = this.speed;
-
-        this.prevX = this.x;
-        this.prevY = this.y;
-        this.prevGridX = gridX;
-        this.prevGridY = gridY;
 
         this.nextDirection = directions.NONE;
 
@@ -61,7 +55,6 @@ export default class Pacman extends BaseEntity {
         performGridMovementStep(this, maze, delta);
 
         this.handleTunnelWrap();
-        handlePortalTraversal(this, gameConfig.tileSize);
 
         const rotation = this.direction.angle;
         this.setStartAngle(rotation + this.mouthAngle);
@@ -98,8 +91,6 @@ export default class Pacman extends BaseEntity {
 
     resetPosition(gridX, gridY) {
         super.resetPosition(gridX, gridY);
-        this.prevGridX = gridX;
-        this.prevGridY = gridY;
         this.nextDirection = directions.NONE;
         this.isDying = false;
         this.mouthAngle = 0;

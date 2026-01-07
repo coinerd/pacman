@@ -105,27 +105,23 @@ export function performGridMovementStep(entity, maze, delta) {
         && (Math.sign(dxToCenter) === entity.direction.x || dxToCenter === 0))
         || (entity.direction.y !== 0
             && (Math.sign(dyToCenter) === entity.direction.y || dyToCenter === 0));
-    const turnTolerance = EPS * 1.5;
     const hasBufferedTurn = entity.nextDirection
         && (entity.nextDirection.x !== 0 || entity.nextDirection.y !== 0);
-    const shouldSnapToCenter = distToCenter <= EPS
-        || (movingTowardCenter && distToCenter <= remainingDist)
-        || (movingTowardCenter && distToCenter <= (remainingDist + EPS))
-        || (hasBufferedTurn && distToCenter <= turnTolerance)
-        || (hasBufferedTurn
-            && distToCenter < gameConfig.tileSize * 0.35
-            && remainingDist >= gameConfig.tileSize * 0.1)
-        || (hasBufferedTurn
-            && wasMoving
-            && distToCenter <= gameConfig.tileSize * 0.5
-            && remainingDist >= gameConfig.tileSize * 0.1);
+
+    const willCrossCenter = movingTowardCenter && distToCenter > 0 && distToCenter <= remainingDist;
+    const snapWithBufferedTurn = hasBufferedTurn && (
+        (wasMoving && distToCenter <= gameConfig.tileSize * 0.5 && remainingDist >= gameConfig.tileSize * 0.1) ||
+        distToCenter <= EPS * 1.5 ||
+        (distToCenter < gameConfig.tileSize * 0.35 && remainingDist >= gameConfig.tileSize * 0.1)
+    );
+    const needsToSnap = distToCenter <= EPS || willCrossCenter || snapWithBufferedTurn;
 
     const crossesCenter = movingTowardCenter && (
         (distToCenter === 0 && moveDist > EPS)
         || (distToCenter > 0 && distToCenter <= (moveDist + EPS))
     );
 
-    if (shouldSnapToCenter) {
+    if (needsToSnap) {
         const shouldPauseAtCenter = distToCenter <= EPS && moveDist <= EPS && typeof entity.type === 'string';
         if (distToCenter <= EPS && distToCenter > 0) {
             remainingDist = 0;

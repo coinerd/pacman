@@ -80,16 +80,6 @@ describe('BaseEntity', () => {
     });
 
     describe('grid-based movement', () => {
-        test('should snap to tile center when crossing threshold', () => {
-            const entity = new BaseEntity(scene, 2, 2, 10, 0xFFFFFF);
-            entity.direction = directions.RIGHT;
-            entity.isMoving = true;
-
-            entity.updateMovement(1000, maze);
-
-            expect(entity.gridX).toBeGreaterThan(2);
-            expect(entity.x % gameConfig.tileSize).toBe(gameConfig.tileSize / 2);
-        });
 
         test('should handle tunnel wrapping', () => {
             const entity = new BaseEntity(scene, 0, 14, 10, 0xFFFFFF);
