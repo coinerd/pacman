@@ -34,12 +34,7 @@ export default class Pacman extends BaseEntity {
             this.nextDirection = directions.NONE;
         }
 
-        if (!this.canMoveInDirection(this.direction, maze)) {
-            this.isMoving = false;
-            this.direction = directions.NONE;
-        } else {
-            this.isMoving = true;
-        }
+        this.isMoving = this.direction !== directions.NONE;
 
         const rotation = this.direction.angle;
         this.setStartAngle(rotation + this.mouthAngle);
@@ -54,13 +49,9 @@ export default class Pacman extends BaseEntity {
 
         this.updateMouthAnimation(delta);
 
-        const currentGridX = Math.floor(this.x / gameConfig.tileSize);
-        const currentGridY = Math.floor(this.y / gameConfig.tileSize);
-        const isAtCenter = isAtTileCenter(this.x, this.y, currentGridX, currentGridY);
+        const isAtCenter = isAtTileCenter(this.x, this.y, this.gridX, this.gridY);
 
         if (isAtCenter) {
-            this.gridX = currentGridX;
-            this.gridY = currentGridY;
             this.makeDecisionAtIntersection(maze);
         }
 
@@ -78,7 +69,8 @@ export default class Pacman extends BaseEntity {
     }
 
     updateMouthAnimation(delta) {
-        this.mouthAngle += this.mouthDirection * this.mouthSpeed * (delta / 2);
+        const deltaSeconds = delta / 1000;
+        this.mouthAngle += this.mouthDirection * this.mouthSpeed * (deltaSeconds / 2);
 
         if (this.mouthAngle >= this.maxMouthAngle) {
             this.mouthAngle = this.maxMouthAngle;
@@ -90,7 +82,8 @@ export default class Pacman extends BaseEntity {
     }
 
     updateDeathAnimation(delta) {
-        this.mouthAngle += animationConfig.pacmanDeathSpeed * (delta / 2);
+        const deltaSeconds = delta / 1000;
+        this.mouthAngle += animationConfig.pacmanDeathSpeed * (deltaSeconds / 2);
         if (this.mouthAngle > 180) {
             this.mouthAngle = 180;
         }
