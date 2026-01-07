@@ -50,6 +50,13 @@ export default class Ghost extends BaseEntity {
 
         this.houseTimer = 0;
         this.inGhostHouse = false;
+        const initialDirections = {
+            blinky: directions.LEFT,
+            pinky: directions.RIGHT,
+            inky: directions.LEFT,
+            clyde: directions.RIGHT
+        };
+        this.direction = initialDirections[this.type] || directions.UP;
     }
 
     /**

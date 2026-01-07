@@ -324,16 +324,17 @@ export default class GameScene extends Phaser.Scene {
      * All physics and game logic updates happen here
      */
     fixedUpdate() {
-        this.pacman.update(physicsConfig.FIXED_DT, this.maze);
+        const deltaMs = physicsConfig.FIXED_DT * 1000;
+        this.pacman.update(deltaMs, this.maze);
 
         for (const ghost of this.ghosts) {
-            ghost.update(physicsConfig.FIXED_DT, this.maze, this.pacman);
+            ghost.update(deltaMs, this.maze, this.pacman);
         }
 
-        this.ghostAISystem.update(physicsConfig.FIXED_DT, this.maze, this.pacman);
+        this.ghostAISystem.update(deltaMs, this.maze, this.pacman);
         this.handleCollisions();
-        this.updateFruit(physicsConfig.FIXED_DT);
-        this.replaySystem.update(physicsConfig.FIXED_DT);
+        this.updateFruit(deltaMs);
+        this.replaySystem.update(deltaMs);
     }
 
     /**

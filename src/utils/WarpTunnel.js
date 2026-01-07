@@ -1,4 +1,5 @@
 import { tileCenter, worldToTile } from './TileMovement.js';
+import { gameConfig } from '../config/gameConfig.js';
 
 const TUNNEL_ROW = 14;
 

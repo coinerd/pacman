@@ -25,6 +25,7 @@ export default class Pacman extends BaseEntity {
         this.maxMouthAngle = 30;
 
         this.isDying = false;
+        this.direction = directions.UP;
     }
 
     makeDecisionAtIntersection(maze) {
