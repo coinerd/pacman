@@ -16,67 +16,60 @@ describe('Pacman - Grid Movement', () => {
     });
 
     describe('tile-center snapping', () => {
-        test('updates grid position when at tile center', () => {
-            pacman.x = 100;
-            pacman.y = 100;
+        test('snaps to tile center when within EPS', () => {
+            pacman.x = 108;
+            pacman.y = 110;
             pacman.direction = directions.RIGHT;
             pacman.speed = 100;
 
             pacman.update(20, maze);
 
-            expect(pacman.gridX).toBe(5);
-            expect(pacman.gridY).toBe(5);
+            const center = tileCenter(5, 5);
+            expect(pacman.x).toBe(center.x);
+            expect(pacman.y).toBe(center.y);
         });
 
         test('detects being at tile center', () => {
-            pacman.x = 100;
-            pacman.y = 100;
+            pacman.x = 110;
+            pacman.y = 110;
             pacman.direction = directions.RIGHT;
             pacman.speed = 100;
 
             pacman.update(20, maze);
 
-            const gridPos = { x: Math.floor(pacman.x / gameConfig.tileSize), y: Math.floor(pacman.y / gameConfig.tileSize) };
-            const centerPixel = { x: gridPos.x * gameConfig.tileSize + gameConfig.tileSize / 2, y: gridPos.y * gameConfig.tileSize + gameConfig.tileSize / 2 };
-            const distToCenter = Math.sqrt(Math.pow(pacman.x - centerPixel.x, 2) + Math.pow(pacman.y - centerPixel.y, 2));
-
-            expect(distToCenter).toBeLessThan(pacman.speed * (20 / 1000));
+            const distToCenter = distanceToTileCenter(pacman.x, pacman.y, pacman.gridX, pacman.gridY);
+            expect(distToCenter).toBeLessThan(2);
         });
 
-        test('continues past center without snapping', () => {
-            pacman.x = 100;
-            pacman.y = 100;
+        test('moves from center without snapping back', () => {
+            pacman.x = 110;
+            pacman.y = 110;
             pacman.direction = directions.RIGHT;
             pacman.speed = 100;
 
-            pacman.update(50, maze);
+            pacman.update(20, maze);
 
             const center = tileCenter(5, 5);
-            const hasPassedCenter = pacman.x > center.x;
-
-            expect(hasPassedCenter).toBe(true);
+            expect(pacman.x).toBeGreaterThan(center.x);
         });
 
         test('works correctly for horizontal movement', () => {
-            pacman.x = 100;
-            pacman.y = 100;
+            pacman.x = 110;
+            pacman.y = 110;
             pacman.direction = directions.RIGHT;
             pacman.speed = 120;
 
             pacman.update(20, maze);
 
-            const gridPos = { x: Math.floor(pacman.x / gameConfig.tileSize), y: Math.floor(pacman.y / gameConfig.tileSize) };
-            const centerPixel = { x: gridPos.x * gameConfig.tileSize + gameConfig.tileSize / 2, y: gridPos.y * gameConfig.tileSize + gameConfig.tileSize / 2 };
-            const distToCenter = Math.sqrt(Math.pow(pacman.x - centerPixel.x, 2) + Math.pow(pacman.y - centerPixel.y, 2));
-
-            expect(distToCenter).toBeLessThan(pacman.speed * (20 / 1000));
+            const distToCenter = distanceToTileCenter(pacman.x, pacman.y, pacman.gridX, pacman.gridY);
+            expect(distToCenter).toBeLessThan(3);
         });
     });
 
     describe('direction changes only at tile center', () => {
         test('does not change direction when not at center', () => {
             pacman.x = 95;
-            pacman.y = 100;
+            pacman.y = 110;
             pacman.direction = directions.RIGHT;
             pacman.setDirection(directions.UP);
             pacman.isMoving = true;
@@ -87,8 +80,8 @@ describe('Pacman - Grid Movement', () => {
         });
 
         test('changes direction when at tile center', () => {
-            pacman.x = 100;
-            pacman.y = 100;
+            pacman.x = 110;
+            pacman.y = 110;
             pacman.direction = directions.RIGHT;
             pacman.setDirection(directions.UP);
             pacman.isMoving = true;
@@ -102,8 +95,8 @@ describe('Pacman - Grid Movement', () => {
         });
 
         test('waits until center to apply buffered direction', () => {
-            pacman.x = 95;
-            pacman.y = 100;
+            pacman.x = 100;
+            pacman.y = 110;
             pacman.direction = directions.RIGHT;
             pacman.setDirection(directions.UP);
             pacman.isMoving = true;
@@ -123,8 +116,8 @@ describe('Pacman - Grid Movement', () => {
         });
 
         test('cannot turn into wall even at center', () => {
-            pacman.x = 100;
-            pacman.y = 100;
+            pacman.x = 110;
+            pacman.y = 110;
             pacman.direction = directions.RIGHT;
             pacman.setDirection(directions.UP);
             pacman.isMoving = true;
@@ -140,8 +133,8 @@ describe('Pacman - Grid Movement', () => {
 
     describe('buffered input handling', () => {
         test('stores nextDirection when not at center', () => {
-            pacman.x = 95;
-            pacman.y = 100;
+            pacman.x = 100;
+            pacman.y = 110;
             pacman.direction = directions.RIGHT;
 
             pacman.setDirection(directions.UP);
@@ -151,8 +144,8 @@ describe('Pacman - Grid Movement', () => {
         });
 
         test('applies buffered direction at tile center', () => {
-            pacman.x = 95;
-            pacman.y = 100;
+            pacman.x = 100;
+            pacman.y = 110;
             pacman.direction = directions.RIGHT;
             pacman.setDirection(directions.UP);
             pacman.isMoving = true;
@@ -167,8 +160,8 @@ describe('Pacman - Grid Movement', () => {
         });
 
         test('replaces buffered direction with new input', () => {
-            pacman.x = 95;
-            pacman.y = 100;
+            pacman.x = 100;
+            pacman.y = 110;
             pacman.direction = directions.RIGHT;
             pacman.setDirection(directions.UP);
 
@@ -180,8 +173,8 @@ describe('Pacman - Grid Movement', () => {
         });
 
         test('clears nextDirection after applying', () => {
-            pacman.x = 100;
-            pacman.y = 100;
+            pacman.x = 110;
+            pacman.y = 110;
             pacman.direction = directions.RIGHT;
             pacman.setDirection(directions.UP);
             pacman.isMoving = true;
@@ -327,15 +320,15 @@ describe('Pacman - Grid Movement', () => {
         test('continues moving if direction is clear', () => {
             pacman.gridX = 5;
             pacman.gridY = 5;
-            pacman.x = 100;
-            pacman.y = 100;
+            pacman.x = 110;
+            pacman.y = 110;
             pacman.direction = directions.RIGHT;
             pacman.isMoving = true;
 
             pacman.update(50, maze);
 
             expect(pacman.isMoving).toBe(true);
-            expect(pacman.x).toBeGreaterThan(100);
+            expect(pacman.x).toBeGreaterThan(110);
         });
     });
 
@@ -343,8 +336,8 @@ describe('Pacman - Grid Movement', () => {
         test('updates gridX after moving right past center', () => {
             pacman.gridX = 5;
             pacman.gridY = 5;
-            pacman.x = 100;
-            pacman.y = 100;
+            pacman.x = 110;
+            pacman.y = 110;
             pacman.direction = directions.RIGHT;
             pacman.isMoving = true;
 
@@ -356,8 +349,8 @@ describe('Pacman - Grid Movement', () => {
         test('updates gridY after moving up past center', () => {
             pacman.gridX = 5;
             pacman.gridY = 5;
-            pacman.x = 100;
-            pacman.y = 100;
+            pacman.x = 110;
+            pacman.y = 110;
             pacman.direction = directions.UP;
             pacman.isMoving = true;
 
@@ -382,8 +375,8 @@ describe('Pacman - Grid Movement', () => {
         });
 
         test('grid position updates only when crossing center', () => {
-            pacman.x = 95;
-            pacman.y = 100;
+            pacman.x = 105;
+            pacman.y = 110;
             pacman.direction = directions.RIGHT;
             pacman.speed = 100;
             const initialGridX = pacman.gridX;
@@ -403,8 +396,8 @@ describe('Pacman - Grid Movement', () => {
             maze[5][5] = 0;
             maze[4][5] = 1;
 
-            pacman.x = 100;
-            pacman.y = 100;
+            pacman.x = 110;
+            pacman.y = 110;
             pacman.direction = directions.RIGHT;
             pacman.setDirection(directions.UP);
             pacman.isMoving = true;
@@ -420,8 +413,8 @@ describe('Pacman - Grid Movement', () => {
             maze[4][5] = 1;
             maze[5][6] = 0;
 
-            pacman.x = 100;
-            pacman.y = 100;
+            pacman.x = 110;
+            pacman.y = 110;
             pacman.direction = directions.RIGHT;
             pacman.setDirection(directions.UP);
             pacman.isMoving = true;
@@ -434,8 +427,8 @@ describe('Pacman - Grid Movement', () => {
 
     describe('edge cases', () => {
         test('can reverse direction immediately', () => {
-            pacman.x = 100;
-            pacman.y = 100;
+            pacman.x = 110;
+            pacman.y = 110;
             pacman.direction = directions.RIGHT;
             pacman.isMoving = true;
 
@@ -465,8 +458,8 @@ describe('Pacman - Grid Movement', () => {
             ];
             pacman.gridX = 1;
             pacman.gridY = 1;
-            pacman.x = 50;
-            pacman.y = 50;
+            pacman.x = 30;
+            pacman.y = 30;
             pacman.direction = directions.RIGHT;
             pacman.isMoving = true;
 

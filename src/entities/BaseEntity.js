@@ -14,6 +14,8 @@ export class BaseEntity extends Phaser.GameObjects.Arc {
 
         this.gridX = gridX;
         this.gridY = gridY;
+        this.prevGridX = gridX;
+        this.prevGridY = gridY;
         this.direction = directions.NONE;
         this.speed = 100;
         this.isMoving = false;
@@ -66,9 +68,9 @@ export class BaseEntity extends Phaser.GameObjects.Arc {
     handleTunnelWrap() {
         const mazeWidth = gameConfig.mazeWidth * gameConfig.tileSize;
 
-        if (this.x < -gameConfig.tileSize) {
+        if (this.x <= -gameConfig.tileSize) {
             this.x = mazeWidth + gameConfig.tileSize;
-        } else if (this.x > mazeWidth + gameConfig.tileSize) {
+        } else if (this.x >= mazeWidth + gameConfig.tileSize) {
             this.x = -gameConfig.tileSize;
         }
     }
@@ -76,6 +78,8 @@ export class BaseEntity extends Phaser.GameObjects.Arc {
     resetPosition(gridX, gridY) {
         this.gridX = gridX;
         this.gridY = gridY;
+        this.prevGridX = gridX;
+        this.prevGridY = gridY;
         this.direction = directions.NONE;
         this.isMoving = false;
         const pixel = getCenterPixel(gridX, gridY);

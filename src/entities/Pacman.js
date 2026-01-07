@@ -1,6 +1,7 @@
 import { BaseEntity } from './BaseEntity.js';
 import { gameConfig, colors, directions, animationConfig, levelConfig } from '../config/gameConfig.js';
 import { handlePortalTraversal } from '../utils/WarpTunnel.js';
+import { performGridMovementStep, isAtTileCenter } from '../utils/TileMovement.js';
 
 export default class Pacman extends BaseEntity {
     constructor(scene, gridX, gridY) {
@@ -13,6 +14,8 @@ export default class Pacman extends BaseEntity {
 
         this.prevX = this.x;
         this.prevY = this.y;
+        this.prevGridX = gridX;
+        this.prevGridY = gridY;
 
         this.nextDirection = directions.NONE;
 
@@ -50,25 +53,23 @@ export default class Pacman extends BaseEntity {
 
         this.updateMouthAnimation(delta);
 
-        const gridPos = { x: Math.floor(this.x / gameConfig.tileSize), y: Math.floor(this.y / gameConfig.tileSize) };
-        const centerPixel = { x: gridPos.x * gameConfig.tileSize + gameConfig.tileSize / 2, y: gridPos.y * gameConfig.tileSize + gameConfig.tileSize / 2 };
-        const distToCenter = Math.sqrt(Math.pow(this.x - centerPixel.x, 2) + Math.pow(this.y - centerPixel.y, 2));
-        const moveStep = this.speed * (delta / 1000);
-        const isAtCenter = distToCenter < moveStep;
+        const currentGridX = Math.floor(this.x / gameConfig.tileSize);
+        const currentGridY = Math.floor(this.y / gameConfig.tileSize);
+        const isAtCenter = isAtTileCenter(this.x, this.y, currentGridX, currentGridY);
 
         if (isAtCenter) {
-            this.gridX = gridPos.x;
-            this.gridY = gridPos.y;
+            this.gridX = currentGridX;
+            this.gridY = currentGridY;
             this.makeDecisionAtIntersection(maze);
         }
 
-        if (this.isMoving && this.direction !== directions.NONE) {
-            this.prevX = this.x;
-            this.prevY = this.y;
-            this.x += this.direction.x * moveStep;
-            this.y += this.direction.y * moveStep;
-            handlePortalTraversal(this, gameConfig.tileSize);
-        }
+        this.prevX = this.x;
+        this.prevY = this.y;
+
+        performGridMovementStep(this, maze, delta);
+
+        this.handleTunnelWrap();
+        handlePortalTraversal(this, gameConfig.tileSize);
 
         const rotation = this.direction.angle;
         this.setStartAngle(rotation + this.mouthAngle);
@@ -103,6 +104,8 @@ export default class Pacman extends BaseEntity {
 
     resetPosition(gridX, gridY) {
         super.resetPosition(gridX, gridY);
+        this.prevGridX = gridX;
+        this.prevGridY = gridY;
         this.nextDirection = directions.NONE;
         this.isDying = false;
         this.mouthAngle = 0;

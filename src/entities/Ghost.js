@@ -7,6 +7,7 @@ import { BaseEntity } from './BaseEntity.js';
 import { gameConfig, colors, directions, ghostModes, animationConfig, levelConfig, ghostSpeedMultipliers } from '../config/gameConfig.js';
 import { getCenterPixel, getValidDirections, getDistance } from '../utils/MazeLayout.js';
 import { handlePortalTraversal } from '../utils/WarpTunnel.js';
+import { performGridMovementStep, isAtTileCenter } from '../utils/TileMovement.js';
 
 export default class Ghost extends BaseEntity {
 
@@ -76,7 +77,7 @@ export default class Ghost extends BaseEntity {
      * Moves ghost based on current direction and speed.
      *
      * Behavior:
-     * - Updates ghost position in maze
+     * - Uses new center-snapping movement system
      * - Handles tunnel wrapping
      * - Makes AI decisions at intersections
      * - Applies buffered direction changes
@@ -93,46 +94,42 @@ export default class Ghost extends BaseEntity {
             speed = this.speed * ghostSpeedMultipliers.tunnel;
         }
 
-        const moveStep = speed * (delta / 1000);
+        const currentGridX = Math.floor(this.x / gameConfig.tileSize);
+        const currentGridY = Math.floor(this.y / gameConfig.tileSize);
+        const isAtCenter = isAtTileCenter(this.x, this.y, currentGridX, currentGridY);
 
-        if (this.isMoving) {
-            this.prevX = this.x;
-            this.prevY = this.y;
-            this.x += this.direction.x * moveStep;
-            this.y += this.direction.y * moveStep;
-            handlePortalTraversal(this, gameConfig.tileSize);
-        }
+        if (isAtCenter && this.scene.ghostAISystem) {
+            this.gridX = currentGridX;
+            this.gridY = currentGridY;
 
-        const gridPos = { x: Math.floor(this.x / gameConfig.tileSize), y: Math.floor(this.y / gameConfig.tileSize) };
-        const centerPixel = { x: gridPos.x * gameConfig.tileSize + gameConfig.tileSize / 2, y: gridPos.y * gameConfig.tileSize + gameConfig.tileSize / 2 };
-        const distToCenter = Math.sqrt(Math.pow(this.x - centerPixel.x, 2) + Math.pow(this.y - centerPixel.y, 2));
-        const isAtCenter = distToCenter < moveStep;
+            const oldDir = this.direction;
+            this.scene.ghostAISystem.chooseDirection(this, maze);
 
-        if (isAtCenter) {
-            this.gridX = gridPos.x;
-            this.gridY = gridPos.y;
+            if (this.nextDirection !== directions.NONE) {
+                this.direction = this.nextDirection;
+                this.nextDirection = directions.NONE;
+            }
 
-            if (this.scene.ghostAISystem) {
-                const oldDir = this.direction;
-                this.scene.ghostAISystem.chooseDirection(this, maze);
+            if (oldDir.x !== this.direction.x || oldDir.y !== this.direction.y) {
+                const centerPixel = getCenterPixel(this.gridX, this.gridY);
+                this.x = centerPixel.x;
+                this.y = centerPixel.y;
+            }
 
-                // Apply buffered direction if valid
-                if (this.nextDirection !== directions.NONE) {
-                    this.direction = this.nextDirection;
-                    this.nextDirection = directions.NONE;
-                }
-
-                if (oldDir.x !== this.direction.x || oldDir.y !== this.direction.y) {
-                    this.x = centerPixel.x;
-                    this.y = centerPixel.y;
-                }
-
-                if (!this.canMoveInDirection(this.direction, maze)) {
-                    this.isMoving = false;
-                    this.direction = directions.NONE;
-                }
+            if (!this.canMoveInDirection(this.direction, maze)) {
+                this.isMoving = false;
+                this.direction = directions.NONE;
             }
         }
+
+        const oldSpeed = this.speed;
+        this.speed = speed;
+        this.prevX = this.x;
+        this.prevY = this.y;
+        performGridMovementStep(this, maze, delta);
+        this.speed = oldSpeed;
+        this.handleTunnelWrap();
+        handlePortalTraversal(this, gameConfig.tileSize);
     }
 
     /**

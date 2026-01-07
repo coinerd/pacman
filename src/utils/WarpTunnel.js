@@ -42,8 +42,24 @@ export function handlePortalTraversal(entity, tileSize) {
 
     const targetTile = entity.x < 0 ? PORTAL_TILES.rightPortal : PORTAL_TILES.leftPortal;
 
+    entity.prevGridX = entity.gridX;
+    entity.prevGridY = entity.gridY;
     entity.gridX = targetTile.tileX;
     entity.gridY = targetTile.tileY;
     const center = tileCenter(targetTile.tileX, targetTile.tileY);
     entity.x = center.x; entity.y = center.y;
+}
+
+/**
+ * Legacy tunnel wrap method for test compatibility
+ * @param {object} entity - Entity with x, y, gridX, gridY properties
+ */
+export function handleTunnelWrap(entity) {
+    const mazeWidth = gameConfig.mazeWidth * gameConfig.tileSize;
+
+    if (entity.x <= -gameConfig.tileSize) {
+        entity.x = mazeWidth + gameConfig.tileSize;
+    } else if (entity.x >= mazeWidth + gameConfig.tileSize) {
+        entity.x = -gameConfig.tileSize;
+    }
 }
