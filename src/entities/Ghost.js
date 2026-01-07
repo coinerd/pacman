@@ -97,6 +97,8 @@ export default class Ghost extends BaseEntity {
         }
 
         const isAtCenter = isAtTileCenter(this.x, this.y, this.gridX, this.gridY);
+        const shouldHoldAtCenter = isAtCenter && this.direction === directions.NONE;
+        let snappedAtCenter = false;
 
         if (isAtCenter && this.scene.ghostAISystem) {
             const oldDir = this.direction;
