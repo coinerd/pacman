@@ -24,7 +24,7 @@ export class BaseEntity extends Phaser.GameObjects.Arc {
     }
 
     updateMovement(delta, maze) {
-        const moveStep = this.speed * delta;
+        const moveStep = this.speed * (delta / 1000);
 
         if (this.isMoving && this.direction !== directions.NONE) {
             this.x += this.direction.x * moveStep;
@@ -68,10 +68,14 @@ export class BaseEntity extends Phaser.GameObjects.Arc {
     handleTunnelWrap() {
         const mazeWidth = gameConfig.mazeWidth * gameConfig.tileSize;
 
-        if (this.x <= -gameConfig.tileSize) {
-            this.x = mazeWidth + gameConfig.tileSize;
-        } else if (this.x >= mazeWidth + gameConfig.tileSize) {
-            this.x = -gameConfig.tileSize;
+        if (this.gridY !== gameConfig.tunnelRow) {
+            return;
+        }
+
+        if (this.x < 0) {
+            this.x = mazeWidth;
+        } else if (this.x > mazeWidth) {
+            this.x = 0;
         }
     }
 

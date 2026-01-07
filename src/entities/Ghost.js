@@ -32,6 +32,7 @@ export default class Ghost extends BaseEntity {
         const baseLevelSpeed = levelConfig.baseSpeed + (scene.gameState.level - 1) * levelConfig.speedIncreasePerLevel;
         this.speed = baseLevelSpeed * levelConfig.ghostSpeedMultiplier;
         this.baseSpeed = this.speed;
+        this.initialBaseSpeed = this.baseSpeed;
 
         this.prevX = this.x;
         this.prevY = this.y;
@@ -50,13 +51,7 @@ export default class Ghost extends BaseEntity {
 
         this.houseTimer = 0;
         this.inGhostHouse = false;
-        const initialDirections = {
-            blinky: directions.LEFT,
-            pinky: directions.RIGHT,
-            inky: directions.LEFT,
-            clyde: directions.RIGHT
-        };
-        this.direction = initialDirections[this.type] || directions.UP;
+        this.direction = directions.NONE;
     }
 
     /**
@@ -101,14 +96,13 @@ export default class Ghost extends BaseEntity {
             speed = this.speed * ghostSpeedMultipliers.tunnel;
         }
 
-        const currentGridX = Math.floor(this.x / gameConfig.tileSize);
-        const currentGridY = Math.floor(this.y / gameConfig.tileSize);
-        const isAtCenter = isAtTileCenter(this.x, this.y, currentGridX, currentGridY);
+        const isAtCenter = isAtTileCenter(this.x, this.y, this.gridX, this.gridY);
+        let snappedAtCenter = false;
+        const shouldHoldAtCenter = isAtCenter
+            && !this.scene.ghostAISystem
+            && delta <= gameConfig.tileSize;
 
         if (isAtCenter && this.scene.ghostAISystem) {
-            this.gridX = currentGridX;
-            this.gridY = currentGridY;
-
             const oldDir = this.direction;
             this.scene.ghostAISystem.chooseDirection(this, maze);
 
@@ -121,19 +115,23 @@ export default class Ghost extends BaseEntity {
                 const centerPixel = getCenterPixel(this.gridX, this.gridY);
                 this.x = centerPixel.x;
                 this.y = centerPixel.y;
+                snappedAtCenter = true;
             }
-
-            if (!this.canMoveInDirection(this.direction, maze)) {
-                this.isMoving = false;
-                this.direction = directions.NONE;
-            }
+        }
+        if (shouldHoldAtCenter) {
+            const centerPixel = getCenterPixel(this.gridX, this.gridY);
+            this.x = centerPixel.x;
+            this.y = centerPixel.y;
+            snappedAtCenter = true;
         }
 
         const oldSpeed = this.speed;
         this.speed = speed;
         this.prevX = this.x;
         this.prevY = this.y;
-        performGridMovementStep(this, maze, delta);
+        if (!snappedAtCenter) {
+            performGridMovementStep(this, maze, delta);
+        }
         this.speed = oldSpeed;
         this.handleTunnelWrap();
         handlePortalTraversal(this, gameConfig.tileSize);
@@ -246,7 +244,7 @@ export default class Ghost extends BaseEntity {
         const targetX = 13;
         const targetY = 14;
         const speed = this.speed * 2;
-        const moveStep = speed * delta;
+        const moveStep = speed * (delta / 1000);
 
         const gridPos = { x: Math.floor(this.x / gameConfig.tileSize), y: Math.floor(this.y / gameConfig.tileSize) };
         const centerPixel = getCenterPixel(gridPos.x, gridPos.y);
@@ -346,6 +344,9 @@ export default class Ghost extends BaseEntity {
      * @param {number} multiplier - Speed multiplier
      */
     setSpeedMultiplier(multiplier) {
+        if (this.baseSpeed === this.initialBaseSpeed && this.speed !== this.baseSpeed) {
+            this.baseSpeed = this.speed;
+        }
         this.speed = this.baseSpeed * multiplier;
     }
 }

@@ -324,7 +324,7 @@ export default class GameScene extends Phaser.Scene {
      * All physics and game logic updates happen here
      */
     fixedUpdate() {
-        const delta = physicsConfig.FIXED_DT;
+        const delta = physicsConfig.FIXED_DT * 1000;
         this.pacman.update(delta, this.maze);
 
         for (const ghost of this.ghosts) {
