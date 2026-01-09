@@ -6,7 +6,7 @@
 import { BaseEntity } from './BaseEntity.js';
 import { gameConfig, colors, directions, ghostModes, animationConfig, levelConfig, ghostSpeedMultipliers } from '../config/gameConfig.js';
 import { getCenterPixel, getValidDirections, getDistance } from '../utils/MazeLayout.js';
-import { performGridMovementStep, isAtTileCenter } from '../utils/TileMovement.js';
+import { performGridMovementStep } from '../utils/TileMovement.js';
 
 export default class Ghost extends BaseEntity {
 
@@ -84,7 +84,7 @@ export default class Ghost extends BaseEntity {
      * @param {number[][]} maze - 2D maze array
      * @param {Pacman} pacman - Pacman entity for AI targeting
      */
-    moveGhost(delta, maze, pacman) {
+    moveGhost(delta, maze, _pacman) {
         this.isMoving = this.direction !== directions.NONE;
 
         let speed = this.speed;
@@ -92,39 +92,9 @@ export default class Ghost extends BaseEntity {
             speed = this.speed * ghostSpeedMultipliers.tunnel;
         }
 
-        const isAtCenter = isAtTileCenter(this.x, this.y, this.gridX, this.gridY);
-        const shouldHoldAtCenter = isAtCenter && this.direction === directions.NONE;
-        let snappedAtCenter = false;
-
-        if (isAtCenter && this.scene.ghostAISystem) {
-            const oldDir = this.direction;
-            this.scene.ghostAISystem.chooseDirection(this, maze);
-
-            if (this.nextDirection !== directions.NONE) {
-                this.direction = this.nextDirection;
-                this.nextDirection = directions.NONE;
-            }
-
-            if (oldDir.x !== this.direction.x || oldDir.y !== this.direction.y) {
-                const centerPixel = getCenterPixel(this.gridX, this.gridY);
-                this.x = centerPixel.x;
-                this.y = centerPixel.y;
-            }
-        }
-        if (shouldHoldAtCenter) {
-            const centerPixel = getCenterPixel(this.gridX, this.gridY);
-            this.x = centerPixel.x;
-            this.y = centerPixel.y;
-            snappedAtCenter = true;
-        }
-
         const oldSpeed = this.speed;
         this.speed = speed;
-        this.prevX = this.x;
-        this.prevY = this.y;
-        if (!snappedAtCenter) {
-            performGridMovementStep(this, maze, delta);
-        }
+        performGridMovementStep(this, maze, delta);
         this.speed = oldSpeed;
         this.handleTunnelWrap();
     }
@@ -147,7 +117,7 @@ export default class Ghost extends BaseEntity {
      *
      * @param {number[][]} maze - 2D maze array (not used)
      */
-    makeDecisionAtIntersection(maze) {
+    makeDecisionAtIntersection(_maze) {
     }
 
     /**
@@ -235,31 +205,20 @@ export default class Ghost extends BaseEntity {
 
         const targetX = 13;
         const targetY = 14;
-        const speed = this.speed * 2;
-        const moveStep = speed * (delta / 1000);
+        const oldSpeed = this.speed;
+        this.speed = this.speed * 2;
 
-        const gridPos = { x: Math.floor(this.x / gameConfig.tileSize), y: Math.floor(this.y / gameConfig.tileSize) };
-        const centerPixel = getCenterPixel(gridPos.x, gridPos.y);
-        const distToCenter = getDistance(this.x, this.y, centerPixel.x, centerPixel.y);
-
-        if (distToCenter < Math.max(moveStep, 1)) {
-            this.gridX = gridPos.x;
-            this.gridY = gridPos.y;
-            if (this.gridX === targetX && this.gridY === targetY) {
-                this.inGhostHouse = true;
-                this.houseTimer = 2000;
-                this.direction = directions.NONE;
-                this.x = centerPixel.x;
-                this.y = centerPixel.y;
-                return;
-            }
-            this.chooseDirectionToTarget(maze, targetX, targetY);
+        if (this.gridX === targetX && this.gridY === targetY) {
+            this.inGhostHouse = true;
+            this.houseTimer = 2000;
+            this.direction = directions.NONE;
+            this.speed = oldSpeed;
+            return;
         }
 
-        if (this.direction !== directions.NONE) {
-            this.x += this.direction.x * moveStep;
-            this.y += this.direction.y * moveStep;
-        }
+        this.chooseDirectionToTarget(maze, targetX, targetY);
+        performGridMovementStep(this, maze, delta);
+        this.speed = oldSpeed;
     }
 
     /**

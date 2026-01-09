@@ -55,6 +55,7 @@ export class GhostAISystem {
                 }
             }
             this.updateGhostTarget(ghost, pacman);
+            this.chooseDirection(ghost, maze);
         }
     }
 

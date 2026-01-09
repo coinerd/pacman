@@ -34,10 +34,10 @@ export function isWarping(entityX, entityY) {
  * @param {object} entity - Entity with x, y, gridX, gridY properties
  * @param {number} tileSize - Size of one tile in pixels
  */
-export function handlePortalTraversal(entity, tileSize) {
+export function handlePortalTraversal(entity, _tileSize) {
     const tile = worldToTile(entity.x, entity.y);
 
-    if (!isPortalTile(tile.x, tile.y)) {
+    if (!isPortalTile(tile.x, tile.y) && !isPortalTile(entity.gridX, entity.gridY)) {
         return;
     }
 

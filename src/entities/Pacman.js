@@ -28,8 +28,6 @@ export default class Pacman extends BaseEntity {
             this.nextDirection = directions.NONE;
         }
 
-        this.isMoving = this.direction !== directions.NONE;
-
         const rotation = this.direction.angle;
         this.setStartAngle(rotation + this.mouthAngle);
         this.setEndAngle(rotation + 360 - this.mouthAngle);

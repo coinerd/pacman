@@ -245,7 +245,8 @@ describe('Tunnel Behavior Integration', () => {
 
         test('entity maintains direction after warp', () => {
             pacman = new Pacman(mockScene, 1, TUNNEL_ROW);
-            pacman.setDirection(directions.LEFT);
+            pacman.direction = directions.LEFT;
+            pacman.nextDirection = directions.NONE;
             pacman.isMoving = true;
             pacman.gridY = TUNNEL_ROW;
 
