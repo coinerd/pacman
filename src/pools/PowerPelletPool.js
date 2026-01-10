@@ -6,6 +6,7 @@ export class PowerPelletPool {
         this.scene = scene;
         this.available = [];
         this.active = [];
+        this.gridIndex = new Map();
     }
 
     init(size = 4) {
@@ -17,8 +18,9 @@ export class PowerPelletPool {
         }
     }
 
-    get() {
+    get(gridX, gridY) {
         if (this.available.length === 0) {
+            console.warn('Power pellet pool exhausted');
             return null;
         }
 
@@ -27,7 +29,21 @@ export class PowerPelletPool {
         pellet.setActive(true);
         this.active.push(pellet);
 
+        const pixel = {
+            x: gridX * gameConfig.tileSize + gameConfig.tileSize / 2,
+            y: gridY * gameConfig.tileSize + gameConfig.tileSize / 2
+        };
+        pellet.setPosition(pixel.x, pixel.y);
+
+        const key = `${gridX},${gridY}`;
+        this.gridIndex.set(key, pellet);
+
         return pellet;
+    }
+
+    getByGrid(gridX, gridY) {
+        const key = `${gridX},${gridY}`;
+        return this.gridIndex.get(key) || null;
     }
 
     release(pellet) {
@@ -37,6 +53,11 @@ export class PowerPelletPool {
             pellet.setVisible(false);
             pellet.setActive(false);
             this.available.push(pellet);
+
+            const gridX = Math.floor(pellet.x / gameConfig.tileSize);
+            const gridY = Math.floor(pellet.y / gameConfig.tileSize);
+            const key = `${gridX},${gridY}`;
+            this.gridIndex.delete(key);
         }
     }
 
@@ -58,5 +79,6 @@ export class PowerPelletPool {
         }
         this.available = [];
         this.active = [];
+        this.gridIndex.clear();
     }
 }

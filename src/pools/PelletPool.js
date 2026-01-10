@@ -7,6 +7,7 @@ export class PelletPool {
         this.available = [];
         this.active = [];
         this.initialSize = 300;
+        this.gridIndex = new Map();
     }
 
     init() {
@@ -35,7 +36,16 @@ export class PelletPool {
         pellet.setPosition(pixel.x, pixel.y);
 
         this.active.push(pellet);
+
+        const key = `${gridX},${gridY}`;
+        this.gridIndex.set(key, pellet);
+
         return pellet;
+    }
+
+    getByGrid(gridX, gridY) {
+        const key = `${gridX},${gridY}`;
+        return this.gridIndex.get(key) || null;
     }
 
     release(pellet) {
@@ -45,6 +55,11 @@ export class PelletPool {
             pellet.setVisible(false);
             pellet.setActive(false);
             this.available.push(pellet);
+
+            const gridX = Math.floor(pellet.x / gameConfig.tileSize);
+            const gridY = Math.floor(pellet.y / gameConfig.tileSize);
+            const key = `${gridX},${gridY}`;
+            this.gridIndex.delete(key);
         }
     }
 
@@ -66,5 +81,6 @@ export class PelletPool {
         }
         this.available = [];
         this.active = [];
+        this.gridIndex.clear();
     }
 }

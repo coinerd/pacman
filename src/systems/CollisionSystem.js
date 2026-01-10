@@ -106,14 +106,9 @@ export class CollisionSystem {
         if (tileType === TILE_TYPES.PELLET) {
             this.maze[pacmanGrid.y][pacmanGrid.x] = TILE_TYPES.EMPTY;
 
-            // Find and release the pellet from the pool
-            const activePellets = this.pelletPool.active;
-            for (const pellet of activePellets) {
-                const spriteGrid = pixelToGrid(pellet.x, pellet.y);
-                if (spriteGrid.x === pacmanGrid.x && spriteGrid.y === pacmanGrid.y) {
-                    this.pelletPool.release(pellet);
-                    break;
-                }
+            const pellet = this.pelletPool.getByGrid(pacmanGrid.x, pacmanGrid.y);
+            if (pellet) {
+                this.pelletPool.release(pellet);
             }
 
             return scoreValues.pellet;
@@ -151,13 +146,9 @@ export class CollisionSystem {
         if (tileType === TILE_TYPES.POWER_PELLET) {
             this.maze[pacmanGrid.y][pacmanGrid.x] = TILE_TYPES.EMPTY;
 
-            const activePowerPellets = this.powerPelletPool.active;
-            for (const powerPellet of activePowerPellets) {
-                const spriteGrid = pixelToGrid(powerPellet.x, powerPellet.y);
-                if (spriteGrid.x === pacmanGrid.x && spriteGrid.y === pacmanGrid.y) {
-                    this.powerPelletPool.release(powerPellet);
-                    break;
-                }
+            const powerPellet = this.powerPelletPool.getByGrid(pacmanGrid.x, pacmanGrid.y);
+            if (powerPellet) {
+                this.powerPelletPool.release(powerPellet);
             }
 
             this.ghostsEatenCount = 0;

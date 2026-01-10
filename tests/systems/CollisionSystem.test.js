@@ -69,14 +69,26 @@ describe('CollisionSystem', () => {
                 { x: 1 * 16 + 8, y: 1 * 16 + 8 },
                 { x: 2 * 16 + 8, y: 1 * 16 + 8 }
             ],
-            release: jest.fn()
+            release: jest.fn(),
+            getByGrid: jest.fn((gridX, gridY) => {
+                return mockPelletPool.active.find(pellet => {
+                    const spriteGrid = { x: Math.floor(pellet.x / 16), y: Math.floor(pellet.y / 16) };
+                    return spriteGrid.x === gridX && spriteGrid.y === gridY;
+                });
+            })
         };
 
         mockPowerPelletPool = {
             active: [
                 { x: 2 * 16 + 8, y: 2 * 16 + 8 }
             ],
-            release: jest.fn()
+            release: jest.fn(),
+            getByGrid: jest.fn((gridX, gridY) => {
+                return mockPowerPelletPool.active.find(powerPellet => {
+                    const spriteGrid = { x: Math.floor(powerPellet.x / 16), y: Math.floor(powerPellet.y / 16) };
+                    return spriteGrid.x === gridX && spriteGrid.y === gridY;
+                });
+            })
         };
 
         collisionSystem = new CollisionSystem(mockScene);
