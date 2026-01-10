@@ -71,7 +71,7 @@ export default class GameScene extends Phaser.Scene {
 
         this.storageManager = new StorageManager();
         this.gameState.highScore = this.storageManager.getHighScore();
-        this.soundManager = new SoundManager();
+        this.soundManager = new SoundManager(this);
 
         this.gameFlowController = new GameFlowController(this);
         this.levelManager = new LevelManager(this, this.gameState);
@@ -79,11 +79,20 @@ export default class GameScene extends Phaser.Scene {
         this.pelletPool = new PelletPool(this);
         this.powerPelletPool = new PowerPelletPool(this);
 
-        this.achievementSystem = new AchievementSystem();
+        this.achievementSystem = new AchievementSystem(this);
         this.achievementSystem.init();
 
         this.replaySystem = new ReplaySystem();
         this.settings = this.storageManager.getSettings();
+
+        if (this.settings) {
+            if (this.settings.soundEnabled !== undefined) {
+                this.soundManager.setEnabled(this.settings.soundEnabled);
+            }
+            if (this.settings.volume !== undefined) {
+                this.soundManager.setVolume(this.settings.volume);
+            }
+        }
     }
 
     create() {
@@ -132,6 +141,8 @@ export default class GameScene extends Phaser.Scene {
         this.levelManager.applySettings();
 
         this.uiController.showReadyMessage();
+
+        this.resetPositions();
     }
 
     /**
@@ -146,7 +157,7 @@ export default class GameScene extends Phaser.Scene {
             colors.background
         );
 
-        const graphics = this.add.graphics();
+        const graphics = this.make.graphics({ x: 0, y: 0, add: false });
         graphics.lineStyle(1, 0x111111, 0.3);
 
         for (let x = 0; x <= this.scale.width; x += gameConfig.tileSize) {
@@ -160,43 +171,57 @@ export default class GameScene extends Phaser.Scene {
         }
 
         graphics.strokePath();
+        graphics.generateTexture('backgroundGrid', this.scale.width, this.scale.height);
+        graphics.destroy();
+
+        this.add.image(
+            this.scale.width / 2,
+            this.scale.height / 2,
+            'backgroundGrid'
+        );
     }
 
     /**
      * Create maze with enhanced visuals
      */
     createMaze() {
-        this.mazeGraphics = this.add.graphics();
+        const graphics = this.make.graphics({ x: 0, y: 0, add: false });
 
         for (let y = 0; y < this.maze.length; y++) {
             for (let x = 0; x < this.maze[y].length; x++) {
                 if (this.maze[y][x] === TILE_TYPES.WALL) {
-                    this.drawWall(x, y);
+                    this.drawWallToGraphics(graphics, x, y);
                 }
             }
         }
+
+        const mazeWidth = this.maze[0].length * gameConfig.tileSize;
+        const mazeHeight = this.maze.length * gameConfig.tileSize;
+        graphics.generateTexture('mazeWalls', mazeWidth, mazeHeight);
+        graphics.destroy();
+
+        this.mazeImage = this.add.image(
+            mazeWidth / 2,
+            mazeHeight / 2,
+            'mazeWalls'
+        );
     }
 
-    /**
-     * Draw a single wall tile with depth and shadow
-     * @param {number} x - Grid X position
-     * @param {number} y - Grid Y position
-     */
-    drawWall(x, y) {
+    drawWallToGraphics(graphics, x, y) {
         const pixel = gridToPixel(x, y);
         const size = gameConfig.tileSize;
 
-        this.mazeGraphics.fillStyle(colors.wallShadow, 1);
-        this.mazeGraphics.fillRect(pixel.x + 2, pixel.y + 2, size, size);
+        graphics.fillStyle(colors.wallShadow, 1);
+        graphics.fillRect(pixel.x + 2, pixel.y + 2, size, size);
 
-        this.mazeGraphics.fillStyle(colors.wall, 1);
-        this.mazeGraphics.fillRect(pixel.x, pixel.y, size, size);
+        graphics.fillStyle(colors.wall, 1);
+        graphics.fillRect(pixel.x, pixel.y, size, size);
 
-        this.mazeGraphics.fillStyle(0x3333FF, 0.3);
-        this.mazeGraphics.fillRect(pixel.x + 2, pixel.y + 2, size - 4, size - 4);
+        graphics.fillStyle(0x3333FF, 0.3);
+        graphics.fillRect(pixel.x + 2, pixel.y + 2, size - 4, size - 4);
 
-        this.mazeGraphics.lineStyle(1, 0x4444FF, 0.5);
-        this.mazeGraphics.strokeRect(pixel.x, pixel.y, size, size);
+        graphics.lineStyle(1, 0x4444FF, 0.5);
+        graphics.strokeRect(pixel.x, pixel.y, size, size);
     }
 
     createPellets() {
@@ -210,11 +235,8 @@ export default class GameScene extends Phaser.Scene {
                 if (tileType === TILE_TYPES.PELLET) {
                     this.pelletPool.get(x, y);
                 } else if (tileType === TILE_TYPES.POWER_PELLET) {
-                    const powerPellet = this.powerPelletPool.get();
+                    const powerPellet = this.powerPelletPool.get(x, y);
                     if (powerPellet) {
-                        const pixel = getCenterPixel(x, y);
-                        powerPellet.setPosition(pixel.x, pixel.y);
-
                         this.tweens.add({
                             targets: powerPellet,
                             scale: { from: 1, to: 1.5 },

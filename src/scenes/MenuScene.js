@@ -6,6 +6,7 @@
 import Phaser from 'phaser';
 import { colors, uiConfig, animationConfig } from '../config/gameConfig.js';
 import { StorageManager } from '../managers/StorageManager.js';
+import { SoundManager } from '../managers/SoundManager.js';
 
 export default class MenuScene extends Phaser.Scene {
     constructor() {
@@ -15,6 +16,7 @@ export default class MenuScene extends Phaser.Scene {
     create() {
         this.storageManager = new StorageManager();
         this.highScore = this.storageManager.getHighScore();
+        this.soundManager = new SoundManager(this);
 
         this.createBackground();
         this.createTitle();
@@ -25,6 +27,18 @@ export default class MenuScene extends Phaser.Scene {
         this.createStartPrompt();
 
         this.input.keyboard.once('keydown-SPACE', () => {
+            this.soundManager.initialize();
+
+            const settings = this.storageManager.getSettings();
+            if (settings) {
+                if (settings.soundEnabled !== undefined) {
+                    this.soundManager.setEnabled(settings.soundEnabled);
+                }
+                if (settings.volume !== undefined) {
+                    this.soundManager.setVolume(settings.volume);
+                }
+            }
+
             this.scene.start('GameScene', { level: 1, score: 0 });
         });
 

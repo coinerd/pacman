@@ -60,7 +60,8 @@ export const ACHIEVEMENTS = {
 };
 
 export class AchievementSystem {
-    constructor() {
+    constructor(scene) {
+        this.scene = scene;
         this.unlocked = new Set();
         this.progress = new Map();
         this.notificationQueue = [];
@@ -125,9 +126,11 @@ export class AchievementSystem {
 
         gameEvents.emit(GAME_EVENTS.ACHIEVEMENT_UNLOCKED, achievement);
 
-        setTimeout(() => {
-            this.showNextNotification();
-        }, this.showNotificationDuration);
+        if (this.scene && this.scene.time) {
+            this.scene.time.delayedCall(this.showNotificationDuration, () => {
+                this.showNextNotification();
+            });
+        }
     }
 
     save() {

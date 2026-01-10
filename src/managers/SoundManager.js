@@ -4,7 +4,8 @@
  */
 
 export class SoundManager {
-    constructor() {
+    constructor(scene) {
+        this.scene = scene;
         this.audioContext = null;
         this.enabled = true;
         this.volume = 0.5;
@@ -68,28 +69,28 @@ export class SoundManager {
      * Play power pellet activation sound
      */
     playPowerPellet() {
-        if (!this.enabled) {return;}
+        if (!this.enabled || !this.scene) {return;}
         this.playTone(600, 0.3, 'square');
-        setTimeout(() => this.playTone(800, 0.2, 'square'), 100);
+        this.scene.time.delayedCall(100, () => this.playTone(800, 0.2, 'square'));
     }
 
     /**
      * Play ghost eaten sound
      */
     playGhostEaten() {
-        if (!this.enabled) {return;}
+        if (!this.enabled || !this.scene) {return;}
         this.playTone(800, 0.2, 'square');
-        setTimeout(() => this.playTone(1000, 0.15, 'square'), 150);
+        this.scene.time.delayedCall(150, () => this.playTone(1000, 0.15, 'square'));
     }
 
     /**
      * Play death sound
      */
     playDeath() {
-        if (!this.enabled) {return;}
+        if (!this.enabled || !this.scene) {return;}
         const frequencies = [400, 350, 300, 250, 200, 150, 100];
         frequencies.forEach((freq, index) => {
-            setTimeout(() => this.playTone(freq, 0.15, 'sawtooth'), index * 100);
+            this.scene.time.delayedCall(index * 100, () => this.playTone(freq, 0.15, 'sawtooth'));
         });
     }
 
@@ -97,10 +98,10 @@ export class SoundManager {
      * Play level complete sound
      */
     playLevelComplete() {
-        if (!this.enabled) {return;}
+        if (!this.enabled || !this.scene) {return;}
         const frequencies = [523, 659, 784, 1047];
         frequencies.forEach((freq, index) => {
-            setTimeout(() => this.playTone(freq, 0.2, 'sine'), index * 150);
+            this.scene.time.delayedCall(index * 150, () => this.playTone(freq, 0.2, 'sine'));
         });
     }
 
@@ -108,9 +109,9 @@ export class SoundManager {
      * Play fruit eaten sound
      */
     playFruitEat() {
-        if (!this.enabled) {return;}
+        if (!this.enabled || !this.scene) {return;}
         this.playTone(500, 0.15, 'sine');
-        setTimeout(() => this.playTone(700, 0.15, 'sine'), 100);
+        this.scene.time.delayedCall(100, () => this.playTone(700, 0.15, 'sine'));
     }
 
     /**

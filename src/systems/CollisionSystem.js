@@ -82,7 +82,18 @@ export class CollisionSystem {
      * @returns {number} Score value if collision occurred, 0 otherwise
      */
     checkPelletCollision() {
+        if (!this.pacman || this.pacman.x === undefined || this.pacman.y === undefined) {
+            return 0;
+        }
+
         const pacmanGrid = pixelToGrid(this.pacman.x, this.pacman.y);
+
+        if (!pacmanGrid || isNaN(pacmanGrid.x) || isNaN(pacmanGrid.y) ||
+            pacmanGrid.x < 0 || pacmanGrid.y < 0 ||
+            pacmanGrid.y >= this.maze.length || pacmanGrid.x >= this.maze[0].length) {
+            return 0;
+        }
+
         const tileType = this.maze[pacmanGrid.y][pacmanGrid.x];
 
         const logData = {
@@ -122,7 +133,18 @@ export class CollisionSystem {
      * @returns {number} Score value if collision occurred, 0 otherwise
      */
     checkPowerPelletCollision() {
+        if (!this.pacman || this.pacman.x === undefined || this.pacman.y === undefined) {
+            return 0;
+        }
+
         const pacmanGrid = pixelToGrid(this.pacman.x, this.pacman.y);
+
+        if (!pacmanGrid || isNaN(pacmanGrid.x) || isNaN(pacmanGrid.y) ||
+            pacmanGrid.x < 0 || pacmanGrid.y < 0 ||
+            pacmanGrid.y >= this.maze.length || pacmanGrid.x >= this.maze[0].length) {
+            return 0;
+        }
+
         const tileType = this.maze[pacmanGrid.y][pacmanGrid.x];
 
         const logData = {
@@ -163,8 +185,16 @@ export class CollisionSystem {
      * @returns {{type: string, score: number}|null} Collision result object or null if no collision
      */
     checkGhostCollision() {
+        if (!this.pacman || this.pacman.x === undefined || this.pacman.y === undefined) {
+            return null;
+        }
+
         for (const ghost of this.ghosts) {
             if (ghost.isEaten) {continue;}
+
+            if (!ghost || ghost.x === undefined || ghost.y === undefined) {
+                continue;
+            }
 
             let collisionDetected = false;
             let method = 'unknown';
