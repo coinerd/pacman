@@ -1,14 +1,13 @@
-import { performGridMovementStep, tileCenter } from '../../src/utils/TileMovement.js';
+import { performGridMovementStep, tileCenter, EPS } from '../../src/utils/TileMovement.js';
 import { checkGhostCollision, checkAllGhostCollisions } from '../../src/utils/CollisionDetection.js';
 import { isPortalTile, handlePortalTraversal } from '../../src/utils/WarpTunnel.js';
-import { gameConfig, directions, physicsConfig } from '../../src/config/gameConfig.js';
+import { gameConfig, directions } from '../../src/config/gameConfig.js';
 import { createMockMaze } from '../utils/testHelpers.js';
 
 describe('TunnelCrossingCorner Integration Tests', () => {
     let mockMaze;
     const TUNNEL_ROW = 14;
     const TILE_SIZE = gameConfig.tileSize;
-    const EPS = physicsConfig.EPS;
 
     beforeEach(() => {
         mockMaze = createMockMaze(createRealisticMaze());

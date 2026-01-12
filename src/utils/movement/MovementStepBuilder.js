@@ -1,6 +1,6 @@
-import { directions, physicsConfig, gameConfig } from '../../config/gameConfig.js';
+import { directions, gameConfig } from '../../config/gameConfig.js';
 import { isWall, isAllDirectionsBlocked, calculateBoundary } from './WallCollisionHandler.js';
-import { tileCenter } from '../TileMath.js';
+import { tileCenter, EPS } from '../TileMath.js';
 
 export function buildMovementStep(entity, maze, moveDist, center, distToCenter, inBounds, currentTile) {
     if (!entity.isMoving || (entity.direction.x === 0 && entity.direction.y === 0)) {
@@ -27,7 +27,6 @@ export function buildMovementStep(entity, maze, moveDist, center, distToCenter, 
 
 function handleWallCollision(entity, maze, currentTile, center, boundary, distToCenter, remainingDist, inBounds) {
     const { gridX, gridY } = entity;
-    const { EPS } = physicsConfig;
     const allBlocked = inBounds && isAllDirectionsBlocked(maze, gridX, gridY);
 
     if (allBlocked && distToCenter <= EPS) {

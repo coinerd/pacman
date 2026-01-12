@@ -30,9 +30,8 @@ export function performGridMovementStep(entity, maze, delta) {
     let remainingDist = moveDist;
 
     if (shouldSnapToCenter(entity, center, distToCenter, remainingDist, moveDist, wasMoving, inBounds)) {
-        const { newEntity, newRemainingDist } = snapToCenter(entity, currentTile, center, distToCenter, remainingDist, moveDist, inBounds, maze);
-        Object.assign(entity, newEntity);
-        remainingDist = newRemainingDist;
+        const result = snapToCenter(entity, currentTile, center, distToCenter, remainingDist, moveDist, inBounds, maze);
+        remainingDist = result.remainingDist;
     }
 
     if (!entity.isMoving || (entity.direction.x === 0 && entity.direction.y === 0)) {

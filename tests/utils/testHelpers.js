@@ -174,9 +174,9 @@ export const createMockScene = () => ({
         })),
         circle: jest.fn((x, y, radius, color) => {
             const mockCircle = {
-                x: 0,
-                y: 0,
-                radius: 3,
+                x: x,
+                y: y,
+                radius: radius || 3,
                 visible: false,
                 active: false,
                 scale: 1,

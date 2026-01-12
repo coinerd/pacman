@@ -52,7 +52,7 @@ export function isAtTileCenter(x, y, tileX, tileY) {
     const dx = x - center.x;
     const dy = y - center.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
-    return distance <= physicsConfig.EPS;
+    return distance <= EPS;
 }
 
 export function distanceToTileCenter(x, y, tileX, tileY) {
