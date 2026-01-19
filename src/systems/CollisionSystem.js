@@ -25,6 +25,13 @@ export class CollisionSystem {
         this.powerPelletPool = null;
         this.ghostsEatenCount = 0;
         this.debugLogger = DebugLogger.getInstance();
+        this.totalPellets = null;
+        this.pelletsRemaining = null;
+        this.lastPelletGrid = { x: null, y: null };
+        this.lastCollisionMs = 0;
+        this.lastCollisionChecks = { pellets: 0, ghosts: 0 };
+        this.collisionBudgetMs = 1;
+        this.lastBudgetWarning = 0;
     }
 
     /**
@@ -49,6 +56,16 @@ export class CollisionSystem {
      */
     setMaze(maze) {
         this.maze = maze;
+    }
+
+    setPelletCounts(totalPellets) {
+        this.totalPellets = totalPellets;
+        this.pelletsRemaining = totalPellets;
+        this.lastPelletGrid = { x: null, y: null };
+    }
+
+    getPelletsRemaining() {
+        return this.pelletsRemaining;
     }
 
     /**
@@ -79,125 +96,54 @@ export class CollisionSystem {
 
     /**
      * Checks and handles collision between Pacman and regular pellets
+     * @param {Object} snapshot - Collision snapshot
      * @returns {number} Score value if collision occurred, 0 otherwise
      */
-    checkPelletCollision() {
-        if (!this.pacman || this.pacman.x === undefined || this.pacman.y === undefined) {
-            return 0;
-        }
+    checkPelletCollision(snapshot) {
+        const result = this.checkPelletTileCollision(snapshot, {
+            allowPellet: true,
+            allowPowerPellet: false,
+            bypassRepeatCheck: true
+        });
 
-        const pacmanGrid = pixelToGrid(this.pacman.x, this.pacman.y);
-
-        if (!pacmanGrid || isNaN(pacmanGrid.x) || isNaN(pacmanGrid.y) ||
-            pacmanGrid.x < 0 || pacmanGrid.y < 0 ||
-            pacmanGrid.y >= this.maze.length || pacmanGrid.x >= this.maze[0].length) {
-            return 0;
-        }
-
-        const tileType = this.maze[pacmanGrid.y][pacmanGrid.x];
-
-        const logData = {
-            timestamp: new Date().toISOString(),
-            type: 'pellet_collision_check',
-            pacman: {
-                x: Math.round(this.pacman.x),
-                y: Math.round(this.pacman.y),
-                gridX: pacmanGrid.x,
-                gridY: pacmanGrid.y
-            },
-            tileType: tileType,
-            collision: tileType === TILE_TYPES.PELLET,
-            result: tileType === TILE_TYPES.PELLET ? { score: scoreValues.pellet } : null
-        };
-
-        if (this.debugLogger.enabled) {
-            console.log(JSON.stringify(logData, null, 2));
-        }
-
-        if (tileType === TILE_TYPES.PELLET) {
-            this.maze[pacmanGrid.y][pacmanGrid.x] = TILE_TYPES.EMPTY;
-
-            const pellet = this.pelletPool.getByGrid(pacmanGrid.x, pacmanGrid.y);
-            if (pellet) {
-                this.pelletPool.release(pellet);
-            }
-
-            return scoreValues.pellet;
-        }
-
-        return 0;
+        return result.pelletScore;
     }
 
     /**
      * Checks and handles collision between Pacman and power pellets
+     * @param {Object} snapshot - Collision snapshot
      * @returns {number} Score value if collision occurred, 0 otherwise
      */
-    checkPowerPelletCollision() {
-        if (!this.pacman || this.pacman.x === undefined || this.pacman.y === undefined) {
-            return 0;
-        }
+    checkPowerPelletCollision(snapshot) {
+        const result = this.checkPelletTileCollision(snapshot, {
+            allowPellet: false,
+            allowPowerPellet: true,
+            bypassRepeatCheck: true
+        });
 
-        const pacmanGrid = pixelToGrid(this.pacman.x, this.pacman.y);
-
-        if (!pacmanGrid || isNaN(pacmanGrid.x) || isNaN(pacmanGrid.y) ||
-            pacmanGrid.x < 0 || pacmanGrid.y < 0 ||
-            pacmanGrid.y >= this.maze.length || pacmanGrid.x >= this.maze[0].length) {
-            return 0;
-        }
-
-        const tileType = this.maze[pacmanGrid.y][pacmanGrid.x];
-
-        const logData = {
-            timestamp: new Date().toISOString(),
-            type: 'power_pellet_collision_check',
-            pacman: {
-                x: Math.round(this.pacman.x),
-                y: Math.round(this.pacman.y),
-                gridX: pacmanGrid.x,
-                gridY: pacmanGrid.y
-            },
-            tileType: tileType,
-            collision: tileType === TILE_TYPES.POWER_PELLET,
-            result: tileType === TILE_TYPES.POWER_PELLET ? { score: scoreValues.powerPellet } : null
-        };
-
-        if (this.debugLogger.enabled) {
-            console.log(JSON.stringify(logData, null, 2));
-        }
-
-        if (tileType === TILE_TYPES.POWER_PELLET) {
-            this.maze[pacmanGrid.y][pacmanGrid.x] = TILE_TYPES.EMPTY;
-
-            const powerPellet = this.powerPelletPool.getByGrid(pacmanGrid.x, pacmanGrid.y);
-            if (powerPellet) {
-                this.powerPelletPool.release(powerPellet);
-            }
-
-            this.ghostsEatenCount = 0;
-            return scoreValues.powerPellet;
-        }
-
-        return 0;
+        return result.powerPelletScore;
     }
 
     /**
      * Checks and handles collision between Pacman and ghosts
      * @returns {{type: string, score: number}|null} Collision result object or null if no collision
      */
-    checkGhostCollision() {
-        if (!this.pacman || this.pacman.x === undefined || this.pacman.y === undefined) {
+    checkGhostCollision(snapshot) {
+        const resolvedSnapshot = snapshot ?? this.createCollisionSnapshot();
+        if (!resolvedSnapshot?.pacman) {
             return null;
         }
 
-        for (const ghost of this.ghosts) {
+        for (const ghostSnapshot of resolvedSnapshot.ghosts) {
+            const ghost = ghostSnapshot.ghost;
             if (ghost.isEaten) {continue;}
 
             if (!ghost || ghost.x === undefined || ghost.y === undefined) {
                 continue;
             }
 
-            if (this.checkCapsuleCollision(this.pacman, ghost)) {
-                return this.handleGhostCollisionWithLogging(ghost, 'capsule');
+            if (this.checkCapsuleCollision(resolvedSnapshot.pacman, ghostSnapshot)) {
+                return this.handleGhostCollisionWithLogging(ghost, 'capsule', resolvedSnapshot.pacman, ghostSnapshot);
             }
         }
 
@@ -209,15 +155,36 @@ export class CollisionSystem {
      * @returns {{pelletScore: number, powerPelletScore: number, ghostCollision: object|null}} Results object containing all collision results
      */
     checkAllCollisions() {
-        const results = {
-            pelletScore: 0,
-            powerPelletScore: 0,
-            ghostCollision: null
+        const snapshot = this.createCollisionSnapshot();
+        const startTime = getCollisionNow();
+        const pelletCheckResult = this.checkPelletTileCollision(snapshot, {
+            allowPellet: true,
+            allowPowerPellet: true,
+            bypassRepeatCheck: false
+        });
+        const ghostCollision = this.checkGhostCollision(snapshot);
+
+        const elapsedMs = getCollisionNow() - startTime;
+        this.lastCollisionMs = elapsedMs;
+        this.lastCollisionChecks = {
+            pellets: snapshot?.pacman ? 1 : 0,
+            ghosts: snapshot?.ghosts?.length || 0
         };
 
-        results.pelletScore = this.checkPelletCollision();
-        results.powerPelletScore = this.checkPowerPelletCollision();
-        results.ghostCollision = this.checkGhostCollision();
+        if (elapsedMs > this.collisionBudgetMs) {
+            const now = Date.now();
+            if (now - this.lastBudgetWarning > 1000) {
+                console.warn(`[CollisionSystem] Collision checks exceeded budget: ${elapsedMs.toFixed(2)}ms`);
+                this.lastBudgetWarning = now;
+            }
+        }
+
+        const results = {
+            pelletScore: pelletCheckResult.pelletScore,
+            powerPelletScore: pelletCheckResult.powerPelletScore,
+            ghostCollision: ghostCollision,
+            pelletsConsumed: pelletCheckResult.pelletsConsumed
+        };
 
         return results;
     }
@@ -250,15 +217,15 @@ export class CollisionSystem {
      * @param {Ghost} ghost - The ghost entity
      * @returns {boolean} True if collision detected, false otherwise
      */
-    checkCapsuleCollision(pacman, ghost) {
-        const pacmanPrevX = pacman.prevX ?? pacman.x;
-        const pacmanPrevY = pacman.prevY ?? pacman.y;
-        const ghostPrevX = ghost.prevX ?? ghost.x;
-        const ghostPrevY = ghost.prevY ?? ghost.y;
+    checkCapsuleCollision(pacmanSnapshot, ghostSnapshot) {
+        const pacmanPrevX = pacmanSnapshot.prevX ?? pacmanSnapshot.x;
+        const pacmanPrevY = pacmanSnapshot.prevY ?? pacmanSnapshot.y;
+        const ghostPrevX = ghostSnapshot.prevX ?? ghostSnapshot.x;
+        const ghostPrevY = ghostSnapshot.prevY ?? ghostSnapshot.y;
 
         return capsuleCollision(
-            pacmanPrevX, pacmanPrevY, pacman.x, pacman.y,
-            ghostPrevX, ghostPrevY, ghost.x, ghost.y,
+            pacmanPrevX, pacmanPrevY, pacmanSnapshot.x, pacmanSnapshot.y,
+            ghostPrevX, ghostPrevY, ghostSnapshot.x, ghostSnapshot.y,
             collisionConfig.radius
         );
     }
@@ -269,7 +236,7 @@ export class CollisionSystem {
      * @param {string} method - The collision method used
      * @returns {{type: string, score: number}|null} Collision result object
      */
-    handleGhostCollisionWithLogging(ghost, method) {
+    handleGhostCollisionWithLogging(ghost, method, pacmanSnapshot, ghostSnapshot) {
         const result = this.handleGhostCollision(ghost);
 
         const logData = {
@@ -277,16 +244,16 @@ export class CollisionSystem {
             type: 'ghost_collision_check',
             method: method,
             pacman: {
-                x: Math.round(this.pacman.x),
-                y: Math.round(this.pacman.y),
-                prevX: this.pacman.prevX !== undefined ? Math.round(this.pacman.prevX) : undefined,
-                prevY: this.pacman.prevY !== undefined ? Math.round(this.pacman.prevY) : undefined
+                x: Math.round(pacmanSnapshot.x),
+                y: Math.round(pacmanSnapshot.y),
+                prevX: pacmanSnapshot.prevX !== undefined ? Math.round(pacmanSnapshot.prevX) : undefined,
+                prevY: pacmanSnapshot.prevY !== undefined ? Math.round(pacmanSnapshot.prevY) : undefined
             },
             ghost: {
-                x: Math.round(ghost.x),
-                y: Math.round(ghost.y),
-                prevX: ghost.prevX !== undefined ? Math.round(ghost.prevX) : undefined,
-                prevY: ghost.prevY !== undefined ? Math.round(ghost.prevY) : undefined,
+                x: Math.round(ghostSnapshot.x),
+                y: Math.round(ghostSnapshot.y),
+                prevX: ghostSnapshot.prevX !== undefined ? Math.round(ghostSnapshot.prevX) : undefined,
+                prevY: ghostSnapshot.prevY !== undefined ? Math.round(ghostSnapshot.prevY) : undefined,
                 name: ghost.name || 'Unknown',
                 isFrightened: ghost.isFrightened
             },
@@ -306,6 +273,9 @@ export class CollisionSystem {
      * @returns {boolean} True if all pellets are eaten, false otherwise
      */
     checkWinCondition() {
+        if (typeof this.pelletsRemaining === 'number') {
+            return this.pelletsRemaining === 0;
+        }
         const pelletsRemaining = countPellets(this.maze);
         return pelletsRemaining === 0;
     }
@@ -316,4 +286,141 @@ export class CollisionSystem {
     reset() {
         this.ghostsEatenCount = 0;
     }
+
+    decrementPelletsRemaining(amount) {
+        if (typeof this.pelletsRemaining !== 'number') {
+            return;
+        }
+
+        this.pelletsRemaining = Math.max(0, this.pelletsRemaining - amount);
+    }
+
+    getProfilingInfo() {
+        return {
+            collisionMs: this.lastCollisionMs,
+            checks: this.lastCollisionChecks,
+            pelletsRemaining: this.pelletsRemaining,
+            totalPellets: this.totalPellets
+        };
+    }
+
+    createCollisionSnapshot() {
+        if (!this.pacman || this.pacman.x === undefined || this.pacman.y === undefined) {
+            return null;
+        }
+
+        const pacmanGrid = pixelToGrid(this.pacman.x, this.pacman.y);
+
+        const pacmanSnapshot = {
+            x: this.pacman.x,
+            y: this.pacman.y,
+            prevX: this.pacman.prevX ?? this.pacman.x,
+            prevY: this.pacman.prevY ?? this.pacman.y,
+            grid: pacmanGrid
+        };
+
+        const ghostSnapshots = this.ghosts.map((ghost) => ({
+            ghost,
+            x: ghost.x,
+            y: ghost.y,
+            prevX: ghost.prevX ?? ghost.x,
+            prevY: ghost.prevY ?? ghost.y
+        }));
+
+        return {
+            pacman: pacmanSnapshot,
+            ghosts: ghostSnapshots
+        };
+    }
+
+    checkPelletTileCollision(snapshot, options) {
+        const resolvedSnapshot = snapshot ?? this.createCollisionSnapshot();
+        const emptyResult = {
+            pelletScore: 0,
+            powerPelletScore: 0,
+            pelletsConsumed: 0
+        };
+
+        if (!resolvedSnapshot?.pacman || !this.maze) {
+            return emptyResult;
+        }
+
+        const pacmanGrid = resolvedSnapshot.pacman.grid;
+
+        if (!pacmanGrid || isNaN(pacmanGrid.x) || isNaN(pacmanGrid.y) ||
+            pacmanGrid.x < 0 || pacmanGrid.y < 0 ||
+            pacmanGrid.y >= this.maze.length || pacmanGrid.x >= this.maze[0].length) {
+            return emptyResult;
+        }
+
+        if (!options.bypassRepeatCheck) {
+            if (pacmanGrid.x === this.lastPelletGrid.x && pacmanGrid.y === this.lastPelletGrid.y) {
+                return emptyResult;
+            }
+
+            this.lastPelletGrid = { x: pacmanGrid.x, y: pacmanGrid.y };
+        }
+
+        const tileType = this.maze[pacmanGrid.y][pacmanGrid.x];
+
+        const logData = {
+            timestamp: new Date().toISOString(),
+            type: 'pellet_tile_check',
+            pacman: {
+                x: Math.round(resolvedSnapshot.pacman.x),
+                y: Math.round(resolvedSnapshot.pacman.y),
+                gridX: pacmanGrid.x,
+                gridY: pacmanGrid.y
+            },
+            tileType: tileType,
+            collision: tileType === TILE_TYPES.PELLET || tileType === TILE_TYPES.POWER_PELLET
+        };
+
+        if (this.debugLogger.enabled) {
+            console.log(JSON.stringify(logData, null, 2));
+        }
+
+        if (tileType === TILE_TYPES.PELLET && options.allowPellet) {
+            this.maze[pacmanGrid.y][pacmanGrid.x] = TILE_TYPES.EMPTY;
+
+            const pellet = this.pelletPool?.getByGrid(pacmanGrid.x, pacmanGrid.y);
+            if (pellet) {
+                this.pelletPool.release(pellet);
+            }
+
+            this.decrementPelletsRemaining(1);
+            return {
+                pelletScore: scoreValues.pellet,
+                powerPelletScore: 0,
+                pelletsConsumed: 1
+            };
+        }
+
+        if (tileType === TILE_TYPES.POWER_PELLET && options.allowPowerPellet) {
+            this.maze[pacmanGrid.y][pacmanGrid.x] = TILE_TYPES.EMPTY;
+
+            const powerPellet = this.powerPelletPool?.getByGrid(pacmanGrid.x, pacmanGrid.y);
+            if (powerPellet) {
+                this.powerPelletPool.release(powerPellet);
+            }
+
+            this.ghostsEatenCount = 0;
+            this.decrementPelletsRemaining(1);
+            return {
+                pelletScore: 0,
+                powerPelletScore: scoreValues.powerPellet,
+                pelletsConsumed: 1
+            };
+        }
+
+        return emptyResult;
+    }
+}
+
+function getCollisionNow() {
+    if (typeof performance !== 'undefined' && performance.now) {
+        return performance.now();
+    }
+
+    return Date.now();
 }
