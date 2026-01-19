@@ -41,7 +41,7 @@ import { ReplaySystem } from '../systems/ReplaySystem.js';
 import { PacmanAI } from '../systems/PacmanAI.js';
 import { FixedTimeStepLoop } from '../systems/FixedTimeStepLoop.js';
 import { gameEvents, GAME_EVENTS } from '../core/EventBus.js';
-import { msToSeconds } from '../utils/Time.js';
+import { normalizeDeltaSeconds } from '../utils/Time.js';
 
 export default class GameScene extends Phaser.Scene {
     constructor() {
@@ -330,7 +330,7 @@ export default class GameScene extends Phaser.Scene {
             return;
         }
 
-        const deltaInSeconds = msToSeconds(delta);
+        const deltaInSeconds = normalizeDeltaSeconds(delta);
 
         if (this.deathHandler.update(deltaInSeconds)) {
             return;
