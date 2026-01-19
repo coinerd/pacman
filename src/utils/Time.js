@@ -10,3 +10,15 @@ export function msToSeconds(milliseconds) {
 export function secondsToMs(seconds) {
     return seconds * 1000;
 }
+
+export function normalizeDeltaSeconds(delta) {
+    if (!Number.isFinite(delta)) {
+        return 0;
+    }
+
+    if (delta > 1) {
+        return msToSeconds(delta);
+    }
+
+    return Math.max(0, delta);
+}

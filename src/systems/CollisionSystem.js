@@ -30,7 +30,10 @@ export class CollisionSystem {
         this.lastPelletGrid = { x: null, y: null };
         this.lastCollisionMs = 0;
         this.lastCollisionChecks = { pellets: 0, ghosts: 0 };
-        this.collisionBudgetMs = 1;
+        this.collisionAvgMs = 0;
+        this.collisionBudgetMs = collisionConfig.budgetMs ?? 1;
+        this.budgetCooldownMs = collisionConfig.warnCooldownMs ?? 1000;
+        this.budgetEmaAlpha = collisionConfig.emaAlpha ?? 0.2;
         this.lastBudgetWarning = 0;
     }
 
@@ -166,15 +169,20 @@ export class CollisionSystem {
 
         const elapsedMs = getCollisionNow() - startTime;
         this.lastCollisionMs = elapsedMs;
+        this.collisionAvgMs = this.collisionAvgMs === 0
+            ? elapsedMs
+            : (this.collisionAvgMs * (1 - this.budgetEmaAlpha)) + (elapsedMs * this.budgetEmaAlpha);
         this.lastCollisionChecks = {
             pellets: snapshot?.pacman ? 1 : 0,
             ghosts: snapshot?.ghosts?.length || 0
         };
 
-        if (elapsedMs > this.collisionBudgetMs) {
+        if (this.collisionAvgMs > this.collisionBudgetMs) {
             const now = Date.now();
-            if (now - this.lastBudgetWarning > 1000) {
-                console.warn(`[CollisionSystem] Collision checks exceeded budget: ${elapsedMs.toFixed(2)}ms`);
+            if (now - this.lastBudgetWarning > this.budgetCooldownMs) {
+                console.warn(
+                    `[CollisionSystem] Collision checks exceeded budget: ${elapsedMs.toFixed(2)}ms (avg ${this.collisionAvgMs.toFixed(2)}ms)`
+                );
                 this.lastBudgetWarning = now;
             }
         }

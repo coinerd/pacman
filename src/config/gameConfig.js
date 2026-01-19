@@ -15,7 +15,10 @@ export const gameConfig = {
 };
 
 export const collisionConfig = {
-    radius: gameConfig.tileSize * 0.6
+    radius: gameConfig.tileSize * 0.6,
+    budgetMs: 2.5,
+    warnCooldownMs: 1000,
+    emaAlpha: 0.2
 };
 
 export const colors = {
