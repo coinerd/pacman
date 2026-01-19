@@ -29,6 +29,8 @@ export class CollisionSystem {
         this.pelletsRemaining = null;
         this.lastPelletGrid = { x: null, y: null };
         this.lastCollisionMs = 0;
+        this.lastPelletCollisionMs = 0;
+        this.lastGhostCollisionMs = 0;
         this.lastCollisionChecks = { pellets: 0, ghosts: 0 };
         this.collisionAvgMs = 0;
         this.collisionBudgetMs = collisionConfig.budgetMs ?? 1;
@@ -160,15 +162,21 @@ export class CollisionSystem {
     checkAllCollisions() {
         const snapshot = this.createCollisionSnapshot();
         const startTime = getCollisionNow();
+        const pelletStart = getCollisionNow();
         const pelletCheckResult = this.checkPelletTileCollision(snapshot, {
             allowPellet: true,
             allowPowerPellet: true,
             bypassRepeatCheck: false
         });
+        const pelletMs = getCollisionNow() - pelletStart;
+        const ghostStart = getCollisionNow();
         const ghostCollision = this.checkGhostCollision(snapshot);
+        const ghostMs = getCollisionNow() - ghostStart;
 
         const elapsedMs = getCollisionNow() - startTime;
         this.lastCollisionMs = elapsedMs;
+        this.lastPelletCollisionMs = pelletMs;
+        this.lastGhostCollisionMs = ghostMs;
         this.collisionAvgMs = this.collisionAvgMs === 0
             ? elapsedMs
             : (this.collisionAvgMs * (1 - this.budgetEmaAlpha)) + (elapsedMs * this.budgetEmaAlpha);
@@ -306,6 +314,8 @@ export class CollisionSystem {
     getProfilingInfo() {
         return {
             collisionMs: this.lastCollisionMs,
+            pelletMs: this.lastPelletCollisionMs,
+            ghostMs: this.lastGhostCollisionMs,
             checks: this.lastCollisionChecks,
             pelletsRemaining: this.pelletsRemaining,
             totalPellets: this.totalPellets
