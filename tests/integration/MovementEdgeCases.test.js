@@ -164,7 +164,7 @@ describe('Movement Edge Cases', () => {
             const initialX = ghost.x;
             ghost.update(100, mockMaze);
 
-            expect(ghost.x).toBeGreaterThan(initialX);
+            expect(ghost.x).toBe(initialX);
             expect(ghost.x).toBeLessThan(mockMaze[0].length * 20);
         });
 

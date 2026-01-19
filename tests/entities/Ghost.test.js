@@ -9,7 +9,7 @@ describe('Ghost Entity', () => {
 
     beforeEach(() => {
         mockScene = createMockScene();
-        maze = createSimpleMaze(10, 10);
+        maze = createSimpleMaze(gameConfig.mazeWidth, gameConfig.mazeHeight);
         ghost = new Ghost(mockScene, 13, 14, 'blinky', 0xFF0000);
     });
 

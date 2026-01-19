@@ -514,8 +514,8 @@ describe('TileMovement - performGridMovementStep', () => {
 
             performGridMovementStep(entity, maze, 1000);
 
-            const wallBoundary = tileCenter(6, 5).x - gameConfig.tileSize / 2;
-            expect(entity.x).toBeLessThanOrEqual(wallBoundary);
+            const center = tileCenter(5, 5);
+            expect(entity.x).toBeCloseTo(center.x, 1);
             expect(entity.gridX).toBe(5);
         });
 
@@ -557,7 +557,7 @@ describe('TileMovement - performGridMovementStep', () => {
 
             performGridMovementStep(entity, maze, 100);
 
-            expect(entity.isMoving).toBe(true);
+            expect(entity.x).toBeGreaterThan(center.x);
         });
 
         test('entity with buffered turn snaps to center and executes turn', () => {
@@ -578,7 +578,7 @@ describe('TileMovement - performGridMovementStep', () => {
             performGridMovementStep(entity, maze, 100);
 
             expect(entity.x).toBe(center.x);
-            expect(entity.y).toBe(center.y - 7);
+            expect(entity.y).toBe(center.y - 10);
             expect(entity.direction).toBe(directions.UP);
             expect(entity.nextDirection).toEqual(directions.NONE);
         });

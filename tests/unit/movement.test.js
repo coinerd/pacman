@@ -48,10 +48,9 @@ describe('Movement - Wall Collision', () => {
             const updateDelta = 500;
             pacman.update(updateDelta, maze);
 
-            const wallLeftEdge = tileCenter(6, 5).x - gameConfig.tileSize / 2;
+            const center = tileCenter(5, 5);
 
-            expect(pacman.x).toBeLessThanOrEqual(wallLeftEdge);
-            expect(pacman.x).toBeGreaterThan(wallLeftEdge - 5);
+            expect(pacman.x).toBeCloseTo(center.x, 1);
             expect(pacman.gridX).toBe(5);
         });
 
@@ -69,10 +68,9 @@ describe('Movement - Wall Collision', () => {
             const updateDelta = 500;
             pacman.update(updateDelta, maze);
 
-            const wallRightEdge = tileCenter(4, 5).x + gameConfig.tileSize / 2;
+            const center = tileCenter(5, 5);
 
-            expect(pacman.x).toBeGreaterThanOrEqual(wallRightEdge);
-            expect(pacman.x).toBeLessThan(wallRightEdge + 5);
+            expect(pacman.x).toBeCloseTo(center.x, 1);
             expect(pacman.gridX).toBe(5);
         });
 
@@ -90,10 +88,9 @@ describe('Movement - Wall Collision', () => {
             const updateDelta = 500;
             pacman.update(updateDelta, maze);
 
-            const wallBottomEdge = tileCenter(5, 4).y + gameConfig.tileSize / 2;
+            const center = tileCenter(5, 5);
 
-            expect(pacman.y).toBeGreaterThanOrEqual(wallBottomEdge);
-            expect(pacman.y).toBeLessThan(wallBottomEdge + 5);
+            expect(pacman.y).toBeCloseTo(center.y, 1);
             expect(pacman.gridY).toBe(5);
         });
 
@@ -111,10 +108,9 @@ describe('Movement - Wall Collision', () => {
             const updateDelta = 500;
             pacman.update(updateDelta, maze);
 
-            const wallTopEdge = tileCenter(5, 6).y - gameConfig.tileSize / 2;
+            const center = tileCenter(5, 5);
 
-            expect(pacman.y).toBeLessThanOrEqual(wallTopEdge);
-            expect(pacman.y).toBeGreaterThan(wallTopEdge - 5);
+            expect(pacman.y).toBeCloseTo(center.y, 1);
             expect(pacman.gridY).toBe(5);
         });
 
@@ -152,7 +148,6 @@ describe('Movement - Wall Collision', () => {
 
                 const updateDelta = 1000;
                 pacman.update(updateDelta, maze);
-
                 const wallLeftEdge = tileCenter(6, 5).x - gameConfig.tileSize / 2;
                 expect(pacman.x).toBeLessThanOrEqual(wallLeftEdge);
             });
@@ -174,10 +169,9 @@ describe('Movement - Wall Collision', () => {
             const updateDelta = 500;
             ghost.update(updateDelta, maze);
 
-            const wallLeftEdge = tileCenter(6, 5).x - gameConfig.tileSize / 2;
+            const center = tileCenter(5, 5);
 
-            expect(ghost.x).toBeLessThanOrEqual(wallLeftEdge);
-            expect(ghost.x).toBeGreaterThan(wallLeftEdge - 5);
+            expect(ghost.x).toBeCloseTo(center.x, 1);
             expect(ghost.gridX).toBe(5);
         });
 
@@ -202,18 +196,11 @@ describe('Movement - Wall Collision', () => {
 
                 ghost.update(500, maze);
 
-                const wallEdge = tileCenter(wallX, wallY)[property];
-                const halfTile = gameConfig.tileSize / 2;
-                const boundary = property === 'x' ?
-                    (direction.x === 1 ? wallEdge - halfTile : wallEdge + halfTile) :
-                    (direction.y === 1 ? wallEdge - halfTile : wallEdge + halfTile);
-
+                const center = tileCenter(5, 5);
                 if (property === 'x') {
-                    expect(ghost.x).toBeLessThanOrEqual(Math.max(boundary, 0));
-                    expect(ghost.x).toBeGreaterThan(Math.min(boundary, 0) - 5);
+                    expect(ghost.x).toBeCloseTo(center.x, 1);
                 } else {
-                    expect(ghost.y).toBeLessThanOrEqual(Math.max(boundary, 0));
-                    expect(ghost.y).toBeGreaterThan(Math.min(boundary, 0) - 5);
+                    expect(ghost.y).toBeCloseTo(center.y, 1);
                 }
             });
         });
@@ -426,7 +413,7 @@ describe('Movement - Corner Turns', () => {
             expect(pacman.direction).toBe(directions.RIGHT);
             expect(pacman.nextDirection).toBe(directions.UP);
 
-            pacman.update(20, maze);
+            pacman.update(80, maze);
             expect(pacman.direction).toBe(directions.UP);
             expect(pacman.nextDirection).toBe(directions.NONE);
         });
@@ -515,7 +502,7 @@ describe('Movement - Corner Turns', () => {
             maze[5][5] = TILE_TYPES.PATH;
             maze[5][6] = TILE_TYPES.PATH;
 
-            pacman.update(20, maze);
+            pacman.update(80, maze);
 
             expect(pacman.direction).toBe(directions.DOWN);
             expect(pacman.nextDirection).toBe(directions.NONE);
@@ -870,4 +857,3 @@ describe('Movement - Edge Cases and Integration', () => {
         });
     });
 });
-

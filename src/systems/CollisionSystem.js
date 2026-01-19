@@ -1,7 +1,7 @@
-import { gameConfig, scoreValues } from '../config/gameConfig.js';
-import { pixelToGrid, getDistance, setTileType, countPellets } from '../utils/MazeLayout.js';
+import { collisionConfig, scoreValues } from '../config/gameConfig.js';
+import { pixelToGrid, countPellets } from '../utils/MazeLayout.js';
 import { TILE_TYPES } from '../utils/MazeLayout.js';
-import { sweptAABBCollision, distanceCollision, lineSegmentsIntersect, pointToLineSegmentDistance } from '../utils/CollisionUtils.js';
+import { capsuleCollision } from '../utils/CollisionUtils.js';
 import { DebugLogger } from '../utils/DebugLogger.js';
 
 
@@ -196,40 +196,12 @@ export class CollisionSystem {
                 continue;
             }
 
-            if (this.checkCrossedPathCollision(this.pacman, ghost)) {
-                return this.handleGhostCollisionWithLogging(ghost, 'crossed_path');
-            }
-
-            if (this.checkSweptAABBCollision(this.pacman, ghost)) {
-                return this.handleGhostCollisionWithLogging(ghost, 'swept_aabb');
-            }
-
-            if (this.checkDistanceCollision(this.pacman, ghost)) {
-                return this.handleGhostCollisionWithLogging(ghost, 'distance');
+            if (this.checkCapsuleCollision(this.pacman, ghost)) {
+                return this.handleGhostCollisionWithLogging(ghost, 'capsule');
             }
         }
 
         return null;
-    }
-
-    /**
-     * Checks if Pacman and ghost paths crossed
-     * @param {Pacman} pacman - The Pacman entity
-     * @param {Ghost} ghost - The ghost entity
-     * @returns {boolean} True if paths crossed, false otherwise
-     */
-    checkCrossedPathCollision(pacman, ghost) {
-        if (pacman.prevX === undefined || pacman.prevY === undefined ||
-            ghost.prevX === undefined || ghost.prevY === undefined) {
-            return false;
-        }
-
-        const crossed = lineSegmentsIntersect(
-            pacman.prevX, pacman.prevY, pacman.x, pacman.y,
-            ghost.prevX, ghost.prevY, ghost.x, ghost.y
-        );
-
-        return crossed;
     }
 
     /**
@@ -273,60 +245,21 @@ export class CollisionSystem {
     }
 
     /**
-     * Checks collision using distance-based methods
+     * Checks collision using a swept capsule test
      * @param {Pacman} pacman - The Pacman entity
      * @param {Ghost} ghost - The ghost entity
      * @returns {boolean} True if collision detected, false otherwise
      */
-    checkDistanceCollision(pacman, ghost) {
-        const radius = gameConfig.tileSize * 0.8;
+    checkCapsuleCollision(pacman, ghost) {
+        const pacmanPrevX = pacman.prevX ?? pacman.x;
+        const pacmanPrevY = pacman.prevY ?? pacman.y;
+        const ghostPrevX = ghost.prevX ?? ghost.x;
+        const ghostPrevY = ghost.prevY ?? ghost.y;
 
-        const bothPrevExist = (pacman.prevX !== undefined && ghost.prevX !== undefined);
-        const pacmanMoved = bothPrevExist &&
-            (pacman.x !== pacman.prevX || pacman.y !== pacman.prevY);
-        const ghostMoved = bothPrevExist &&
-            (ghost.x !== ghost.prevX || ghost.y !== ghost.prevY);
-
-        if (!pacmanMoved && !ghostMoved) {
-            return distanceCollision(pacman.x, pacman.y, ghost.x, ghost.y, radius);
-        }
-
-        if (pacmanMoved && ghostMoved) {
-            return distanceCollision(pacman.x, pacman.y, ghost.x, ghost.y, radius);
-        }
-
-        if (bothPrevExist) {
-            if (pacmanMoved && !ghostMoved) {
-                const dist = pointToLineSegmentDistance(
-                    ghost.x, ghost.y,
-                    pacman.prevX, pacman.prevY, pacman.x, pacman.y
-                );
-                return dist < radius;
-            } else if (!pacmanMoved && ghostMoved) {
-                const dist = pointToLineSegmentDistance(
-                    pacman.x, pacman.y,
-                    ghost.prevX, ghost.prevY, ghost.x, ghost.y
-                );
-                return dist < radius;
-            }
-        }
-
-        return distanceCollision(pacman.x, pacman.y, ghost.x, ghost.y, radius);
-    }
-
-    /**
-     * Checks collision using swept AABB method
-     * @param {Pacman} pacman - The Pacman entity
-     * @param {Ghost} ghost - The ghost entity
-     * @returns {boolean} True if collision detected, false otherwise
-     */
-    checkSweptAABBCollision(pacman, ghost) {
-        const radius = gameConfig.tileSize * 0.8;
-
-        return sweptAABBCollision(
-            ghost.prevX, ghost.prevY, ghost.x, ghost.y,
-            pacman.x, pacman.y,
-            radius
+        return capsuleCollision(
+            pacmanPrevX, pacmanPrevY, pacman.x, pacman.y,
+            ghostPrevX, ghostPrevY, ghost.x, ghost.y,
+            collisionConfig.radius
         );
     }
 

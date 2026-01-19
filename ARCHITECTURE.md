@@ -798,12 +798,18 @@ init(data) {
 
 ## Collision Detection
 
+### Movement & Grid Rules
+
+- **Tile-centered stepping**: Movement resolves in tile-sized steps, snapping to centers when within a small epsilon.
+- **Turn gating**: Buffered turns apply only at tile centers, simplifying movement state.
+- **Tunnel warps**: Portal tiles warp to the opposing portal when moving outward, handled directly in the movement step.
+
 ### Collision Types
 
 1. **Entity-Maze**: Handled by entities (grid-based)
 2. **Pacman-Pellet**: Grid tile query + sprite management
 3. **Pacman-PowerPellet**: Grid tile query + global state change
-4. **Pacman-Ghost**: Distance-based check
+4. **Pacman-Ghost**: Swept capsule check
 5. **Pacman-Fruit**: Distance-based check
 
 ### Collision Algorithm
@@ -816,13 +822,19 @@ canMoveInDirection(direction, maze) {
     return maze[nextGridY][nextGridX] !== WALL;
 }
 
-// Distance-based collision (entity-entity)
+// Swept capsule collision (entity-entity)
 checkEntityCollision(entity1, entity2) {
-    const dist = Math.sqrt(
-        Math.pow(entity1.x - entity2.x, 2) +
-        Math.pow(entity1.y - entity2.y, 2)
+    return capsuleCollision(
+        entity1.prevX ?? entity1.x,
+        entity1.prevY ?? entity1.y,
+        entity1.x,
+        entity1.y,
+        entity2.prevX ?? entity2.x,
+        entity2.prevY ?? entity2.y,
+        entity2.x,
+        entity2.y,
+        collisionRadius
     );
-    return dist < threshold; // Usually tileSize * 0.8
 }
 ```
 
@@ -871,7 +883,7 @@ const radius = gameConfig.tileSize * 0.4;
 const radius = 3; // ~15% tile size
 
 // Collision threshold
-const collisionThreshold = gameConfig.tileSize * 0.8; // 16 pixels
+const collisionRadius = gameConfig.tileSize * 0.6; // 12 pixels
 ```
 
 **Strengths**:
