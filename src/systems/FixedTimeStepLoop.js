@@ -14,6 +14,9 @@ export class FixedTimeStepLoop {
     constructor(callback) {
         this.callback = callback;
         this.accumulator = 0;
+        this.lastStepCount = 0;
+        this.lastRealDt = 0;
+        this.hasWarnedAboutDelta = false;
     }
 
     /**
@@ -21,6 +24,24 @@ export class FixedTimeStepLoop {
      * @param {number} realDt - Real time elapsed since last frame (seconds)
      */
     update(realDt) {
+        this.lastRealDt = realDt;
+        this.lastStepCount = 0;
+
+        if (!Number.isFinite(realDt)) {
+            if (!this.hasWarnedAboutDelta) {
+                console.warn('[FixedTimeStepLoop] Invalid delta provided (expected seconds).');
+                this.hasWarnedAboutDelta = true;
+            }
+            return;
+        }
+
+        if ((realDt > 1 || realDt < 0.001) && !this.hasWarnedAboutDelta) {
+            console.warn(
+                `[FixedTimeStepLoop] Delta (${realDt.toFixed(4)}s) out of expected range; check time units.`
+            );
+            this.hasWarnedAboutDelta = true;
+        }
+
         const clampThreshold = physicsConfig.MAX_DT * 2;
         const clampedDt = realDt > clampThreshold ? physicsConfig.MAX_DT : realDt;
         this.accumulator += clampedDt;
@@ -28,6 +49,7 @@ export class FixedTimeStepLoop {
         while (this.accumulator >= physicsConfig.FIXED_DT) {
             this.callback();
             this.accumulator -= physicsConfig.FIXED_DT;
+            this.lastStepCount += 1;
         }
 
         if (this.accumulator < Number.EPSILON) {
@@ -41,6 +63,22 @@ export class FixedTimeStepLoop {
      */
     getAccumulator() {
         return this.accumulator;
+    }
+
+    /**
+     * Gets number of fixed steps executed during last update
+     * @returns {number} Step count
+     */
+    getLastStepCount() {
+        return this.lastStepCount;
+    }
+
+    /**
+     * Gets the most recent real delta value
+     * @returns {number} Time elapsed since last frame (seconds)
+     */
+    getLastRealDt() {
+        return this.lastRealDt;
     }
 
     /**

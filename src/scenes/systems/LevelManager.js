@@ -31,14 +31,14 @@ export class LevelManager {
         }
 
         this.currentFrightenedDuration = Math.max(
-            2000,
+            2,
             levelConfig.frightenedDuration - (level - 1) * levelConfig.frightenedDecreasePerLevel
         );
     }
 
     /**
      * Get current frightened duration for level
-     * @returns {number} Frightened duration in milliseconds
+     * @returns {number} Frightened duration in seconds
      */
     getFrightenedDuration() {
         return this.currentFrightenedDuration;

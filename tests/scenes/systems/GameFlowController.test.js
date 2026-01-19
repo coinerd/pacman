@@ -1,5 +1,6 @@
 import { GameFlowController } from '../../../src/scenes/systems/GameFlowController.js';
 import { createMockScene, createMockGhost } from '../../utils/testHelpers.js';
+import { msToSeconds } from '../../../src/utils/Time.js';
 
 describe('GameFlowController', () => {
     let controller;
@@ -46,27 +47,27 @@ describe('GameFlowController', () => {
     describe('power pellet handling', () => {
         test('should update score when power pellet is eaten', () => {
             const initialScore = mockScene.gameState.score;
-            controller.handlePowerPelletEaten(50, 8000);
+            controller.handlePowerPelletEaten(50, msToSeconds(8000));
 
             expect(mockScene.gameState.score).toBe(initialScore + 50);
         });
 
         test('should set ghosts frightened for correct duration', () => {
-            controller.handlePowerPelletEaten(50, 8000);
+            controller.handlePowerPelletEaten(50, msToSeconds(8000));
 
-            expect(mockGhosts[0].setFrightened).toHaveBeenCalledWith(8000);
-            expect(mockGhosts[1].setFrightened).toHaveBeenCalledWith(8000);
-            expect(mockGhosts[3].setFrightened).toHaveBeenCalledWith(8000);
+            expect(mockGhosts[0].setFrightened).toHaveBeenCalledWith(msToSeconds(8000));
+            expect(mockGhosts[1].setFrightened).toHaveBeenCalledWith(msToSeconds(8000));
+            expect(mockGhosts[3].setFrightened).toHaveBeenCalledWith(msToSeconds(8000));
         });
 
         test('should not set eaten ghosts frightened', () => {
-            controller.handlePowerPelletEaten(50, 8000);
+            controller.handlePowerPelletEaten(50, msToSeconds(8000));
 
             expect(mockGhosts[2].setFrightened).not.toHaveBeenCalled();
         });
 
         test('should play power pellet sound', () => {
-            controller.handlePowerPelletEaten(50, 8000);
+            controller.handlePowerPelletEaten(50, msToSeconds(8000));
 
             expect(mockScene.soundManager.playPowerPellet).toHaveBeenCalled();
         });

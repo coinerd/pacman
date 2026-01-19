@@ -1,5 +1,6 @@
 import Ghost from '../../src/entities/Ghost.js';
 import { gameConfig, directions, ghostModes, levelConfig, ghostSpeedMultipliers } from '../../src/config/gameConfig.js';
+import { msToSeconds } from '../../src/utils/Time.js';
 import { createMockScene, createSimpleMaze } from '../utils/testHelpers.js';
 
 describe('Ghost - Bug Fixes', () => {
@@ -78,25 +79,25 @@ describe('Ghost - Bug Fixes', () => {
             ghost.direction = directions.RIGHT;
             ghost.speed = 100;
 
-            const delta = 100;
-            const moveStep = ghost.speed * (delta / 1000);
+            const deltaSeconds = msToSeconds(100);
+            const moveStep = ghost.speed * deltaSeconds;
 
-            ghost.update(delta, maze, { x: 0, y: 0 });
+            ghost.update(deltaSeconds, maze, { x: 0, y: 0 });
 
             expect(ghost.gridX).toBe(5);
         });
 
         test('does not update grid when distance is not less than moveStep', () => {
             const speed = 150;
-            const delta = 16;
-            const moveStep = speed * (delta / 1000);
+            const deltaSeconds = msToSeconds(16);
+            const moveStep = speed * deltaSeconds;
 
             ghost.x = 100;
             ghost.y = 100;
             ghost.speed = speed;
             ghost.direction = directions.RIGHT;
 
-            ghost.update(delta, maze, { x: 0, y: 0 });
+            ghost.update(deltaSeconds, maze, { x: 0, y: 0 });
 
             const gridPos = { x: Math.floor(ghost.x / gameConfig.tileSize), y: Math.floor(ghost.y / gameConfig.tileSize) };
             const centerPixel = { x: gridPos.x * gameConfig.tileSize + gameConfig.tileSize / 2, y: gridPos.y * gameConfig.tileSize + gameConfig.tileSize / 2 };
@@ -121,7 +122,7 @@ describe('Ghost - Bug Fixes', () => {
             ghost.direction = directions.RIGHT;
             ghost.isMoving = true;
 
-            ghost.update(100, maze, { x: 0, y: 0 });
+            ghost.update(msToSeconds(100), maze, { x: 0, y: 0 });
 
             expect(ghost.x).toBe(center.x);
         });
@@ -140,7 +141,7 @@ describe('Ghost - Bug Fixes', () => {
             ghost.direction = directions.LEFT;
             ghost.isMoving = true;
 
-            ghost.update(100, maze, { x: 0, y: 0 });
+            ghost.update(msToSeconds(100), maze, { x: 0, y: 0 });
 
             expect(ghost.x).toBe(center.x);
         });
@@ -159,7 +160,7 @@ describe('Ghost - Bug Fixes', () => {
             ghost.direction = directions.UP;
             ghost.isMoving = true;
 
-            ghost.update(100, maze, { x: 0, y: 0 });
+            ghost.update(msToSeconds(100), maze, { x: 0, y: 0 });
 
             expect(ghost.y).toBe(center.y);
         });
@@ -178,7 +179,7 @@ describe('Ghost - Bug Fixes', () => {
             ghost.direction = directions.DOWN;
             ghost.isMoving = true;
 
-            ghost.update(100, maze, { x: 0, y: 0 });
+            ghost.update(msToSeconds(100), maze, { x: 0, y: 0 });
 
             expect(ghost.y).toBe(center.y);
         });
@@ -188,13 +189,13 @@ describe('Ghost - Bug Fixes', () => {
         test('uses tunnel speed multiplier on tunnel row', () => {
             ghost.gridY = 14;
             ghost.speed = 100;
-            const delta = 100;
+            const deltaSeconds = msToSeconds(100);
 
-            const moveStep = ghost.speed * ghostSpeedMultipliers.tunnel * (delta / 1000);
+            const moveStep = ghost.speed * ghostSpeedMultipliers.tunnel * deltaSeconds;
             ghost.direction = directions.RIGHT;
             const initialX = ghost.x;
 
-            ghost.update(delta, maze, { x: 0, y: 0 });
+            ghost.update(deltaSeconds, maze, { x: 0, y: 0 });
 
             expect(ghost.x - initialX).toBeCloseTo(moveStep, 1);
         });
@@ -202,12 +203,12 @@ describe('Ghost - Bug Fixes', () => {
         test('uses normal speed multiplier off tunnel row', () => {
             ghost.gridY = 10;
             ghost.speed = 100;
-            const delta = 100;
+            const deltaSeconds = msToSeconds(100);
 
             ghost.direction = directions.RIGHT;
             const initialX = ghost.x;
 
-            ghost.update(delta, maze, { x: 0, y: 0 });
+            ghost.update(deltaSeconds, maze, { x: 0, y: 0 });
 
             expect(ghost.x - initialX).toBeLessThan(15);
         });

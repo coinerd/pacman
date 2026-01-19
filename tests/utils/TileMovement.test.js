@@ -11,6 +11,7 @@ import {
     EPS
 } from '../../src/utils/TileMovement.js';
 import { directions, gameConfig } from '../../src/config/gameConfig.js';
+import { msToSeconds } from '../../src/utils/Time.js';
 import { createSimpleMaze } from '../utils/testHelpers.js';
 
 describe('TileMovement - worldToTile', () => {
@@ -439,7 +440,7 @@ describe('TileMovement - performGridMovementStep', () => {
                 speed: 100
             });
 
-            const result = performGridMovementStep(entity, maze, 100);
+            const result = performGridMovementStep(entity, maze, msToSeconds(100));
             expect(result).toBe(entity);
         });
 
@@ -456,7 +457,7 @@ describe('TileMovement - performGridMovementStep', () => {
             });
 
             const initialX = entity.x;
-            performGridMovementStep(entity, maze, 50);
+            performGridMovementStep(entity, maze, msToSeconds(50));
 
             expect(entity.x).toBeGreaterThan(initialX);
         });
@@ -475,7 +476,7 @@ describe('TileMovement - performGridMovementStep', () => {
                 speed: 0
             });
 
-            performGridMovementStep(entity, maze, 100);
+            performGridMovementStep(entity, maze, msToSeconds(100));
 
             expect(entity.x).toBe(center.x);
         });
@@ -492,7 +493,7 @@ describe('TileMovement - performGridMovementStep', () => {
                 speed: 100
             });
 
-            performGridMovementStep(entity, maze, 0);
+            performGridMovementStep(entity, maze, msToSeconds(0));
 
             expect(entity.x).toBe(center.x);
         });
@@ -512,7 +513,7 @@ describe('TileMovement - performGridMovementStep', () => {
                 speed: 100
             });
 
-            performGridMovementStep(entity, maze, 1000);
+            performGridMovementStep(entity, maze, msToSeconds(1000));
 
             const center = tileCenter(5, 5);
             expect(entity.x).toBeCloseTo(center.x, 1);
@@ -535,7 +536,7 @@ describe('TileMovement - performGridMovementStep', () => {
                 speed: 100
             });
 
-            performGridMovementStep(entity, maze, 100);
+            performGridMovementStep(entity, maze, msToSeconds(100));
 
             expect(entity.direction).toBe(directions.NONE);
             expect(entity.isMoving).toBe(false);
@@ -555,7 +556,7 @@ describe('TileMovement - performGridMovementStep', () => {
                 speed: 100
             });
 
-            performGridMovementStep(entity, maze, 100);
+            performGridMovementStep(entity, maze, msToSeconds(100));
 
             expect(entity.x).toBeGreaterThan(center.x);
         });
@@ -575,7 +576,7 @@ describe('TileMovement - performGridMovementStep', () => {
                 speed: 100
             });
 
-            performGridMovementStep(entity, maze, 100);
+            performGridMovementStep(entity, maze, msToSeconds(100));
 
             expect(entity.x).toBe(center.x);
             expect(entity.y).toBe(center.y - 10);
@@ -598,7 +599,7 @@ describe('TileMovement - performGridMovementStep', () => {
                 speed: 200
             });
 
-            performGridMovementStep(entity, maze, 200);
+            performGridMovementStep(entity, maze, msToSeconds(200));
 
             expect(entity.gridX).toBe(6);
         });
@@ -616,7 +617,7 @@ describe('TileMovement - performGridMovementStep', () => {
                 speed: 200
             });
 
-            performGridMovementStep(entity, maze, 200);
+            performGridMovementStep(entity, maze, msToSeconds(200));
 
             expect(entity.gridY).toBe(6);
         });
@@ -634,7 +635,7 @@ describe('TileMovement - performGridMovementStep', () => {
                 speed: 100
             });
 
-            expect(() => performGridMovementStep(entity, maze, 100)).not.toThrow();
+            expect(() => performGridMovementStep(entity, maze, msToSeconds(100))).not.toThrow();
         });
 
         test('large delta time does not cause overflow', () => {
@@ -648,7 +649,7 @@ describe('TileMovement - performGridMovementStep', () => {
                 speed: 100
             });
 
-            performGridMovementStep(entity, maze, 5000);
+            performGridMovementStep(entity, maze, msToSeconds(5000));
 
             expect(entity.x).toBeLessThan(tileCenter(7, 5).x + gameConfig.tileSize);
         });

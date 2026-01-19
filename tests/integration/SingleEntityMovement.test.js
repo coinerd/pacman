@@ -2,6 +2,7 @@ import Pacman from '../../src/entities/Pacman.js';
 import Ghost from '../../src/entities/Ghost.js';
 import { directions, gameConfig } from '../../src/config/gameConfig.js';
 import { TILE_TYPES } from '../../src/utils/MazeLayout.js';
+import { msToSeconds } from '../../src/utils/Time.js';
 import { createMockScene, createMockMaze } from '../utils/testHelpers.js';
 
 describe('Single Entity Movement Integration', () => {
@@ -26,7 +27,7 @@ describe('Single Entity Movement Integration', () => {
             const initialY = pacman.y;
 
             pacman.setDirection(directions.RIGHT);
-            pacman.update(16.67, mockMaze);
+            pacman.update(msToSeconds(16.67), mockMaze);
 
             expect(pacman.x).toBeGreaterThan(initialX);
             expect(pacman.y).toBe(initialY);
@@ -36,14 +37,14 @@ describe('Single Entity Movement Integration', () => {
             pacman.setDirection(directions.RIGHT);
             const initialY = pacman.y;
 
-            pacman.update(16.67, mockMaze);
+            pacman.update(msToSeconds(16.67), mockMaze);
             pacman.setDirection(directions.DOWN);
-            pacman.update(16.67, mockMaze);
-            pacman.update(16.67, mockMaze);
-            pacman.update(16.67, mockMaze);
-            pacman.update(16.67, mockMaze);
-            pacman.update(16.67, mockMaze);
-            pacman.update(16.67, mockMaze);
+            pacman.update(msToSeconds(16.67), mockMaze);
+            pacman.update(msToSeconds(16.67), mockMaze);
+            pacman.update(msToSeconds(16.67), mockMaze);
+            pacman.update(msToSeconds(16.67), mockMaze);
+            pacman.update(msToSeconds(16.67), mockMaze);
+            pacman.update(msToSeconds(16.67), mockMaze);
 
             expect(pacman.direction).toBe(directions.DOWN);
             expect(pacman.y).toBeGreaterThan(initialY);
@@ -54,7 +55,7 @@ describe('Single Entity Movement Integration', () => {
             pacman.nextDirection = directions.LEFT;
 
             const initialX = pacman.x;
-            pacman.update(16.67, mockMaze);
+            pacman.update(msToSeconds(16.67), mockMaze);
 
             expect(pacman.direction).toBe(directions.LEFT);
             expect(pacman.x).toBeLessThan(initialX);
@@ -65,7 +66,7 @@ describe('Single Entity Movement Integration', () => {
             pacman.setDirection(directions.LEFT);
 
             const initialX = pacman.x;
-            pacman.update(1000, mockMaze);
+            pacman.update(msToSeconds(1000), mockMaze);
 
             expect(pacman.x).toBeLessThan(initialX);
             expect(pacman.x).toBeGreaterThan(gameConfig.tileSize);
@@ -77,7 +78,7 @@ describe('Single Entity Movement Integration', () => {
             pacman.direction = directions.RIGHT;
 
             const initialX = pacman.x;
-            pacman.update(16.67, surroundedMaze);
+            pacman.update(msToSeconds(16.67), surroundedMaze);
 
             expect(pacman.x).toBe(initialX);
             expect(pacman.isMoving).toBe(false);
@@ -98,7 +99,7 @@ describe('Single Entity Movement Integration', () => {
             const initialX = ghost.x;
             const initialY = ghost.y;
 
-            ghost.update(16.67, mockMaze, mockPacman);
+            ghost.update(msToSeconds(16.67), mockMaze, mockPacman);
 
             expect(ghost.x).toBeGreaterThan(initialX);
             expect(ghost.y).toBe(initialY);
@@ -108,13 +109,13 @@ describe('Single Entity Movement Integration', () => {
             ghost.setDirection(directions.DOWN);
             const initialY = ghost.y;
 
-            ghost.update(16.67, mockMaze, mockPacman);
-            ghost.update(16.67, mockMaze, mockPacman);
-            ghost.update(16.67, mockMaze, mockPacman);
-            ghost.update(16.67, mockMaze, mockPacman);
-            ghost.update(16.67, mockMaze, mockPacman);
-            ghost.update(16.67, mockMaze, mockPacman);
-            ghost.update(16.67, mockMaze, mockPacman);
+            ghost.update(msToSeconds(16.67), mockMaze, mockPacman);
+            ghost.update(msToSeconds(16.67), mockMaze, mockPacman);
+            ghost.update(msToSeconds(16.67), mockMaze, mockPacman);
+            ghost.update(msToSeconds(16.67), mockMaze, mockPacman);
+            ghost.update(msToSeconds(16.67), mockMaze, mockPacman);
+            ghost.update(msToSeconds(16.67), mockMaze, mockPacman);
+            ghost.update(msToSeconds(16.67), mockMaze, mockPacman);
 
             expect(ghost.y).not.toBe(initialY);
         });
@@ -124,7 +125,7 @@ describe('Single Entity Movement Integration', () => {
             ghost.setDirection(directions.LEFT);
 
             const initialX = ghost.x;
-            ghost.update(1000, mockMaze, mockPacman);
+            ghost.update(msToSeconds(1000), mockMaze, mockPacman);
 
             expect(ghost.x).toBeLessThan(initialX);
             expect(ghost.x).toBeGreaterThan(gameConfig.tileSize);

@@ -3,6 +3,7 @@ import Ghost from '../../src/entities/Ghost.js';
 import { GhostAISystem } from '../../src/systems/GhostAISystem.js';
 import { directions, gameConfig } from '../../src/config/gameConfig.js';
 import { TILE_TYPES } from '../../src/utils/MazeLayout.js';
+import { msToSeconds } from '../../src/utils/Time.js';
 import { createMockScene, createMockMaze, measureTime } from '../utils/testHelpers.js';
 
 describe('Concurrent Movement Integration', () => {
@@ -34,8 +35,8 @@ describe('Concurrent Movement Integration', () => {
             const initialPacmanX = pacman.x;
             const initialGhostX = ghosts[0].x;
 
-            pacman.update(16.67, mockMaze);
-            ghosts[0].update(16.67, mockMaze, pacman);
+            pacman.update(msToSeconds(16.67), mockMaze);
+            ghosts[0].update(msToSeconds(16.67), mockMaze, pacman);
 
             expect(pacman.x).toBeDefined();
             expect(ghosts[0].x).toBeDefined();
@@ -57,8 +58,8 @@ describe('Concurrent Movement Integration', () => {
             pacman.setDirection(directions.DOWN);
             ghosts[0].setDirection(directions.UP);
 
-            pacman.update(16.67, mockMaze);
-            ghosts[0].update(16.67, mockMaze, pacman);
+            pacman.update(msToSeconds(16.67), mockMaze);
+            ghosts[0].update(msToSeconds(16.67), mockMaze, pacman);
 
             expect(pacman.direction).toBe(directions.DOWN);
             expect(ghosts[0].direction).toBe(directions.UP);
@@ -69,7 +70,7 @@ describe('Concurrent Movement Integration', () => {
         test('all ghosts update without errors', () => {
             expect(() => {
                 for (let i = 0; i < 10; i++) {
-                    ghosts.forEach(g => g.update(16.67, mockMaze, pacman));
+                    ghosts.forEach(g => g.update(msToSeconds(16.67), mockMaze, pacman));
                 }
             }).not.toThrow();
         });
@@ -81,7 +82,7 @@ describe('Concurrent Movement Integration', () => {
                 direction: g.direction
             }));
 
-            ghosts.forEach(g => g.update(16.67, mockMaze, pacman));
+            ghosts.forEach(g => g.update(msToSeconds(16.67), mockMaze, pacman));
 
             expect(states.length).toBe(4);
             states.forEach(state => {
@@ -119,7 +120,7 @@ describe('Concurrent Movement Integration', () => {
                 expect(g.y).toBe(ghosts[0].y);
             });
 
-            ghosts.forEach(g => g.update(16.67, mockMaze, pacman));
+            ghosts.forEach(g => g.update(msToSeconds(16.67), mockMaze, pacman));
 
             ghosts.forEach(g => {
                 expect(g.x).toBeDefined();
@@ -131,7 +132,7 @@ describe('Concurrent Movement Integration', () => {
             const initialX = ghosts.map(g => g.x);
             const initialY = ghosts.map(g => g.y);
 
-            ghosts.forEach(g => g.update(16.67, mockMaze, pacman));
+            ghosts.forEach(g => g.update(msToSeconds(16.67), mockMaze, pacman));
 
             ghosts.forEach((g, idx) => {
                 expect(g.x).toBeDefined();
@@ -193,8 +194,8 @@ describe('Concurrent Movement Integration', () => {
     describe('Complex concurrent scenarios', () => {
         test('all entities update at same time', () => {
             expect(() => {
-                pacman.update(16.67, mockMaze);
-                ghosts.forEach(g => g.update(16.67, mockMaze, pacman));
+                pacman.update(msToSeconds(16.67), mockMaze);
+                ghosts.forEach(g => g.update(msToSeconds(16.67), mockMaze, pacman));
             }).not.toThrow();
         });
 
@@ -219,8 +220,8 @@ describe('Concurrent Movement Integration', () => {
 
             expect(() => {
                 for (let i = 0; i < tunnelWidth * 2; i++) {
-                    pacman.update(16.67, tunnelMaze);
-                    ghosts.forEach(g => g.update(16.67, tunnelMaze, pacman));
+                    pacman.update(msToSeconds(16.67), tunnelMaze);
+                    ghosts.forEach(g => g.update(msToSeconds(16.67), tunnelMaze, pacman));
                 }
             }).not.toThrow();
         });

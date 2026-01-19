@@ -1,5 +1,6 @@
 import Pacman from '../../src/entities/Pacman.js';
 import { gameConfig, directions, levelConfig } from '../../src/config/gameConfig.js';
+import { msToSeconds } from '../../src/utils/Time.js';
 import { createMockScene, createSimpleMaze } from '../utils/testHelpers.js';
 
 describe('Pacman - Bug Fixes', () => {
@@ -21,25 +22,25 @@ describe('Pacman - Bug Fixes', () => {
             pacman.direction = directions.RIGHT;
             pacman.speed = 100;
 
-            const delta = 100;
-            const moveStep = pacman.speed * (delta / 1000);
+            const deltaSeconds = msToSeconds(100);
+            const moveStep = pacman.speed * deltaSeconds;
 
-            pacman.update(delta, maze);
+            pacman.update(deltaSeconds, maze);
 
             expect(pacman.gridX).toBe(5);
         });
 
         test('does not update grid when distance is not less than moveStep', () => {
             const speed = 150;
-            const delta = 16;
-            const moveStep = speed * (delta / 1000);
+            const deltaSeconds = msToSeconds(16);
+            const moveStep = speed * deltaSeconds;
 
             pacman.x = 100;
             pacman.y = 100;
             pacman.speed = speed;
             pacman.direction = directions.RIGHT;
 
-            pacman.update(delta, maze);
+            pacman.update(deltaSeconds, maze);
 
             const gridPos = { x: Math.floor(pacman.x / gameConfig.tileSize), y: Math.floor(pacman.y / gameConfig.tileSize) };
             const centerPixel = { x: gridPos.x * gameConfig.tileSize + gameConfig.tileSize / 2, y: gridPos.y * gameConfig.tileSize + gameConfig.tileSize / 2 };
@@ -55,10 +56,10 @@ describe('Pacman - Bug Fixes', () => {
             pacman.nextDirection = directions.UP;
             pacman.speed = 120;
 
-            const delta = 16;
+            const deltaSeconds = msToSeconds(16);
             const oldDirection = { ...pacman.direction };
 
-            pacman.update(delta, maze);
+            pacman.update(deltaSeconds, maze);
 
             expect(pacman.direction).toEqual(oldDirection);
         });
@@ -79,7 +80,7 @@ describe('Pacman - Bug Fixes', () => {
             pacman.nextDirection = directions.NONE;
             pacman.isMoving = true;
 
-            pacman.update(100, maze);
+            pacman.update(msToSeconds(100), maze);
 
             expect(pacman.x).toBeLessThan(70);
         });
@@ -98,7 +99,7 @@ describe('Pacman - Bug Fixes', () => {
             pacman.nextDirection = directions.NONE;
             pacman.isMoving = true;
 
-            pacman.update(100, maze);
+            pacman.update(msToSeconds(100), maze);
 
             expect(pacman.x).toBeGreaterThan(30);
         });
@@ -117,7 +118,7 @@ describe('Pacman - Bug Fixes', () => {
             pacman.nextDirection = directions.NONE;
             pacman.isMoving = true;
 
-            pacman.update(100, maze);
+            pacman.update(msToSeconds(100), maze);
 
             expect(pacman.y).toBeGreaterThan(30);
         });
@@ -136,7 +137,7 @@ describe('Pacman - Bug Fixes', () => {
             pacman.nextDirection = directions.NONE;
             pacman.isMoving = true;
 
-            pacman.update(100, maze);
+            pacman.update(msToSeconds(100), maze);
 
             expect(pacman.y).toBeLessThan(70);
         });
@@ -150,8 +151,8 @@ describe('Pacman - Bug Fixes', () => {
             pacman.nextDirection = directions.UP;
             pacman.isMoving = true;
 
-            const delta = 10;
-            pacman.update(delta, maze);
+            const deltaSeconds = msToSeconds(10);
+            pacman.update(deltaSeconds, maze);
 
             expect(pacman.direction).toBe(directions.RIGHT);
         });
@@ -169,7 +170,7 @@ describe('Pacman - Bug Fixes', () => {
             maze[5][6] = 0;
             maze[4][5] = 0;
 
-            pacman.update(20, maze);
+            pacman.update(msToSeconds(20), maze);
 
             expect(pacman.direction).toBe(directions.UP);
         });
@@ -185,7 +186,7 @@ describe('Pacman - Bug Fixes', () => {
             maze[5][6] = 0;
             maze[4][5] = 1;
 
-            pacman.update(20, maze);
+            pacman.update(msToSeconds(20), maze);
 
             expect(pacman.direction).toBe(directions.RIGHT);
         });
@@ -241,8 +242,8 @@ describe('Pacman - Bug Fixes', () => {
             pacman.direction = directions.RIGHT;
             pacman.isMoving = true;
 
-            const delta = 16;
-            pacman.update(delta, maze);
+            const deltaSeconds = msToSeconds(16);
+            pacman.update(deltaSeconds, maze);
 
             expect(pacman.x).toBeLessThan(101);
         });
@@ -254,8 +255,8 @@ describe('Pacman - Bug Fixes', () => {
             pacman.direction = directions.RIGHT;
             pacman.isMoving = true;
 
-            const delta = 16;
-            pacman.update(delta, maze);
+            const deltaSeconds = msToSeconds(16);
+            pacman.update(deltaSeconds, maze);
 
             expect(pacman.x).toBeGreaterThan(90);
         });

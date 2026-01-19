@@ -167,7 +167,7 @@ export default class Fruit extends Phaser.GameObjects.Sprite {
         this.setScale(0);
     }
 
-    activate(duration = 10000) {
+    activate(duration = fruitConfig.duration) {
         this.active = true;
         this.timer = duration;
         this.setVisible(true);
@@ -211,10 +211,10 @@ export default class Fruit extends Phaser.GameObjects.Sprite {
         });
     }
 
-    update(delta) {
+    update(deltaSeconds) {
         if (!this.active) {return false;}
 
-        this.timer -= delta;
+        this.timer -= deltaSeconds;
 
         if (this.timer <= 0) {
             this.deactivate();

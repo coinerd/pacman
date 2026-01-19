@@ -2,6 +2,7 @@ import Pacman from '../../src/entities/Pacman.js';
 import Ghost from '../../src/entities/Ghost.js';
 import { directions, gameConfig } from '../../src/config/gameConfig.js';
 import { TILE_TYPES } from '../../src/utils/MazeLayout.js';
+import { msToSeconds } from '../../src/utils/Time.js';
 import { createMockScene, createMockMaze } from '../utils/testHelpers.js';
 
 /**
@@ -29,7 +30,7 @@ describe('Movement Fuzz Tests', () => {
             for (let i = 0; i < frameCount; i++) {
                 const randomDir = directionsArray[Math.floor(Math.random() * directionsArray.length)];
                 pacman.setDirection(randomDir);
-                pacman.update(16.67, mockMaze);
+                pacman.update(msToSeconds(16.67), mockMaze);
 
                 positions.push({ x: pacman.x, y: pacman.y });
             }
@@ -57,7 +58,7 @@ describe('Movement Fuzz Tests', () => {
             for (let i = 0; i < frameCount; i++) {
                 const randomDir = directionsArray[Math.floor(Math.random() * directionsArray.length)];
                 ghost.direction = randomDir;
-                ghost.update(16.67, mockMaze, pacman);
+                ghost.update(msToSeconds(16.67), mockMaze, pacman);
 
                 positions.push({ x: ghost.x, y: ghost.y });
             }
@@ -84,7 +85,7 @@ describe('Movement Fuzz Tests', () => {
             for (let i = 0; i < 500; i++) {
                 pacman.speed = Math.random() * 300 + 50; ;
                 pacman.setDirection(directions.RIGHT);
-                pacman.update(16.67, mockMaze);
+                pacman.update(msToSeconds(16.67), mockMaze);
 
                 expect(Number.isFinite(pacman.x)).toBe(true);
                 expect(Number.isFinite(pacman.y)).toBe(true);
@@ -101,8 +102,8 @@ describe('Movement Fuzz Tests', () => {
 
             expect(() => {
                 for (let i = 0; i < 100; i++) {
-                    pacman.update(16.67, mockMaze);
-                    ghost.update(16.67, mockMaze, pacman);
+                    pacman.update(msToSeconds(16.67), mockMaze);
+                    ghost.update(msToSeconds(16.67), mockMaze, pacman);
                 }
             }).not.toThrow();
         });
@@ -115,7 +116,7 @@ describe('Movement Fuzz Tests', () => {
 
             expect(() => {
                 for (let i = 0; i < 100; i++) {
-                    pacman.update(16.67, mockMaze);
+                    pacman.update(msToSeconds(16.67), mockMaze);
                 }
             }).not.toThrow();
         });
@@ -178,8 +179,8 @@ describe('Movement Fuzz Tests', () => {
 
             expect(() => {
                 for (let i = 0; i < frameCount; i++) {
-                    pacman.update(16.67, mockMaze);
-                    ghosts.forEach(g => g.update(16.67, mockMaze, pacman));
+                    pacman.update(msToSeconds(16.67), mockMaze);
+                    ghosts.forEach(g => g.update(msToSeconds(16.67), mockMaze, pacman));
 
                     positions.push({
                         pacman: { x: pacman.x, y: pacman.y },
@@ -208,7 +209,7 @@ describe('Movement Fuzz Tests', () => {
             let stuckInWall = false;
 
             for (let i = 0; i < frameCount; i++) {
-                pacman.update(16.67, mockMaze);
+                pacman.update(msToSeconds(16.67), mockMaze);
 
                 ;
                 const gridX = Math.floor(pacman.x / gameConfig.tileSize);
@@ -233,7 +234,7 @@ describe('Movement Fuzz Tests', () => {
 
             expect(() => {
                 for (let i = 0; i < 5000; i++) {
-                    pacman.update(16.67, tunnelMaze);
+                    pacman.update(msToSeconds(16.67), tunnelMaze);
                 }
             }).not.toThrow();
 
@@ -256,8 +257,8 @@ describe('Movement Fuzz Tests', () => {
             const frameCount = 500;
 
             for (let i = 0; i < frameCount; i++) {
-                pacman.update(16.67, mockMaze);
-                ghosts.forEach(g => g.update(16.67, mockMaze, pacman));
+                pacman.update(msToSeconds(16.67), mockMaze);
+                ghosts.forEach(g => g.update(msToSeconds(16.67), mockMaze, pacman));
             }
 
             const elapsedTime = Date.now() - startTime;
@@ -279,8 +280,8 @@ describe('Movement Fuzz Tests', () => {
 
             ;
             for (let i = 0; i < 5000; i++) {
-                pacman.update(16.67, mockMaze);
-                ghosts.forEach(g => g.update(16.67, mockMaze, pacman));
+                pacman.update(msToSeconds(16.67), mockMaze);
+                ghosts.forEach(g => g.update(msToSeconds(16.67), mockMaze, pacman));
             }
 
             ;
@@ -297,7 +298,7 @@ describe('Movement Fuzz Tests', () => {
             for (let i = 0; i < 1000; i++) {
                 const randomDir = directionsArray[Math.floor(Math.random() * directionsArray.length)];
                 pacman.setDirection(randomDir);
-                pacman.update(1, mockMaze); ;
+                pacman.update(msToSeconds(1), mockMaze); ;
             }
 
             expect(Number.isFinite(pacman.x)).toBe(true);
@@ -330,8 +331,8 @@ describe('Movement Fuzz Tests', () => {
                     g.isEaten = Math.random() > 0.9;
                 });
 
-                pacman.update(16.67, mockMaze);
-                ghosts.forEach(g => g.update(16.67, mockMaze, pacman));
+                pacman.update(msToSeconds(16.67), mockMaze);
+                ghosts.forEach(g => g.update(msToSeconds(16.67), mockMaze, pacman));
             }
 
             expect(Number.isFinite(pacman.x)).toBe(true);

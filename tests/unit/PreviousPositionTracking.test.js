@@ -16,6 +16,7 @@ import Pacman from '../../src/entities/Pacman.js';
 import Ghost from '../../src/entities/Ghost.js';
 import { gameConfig, directions, ghostColors, ghostNames } from '../../src/config/gameConfig.js';
 import { tileCenter } from '../../src/utils/TileMovement.js';
+import { msToSeconds } from '../../src/utils/Time.js';
 import { createMockScene, createSimpleMaze } from '../utils/testHelpers.js';
 
 describe('Previous Position Tracking - Initialization', () => {
@@ -79,7 +80,7 @@ describe('Previous Position Tracking - prevX/prevY Updates on Movement', () => {
         pacman.direction = directions.RIGHT;
         pacman.isMoving = true;
 
-        pacman.update(100, maze);
+        pacman.update(msToSeconds(100), maze);
 
         expect(pacman.prevX).toBe(initialX);
         expect(pacman.prevY).toBe(initialY);
@@ -93,7 +94,7 @@ describe('Previous Position Tracking - prevX/prevY Updates on Movement', () => {
         pacman.direction = directions.LEFT;
         pacman.isMoving = true;
 
-        pacman.update(100, maze);
+        pacman.update(msToSeconds(100), maze);
 
         expect(pacman.prevX).toBe(initialX);
         expect(pacman.prevY).toBe(initialY);
@@ -107,7 +108,7 @@ describe('Previous Position Tracking - prevX/prevY Updates on Movement', () => {
         pacman.direction = directions.UP;
         pacman.isMoving = true;
 
-        pacman.update(100, maze);
+        pacman.update(msToSeconds(100), maze);
 
         expect(pacman.prevX).toBe(initialX);
         expect(pacman.prevY).toBe(initialY);
@@ -121,7 +122,7 @@ describe('Previous Position Tracking - prevX/prevY Updates on Movement', () => {
         pacman.direction = directions.DOWN;
         pacman.isMoving = true;
 
-        pacman.update(100, maze);
+        pacman.update(msToSeconds(100), maze);
 
         expect(pacman.prevX).toBe(initialX);
         expect(pacman.prevY).toBe(initialY);
@@ -137,7 +138,7 @@ describe('Previous Position Tracking - prevX/prevY Updates on Movement', () => {
             pacman.direction = directions.RIGHT;
             pacman.isMoving = true;
 
-            pacman.update(50, maze);
+            pacman.update(msToSeconds(50), maze);
 
             expect(pacman.prevX).toBe(positions[i].x);
             expect(pacman.prevY).toBe(positions[i].y);
@@ -151,14 +152,14 @@ describe('Previous Position Tracking - prevX/prevY Updates on Movement', () => {
         pacman.direction = directions.RIGHT;
         pacman.isMoving = true;
 
-        pacman.update(100, maze);
+        pacman.update(msToSeconds(100), maze);
 
         const afterFirstPrevX = pacman.prevX;
         const afterFirstPrevY = pacman.prevY;
         const afterFirstX = pacman.x;
         const afterFirstY = pacman.y;
 
-        pacman.update(100, maze);
+        pacman.update(msToSeconds(100), maze);
 
         expect(pacman.prevX).toBe(afterFirstX);
         expect(pacman.prevY).toBe(afterFirstY);
@@ -189,7 +190,7 @@ describe('Previous Position Tracking - prevGridX/prevGridY Updates on Tile Cross
         pacman.x = center.x;
         pacman.y = center.y;
 
-        pacman.update(100, maze);
+        pacman.update(msToSeconds(100), maze);
 
         expect(pacman.prevGridX).toBe(initialGridX);
     });
@@ -204,7 +205,7 @@ describe('Previous Position Tracking - prevGridX/prevGridY Updates on Tile Cross
         pacman.x = center.x;
         pacman.y = center.y;
 
-        pacman.update(100, maze);
+        pacman.update(msToSeconds(100), maze);
 
         expect(pacman.prevGridY).toBe(initialGridY);
     });
@@ -221,7 +222,7 @@ describe('Previous Position Tracking - prevGridX/prevGridY Updates on Tile Cross
         pacman.direction = directions.RIGHT;
         pacman.isMoving = true;
 
-        pacman.update(10, maze);
+        pacman.update(msToSeconds(10), maze);
 
         expect(pacman.gridX).toBe(5);
         expect(pacman.gridY).toBe(5);
@@ -240,7 +241,7 @@ describe('Previous Position Tracking - prevGridX/prevGridY Updates on Tile Cross
         pacman.x = center.x;
         pacman.y = center.y;
 
-        pacman.update(100, maze);
+        pacman.update(msToSeconds(100), maze);
 
         expect(pacman.prevGridX).toBe(5);
         expect(pacman.prevGridY).toBe(5);
@@ -267,7 +268,7 @@ describe('Previous Position Tracking - Zero Speed and Stopped Entities', () => {
         const initialX = pacman.x;
         const initialY = pacman.y;
 
-        pacman.update(100, maze);
+        pacman.update(msToSeconds(100), maze);
 
         expect(pacman.prevX).toBe(initialX);
         expect(pacman.prevY).toBe(initialY);
@@ -283,7 +284,7 @@ describe('Previous Position Tracking - Zero Speed and Stopped Entities', () => {
         const initialX = pacman.x;
         const initialY = pacman.y;
 
-        pacman.update(100, maze);
+        pacman.update(msToSeconds(100), maze);
 
         expect(pacman.prevX).toBe(initialX);
         expect(pacman.prevY).toBe(initialY);
@@ -305,7 +306,7 @@ describe('Previous Position Tracking - Zero Speed and Stopped Entities', () => {
         const initialPrevGridX = pacman.prevGridX;
         const initialPrevGridY = pacman.prevGridY;
 
-        pacman.update(500, maze);
+        pacman.update(msToSeconds(500), maze);
 
         expect(pacman.prevGridX).toBe(initialPrevGridX);
         expect(pacman.prevGridY).toBe(initialPrevGridY);
@@ -331,13 +332,13 @@ describe('Previous Position Tracking - Direction Changes', () => {
         pacman.direction = directions.RIGHT;
         pacman.isMoving = true;
 
-        pacman.update(50, maze);
+        pacman.update(msToSeconds(50), maze);
 
         const afterFirstUpdateX = pacman.x;
         const afterFirstUpdateY = pacman.y;
 
         pacman.setDirection(directions.UP);
-        pacman.update(50, maze);
+        pacman.update(msToSeconds(50), maze);
 
         expect(pacman.prevX).toBe(afterFirstUpdateX);
         expect(pacman.prevY).toBe(afterFirstUpdateY);
@@ -347,13 +348,13 @@ describe('Previous Position Tracking - Direction Changes', () => {
         pacman.direction = directions.RIGHT;
         pacman.isMoving = true;
 
-        pacman.update(50, maze);
+        pacman.update(msToSeconds(50), maze);
 
         const afterFirstUpdateX = pacman.x;
         const afterFirstUpdateY = pacman.y;
 
         pacman.setDirection(directions.LEFT);
-        pacman.update(50, maze);
+        pacman.update(msToSeconds(50), maze);
 
         expect(pacman.prevX).toBe(afterFirstUpdateX);
         expect(pacman.prevY).toBe(afterFirstUpdateY);
@@ -366,13 +367,13 @@ describe('Previous Position Tracking - Direction Changes', () => {
         pacman.direction = directions.RIGHT;
         pacman.isMoving = true;
 
-        pacman.update(10, maze);
+        pacman.update(msToSeconds(10), maze);
 
         const initialPrevGridX = pacman.prevGridX;
         const initialPrevGridY = pacman.prevGridY;
 
         pacman.setDirection(directions.UP);
-        pacman.update(20, maze);
+        pacman.update(msToSeconds(20), maze);
 
         expect(pacman.prevGridX).toBe(initialPrevGridX);
         expect(pacman.prevGridY).toBe(initialPrevGridY);
@@ -399,7 +400,7 @@ describe('Previous Position Tracking - Edge Cases', () => {
         pacman.isMoving = true;
         pacman.speed = 1;
 
-        pacman.update(10, maze);
+        pacman.update(msToSeconds(10), maze);
 
         expect(pacman.prevX).toBe(initialX);
         expect(pacman.prevY).toBe(initialY);
@@ -412,7 +413,7 @@ describe('Previous Position Tracking - Edge Cases', () => {
         pacman.direction = directions.RIGHT;
         pacman.isMoving = true;
 
-        pacman.update(1000, maze);
+        pacman.update(msToSeconds(1000), maze);
 
         expect(pacman.prevX).toBe(initialX);
         expect(pacman.prevY).toBe(initialY);
@@ -423,7 +424,7 @@ describe('Previous Position Tracking - Edge Cases', () => {
         pacman.direction = directions.RIGHT;
         pacman.isMoving = true;
 
-        pacman.update(100, maze);
+        pacman.update(msToSeconds(100), maze);
 
         expect(pacman.prevX).toBeDefined();
         expect(pacman.prevY).toBeDefined();
@@ -442,7 +443,7 @@ describe('Previous Position Tracking - Edge Cases', () => {
             const currentX = pacman.x;
             const currentY = pacman.y;
 
-            pacman.update(50, maze);
+            pacman.update(msToSeconds(50), maze);
 
             expect(pacman.prevX).toBe(currentX);
             expect(pacman.prevY).toBe(currentY);

@@ -27,7 +27,7 @@ export class GameFlowController {
     /**
      * Handle power pellet eaten event
      * @param {number} score - Score to add
-     * @param {number} duration - Frightened duration in ms
+     * @param {number} duration - Frightened duration in seconds
      */
     handlePowerPelletEaten(score, duration) {
         this.gameState.score += score;

@@ -41,6 +41,7 @@ import { ReplaySystem } from '../systems/ReplaySystem.js';
 import { PacmanAI } from '../systems/PacmanAI.js';
 import { FixedTimeStepLoop } from '../systems/FixedTimeStepLoop.js';
 import { gameEvents, GAME_EVENTS } from '../core/EventBus.js';
+import { msToSeconds } from '../utils/Time.js';
 
 export default class GameScene extends Phaser.Scene {
     constructor() {
@@ -324,7 +325,9 @@ export default class GameScene extends Phaser.Scene {
             return;
         }
 
-        if (this.deathHandler.update(delta)) {
+        const deltaInSeconds = msToSeconds(delta);
+
+        if (this.deathHandler.update(deltaInSeconds)) {
             return;
         }
 
@@ -334,8 +337,16 @@ export default class GameScene extends Phaser.Scene {
             this.inputController.handleInput();
         }
 
-        const deltaInSeconds = delta / 1000;
         this.fixedTimeStepLoop.update(deltaInSeconds);
+
+        if (this.debugOverlay.visible) {
+            this.debugOverlay.updateDebugInfo({
+                'Frame dt': `${deltaInSeconds.toFixed(4)}s`,
+                'Fixed dt': `${physicsConfig.FIXED_DT.toFixed(4)}s`,
+                'Steps': this.fixedTimeStepLoop.getLastStepCount(),
+                'Accumulator': `${this.fixedTimeStepLoop.getAccumulator().toFixed(4)}s`
+            });
+        }
 
         this.uiController.update();
         this.debugOverlay.update(time, delta);
@@ -346,17 +357,17 @@ export default class GameScene extends Phaser.Scene {
      * All physics and game logic updates happen here
      */
     fixedUpdate() {
-        const delta = physicsConfig.FIXED_DT * 1000;
-        this.pacman.update(delta, this.maze);
+        const deltaSeconds = physicsConfig.FIXED_DT;
+        this.pacman.update(deltaSeconds, this.maze);
 
         for (const ghost of this.ghosts) {
-            ghost.update(delta, this.maze, this.pacman);
+            ghost.update(deltaSeconds, this.maze, this.pacman);
         }
 
-        this.ghostAISystem.update(delta, this.maze, this.pacman);
+        this.ghostAISystem.update(deltaSeconds, this.maze, this.pacman);
         this.handleCollisions();
-        this.updateFruit(delta);
-        this.replaySystem.update(delta);
+        this.updateFruit(deltaSeconds);
+        this.replaySystem.update(deltaSeconds);
     }
 
     /**

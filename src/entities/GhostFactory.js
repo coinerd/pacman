@@ -71,7 +71,7 @@ export class GhostFactory {
      * - Reduces ghost speed by 50%
      *
      * @param {Ghost[]} ghosts - Array of ghost entities to frighten
-     * @param {number} duration - Duration of frightened state in milliseconds
+     * @param {number} duration - Duration of frightened state in seconds
      */
     static setGhostsFrightened(ghosts, duration) {
         for (const ghost of ghosts) {
