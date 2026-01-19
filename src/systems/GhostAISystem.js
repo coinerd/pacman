@@ -1,4 +1,4 @@
-import { ghostModes, directions, scatterTargets } from '../config/gameConfig.js';
+import { ghostModes, directions, scatterTargets, getOpposite } from '../config/gameConfig.js';
 import { getDistance, getValidDirections } from '../utils/MazeLayout.js';
 
 /**
@@ -50,8 +50,9 @@ export class GhostAISystem {
             if (!ghost.isFrightened && !ghost.isEaten) {
                 if (ghost.mode !== this.globalMode) {
                     ghost.mode = this.globalMode;
-                    // Ghosts reverse direction when the mode changes
-                    ghost.direction = this.getReverseDirection(ghost.direction);
+                    // Ghosts reverse direction when mode changes
+                    const opposite = getOpposite(ghost.direction);
+                    ghost.setDirection(opposite);
                 }
             }
             this.updateGhostTarget(ghost, pacman);
@@ -65,7 +66,9 @@ export class GhostAISystem {
      */
     updateGlobalMode(delta) {
         const currentCycle = this.cycles[this.cycleIndex];
-        if (currentCycle.duration === -1) {return;}
+        if (currentCycle.duration === -1) {
+            return;
+        }
 
         this.globalModeTimer += delta;
 
@@ -216,12 +219,12 @@ export class GhostAISystem {
         const validDirs = getValidDirections(maze, ghost.gridX, ghost.gridY);
 
         if (validDirs.length === 0) {
-            ghost.nextDirection = directions.NONE;
+            ghost.setDirection(directions.NONE);
             return;
         }
 
         if (validDirs.length === 1) {
-            ghost.nextDirection = validDirs[0];
+            ghost.setDirection(validDirs[0]);
             return;
         }
 
@@ -241,7 +244,7 @@ export class GhostAISystem {
         if (ghost.isFrightened) {
             // Frightened ghosts choose pseudorandomly at intersections
             const randomIndex = Math.floor(Math.random() * filteredDirs.length);
-            ghost.nextDirection = filteredDirs[randomIndex];
+            ghost.setDirection(filteredDirs[randomIndex]);
         } else {
             // Intersection decision: choose the direction that minimizes distance to target
             let bestDir = filteredDirs[0];
@@ -258,13 +261,7 @@ export class GhostAISystem {
                 }
             }
 
-            ghost.nextDirection = bestDir;
-        }
-
-        // Apply direction immediately if ghost is not moving
-        if (ghost.direction === directions.NONE && ghost.nextDirection !== directions.NONE) {
-            ghost.direction = ghost.nextDirection;
-            ghost.nextDirection = directions.NONE;
+            ghost.setDirection(bestDir);
         }
     }
 

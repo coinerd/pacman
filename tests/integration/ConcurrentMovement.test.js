@@ -54,14 +54,14 @@ describe('Concurrent Movement Integration', () => {
         });
 
         test('direction changes processed concurrently', () => {
-            pacman.nextDirection = directions.DOWN;
-            ghosts[0].nextDirection = directions.UP;
+            pacman.setDirection(directions.DOWN);
+            ghosts[0].setDirection(directions.UP);
 
             pacman.update(16.67, mockMaze);
             ghosts[0].update(16.67, mockMaze, pacman);
 
-            expect(pacman.nextDirection).toBe(directions.NONE);
-            expect(ghosts[0].nextDirection).toBe(directions.NONE);
+            expect(pacman.direction).toBe(directions.DOWN);
+            expect(ghosts[0].direction).toBe(directions.UP);
         });
     });
 

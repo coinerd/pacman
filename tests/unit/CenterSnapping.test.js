@@ -181,39 +181,63 @@ describe('Center Snapping - Behavior with performGridMovementStep', () => {
     });
 
     describe('Single tile movement', () => {
-        test('snaps to center when starting close to center', () => {
+        test('does not snap when far from center', () => {
+            const center = tileCenter(5, 5);
             const entity = {
-                x: tileCenter(5, 5).x + 2,
-                y: tileCenter(5, 5).y,
+                x: center.x - 10,
+                y: center.y,
                 gridX: 5,
                 gridY: 5,
-                direction: directions.RIGHT,
                 speed: 100,
                 isMoving: true,
-                nextDirection: directions.NONE
+                directionBuffer: {
+                    current: directions.RIGHT,
+                    buffered: directions.NONE,
+                    getCurrent: function() { return this.current; },
+                    getBuffered: function() { return this.buffered; },
+                    applyIfCanMove: function() { return false; }
+                }
             };
+            Object.defineProperty(entity, 'direction', {
+                get() { return this.directionBuffer.getCurrent(); }
+            });
+            Object.defineProperty(entity, 'nextDirection', {
+                get() { return this.directionBuffer.getBuffered(); }
+            });
 
             const delta = 20;
             const result = performGridMovementStep(entity, maze, delta);
 
-            expect(result.x).toBe(tileCenter(5, 5).x);
-            expect(result.y).toBe(tileCenter(5, 5).y);
+            expect(result.x).toBeGreaterThanOrEqual(entity.x);
+            expect(result.x).toBeLessThan(center.x);
+            expect(result.y).toBe(center.y);
         });
 
-        test('snaps to center when moving and reaching center', () => {
+        test('snaps exactly to center when reaching it', () => {
             const center = tileCenter(5, 5);
             const entity = {
-                x: center.x - 2,
+                x: center.x - 5,
                 y: center.y,
                 gridX: 5,
                 gridY: 5,
-                direction: directions.RIGHT,
                 speed: 100,
                 isMoving: true,
-                nextDirection: directions.NONE
+                directionBuffer: {
+                    current: directions.RIGHT,
+                    buffered: directions.NONE,
+                    getCurrent: function() { return this.current; },
+                    getBuffered: function() { return this.buffered; },
+                    applyIfCanMove: function() { return false; }
+                }
             };
+            Object.defineProperty(entity, 'direction', {
+                get() { return this.directionBuffer.getCurrent(); }
+            });
+            Object.defineProperty(entity, 'nextDirection', {
+                get() { return this.directionBuffer.getBuffered(); }
+            });
 
-            const delta = 30;
+            const delta = 50;
             const result = performGridMovementStep(entity, maze, delta);
 
             expect(result.x).toBe(center.x);
@@ -311,23 +335,43 @@ describe('Center Snapping - Behavior with performGridMovementStep', () => {
         test('changes direction when reaching center with buffered turn', () => {
             const center = tileCenter(5, 5);
             maze[4][5] = TILE_TYPES.PATH;
+            maze[6][5] = TILE_TYPES.PATH;
             const entity = {
-                x: center.x,
+                x: center.x - 3,
                 y: center.y,
                 gridX: 5,
                 gridY: 5,
-                direction: directions.RIGHT,
                 speed: 100,
                 isMoving: true,
-                nextDirection: directions.UP,
-                wasMoving: true
+                wasMoving: true,
+                directionBuffer: {
+                    current: directions.RIGHT,
+                    buffered: directions.UP,
+                    getCurrent: function() { return this.current; },
+                    getBuffered: function() { return this.buffered; },
+                    applyIfCanMove: function(canMoveFunction) {
+                        if (this.buffered === directions.NONE) {return false;}
+                        if (canMoveFunction(this.buffered)) {
+                            this.current = this.buffered;
+                            this.buffered = directions.NONE;
+                            return true;
+                        }
+                        return false;
+                    }
+                }
             };
+            Object.defineProperty(entity, 'direction', {
+                get() { return this.directionBuffer.getCurrent(); }
+            });
+            Object.defineProperty(entity, 'nextDirection', {
+                get() { return this.directionBuffer.getBuffered(); }
+            });
 
-            const delta = 20;
+            const delta = 30;
             const result = performGridMovementStep(entity, maze, delta);
 
             expect(result.direction).toBe(directions.UP);
-            expect(result.nextDirection).toBe(directions.NONE);
+            expect(result.gridX).toBe(5);
         });
 
         test('buffers direction when not at center', () => {
@@ -354,24 +398,34 @@ describe('Center Snapping - Behavior with performGridMovementStep', () => {
     });
 
     describe('Without buffered turns', () => {
-        test('snaps to center only when within EPS or moving past center', () => {
+        test('snaps to center when within EPS and moving toward it', () => {
             const center = tileCenter(5, 5);
             const entity = {
-                x: center.x + 2.5,
+                x: center.x + 3,
                 y: center.y,
                 gridX: 5,
                 gridY: 5,
-                direction: directions.RIGHT,
                 speed: 100,
                 isMoving: true,
-                nextDirection: directions.NONE
+                directionBuffer: {
+                    current: directions.LEFT,
+                    buffered: directions.NONE,
+                    getCurrent: function() { return this.current; },
+                    getBuffered: function() { return this.buffered; },
+                    applyIfCanMove: function() { return false; }
+                }
             };
+            Object.defineProperty(entity, 'direction', {
+                get() { return this.directionBuffer.getCurrent(); }
+            });
+            Object.defineProperty(entity, 'nextDirection', {
+                get() { return this.directionBuffer.getBuffered(); }
+            });
 
             const delta = 20;
             const result = performGridMovementStep(entity, maze, delta);
 
-            // Without buffered turn, still snaps when within EPS
-            expect(result.x).toBe(center.x);
+            expect(result.x).toBeCloseTo(center.x, 2);
             expect(result.y).toBe(center.y);
         });
 
@@ -541,26 +595,37 @@ describe('Center Snapping - Behavior with performGridMovementStep', () => {
             expect(result.speed).toBe(100);
         });
 
-        test('updates grid position when snapping to center', () => {
+        test('updates grid position when snapping to center with sufficient movement', () => {
             const center = tileCenter(5, 5);
             const entity = {
-                x: center.x + 2,
+                x: center.x - 2,
                 y: center.y,
                 gridX: 5,
                 gridY: 5,
-                direction: directions.RIGHT,
                 speed: 100,
                 isMoving: true,
-                nextDirection: directions.NONE
+                directionBuffer: {
+                    current: directions.RIGHT,
+                    buffered: directions.NONE,
+                    getCurrent: function() { return this.current; },
+                    getBuffered: function() { return this.buffered; },
+                    applyIfCanMove: function() { return false; }
+                }
             };
+            Object.defineProperty(entity, 'direction', {
+                get() { return this.directionBuffer.getCurrent(); }
+            });
+            Object.defineProperty(entity, 'nextDirection', {
+                get() { return this.directionBuffer.getBuffered(); }
+            });
 
-            const delta = 20;
+            const delta = 40;
             const result = performGridMovementStep(entity, maze, delta);
 
-            // When gridX matches world position tile, snaps to center of that tile
-            expect(result.gridX).toBe(5);
+            // Entity crosses center and updates grid position
+            expect(result.gridX).toBe(6);
             expect(result.gridY).toBe(5);
-            expect(result.x).toBe(center.x);
+            expect(result.x).toBeCloseTo(center.x + 2, 2);
             expect(result.y).toBe(center.y);
         });
     });

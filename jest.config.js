@@ -4,6 +4,10 @@ export default {
   testMatch: [
     '<rootDir>/tests/**/*.test.{js,jsx}'
   ],
+  // FIX: Add timeout to prevent infinite hanging
+  testTimeout: 10000,
+  // FIX: Add bail mode to stop after first failure
+  bail: false,
   collectCoverageFrom: [
     'src/**/*.{js,jsx}'
   ],

@@ -131,7 +131,7 @@ describe('Multi Entity Collision Integration', () => {
             ghosts[0].x = ghosts[0].prevX + gameConfig.tileSize * 2;
             ghosts[0].y = pacman.y - 5;
 
-            const result = collisionSystem.checkCrossedPathCollision(pacman, ghosts[0]);
+            const result = collisionSystem.checkGhostCollision();
 
             expect(result).not.toBeNull();
             expect(result.type).toBe('pacman_died');
@@ -146,7 +146,7 @@ describe('Multi Entity Collision Integration', () => {
             ghosts[0].x = pacman.x - 5;
             ghosts[0].y = ghosts[0].prevY + gameConfig.tileSize * 2;
 
-            const result = collisionSystem.checkCrossedPathCollision(pacman, ghosts[0]);
+            const result = collisionSystem.checkGhostCollision();
 
             expect(result).not.toBeNull();
             expect(result.type).toBe('pacman_died');
@@ -162,7 +162,7 @@ describe('Multi Entity Collision Integration', () => {
             ghosts[0].x = ghosts[0].prevX + gameConfig.tileSize * 2;
             ghosts[0].y = pacman.y - 5;
 
-            const result = collisionSystem.checkCrossedPathCollision(pacman, ghosts[0]);
+            const result = collisionSystem.checkGhostCollision();
 
             expect(result).not.toBeNull();
             expect(result.type).toBe('ghost_eaten');
@@ -178,7 +178,7 @@ describe('Multi Entity Collision Integration', () => {
             ghosts[0].x = ghosts[0].prevX + gameConfig.tileSize;
             ghosts[0].y = pacman.y;
 
-            const result = collisionSystem.checkCrossedPathCollision(pacman, ghosts[0]);
+            const result = collisionSystem.checkGhostCollision();
 
             expect(result).toBeNull();
         });
@@ -192,7 +192,7 @@ describe('Multi Entity Collision Integration', () => {
             ghosts[0].prevX = ghosts[0].x;
             ghosts[0].prevY = ghosts[0].y;
 
-            const result = collisionSystem.checkCrossedPathCollision(pacman, ghosts[0]);
+            const result = collisionSystem.checkGhostCollision();
 
             expect(result).not.toBeNull();
             expect(result.type).toBe('pacman_died');
@@ -203,7 +203,7 @@ describe('Multi Entity Collision Integration', () => {
             ghosts[0].x = pacman.x + gameConfig.tileSize;
             ghosts[0].y = pacman.y;
 
-            const result = collisionSystem.checkCrossedPathCollision(pacman, ghosts[0]);
+            const result = collisionSystem.checkGhostCollision();
 
             expect(result).not.toBeNull();
             expect(result.type).toBe('pacman_died');

@@ -48,14 +48,17 @@ export function isAllDirectionsBlocked(maze, tileX, tileY) {
 }
 
 export function handleBufferedTurn(entity, maze) {
-    if (entity.nextDirection && (entity.nextDirection.x !== 0 || entity.nextDirection.y !== 0)) {
-        const nextGridX = entity.gridX + entity.nextDirection.x;
-        const nextGridY = entity.gridY + entity.nextDirection.y;
-        if (!isWall(maze, nextGridX, nextGridY)) {
-            entity.direction = entity.nextDirection;
-            entity.nextDirection = directions.NONE;
-            entity.isMoving = true;
-        }
+    if (!entity.directionBuffer) {
+        return false;
+    }
+
+    const applied = entity.directionBuffer.applyIfCanMove((dir) => {
+        const nextGridX = entity.gridX + dir.x;
+        const nextGridY = entity.gridY + dir.y;
+        return !isWall(maze, nextGridX, nextGridY);
+    });
+    if (applied) {
+        entity.isMoving = true;
     }
 }
 

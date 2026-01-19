@@ -11,22 +11,27 @@ export default class Pacman extends BaseEntity {
         this.speed = baseLevelSpeed * levelConfig.pacmanSpeedMultiplier;
         this.baseSpeed = this.speed;
 
-        this.nextDirection = directions.NONE;
-
         this.mouthAngle = 0;
         this.mouthDirection = 1;
         this.mouthSpeed = animationConfig.pacmanMouthSpeed;
         this.maxMouthAngle = 30;
 
         this.isDying = false;
-        this.direction = directions.UP;
     }
 
     makeDecisionAtIntersection(maze) {
-        if (this.nextDirection !== directions.NONE && this.canMoveInDirection(this.nextDirection, maze)) {
-            this.direction = this.nextDirection;
-            this.nextDirection = directions.NONE;
+        if (this.direction === directions.NONE) {
+            this.isMoving = false;
+            const rotation = this.direction.angle;
+            this.setStartAngle(rotation + this.mouthAngle);
+            this.setEndAngle(rotation + 360 - this.mouthAngle);
+            return;
         }
+
+        this.directionBuffer.applyIfCanMove((dir) => {
+            return this.canMoveInDirection(dir, maze);
+        });
+        this.isMoving = this.direction !== directions.NONE;
 
         const rotation = this.direction.angle;
         this.setStartAngle(rotation + this.mouthAngle);
@@ -89,7 +94,6 @@ export default class Pacman extends BaseEntity {
 
     resetPosition(gridX, gridY) {
         super.resetPosition(gridX, gridY);
-        this.nextDirection = directions.NONE;
         this.isDying = false;
         this.mouthAngle = 0;
         this.mouthDirection = 1;
@@ -100,19 +104,8 @@ export default class Pacman extends BaseEntity {
     }
 
     setDirection(direction) {
-        if (!direction || direction === directions.NONE) {return;}
-
-        if (this.direction !== directions.NONE) {
-            if ((direction.x !== 0 && direction.x === -this.direction.x) ||
-          (direction.y !== 0 && direction.y === -this.direction.y)) {
-                this.direction = direction;
-                this.nextDirection = directions.NONE;
-                this.isMoving = true;
-                return;
-            }
-        }
-
-        this.nextDirection = direction;
+        this.directionBuffer.queue(direction);
+        this.isMoving = direction !== directions.NONE;
     }
 
     setSpeedMultiplier(multiplier) {

@@ -32,3 +32,14 @@ coverage/
 # Temporary files
 *.tmp
 .cache/
+.git-credentials
+.opencode/
+AGENTS.md
+ARCHITECTURAL_CHANGES*.md
+SIMPLIFY*.md
+test-*.js
+trace_test.mjs
+*.mjs
+FIX_MOVEMENT.md
+MOVEMENT_BUG_ANALYSIS.md
+REGRESSION_REPORT.md

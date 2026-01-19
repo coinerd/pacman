@@ -25,6 +25,7 @@ describe('Single Entity Movement Integration', () => {
             const initialX = pacman.x;
             const initialY = pacman.y;
 
+            pacman.setDirection(directions.RIGHT);
             pacman.update(16.67, mockMaze);
 
             expect(pacman.x).toBeGreaterThan(initialX);
@@ -32,9 +33,15 @@ describe('Single Entity Movement Integration', () => {
         });
 
         test('90-degree turn at intersection', () => {
+            pacman.setDirection(directions.RIGHT);
             const initialY = pacman.y;
 
-            pacman.nextDirection = directions.DOWN;
+            pacman.update(16.67, mockMaze);
+            pacman.setDirection(directions.DOWN);
+            pacman.update(16.67, mockMaze);
+            pacman.update(16.67, mockMaze);
+            pacman.update(16.67, mockMaze);
+            pacman.update(16.67, mockMaze);
             pacman.update(16.67, mockMaze);
             pacman.update(16.67, mockMaze);
 
@@ -54,8 +61,8 @@ describe('Single Entity Movement Integration', () => {
         });
 
         test('wall collision stops movement', () => {
-            pacman = new Pacman(mockScene, 1, 3);
-            pacman.direction = directions.LEFT;
+            pacman = new Pacman(mockScene, 2, 3);
+            pacman.setDirection(directions.LEFT);
 
             const initialX = pacman.x;
             pacman.update(1000, mockMaze);
@@ -83,8 +90,8 @@ describe('Single Entity Movement Integration', () => {
 
         beforeEach(() => {
             ghost = new Ghost(mockScene, 3, 3, 'blinky', 0xFF0000);
-            ghost.direction = directions.RIGHT;
-            mockPacman = { x: 100, y: 100, gridX: 5, gridY: 5 };
+            ghost.setDirection(directions.RIGHT);
+            mockPacman = { x: 100, y: 100, gridX: 5, gridY: 5, prevX: 100, prevY: 100 };
         });
 
         test('straight line movement', () => {
@@ -98,8 +105,14 @@ describe('Single Entity Movement Integration', () => {
         });
 
         test('90-degree turn at intersection', () => {
+            ghost.setDirection(directions.DOWN);
             const initialY = ghost.y;
 
+            ghost.update(16.67, mockMaze, mockPacman);
+            ghost.update(16.67, mockMaze, mockPacman);
+            ghost.update(16.67, mockMaze, mockPacman);
+            ghost.update(16.67, mockMaze, mockPacman);
+            ghost.update(16.67, mockMaze, mockPacman);
             ghost.update(16.67, mockMaze, mockPacman);
             ghost.update(16.67, mockMaze, mockPacman);
 
@@ -107,8 +120,8 @@ describe('Single Entity Movement Integration', () => {
         });
 
         test('wall collision stops movement', () => {
-            ghost = new Ghost(mockScene, 1, 3, 'blinky', 0xFF0000);
-            ghost.direction = directions.LEFT;
+            ghost = new Ghost(mockScene, 2, 3, 'blinky', 0xFF0000);
+            ghost.setDirection(directions.LEFT);
 
             const initialX = ghost.x;
             ghost.update(1000, mockMaze, mockPacman);

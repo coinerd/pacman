@@ -106,12 +106,12 @@ describe('Ghost Entity', () => {
 
         test('calculates move step based on speed and delta', () => {
             ghost.direction = directions.RIGHT;
-            ghost.speed = 100;
+            ghost.baseSpeed = 100;
             const delta = 100;
             const expectedMove = 100 * (100 / 1000);
             const initialX = ghost.x;
             ghost.moveGhost(delta, maze, createMockPacman());
-            // Ghost is at gridY 14 (tunnel row), so tunnel speed multiplier (0.4) is applied
+            // Ghost is at gridY 14 (tunnel row), so tunnel speed modifier (0.4) is applied
             const expectedMoveWithTunnel = 100 * 0.4 * (100 / 1000);
             expect(ghost.x - initialX).toBeCloseTo(expectedMoveWithTunnel, 1);
         });
@@ -166,11 +166,11 @@ describe('Ghost Entity', () => {
             ghost.isFrightened = true;
             ghost.isBlinking = true;
             ghost.frightenedTimer = 100;
-            ghost.speed = 50;
             ghost.updateFrightened(100);
             expect(ghost.isFrightened).toBe(false);
             expect(ghost.isBlinking).toBe(false);
             expect(ghost.speed).toBe(ghost.baseSpeed);
+            expect(ghost.speedModifier).toBe(1.0);
         });
     });
 
@@ -333,10 +333,14 @@ describe('Ghost Entity', () => {
         });
 
         test('resets speed to baseSpeed', () => {
-            ghost.speed = 200;
             ghost.baseSpeed = 100;
+            ghost.setSpeedMultiplier(2.0);
+            const modifiedSpeed = ghost.speed;
             ghost.reset();
-            expect(ghost.speed).toBe(100);
+            expect(ghost.speed).toBe(ghost.baseSpeed);
+            expect(ghost.speedMultiplier).toBe(1.0);
+            expect(ghost.speedModifier).toBe(1.0);
+            expect(ghost.speed).toBe(modifiedSpeed / 2.0);
         });
 
         test('resets mode to SCATTER', () => {
@@ -357,6 +361,20 @@ describe('Ghost Entity', () => {
             ghost.baseSpeed = 80;
             ghost.setSpeedMultiplier(2.0);
             expect(ghost.speed).toBe(160);
+        });
+
+        test('speed multiplier preserved after frightened state', () => {
+            ghost.speedMultiplier = 2.0;
+            const expectedSpeed = ghost.baseSpeed * 2.0;
+
+            ghost.setFrightened(5000);
+            expect(ghost.speed).toBe(expectedSpeed * 0.5);
+            expect(ghost.speedModifier).toBe(0.5);
+
+            ghost.updateFrightened(6000);
+            expect(ghost.speed).toBe(expectedSpeed);
+            expect(ghost.speedMultiplier).toBe(2.0);
+            expect(ghost.speedModifier).toBe(1.0);
         });
     });
 

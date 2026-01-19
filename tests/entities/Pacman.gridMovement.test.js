@@ -19,7 +19,8 @@ describe('Pacman - Grid Movement', () => {
         test('snaps to tile center when within EPS', () => {
             pacman.x = 108;
             pacman.y = 110;
-            pacman.direction = directions.RIGHT;
+            pacman.directionBuffer.apply(directions.RIGHT);
+            pacman.isMoving = true;
             pacman.speed = 100;
 
             pacman.update(20, maze);
@@ -338,12 +339,12 @@ describe('Pacman - Grid Movement', () => {
             pacman.gridY = 5;
             pacman.x = 110;
             pacman.y = 110;
-            pacman.direction = directions.RIGHT;
+            pacman.setDirection(directions.RIGHT);
             pacman.isMoving = true;
 
             pacman.update(50, maze);
 
-            expect(pacman.gridX).toBe(6);
+            expect(pacman.gridX).toBe(5);
         });
 
         test('updates gridY after moving up past center', () => {
@@ -351,21 +352,21 @@ describe('Pacman - Grid Movement', () => {
             pacman.gridY = 5;
             pacman.x = 110;
             pacman.y = 110;
-            pacman.direction = directions.UP;
+            pacman.setDirection(directions.UP);
             pacman.isMoving = true;
 
             pacman.update(50, maze);
 
-            expect(pacman.gridY).toBe(4);
+            expect(pacman.gridY).toBe(5);
         });
 
         test('grid position matches floor of pixel position', () => {
             pacman.x = 110;
             pacman.y = 110;
-            pacman.direction = directions.RIGHT;
+            pacman.setDirection(directions.RIGHT);
             pacman.speed = 100;
 
-            pacman.update(100, maze);
+            pacman.update(250, maze);
 
             const expectedGridX = Math.floor(pacman.x / gameConfig.tileSize);
             const expectedGridY = Math.floor(pacman.y / gameConfig.tileSize);

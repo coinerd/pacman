@@ -25,10 +25,10 @@ export function isMovingTowardCenter(entity, dxToCenter, dyToCenter) {
 }
 
 export function crossesCenter(distToCenter, movingTowardCenter, moveDist, EPS) {
-    return movingTowardCenter && (
-        (distToCenter === 0 && moveDist > EPS)
-        || (distToCenter > 0 && distToCenter <= (moveDist + EPS))
-    );
+    if (distToCenter === 0) {
+        return false;
+    }
+    return movingTowardCenter && distToCenter <= (moveDist + EPS);
 }
 
 export function calculateCenterInfo(entity, center) {
@@ -56,17 +56,24 @@ export function updatePreviousGridPosition(entity, currentTile) {
 }
 
 export function snapToCenter(entity, currentTile, center, distToCenter, remainingDist, moveDist, inBounds, maze) {
+    const centerInfoBeforeSnap = calculateCenterInfo(entity, center);
+    const startedAtCenter = distToCenter === 0;
+
     snapEntityToCenter(entity, center);
     updatePreviousGridPosition(entity, currentTile);
 
     entity.gridX = currentTile.x;
     entity.gridY = currentTile.y;
 
-    const { movingTowardCenter } = calculateCenterInfo(entity, center);
-    const crossCenter = crossesCenter(distToCenter, movingTowardCenter, moveDist, EPS);
+    const crossCenter = crossesCenter(distToCenter, centerInfoBeforeSnap.movingTowardCenter, moveDist, EPS);
     const hasBufTurn = entity.nextDirection && (entity.nextDirection.x !== 0 || entity.nextDirection.y !== 0);
 
-    if (crossCenter && !hasBufTurn && inBounds) {
+    const distUsedToCenter = distToCenter > 0 ? distToCenter : 0;
+    const newRemainingDist = calculateRemainingDist(0, remainingDist - distUsedToCenter, moveDist, EPS, entity);
+
+    const willCrossFromCenter = startedAtCenter && newRemainingDist > (gameConfig.tileSize / 2) && (entity.direction.x !== 0 || entity.direction.y !== 0);
+
+    if ((crossCenter || willCrossFromCenter) && !hasBufTurn && inBounds) {
         const nextGridX = currentTile.x + entity.direction.x;
         const nextGridY = currentTile.y + entity.direction.y;
         if (!isWallMaze(maze, nextGridX, nextGridY)) {
@@ -76,8 +83,6 @@ export function snapToCenter(entity, currentTile, center, distToCenter, remainin
     }
 
     handleBufferedTurn(entity, maze);
-
-    const newRemainingDist = calculateRemainingDist(distToCenter, remainingDist, moveDist, EPS, entity);
 
     return {
         entity,
@@ -96,7 +101,10 @@ export function shouldSnapToCenter(entity, center, distToCenter, remainingDist, 
         (distToCenter < gameConfig.tileSize * 0.35 && remainingDist >= gameConfig.tileSize * 0.1)
     );
 
-    return distToCenter <= EPS || willCrossCenter || snapWithBufferedTurn;
+    const snapWhenNearCenter = movingTowardCenter && (distToCenter <= EPS && distToCenter > 0);
+    const snapAtCenter = (distToCenter === 0 && movingTowardCenter);
+
+    return distToCenter <= EPS || willCrossCenter || snapWithBufferedTurn || snapWhenNearCenter || snapAtCenter;
 }
 
 export function handleSnapToCenter(entity, maze, currentTile, center, crossCenter, hasBufTurn, inBounds, moveDist, EPS, buildMovementStep, distToCenterFunc, onCenterCross) {
@@ -128,5 +136,6 @@ export function handleSnapToCenter(entity, maze, currentTile, center, crossCente
     }
 
     const result = buildMovementStep(entity, maze, remainingDist, center, 0, inBounds, { x: entity.gridX, y: entity.gridY });
-    return result.entity;
+    Object.assign(entity, result.entity);
+    return entity;
 }

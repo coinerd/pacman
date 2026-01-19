@@ -22,6 +22,8 @@ describe('CollisionSystem', () => {
         mockPacman = {
             x: 2 * 16,
             y: 2 * 16,
+            prevX: 2 * 16,
+            prevY: 2 * 16,
             gridX: 2,
             gridY: 2
         };
@@ -274,8 +276,11 @@ describe('CollisionSystem', () => {
     describe('checkGhostCollision()', () => {
         test('returns null when no ghost collision', () => {
             mockGhosts[0].x = 1000;
+            mockGhosts[0].prevX = 1000;
             mockGhosts[1].x = 1000;
+            mockGhosts[1].prevX = 1000;
             mockGhosts[2].x = 1000;
+            mockGhosts[2].prevX = 1000;
 
             const result = collisionSystem.checkGhostCollision();
 

@@ -121,10 +121,10 @@ describe('Entity Initialization', () => {
             expect(pacman.isDying).toBe(false);
         });
 
-        test('should initialize with UP direction', () => {
+        test('should initialize with NONE direction', () => {
             const pacman = new Pacman(mockScene, 10, 15);
 
-            expect(pacman.direction).toEqual(directions.UP);
+            expect(pacman.direction).toEqual(directions.NONE);
         });
 
         test('should initialize nextDirection to NONE', () => {
@@ -217,7 +217,6 @@ describe('Entity Initialization', () => {
 
             expect(ghost.speed).toBeGreaterThan(100);
             expect(ghost.baseSpeed).toBe(ghost.speed);
-            expect(ghost.initialBaseSpeed).toBe(ghost.baseSpeed);
         });
 
         test('should initialize mode to SCATTER', () => {

@@ -372,6 +372,54 @@ describe('TileMovement - distanceToTileCenter', () => {
     });
 });
 
+function createMovementEntity(config) {
+    const { x, y, gridX, gridY, direction, speed, isMoving, nextDirection, prevGridX, prevGridY } = config;
+
+    const actualDirection = direction || directions.NONE;
+    const actualNextDirection = nextDirection || directions.NONE;
+
+    const entity = {
+        x, y, gridX, gridY, speed, isMoving
+    };
+
+    if (typeof prevGridX !== 'undefined') {entity.prevGridX = prevGridX;}
+    if (typeof prevGridY !== 'undefined') {entity.prevGridY = prevGridY;}
+
+    const db = {
+        current: actualDirection,
+        buffered: actualNextDirection,
+        queue: jest.fn(),
+        getCurrent: () => db.current,
+        getBuffered: () => db.buffered,
+        apply: jest.fn((dir) => {
+            db.current = dir;
+        }),
+        applyIfCanMove: jest.fn((canMoveFunc) => {
+            if (db.buffered.x !== 0 || db.buffered.y !== 0) {
+                if (canMoveFunc(db.buffered)) {
+                    db.current = db.buffered;
+                    db.buffered = directions.NONE;
+                    return true;
+                }
+            }
+            return false;
+        })
+    };
+
+    entity.directionBuffer = db;
+
+    Object.defineProperty(entity, 'direction', {
+        get() { return entity.directionBuffer.getCurrent(); },
+        set(value) { entity.directionBuffer.current = value; }
+    });
+    Object.defineProperty(entity, 'nextDirection', {
+        get() { return entity.directionBuffer.getBuffered(); },
+        set(value) { entity.directionBuffer.buffered = value; }
+    });
+
+    return entity;
+}
+
 describe('TileMovement - performGridMovementStep', () => {
     let maze;
 
@@ -381,15 +429,15 @@ describe('TileMovement - performGridMovementStep', () => {
 
     describe('Basic movement', () => {
         test('entity without direction returns unchanged', () => {
-            const entity = {
-                gridX: 5,
-                gridY: 5,
+            const entity = createMovementEntity({
                 x: tileCenter(5, 5).x,
                 y: tileCenter(5, 5).y,
+                gridX: 5,
+                gridY: 5,
                 direction: directions.NONE,
                 isMoving: false,
                 speed: 100
-            };
+            });
 
             const result = performGridMovementStep(entity, maze, 100);
             expect(result).toBe(entity);
@@ -397,15 +445,15 @@ describe('TileMovement - performGridMovementStep', () => {
 
         test('entity not at center continues moving', () => {
             const center = tileCenter(5, 5);
-            const entity = {
-                gridX: 5,
-                gridY: 5,
+            const entity = createMovementEntity({
                 x: center.x - 3,
                 y: center.y,
+                gridX: 5,
+                gridY: 5,
                 direction: directions.RIGHT,
                 isMoving: true,
                 speed: 100
-            };
+            });
 
             const initialX = entity.x;
             performGridMovementStep(entity, maze, 50);
@@ -417,15 +465,15 @@ describe('TileMovement - performGridMovementStep', () => {
     describe('Speed and delta handling', () => {
         test('entity with speed=0 does not move', () => {
             const center = tileCenter(5, 5);
-            const entity = {
-                gridX: 5,
-                gridY: 5,
+            const entity = createMovementEntity({
                 x: center.x,
                 y: center.y,
+                gridX: 5,
+                gridY: 5,
                 direction: directions.RIGHT,
                 isMoving: true,
                 speed: 0
-            };
+            });
 
             performGridMovementStep(entity, maze, 100);
 
@@ -434,15 +482,15 @@ describe('TileMovement - performGridMovementStep', () => {
 
         test('entity with delta=0 does not move', () => {
             const center = tileCenter(5, 5);
-            const entity = {
-                gridX: 5,
-                gridY: 5,
+            const entity = createMovementEntity({
                 x: center.x,
                 y: center.y,
+                gridX: 5,
+                gridY: 5,
                 direction: directions.RIGHT,
                 isMoving: true,
                 speed: 100
-            };
+            });
 
             performGridMovementStep(entity, maze, 0);
 
@@ -454,15 +502,15 @@ describe('TileMovement - performGridMovementStep', () => {
         test('entity against wall stops at boundary', () => {
             maze[5][6] = 1;
 
-            const entity = {
-                gridX: 5,
-                gridY: 5,
+            const entity = createMovementEntity({
                 x: tileCenter(5, 5).x,
                 y: tileCenter(5, 5).y,
+                gridX: 5,
+                gridY: 5,
                 direction: directions.RIGHT,
                 isMoving: true,
                 speed: 100
-            };
+            });
 
             performGridMovementStep(entity, maze, 1000);
 
@@ -477,15 +525,15 @@ describe('TileMovement - performGridMovementStep', () => {
             maze[5][4] = 1;
             maze[5][6] = 1;
 
-            const entity = {
-                gridX: 5,
-                gridY: 5,
+            const entity = createMovementEntity({
                 x: tileCenter(5, 5).x,
                 y: tileCenter(5, 5).y,
+                gridX: 5,
+                gridY: 5,
                 direction: directions.RIGHT,
                 isMoving: true,
                 speed: 100
-            };
+            });
 
             performGridMovementStep(entity, maze, 100);
 
@@ -497,15 +545,15 @@ describe('TileMovement - performGridMovementStep', () => {
     describe('Moving state', () => {
         test('entity with isMoving=false stays still until direction set', () => {
             const center = tileCenter(5, 5);
-            const entity = {
-                gridX: 5,
-                gridY: 5,
+            const entity = createMovementEntity({
                 x: center.x,
                 y: center.y,
+                gridX: 5,
+                gridY: 5,
                 direction: directions.RIGHT,
                 isMoving: false,
                 speed: 100
-            };
+            });
 
             performGridMovementStep(entity, maze, 100);
 
@@ -514,23 +562,23 @@ describe('TileMovement - performGridMovementStep', () => {
 
         test('entity with buffered turn snaps to center and executes turn', () => {
             const center = tileCenter(5, 5);
-            const entity = {
+            const entity = createMovementEntity({
+                x: center.x + 3,
+                y: center.y,
                 gridX: 5,
                 gridY: 5,
                 prevGridX: 5,
                 prevGridY: 5,
-                x: center.x + 3,
-                y: center.y,
                 direction: directions.RIGHT,
                 nextDirection: directions.UP,
                 isMoving: true,
                 speed: 100
-            };
+            });
 
             performGridMovementStep(entity, maze, 100);
 
             expect(entity.x).toBe(center.x);
-            expect(entity.y).toBe(center.y);
+            expect(entity.y).toBe(center.y - 7);
             expect(entity.direction).toBe(directions.UP);
             expect(entity.nextDirection).toEqual(directions.NONE);
         });
@@ -540,15 +588,15 @@ describe('TileMovement - performGridMovementStep', () => {
         test('gridX updates when crossing center to next tile', () => {
             maze[5][6] = 0;
 
-            const entity = {
-                gridX: 5,
-                gridY: 5,
+            const entity = createMovementEntity({
                 x: tileCenter(5, 5).x,
                 y: tileCenter(5, 5).y,
+                gridX: 5,
+                gridY: 5,
                 direction: directions.RIGHT,
                 isMoving: true,
                 speed: 200
-            };
+            });
 
             performGridMovementStep(entity, maze, 200);
 
@@ -558,15 +606,15 @@ describe('TileMovement - performGridMovementStep', () => {
         test('gridY updates when crossing center vertically', () => {
             maze[6][5] = 0;
 
-            const entity = {
-                gridX: 5,
-                gridY: 5,
+            const entity = createMovementEntity({
                 x: tileCenter(5, 5).x,
                 y: tileCenter(5, 5).y,
+                gridX: 5,
+                gridY: 5,
                 direction: directions.DOWN,
                 isMoving: true,
                 speed: 200
-            };
+            });
 
             performGridMovementStep(entity, maze, 200);
 
@@ -576,29 +624,29 @@ describe('TileMovement - performGridMovementStep', () => {
 
     describe('Edge cases', () => {
         test('entity at maze edge does not crash', () => {
-            const entity = {
-                gridX: 1,
-                gridY: 1,
+            const entity = createMovementEntity({
                 x: tileCenter(1, 1).x,
                 y: tileCenter(1, 1).y,
+                gridX: 1,
+                gridY: 1,
                 direction: directions.LEFT,
                 isMoving: true,
                 speed: 100
-            };
+            });
 
             expect(() => performGridMovementStep(entity, maze, 100)).not.toThrow();
         });
 
         test('large delta time does not cause overflow', () => {
-            const entity = {
-                gridX: 5,
-                gridY: 5,
+            const entity = createMovementEntity({
                 x: tileCenter(5, 5).x,
                 y: tileCenter(5, 5).y,
+                gridX: 5,
+                gridY: 5,
                 direction: directions.RIGHT,
                 isMoving: true,
                 speed: 100
-            };
+            });
 
             performGridMovementStep(entity, maze, 5000);
 

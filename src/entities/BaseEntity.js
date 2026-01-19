@@ -1,3 +1,4 @@
+import { DirectionBuffer } from '../utils/movement/DirectionBuffer.js';
 import Phaser from 'phaser';
 import { gameConfig, directions } from '../config/gameConfig.js';
 import { getCenterPixel } from '../utils/MazeLayout.js';
@@ -11,6 +12,7 @@ export class BaseEntity extends Phaser.GameObjects.Arc {
         this.scene = scene;
         this.scene.add.existing(this);
         this.setDepth(100);
+        this.directionBuffer = new DirectionBuffer();
 
         this.gridX = gridX;
         this.gridY = gridY;
@@ -18,11 +20,31 @@ export class BaseEntity extends Phaser.GameObjects.Arc {
         this.prevGridY = gridY;
         this.prevX = this.x;
         this.prevY = this.y;
-        this.direction = directions.NONE;
         this.speed = 100;
         this.isMoving = false;
         this.radius = radius;
         this.color = color;
+    }
+
+    get direction() {
+        return this.directionBuffer.getCurrent();
+    }
+
+    get nextDirection() {
+        return this.directionBuffer.getBuffered();
+    }
+
+    set direction(direction) {
+        this.directionBuffer.apply(direction);
+    }
+
+    set nextDirection(direction) {
+        this.directionBuffer.queue(direction);
+    }
+
+    setDirection(direction) {
+        this.directionBuffer.apply(direction);
+        this.isMoving = true;
     }
 
     makeDecisionAtIntersection(maze) {
@@ -66,7 +88,7 @@ export class BaseEntity extends Phaser.GameObjects.Arc {
         this.gridY = gridY;
         this.prevGridX = gridX;
         this.prevGridY = gridY;
-        this.direction = directions.NONE;
+        this.directionBuffer.reset();
         this.isMoving = false;
         const pixel = getCenterPixel(gridX, gridY);
         this.x = pixel.x;

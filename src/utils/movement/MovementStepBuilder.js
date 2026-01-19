@@ -2,7 +2,7 @@ import { directions, gameConfig } from '../../config/gameConfig.js';
 import { isWall, isAllDirectionsBlocked, calculateBoundary } from './WallCollisionHandler.js';
 import { tileCenter, EPS } from '../TileMath.js';
 
-export function buildMovementStep(entity, maze, moveDist, center, distToCenter, inBounds, currentTile) {
+export function buildMovementStep(entity, maze, moveDist, center, distToCenter, inBounds, currentTile, depthLimit = 10) {
     if (!entity.isMoving || (entity.direction.x === 0 && entity.direction.y === 0)) {
         return { entity, remainingDist: 0 };
     }
@@ -22,7 +22,8 @@ export function buildMovementStep(entity, maze, moveDist, center, distToCenter, 
         return handleWallCollision(entity, maze, currentTile, center, boundary, distToCenter, remainingDist, inBounds);
     }
 
-    return handleOpenPath(entity, maze, nextTile, center, remainingDist);
+    // FIX: Pass depthLimit to handleOpenPath
+    return handleOpenPath(entity, maze, nextTile, center, remainingDist, depthLimit);
 }
 
 function handleWallCollision(entity, maze, currentTile, center, boundary, distToCenter, remainingDist, inBounds) {
@@ -54,7 +55,7 @@ function handleWallCollision(entity, maze, currentTile, center, boundary, distTo
     return { entity, remainingDist: 0 };
 }
 
-function handleOpenPath(entity, maze, nextTile, currentCenter, remainingDist) {
+function handleOpenPath(entity, maze, nextTile, currentCenter, remainingDist, depthLimit) {
     const nextCenter = tileCenter(nextTile.x, nextTile.y);
     const distToNextCenter = calculateDistanceToCenter(entity.x, entity.y, nextCenter.x, nextCenter.y);
 
@@ -65,17 +66,33 @@ function handleOpenPath(entity, maze, nextTile, currentCenter, remainingDist) {
         entity.gridX = nextTile.x;
         entity.gridY = nextTile.y;
 
+        // FIX: Check if next tile after center is wall
         const nextGridX2 = entity.gridX + entity.direction.x;
         const nextGridY2 = entity.gridY + entity.direction.y;
 
         if (isWall(maze, nextGridX2, nextGridY2)) {
+            // FIX: Update center to next tile's center before stopping
+            entity.x = nextCenter.x;
+            entity.y = nextCenter.y;
+            entity.gridX = nextTile.x;
+            entity.gridY = nextTile.y;
+
             entity.direction = directions.NONE;
             entity.isMoving = false;
             return { entity, remainingDist: 0 };
         }
 
-        entity.x += entity.direction.x * remainingDist;
-        entity.y += entity.direction.y * remainingDist;
+        const result = buildMovementStep(
+            entity,
+            maze,
+            remainingDist,
+            nextCenter,
+            0,
+            true,
+            { x: entity.gridX, y: entity.gridY },
+            depthLimit - 1
+        );
+        return result;
     } else {
         entity.x += entity.direction.x * remainingDist;
         entity.y += entity.direction.y * remainingDist;

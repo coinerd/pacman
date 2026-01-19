@@ -14,9 +14,6 @@ export function performGridMovementStep(entity, maze, delta) {
     }
 
     const wasMoving = entity.isMoving;
-    if (!entity.isMoving) {
-        entity.isMoving = true;
-    }
 
     const currentTile = { x: entity.gridX, y: entity.gridY };
     const distToCenter = distanceToTileCenter(entity.x, entity.y, currentTile.x, currentTile.y);
@@ -32,6 +29,10 @@ export function performGridMovementStep(entity, maze, delta) {
     if (shouldSnapToCenter(entity, center, distToCenter, remainingDist, moveDist, wasMoving, inBounds)) {
         const result = snapToCenter(entity, currentTile, center, distToCenter, remainingDist, moveDist, inBounds, maze);
         remainingDist = result.remainingDist;
+    }
+
+    if (entity.direction.x !== 0 || entity.direction.y !== 0) {
+        entity.isMoving = true;
     }
 
     if (!entity.isMoving || (entity.direction.x === 0 && entity.direction.y === 0)) {

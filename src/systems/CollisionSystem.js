@@ -196,128 +196,16 @@ export class CollisionSystem {
                 continue;
             }
 
-            let collisionDetected = false;
-            let method = 'unknown';
-
-            if (this.pacman.prevX !== undefined && ghost.prevX !== undefined) {
-                const pacmanMoved = (this.pacman.x !== this.pacman.prevX || this.pacman.y !== this.pacman.prevY);
-                const ghostMoved = (ghost.x !== ghost.prevX || ghost.y !== ghost.prevY);
-
-                if (pacmanMoved || ghostMoved) {
-                    method = 'crossed_path';
-                    const crossedPathResult = this.checkCrossedPathCollision(this.pacman, ghost);
-                    if (crossedPathResult) {
-                        const logData = {
-                            timestamp: new Date().toISOString(),
-                            type: 'ghost_collision_check',
-                            method: method,
-                            pacman: {
-                                x: Math.round(this.pacman.x),
-                                y: Math.round(this.pacman.y),
-                                prevX: Math.round(this.pacman.prevX),
-                                prevY: Math.round(this.pacman.prevY)
-                            },
-                            ghost: {
-                                x: Math.round(ghost.x),
-                                y: Math.round(ghost.y),
-                                prevX: Math.round(ghost.prevX),
-                                prevY: Math.round(ghost.prevY),
-                                name: ghost.name || 'Unknown',
-                                isFrightened: ghost.isFrightened
-                            },
-                            collision: true,
-                            result: crossedPathResult
-                        };
-
-                        if (this.debugLogger.enabled) {
-                            console.log(JSON.stringify(logData, null, 2));
-                        }
-
-                        return crossedPathResult;
-                    }
-                }
-
-                if (pacmanMoved && ghostMoved) {
-                    method = 'swept_aabb';
-                    collisionDetected = sweptAABBCollision(
-                        ghost.prevX, ghost.prevY, ghost.x, ghost.y,
-                        this.pacman.x, this.pacman.y,
-                        gameConfig.tileSize * 0.8
-                    ) || sweptAABBCollision(
-                        this.pacman.prevX, this.pacman.prevY, this.pacman.x, this.pacman.y,
-                        ghost.x, ghost.y,
-                        gameConfig.tileSize * 0.8
-                    );
-                } else {
-                    method = 'distance';
-                    collisionDetected = distanceCollision(
-                        this.pacman.x, this.pacman.y,
-                        ghost.x, ghost.y,
-                        gameConfig.tileSize * 0.8
-                    );
-                }
-            } else {
-                method = 'distance_initial';
-                const dist = getDistance(
-                    this.pacman.x, this.pacman.y,
-                    ghost.x, ghost.y
-                );
-
-                collisionDetected = dist < gameConfig.tileSize * 0.8;
+            if (this.checkCrossedPathCollision(this.pacman, ghost)) {
+                return this.handleGhostCollisionWithLogging(ghost, 'crossed_path');
             }
 
-            const logData = {
-                timestamp: new Date().toISOString(),
-                type: 'ghost_collision_check',
-                method: method,
-                pacman: {
-                    x: Math.round(this.pacman.x),
-                    y: Math.round(this.pacman.y),
-                    prevX: this.pacman.prevX !== undefined ? Math.round(this.pacman.prevX) : undefined,
-                    prevY: this.pacman.prevY !== undefined ? Math.round(this.pacman.prevY) : undefined
-                },
-                ghost: {
-                    x: Math.round(ghost.x),
-                    y: Math.round(ghost.y),
-                    prevX: ghost.prevX !== undefined ? Math.round(ghost.prevX) : undefined,
-                    prevY: ghost.prevY !== undefined ? Math.round(ghost.prevY) : undefined,
-                    name: ghost.name || 'Unknown',
-                    isFrightened: ghost.isFrightened
-                },
-                collision: collisionDetected
-            };
-
-            if (this.debugLogger.enabled) {
-                console.log(JSON.stringify(logData, null, 2));
+            if (this.checkSweptAABBCollision(this.pacman, ghost)) {
+                return this.handleGhostCollisionWithLogging(ghost, 'swept_aabb');
             }
 
-            if (collisionDetected) {
-                let result;
-                if (ghost.isFrightened) {
-                    ghost.eat();
-                    this.ghostsEatenCount++;
-                    const scoreIndex = Math.min(this.ghostsEatenCount - 1, scoreValues.ghost.length - 1);
-                    result = {
-                        type: 'ghost_eaten',
-                        score: scoreValues.ghost[scoreIndex]
-                    };
-                } else {
-                    result = {
-                        type: 'pacman_died',
-                        score: 0
-                    };
-                }
-
-                const collisionLogData = {
-                    ...logData,
-                    result: result
-                };
-
-                if (this.debugLogger.enabled) {
-                    console.log(JSON.stringify(collisionLogData, null, 2));
-                }
-
-                return result;
+            if (this.checkDistanceCollision(this.pacman, ghost)) {
+                return this.handleGhostCollisionWithLogging(ghost, 'distance');
             }
         }
 
@@ -328,12 +216,12 @@ export class CollisionSystem {
      * Checks if Pacman and ghost paths crossed
      * @param {Pacman} pacman - The Pacman entity
      * @param {Ghost} ghost - The ghost entity
-     * @returns {{type: string, score: number}|null} Collision result object or null if no path crossing
+     * @returns {boolean} True if paths crossed, false otherwise
      */
     checkCrossedPathCollision(pacman, ghost) {
         if (pacman.prevX === undefined || pacman.prevY === undefined ||
             ghost.prevX === undefined || ghost.prevY === undefined) {
-            return null;
+            return false;
         }
 
         const crossed = lineSegmentsIntersect(
@@ -341,157 +229,7 @@ export class CollisionSystem {
             ghost.prevX, ghost.prevY, ghost.x, ghost.y
         );
 
-        if (crossed) {
-            let result;
-            if (ghost.isFrightened) {
-                ghost.eat();
-                this.ghostsEatenCount++;
-                const scoreIndex = Math.min(this.ghostsEatenCount - 1, scoreValues.ghost.length - 1);
-                result = {
-                    type: 'ghost_eaten',
-                    score: scoreValues.ghost[scoreIndex]
-                };
-            } else {
-                result = {
-                    type: 'pacman_died',
-                    score: 0
-                };
-            }
-
-            const logData = {
-                timestamp: new Date().toISOString(),
-                type: 'ghost_collision_check',
-                method: 'crossed_path',
-                pacman: {
-                    x: Math.round(pacman.x),
-                    y: Math.round(pacman.y),
-                    prevX: Math.round(pacman.prevX),
-                    prevY: Math.round(pacman.prevY)
-                },
-                ghost: {
-                    x: Math.round(ghost.x),
-                    y: Math.round(ghost.y),
-                    prevX: Math.round(ghost.prevX),
-                    prevY: Math.round(ghost.prevY),
-                    name: ghost.name || 'Unknown',
-                    isFrightened: ghost.isFrightened
-                },
-                collision: true,
-                result: result
-            };
-
-            if (this.debugLogger.enabled) {
-                console.log(JSON.stringify(logData, null, 2));
-            }
-
-            return result;
-        }
-
-        const pacmanMoved = (pacman.x !== pacman.prevX || pacman.y !== pacman.prevY);
-        const ghostMoved = (ghost.x !== ghost.prevX || ghost.y !== ghost.prevY);
-
-        if (pacmanMoved !== ghostMoved) {
-            if (pacmanMoved && !ghostMoved) {
-                const dist = pointToLineSegmentDistance(
-                    ghost.x, ghost.y,
-                    pacman.prevX, pacman.prevY, pacman.x, pacman.y
-                );
-                if (dist < gameConfig.tileSize * 0.8) {
-                    const result = this.handleGhostCollision(ghost);
-
-                    const logData = {
-                        timestamp: new Date().toISOString(),
-                        type: 'ghost_collision_check',
-                        method: 'crossed_path_pacman_moved',
-                        pacman: {
-                            x: Math.round(pacman.x),
-                            y: Math.round(pacman.y),
-                            prevX: Math.round(pacman.prevX),
-                            prevY: Math.round(pacman.prevY)
-                        },
-                        ghost: {
-                            x: Math.round(ghost.x),
-                            y: Math.round(ghost.y),
-                            prevX: Math.round(ghost.prevX),
-                            prevY: Math.round(ghost.prevY),
-                            name: ghost.name || 'Unknown',
-                            isFrightened: ghost.isFrightened
-                        },
-                        collision: true,
-                        result: result
-                    };
-
-                    if (this.debugLogger.enabled) {
-                        console.log(JSON.stringify(logData, null, 2));
-                    }
-
-                    return result;
-                }
-            } else if (!pacmanMoved && ghostMoved) {
-                const dist = pointToLineSegmentDistance(
-                    pacman.x, pacman.y,
-                    ghost.prevX, ghost.prevY, ghost.x, ghost.y
-                );
-                if (dist < gameConfig.tileSize * 0.8) {
-                    const result = this.handleGhostCollision(ghost);
-
-                    const logData = {
-                        timestamp: new Date().toISOString(),
-                        type: 'ghost_collision_check',
-                        method: 'crossed_path_ghost_moved',
-                        pacman: {
-                            x: Math.round(pacman.x),
-                            y: Math.round(pacman.y),
-                            prevX: Math.round(pacman.prevX),
-                            prevY: Math.round(pacman.prevY)
-                        },
-                        ghost: {
-                            x: Math.round(ghost.x),
-                            y: Math.round(ghost.y),
-                            prevX: Math.round(ghost.prevX),
-                            prevY: Math.round(ghost.prevY),
-                            name: ghost.name || 'Unknown',
-                            isFrightened: ghost.isFrightened
-                        },
-                        collision: true,
-                        result: result
-                    };
-
-                    if (this.debugLogger.enabled) {
-                        console.log(JSON.stringify(logData, null, 2));
-                    }
-
-                    return result;
-                }
-            }
-        }
-
-        const logData = {
-            timestamp: new Date().toISOString(),
-            type: 'ghost_collision_check',
-            method: 'crossed_path_no_collision',
-            pacman: {
-                x: Math.round(pacman.x),
-                y: Math.round(pacman.y),
-                prevX: Math.round(pacman.prevX),
-                prevY: Math.round(pacman.prevY)
-            },
-            ghost: {
-                x: Math.round(ghost.x),
-                y: Math.round(ghost.y),
-                prevX: Math.round(ghost.prevX),
-                prevY: Math.round(ghost.prevY),
-                name: ghost.name || 'Unknown',
-                isFrightened: ghost.isFrightened
-            },
-            collision: false
-        };
-
-        if (this.debugLogger.enabled) {
-            console.log(JSON.stringify(logData, null, 2));
-        }
-
-        return null;
+        return crossed;
     }
 
     /**
@@ -532,6 +270,102 @@ export class CollisionSystem {
                 score: 0
             };
         }
+    }
+
+    /**
+     * Checks collision using distance-based methods
+     * @param {Pacman} pacman - The Pacman entity
+     * @param {Ghost} ghost - The ghost entity
+     * @returns {boolean} True if collision detected, false otherwise
+     */
+    checkDistanceCollision(pacman, ghost) {
+        const radius = gameConfig.tileSize * 0.8;
+
+        const bothPrevExist = (pacman.prevX !== undefined && ghost.prevX !== undefined);
+        const pacmanMoved = bothPrevExist &&
+            (pacman.x !== pacman.prevX || pacman.y !== pacman.prevY);
+        const ghostMoved = bothPrevExist &&
+            (ghost.x !== ghost.prevX || ghost.y !== ghost.prevY);
+
+        if (!pacmanMoved && !ghostMoved) {
+            return distanceCollision(pacman.x, pacman.y, ghost.x, ghost.y, radius);
+        }
+
+        if (pacmanMoved && ghostMoved) {
+            return distanceCollision(pacman.x, pacman.y, ghost.x, ghost.y, radius);
+        }
+
+        if (bothPrevExist) {
+            if (pacmanMoved && !ghostMoved) {
+                const dist = pointToLineSegmentDistance(
+                    ghost.x, ghost.y,
+                    pacman.prevX, pacman.prevY, pacman.x, pacman.y
+                );
+                return dist < radius;
+            } else if (!pacmanMoved && ghostMoved) {
+                const dist = pointToLineSegmentDistance(
+                    pacman.x, pacman.y,
+                    ghost.prevX, ghost.prevY, ghost.x, ghost.y
+                );
+                return dist < radius;
+            }
+        }
+
+        return distanceCollision(pacman.x, pacman.y, ghost.x, ghost.y, radius);
+    }
+
+    /**
+     * Checks collision using swept AABB method
+     * @param {Pacman} pacman - The Pacman entity
+     * @param {Ghost} ghost - The ghost entity
+     * @returns {boolean} True if collision detected, false otherwise
+     */
+    checkSweptAABBCollision(pacman, ghost) {
+        const radius = gameConfig.tileSize * 0.8;
+
+        return sweptAABBCollision(
+            ghost.prevX, ghost.prevY, ghost.x, ghost.y,
+            pacman.x, pacman.y,
+            radius
+        );
+    }
+
+    /**
+     * Handles ghost collision with debug logging
+     * @param {Ghost} ghost - The ghost entity
+     * @param {string} method - The collision method used
+     * @returns {{type: string, score: number}|null} Collision result object
+     */
+    handleGhostCollisionWithLogging(ghost, method) {
+        const result = this.handleGhostCollision(ghost);
+
+        const logData = {
+            timestamp: new Date().toISOString(),
+            type: 'ghost_collision_check',
+            method: method,
+            pacman: {
+                x: Math.round(this.pacman.x),
+                y: Math.round(this.pacman.y),
+                prevX: this.pacman.prevX !== undefined ? Math.round(this.pacman.prevX) : undefined,
+                prevY: this.pacman.prevY !== undefined ? Math.round(this.pacman.prevY) : undefined
+            },
+            ghost: {
+                x: Math.round(ghost.x),
+                y: Math.round(ghost.y),
+                prevX: ghost.prevX !== undefined ? Math.round(ghost.prevX) : undefined,
+                prevY: ghost.prevY !== undefined ? Math.round(ghost.prevY) : undefined,
+                name: ghost.name || 'Unknown',
+                isFrightened: ghost.isFrightened
+            },
+            collision: true,
+            result: result
+        };
+
+        if (this.debugLogger.enabled) {
+            console.log(JSON.stringify(logData, null, 2));
+        }
+
+        return result;
     }
 
     /**

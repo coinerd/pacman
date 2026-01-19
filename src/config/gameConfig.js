@@ -49,6 +49,15 @@ export const directions = {
     NONE: { x: 0, y: 0, angle: 0 }
 };
 
+directions.ALL = [directions.UP, directions.DOWN, directions.LEFT, directions.RIGHT];
+
+export const getOpposite = (dir) => {
+    if (!dir || dir === directions.NONE) {
+        return directions.NONE;
+    }
+    return directions.ALL.find(d => d.x === -dir.x && d.y === -dir.y);
+};
+
 export const ghostModes = {
     SCATTER: 'SCATTER',
     CHASE: 'CHASE',

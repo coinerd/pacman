@@ -113,24 +113,4 @@ export function shouldTriggerPortalTraversal(entity, moveDist, direction) {
     return false;
 }
 
-/**
- * Wrap entity around maze boundaries (legacy method)
- * This method is kept for backward compatibility
- * @param {object} entity - Entity with x, y, gridY properties
- * @returns {object} Updated entity
- */
-export function handleTunnelWrap(entity) {
-    const mazeWidth = gameConfig.mazeWidth * gameConfig.tileSize;
 
-    if (entity.gridY !== gameConfig.tunnelRow) {
-        return entity;
-    }
-
-    if (entity.x < 0) {
-        entity.x = mazeWidth;
-    } else if (entity.x > mazeWidth) {
-        entity.x = 0;
-    }
-
-    return entity;
-}

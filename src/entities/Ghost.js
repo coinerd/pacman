@@ -4,7 +4,7 @@
  */
 
 import { BaseEntity } from './BaseEntity.js';
-import { gameConfig, colors, directions, ghostModes, animationConfig, levelConfig, ghostSpeedMultipliers } from '../config/gameConfig.js';
+import { gameConfig, colors, directions, ghostModes, animationConfig, levelConfig, ghostSpeedMultipliers, getOpposite } from '../config/gameConfig.js';
 import { getCenterPixel, getValidDirections, getDistance } from '../utils/MazeLayout.js';
 import { performGridMovementStep } from '../utils/TileMovement.js';
 
@@ -29,9 +29,9 @@ export default class Ghost extends BaseEntity {
         this.startGridY = y;
 
         const baseLevelSpeed = levelConfig.baseSpeed + (scene.gameState.level - 1) * levelConfig.speedIncreasePerLevel;
-        this.speed = baseLevelSpeed * levelConfig.ghostSpeedMultiplier;
-        this.baseSpeed = this.speed;
-        this.initialBaseSpeed = this.baseSpeed;
+        this.baseSpeed = baseLevelSpeed * levelConfig.ghostSpeedMultiplier;
+        this.speedMultiplier = 1.0;
+        this.speedModifier = 1.0;
 
         this.nextDirection = directions.NONE;
 
@@ -47,7 +47,14 @@ export default class Ghost extends BaseEntity {
 
         this.houseTimer = 0;
         this.inGhostHouse = false;
-        this.direction = directions.NONE;
+    }
+
+    get speed() {
+        return this.baseSpeed * this.speedMultiplier * this.speedModifier;
+    }
+
+    set speed(value) {
+        this.baseSpeed = value;
     }
 
     /**
@@ -87,15 +94,13 @@ export default class Ghost extends BaseEntity {
     moveGhost(delta, maze, _pacman) {
         this.isMoving = this.direction !== directions.NONE;
 
-        let speed = this.speed;
+        const oldModifier = this.speedModifier;
         if (this.gridY === gameConfig.tunnelRow) {
-            speed = this.speed * ghostSpeedMultipliers.tunnel;
+            this.speedModifier *= ghostSpeedMultipliers.tunnel;
         }
 
-        const oldSpeed = this.speed;
-        this.speed = speed;
         performGridMovementStep(this, maze, delta);
-        this.speed = oldSpeed;
+        this.speedModifier = oldModifier;
         this.handleTunnelWrap();
     }
 
@@ -162,7 +167,7 @@ export default class Ghost extends BaseEntity {
                 this.frightenedTimer = 0;
                 this.isFrightened = false;
                 this.isBlinking = false;
-                this.speed = this.baseSpeed;
+                this.speedModifier = 1.0;
             }
         }
     }
@@ -205,20 +210,20 @@ export default class Ghost extends BaseEntity {
 
         const targetX = 13;
         const targetY = 14;
-        const oldSpeed = this.speed;
-        this.speed = this.speed * 2;
+        const oldModifier = this.speedModifier;
+        this.speedModifier *= 2;
 
         if (this.gridX === targetX && this.gridY === targetY) {
             this.inGhostHouse = true;
             this.houseTimer = 2000;
-            this.direction = directions.NONE;
-            this.speed = oldSpeed;
+            this.setDirection(directions.NONE);
+            this.speedModifier = oldModifier;
             return;
         }
 
         this.chooseDirectionToTarget(maze, targetX, targetY);
         performGridMovementStep(this, maze, delta);
-        this.speed = oldSpeed;
+        this.speedModifier = oldModifier;
     }
 
     /**
@@ -240,7 +245,11 @@ export default class Ghost extends BaseEntity {
             const dist = getDistance(this.gridX + dir.x, this.gridY + dir.y, targetX, targetY);
             if (dist < bestDist) { bestDist = dist; bestDir = dir; }
         }
-        this.direction = bestDir;
+        if (this.direction === directions.NONE) {
+            this.directionBuffer.apply(bestDir);
+        } else {
+            this.setDirection(bestDir);
+        }
     }
 
     /**
@@ -257,8 +266,11 @@ export default class Ghost extends BaseEntity {
         this.isFrightened = true;
         this.frightenedTimer = duration;
         this.isBlinking = false;
-        this.speed = this.baseSpeed * 0.5;
-        if (this.direction !== directions.NONE) {this.direction = this.getReverseDirection(this.direction);}
+        this.speedModifier = 0.5;
+        if (this.direction !== directions.NONE) {
+            const opposite = getOpposite(this.direction);
+            this.setDirection(opposite);
+        }
     }
 
     /**
@@ -280,18 +292,19 @@ export default class Ghost extends BaseEntity {
         this.gridY = this.startGridY;
         this.prevGridX = this.startGridX;
         this.prevGridY = this.startGridY;
-        this.direction = directions.NONE;
+        this.directionBuffer.reset();
         this.isEaten = false;
         this.isFrightened = false;
         this.inGhostHouse = false;
         this.houseTimer = 0;
         this.mode = ghostModes.SCATTER;
+        this.speedMultiplier = 1.0;
+        this.speedModifier = 1.0;
         const pixel = getCenterPixel(this.gridX, this.gridY);
         this.x = pixel.x;
         this.y = pixel.y;
         this.prevX = this.x;
         this.prevY = this.y;
-        this.speed = this.baseSpeed;
     }
 
     /**
@@ -299,9 +312,6 @@ export default class Ghost extends BaseEntity {
      * @param {number} multiplier - Speed multiplier
      */
     setSpeedMultiplier(multiplier) {
-        if (this.baseSpeed === this.initialBaseSpeed && this.speed !== this.baseSpeed) {
-            this.baseSpeed = this.speed;
-        }
-        this.speed = this.baseSpeed * multiplier;
+        this.speedMultiplier = multiplier;
     }
 }
