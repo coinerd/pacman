@@ -1,6 +1,5 @@
 import { directions } from '../config/gameConfig.js';
-import { getValidDirections, getDistance } from '../utils/MazeLayout.js';
-import { TILE_TYPES } from '../utils/MazeLayout.js';
+import { getValidDirections, getDistance, isPelletAt } from '../utils/MazeLayout.js';
 
 export class PacmanAI {
     constructor() {
@@ -19,7 +18,7 @@ export class PacmanAI {
         this.enabled = false;
     }
 
-    update(pacman, maze, ghosts) {
+    update(pacman, maze, pelletGrid, ghosts) {
         if (!this.enabled) {
             return;
         }
@@ -32,7 +31,7 @@ export class PacmanAI {
             return;
         }
 
-        const direction = this.decideDirection(pacman, maze, ghosts);
+        const direction = this.decideDirection(pacman, maze, pelletGrid, ghosts);
         if (direction !== directions.NONE) {
             pacman.setDirection(direction);
             this.lastDecisionGridX = pacmanGridX;
@@ -41,7 +40,7 @@ export class PacmanAI {
         }
     }
 
-    decideDirection(pacman, maze, ghosts) {
+    decideDirection(pacman, maze, pelletGrid, ghosts) {
         const validDirs = getValidDirections(maze, pacman.gridX, pacman.gridY);
         if (validDirs.length === 0) {
             return directions.NONE;
@@ -69,12 +68,8 @@ export class PacmanAI {
             const nextGridX = pacman.gridX + dir.x;
             const nextGridY = pacman.gridY + dir.y;
 
-            if (nextGridY >= 0 && nextGridY < maze.length && nextGridX >= 0 && nextGridX < maze[0].length) {
-                const tile = maze[nextGridY][nextGridX];
-
-                if (tile === TILE_TYPES.PELLET || tile === TILE_TYPES.POWER_PELLET) {
-                    score += 5;
-                }
+            if (isPelletAt(pelletGrid, nextGridX, nextGridY)) {
+                score += 5;
             }
 
             const distanceFromCurrent = getDistance(pacman.gridX + currentDir.x, pacman.gridY + currentDir.y, nextGridX, nextGridY);

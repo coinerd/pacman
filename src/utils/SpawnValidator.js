@@ -3,7 +3,7 @@
  * Validates spawn points and finds nearest valid spawn locations
  */
 
-import { TILE_TYPES } from './MazeLayout.js';
+import { isWalkableTile } from './MazeLayout.js';
 
 export function validateSpawnPoint(gridX, gridY, maze) {
     // Check bounds
@@ -11,10 +11,7 @@ export function validateSpawnPoint(gridX, gridY, maze) {
     if (gridX < 0 || gridX >= maze[0].length) {return false;}
 
     // Check tile type
-    const tileType = maze[gridY][gridX];
-    const validTypes = [TILE_TYPES.PATH, TILE_TYPES.PELLET, TILE_TYPES.GHOST_HOUSE];
-
-    return validTypes.includes(tileType);
+    return isWalkableTile(maze, gridX, gridY);
 }
 
 export function findNearestValidSpawn(targetX, targetY, maze) {

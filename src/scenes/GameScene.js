@@ -18,6 +18,7 @@ import {
     gridToPixel,
     getCenterPixel,
     TILE_TYPES,
+    PELLET_TYPES,
     countPellets
 } from '../utils/MazeLayout.js';
 import Pacman from '../entities/Pacman.js';
@@ -99,7 +100,9 @@ export default class GameScene extends Phaser.Scene {
     }
 
     create() {
-        this.maze = createMazeData();
+        const { maze, pelletGrid } = createMazeData();
+        this.maze = maze;
+        this.pelletGrid = pelletGrid;
 
         this.createBackground();
         this.createMaze();
@@ -122,7 +125,8 @@ export default class GameScene extends Phaser.Scene {
         this.collisionSystem.setMaze(this.maze);
         this.collisionSystem.setPelletPool(this.pelletPool);
         this.collisionSystem.setPowerPelletPool(this.powerPelletPool);
-        this.gameState.totalPellets = countPellets(this.maze);
+        this.collisionSystem.setPelletGrid(this.pelletGrid);
+        this.gameState.totalPellets = countPellets(this.pelletGrid);
         this.gameState.pelletsRemaining = this.gameState.totalPellets;
         this.collisionSystem.setPelletCounts(this.gameState.totalPellets);
 
@@ -236,11 +240,11 @@ export default class GameScene extends Phaser.Scene {
 
         for (let y = 0; y < this.maze.length; y++) {
             for (let x = 0; x < this.maze[y].length; x++) {
-                const tileType = this.maze[y][x];
+                const pelletType = this.pelletGrid[y][x];
 
-                if (tileType === TILE_TYPES.PELLET) {
+                if (pelletType === PELLET_TYPES.PELLET) {
                     this.pelletPool.get(x, y);
-                } else if (tileType === TILE_TYPES.POWER_PELLET) {
+                } else if (pelletType === PELLET_TYPES.POWER_PELLET) {
                     const powerPellet = this.powerPelletPool.get(x, y);
                     if (powerPellet) {
                         this.tweens.add({
@@ -337,7 +341,7 @@ export default class GameScene extends Phaser.Scene {
         }
 
         if (this.sys.game.isDemo) {
-            this.pacmanAI.update(this.pacman, this.maze, this.ghosts);
+            this.pacmanAI.update(this.pacman, this.maze, this.pelletGrid, this.ghosts);
         } else {
             this.inputController.handleInput();
         }

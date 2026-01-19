@@ -3,11 +3,18 @@ import { gameConfig } from '../config/gameConfig.js';
 export const TILE_TYPES = {
     WALL: 1,
     PATH: 0,
-    PELLET: 0,
-    POWER_PELLET: 2,
-    EMPTY: 3,
     GHOST_HOUSE: 4,
     GHOST_HOUSE_DOOR: 5
+};
+
+export const PELLET_TYPES = {
+    NONE: 0,
+    PELLET: 1,
+    POWER_PELLET: 2
+};
+
+const LAYOUT_TILE_TYPES = {
+    POWER_PELLET: 2
 };
 
 export const mazeLayout = [
@@ -42,14 +49,40 @@ export const mazeLayout = [
 
 export function createMazeData() {
     const maze = [];
+    const pelletGrid = [];
+
     for (let y = 0; y < mazeLayout.length; y++) {
         const row = [];
+        const pelletRow = [];
         for (let x = 0; x < mazeLayout[y].length; x++) {
-            row.push(mazeLayout[y][x]);
+            const tile = mazeLayout[y][x];
+
+            if (tile === TILE_TYPES.WALL) {
+                row.push(TILE_TYPES.WALL);
+                pelletRow.push(PELLET_TYPES.NONE);
+                continue;
+            }
+
+            if (tile === TILE_TYPES.GHOST_HOUSE || tile === TILE_TYPES.GHOST_HOUSE_DOOR) {
+                row.push(tile);
+                pelletRow.push(PELLET_TYPES.NONE);
+                continue;
+            }
+
+            if (tile === LAYOUT_TILE_TYPES.POWER_PELLET) {
+                row.push(TILE_TYPES.PATH);
+                pelletRow.push(PELLET_TYPES.POWER_PELLET);
+                continue;
+            }
+
+            row.push(TILE_TYPES.PATH);
+            pelletRow.push(PELLET_TYPES.PELLET);
         }
         maze.push(row);
+        pelletGrid.push(pelletRow);
     }
-    return maze;
+
+    return { maze, pelletGrid };
 }
 
 export function getTileType(maze, gridX, gridY) {
@@ -63,9 +96,11 @@ export function isWall(maze, gridX, gridY) {
     return getTileType(maze, gridX, gridY) === TILE_TYPES.WALL;
 }
 
-export function isPath(maze, gridX, gridY) {
+export function isWalkableTile(maze, gridX, gridY) {
     const tile = getTileType(maze, gridX, gridY);
-    return tile === TILE_TYPES.PATH || tile === TILE_TYPES.PELLET || tile === TILE_TYPES.POWER_PELLET;
+    return tile === TILE_TYPES.PATH ||
+        tile === TILE_TYPES.GHOST_HOUSE ||
+        tile === TILE_TYPES.GHOST_HOUSE_DOOR;
 }
 
 export function isGhostHouse(maze, gridX, gridY) {
@@ -115,7 +150,7 @@ export function getValidDirections(maze, gridX, gridY, allowReverse = true) {
                 if (dir.x !== 0) {
                     validDirs.push(dir);
                 }
-            } else if (isPath(maze, newX, newY) || isGhostHouse(maze, newX, newY)) {
+            } else if (isWalkableTile(maze, newX, newY)) {
                 validDirs.push(dir);
             }
         }
@@ -124,16 +159,36 @@ export function getValidDirections(maze, gridX, gridY, allowReverse = true) {
     return validDirs;
 }
 
-export function countPellets(maze) {
+export function countPellets(pelletGrid) {
     let count = 0;
-    for (let y = 0; y < maze.length; y++) {
-        for (let x = 0; x < maze[y].length; x++) {
-            if (maze[y][x] === TILE_TYPES.PELLET || maze[y][x] === TILE_TYPES.POWER_PELLET) {
+    for (let y = 0; y < pelletGrid.length; y++) {
+        for (let x = 0; x < pelletGrid[y].length; x++) {
+            if (pelletGrid[y][x] === PELLET_TYPES.PELLET || pelletGrid[y][x] === PELLET_TYPES.POWER_PELLET) {
                 count++;
             }
         }
     }
     return count;
+}
+
+export function getPelletType(pelletGrid, gridX, gridY) {
+    if (!pelletGrid || gridY < 0 || gridY >= pelletGrid.length || gridX < 0 || gridX >= pelletGrid[0].length) {
+        return PELLET_TYPES.NONE;
+    }
+    return pelletGrid[gridY][gridX];
+}
+
+export function isPelletAt(pelletGrid, gridX, gridY) {
+    const pelletType = getPelletType(pelletGrid, gridX, gridY);
+    return pelletType === PELLET_TYPES.PELLET || pelletType === PELLET_TYPES.POWER_PELLET;
+}
+
+export function consumePelletAt(pelletGrid, gridX, gridY) {
+    const pelletType = getPelletType(pelletGrid, gridX, gridY);
+    if (pelletType !== PELLET_TYPES.NONE && pelletGrid?.[gridY]) {
+        pelletGrid[gridY][gridX] = PELLET_TYPES.NONE;
+    }
+    return pelletType;
 }
 
 export function setTileType(maze, gridX, gridY, tileType) {

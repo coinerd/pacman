@@ -3,7 +3,7 @@ import { ghostModes, directions } from '../../src/config/gameConfig.js';
 import { createMazeData } from '../../src/utils/MazeLayout.js';
 import { msToSeconds } from '../../src/utils/Time.js';
 
-const maze = createMazeData();
+const { maze } = createMazeData();
 
 describe('GhostAISystem', () => {
     let aiSystem;

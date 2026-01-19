@@ -1,20 +1,30 @@
 import { PacmanAI } from '../../src/systems/PacmanAI.js';
 import { gameConfig, directions } from '../../src/config/gameConfig.js';
 import { createMockPacman } from '../utils/testHelpers.js';
+import { PELLET_TYPES } from '../../src/utils/MazeLayout.js';
 
 describe('PacmanAI', () => {
     let ai;
     let mockPacman;
     let mockMaze;
+    let mockPelletGrid;
     let mockGhosts;
 
     beforeEach(() => {
         mockMaze = [
             [1, 1, 1, 1, 1],
             [1, 0, 0, 0, 1],
-            [1, 0, 2, 0, 1],
+            [1, 0, 0, 0, 1],
             [1, 0, 0, 0, 1],
             [1, 1, 1, 1, 1]
+        ];
+
+        mockPelletGrid = [
+            [0, 0, 0, 0, 0],
+            [0, PELLET_TYPES.PELLET, PELLET_TYPES.PELLET, PELLET_TYPES.PELLET, 0],
+            [0, PELLET_TYPES.PELLET, PELLET_TYPES.POWER_PELLET, PELLET_TYPES.PELLET, 0],
+            [0, PELLET_TYPES.PELLET, PELLET_TYPES.PELLET, PELLET_TYPES.PELLET, 0],
+            [0, 0, 0, 0, 0]
         ];
 
         mockGhosts = [
@@ -60,7 +70,7 @@ describe('PacmanAI', () => {
     describe('decideDirection()', () => {
         test('returns a valid direction', () => {
             ai.enable();
-            const direction = ai.decideDirection(mockPacman, mockMaze, mockGhosts);
+            const direction = ai.decideDirection(mockPacman, mockMaze, mockPelletGrid, mockGhosts);
 
             expect(direction).toBeDefined();
             expect(direction).not.toBe(directions.NONE);
@@ -76,7 +86,7 @@ describe('PacmanAI', () => {
                 { x: 20, y: 40, gridX: 1, gridY: 2 }
             ];
 
-            const direction = ai.decideDirection(mockPacman, mockMaze, mockGhosts);
+            const direction = ai.decideDirection(mockPacman, mockMaze, mockPelletGrid, mockGhosts);
 
             expect(direction).not.toBe(directions.RIGHT);
             expect(direction).not.toBe(directions.LEFT);
@@ -87,10 +97,10 @@ describe('PacmanAI', () => {
             mockPacman.gridX = 2;
             mockPacman.gridY = 2;
 
-            mockMaze[2][2] = 0;
-            mockMaze[2][3] = 2;
+            mockPelletGrid[2][2] = PELLET_TYPES.PELLET;
+            mockPelletGrid[2][3] = PELLET_TYPES.POWER_PELLET;
 
-            const direction = ai.decideDirection(mockPacman, mockMaze, mockGhosts);
+            const direction = ai.decideDirection(mockPacman, mockMaze, mockPelletGrid, mockGhosts);
 
             expect(direction).not.toBeNull();
         });
@@ -104,7 +114,7 @@ describe('PacmanAI', () => {
                 { x: 200, y: 200, gridX: 10, gridY: 10 }
             ];
 
-            const direction = ai.decideDirection(mockPacman, mockMaze, mockGhosts);
+            const direction = ai.decideDirection(mockPacman, mockMaze, mockPelletGrid, mockGhosts);
 
             expect(direction).not.toBeNull();
         });
@@ -115,7 +125,7 @@ describe('PacmanAI', () => {
             mockPacman.gridX = 2;
             mockPacman.gridY = 2;
 
-            const direction = ai.decideDirection(mockPacman, mockMaze, mockGhosts);
+            const direction = ai.decideDirection(mockPacman, mockMaze, mockPelletGrid, mockGhosts);
 
             expect(direction).not.toBe(directions.LEFT);
         });
@@ -130,8 +140,13 @@ describe('PacmanAI', () => {
                 [1, 0, 1],
                 [1, 1, 0]
             ];
+            mockPelletGrid = [
+                [0, 0, 0],
+                [0, PELLET_TYPES.PELLET, 0],
+                [0, 0, PELLET_TYPES.PELLET]
+            ];
 
-            const direction = ai.decideDirection(mockPacman, mockMaze, mockGhosts);
+            const direction = ai.decideDirection(mockPacman, mockMaze, mockPelletGrid, mockGhosts);
 
             expect(direction).not.toBeNull();
         });
@@ -142,7 +157,7 @@ describe('PacmanAI', () => {
             ai.enabled = false;
             mockPacman.setDirection = jest.fn();
 
-            ai.update(mockPacman, mockMaze, mockGhosts);
+            ai.update(mockPacman, mockMaze, mockPelletGrid, mockGhosts);
 
             expect(mockPacman.setDirection).not.toHaveBeenCalled();
         });
@@ -151,7 +166,7 @@ describe('PacmanAI', () => {
             ai.enable();
             mockPacman.setDirection = jest.fn();
 
-            ai.update(mockPacman, mockMaze, mockGhosts);
+            ai.update(mockPacman, mockMaze, mockPelletGrid, mockGhosts);
 
             expect(mockPacman.setDirection).toHaveBeenCalled();
         });
@@ -162,10 +177,10 @@ describe('PacmanAI', () => {
             mockPacman.gridX = 2;
             mockPacman.gridY = 2;
 
-            ai.update(mockPacman, mockMaze, mockGhosts);
+            ai.update(mockPacman, mockMaze, mockPelletGrid, mockGhosts);
             const firstCall = mockPacman.setDirection.mock.calls[0];
 
-            ai.update(mockPacman, mockMaze, mockGhosts);
+            ai.update(mockPacman, mockMaze, mockPelletGrid, mockGhosts);
             const secondCall = mockPacman.setDirection.mock.calls[1];
 
             expect(firstCall).toEqual(secondCall);
@@ -227,7 +242,7 @@ describe('PacmanAI', () => {
             mockPacman.setDirection = jest.fn();
 
             for (let i = 0; i < 10; i++) {
-                ai.update(mockPacman, mockMaze, mockGhosts);
+                ai.update(mockPacman, mockMaze, mockPelletGrid, mockGhosts);
             }
 
             expect(mockPacman.setDirection).toHaveBeenCalledTimes(10);
@@ -244,7 +259,7 @@ describe('PacmanAI', () => {
                 { x: 70, y: 40, gridX: 3, gridY: 2 }
             ];
 
-            ai.update(mockPacman, mockMaze, mockGhosts);
+            ai.update(mockPacman, mockMaze, mockPelletGrid, mockGhosts);
 
             const calledDirection = mockPacman.setDirection.mock.calls[0][0];
             expect(calledDirection).not.toBe(directions.RIGHT);
@@ -259,7 +274,7 @@ describe('PacmanAI', () => {
             mockPacman.direction = directions.RIGHT;
             mockPacman.setDirection = jest.fn();
 
-            ai.update(mockPacman, mockMaze, mockGhosts);
+            ai.update(mockPacman, mockMaze, mockPelletGrid, mockGhosts);
 
             expect(mockPacman.setDirection).toHaveBeenCalled();
         });
