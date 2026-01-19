@@ -14,6 +14,10 @@ export const gameConfig = {
     tunnelRow: 14
 };
 
+export const collisionConfig = {
+    radius: gameConfig.tileSize * 0.6
+};
+
 export const colors = {
     background: 0x000000,
     wall: 0x2121DE,

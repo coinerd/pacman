@@ -115,14 +115,15 @@ describe('Ghost - Bug Fixes', () => {
             ];
             ghost.gridX = 1;
             ghost.gridY = 1;
-            ghost.x = 50;
-            ghost.y = 50;
+            const center = { x: gameConfig.tileSize * 1.5, y: gameConfig.tileSize * 1.5 };
+            ghost.x = center.x;
+            ghost.y = center.y;
             ghost.direction = directions.RIGHT;
             ghost.isMoving = true;
 
             ghost.update(100, maze, { x: 0, y: 0 });
 
-            expect(ghost.x).toBeLessThan(70);
+            expect(ghost.x).toBe(center.x);
         });
 
         test('stops at wall boundary when moving left', () => {
@@ -133,14 +134,15 @@ describe('Ghost - Bug Fixes', () => {
             ];
             ghost.gridX = 1;
             ghost.gridY = 1;
-            ghost.x = 50;
-            ghost.y = 50;
+            const center = { x: gameConfig.tileSize * 1.5, y: gameConfig.tileSize * 1.5 };
+            ghost.x = center.x;
+            ghost.y = center.y;
             ghost.direction = directions.LEFT;
             ghost.isMoving = true;
 
             ghost.update(100, maze, { x: 0, y: 0 });
 
-            expect(ghost.x).toBeGreaterThan(30);
+            expect(ghost.x).toBe(center.x);
         });
 
         test('stops at wall boundary when moving up', () => {
@@ -151,14 +153,15 @@ describe('Ghost - Bug Fixes', () => {
             ];
             ghost.gridX = 1;
             ghost.gridY = 1;
-            ghost.x = 50;
-            ghost.y = 50;
+            const center = { x: gameConfig.tileSize * 1.5, y: gameConfig.tileSize * 1.5 };
+            ghost.x = center.x;
+            ghost.y = center.y;
             ghost.direction = directions.UP;
             ghost.isMoving = true;
 
             ghost.update(100, maze, { x: 0, y: 0 });
 
-            expect(ghost.y).toBeGreaterThan(30);
+            expect(ghost.y).toBe(center.y);
         });
 
         test('stops at wall boundary when moving down', () => {
@@ -169,14 +172,15 @@ describe('Ghost - Bug Fixes', () => {
             ];
             ghost.gridX = 1;
             ghost.gridY = 1;
-            ghost.x = 50;
-            ghost.y = 50;
+            const center = { x: gameConfig.tileSize * 1.5, y: gameConfig.tileSize * 1.5 };
+            ghost.x = center.x;
+            ghost.y = center.y;
             ghost.direction = directions.DOWN;
             ghost.isMoving = true;
 
             ghost.update(100, maze, { x: 0, y: 0 });
 
-            expect(ghost.y).toBeLessThan(70);
+            expect(ghost.y).toBe(center.y);
         });
     });
 

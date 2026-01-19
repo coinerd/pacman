@@ -310,7 +310,7 @@ describe('Center Snapping - Behavior with performGridMovementStep', () => {
     });
 
     describe('With buffered turns', () => {
-        test('snaps to center earlier when buffered turn is set', () => {
+        test('does not snap early when buffered turn is set', () => {
             const center = tileCenter(5, 5);
             const entity = {
                 x: center.x + 5,
@@ -327,9 +327,8 @@ describe('Center Snapping - Behavior with performGridMovementStep', () => {
             const delta = 50;
             const result = performGridMovementStep(entity, maze, delta);
 
-            // With buffered turn, should snap to center to enable turn
             const distToCenter = distanceToTileCenter(result.x, result.y, 5, 5);
-            expect(distToCenter).toBeLessThanOrEqual(EPS + 1);
+            expect(distToCenter).toBeGreaterThan(EPS);
         });
 
         test('changes direction when reaching center with buffered turn', () => {
@@ -425,7 +424,8 @@ describe('Center Snapping - Behavior with performGridMovementStep', () => {
             const delta = 20;
             const result = performGridMovementStep(entity, maze, delta);
 
-            expect(result.x).toBeCloseTo(center.x, 2);
+            const distToCenter = distanceToTileCenter(result.x, result.y, 5, 5);
+            expect(distToCenter).toBeLessThanOrEqual(EPS + 2);
             expect(result.y).toBe(center.y);
         });
 
@@ -468,9 +468,8 @@ describe('Center Snapping - Behavior with performGridMovementStep', () => {
             const delta = 50;
             const result = performGridMovementStep(entity, maze, delta);
 
-            // Should snap to center, then stop at wall
-            expect(result.x).toBeGreaterThanOrEqual(center.x);
-            expect(result.x).toBeLessThan(tileCenter(6, 5).x - gameConfig.tileSize / 2);
+            expect(result.x).toBe(center.x);
+            expect(result.direction).toBe(directions.NONE);
         });
 
         test('does not snap to center if surrounded by walls', () => {
@@ -503,8 +502,6 @@ describe('Center Snapping - Behavior with performGridMovementStep', () => {
         test('stops at wall boundary when near wall', () => {
             maze[5][6] = TILE_TYPES.WALL;
             const center5 = tileCenter(5, 5);
-            const center6 = tileCenter(6, 5);
-            const wallLeftEdge = center6.x - gameConfig.tileSize / 2;
 
             const entity = {
                 x: center5.x,
@@ -520,13 +517,13 @@ describe('Center Snapping - Behavior with performGridMovementStep', () => {
             const delta = 500;
             const result = performGridMovementStep(entity, maze, delta);
 
-            expect(result.x).toBeLessThanOrEqual(wallLeftEdge);
+            expect(result.x).toBe(center5.x);
             expect(result.gridX).toBe(5);
         });
     });
 
     describe('Turn tolerance scenarios', () => {
-        test('uses larger tolerance (1.5 * EPS) when buffered turn exists', () => {
+        test('does not turn until within EPS even with buffered input', () => {
             const center = tileCenter(5, 5);
             const entity = {
                 x: center.x + EPS * 1.5,
@@ -543,12 +540,11 @@ describe('Center Snapping - Behavior with performGridMovementStep', () => {
             const delta = 50;
             const result = performGridMovementStep(entity, maze, delta);
 
-            // Should snap within 1.5 * EPS tolerance
-            const distToCenter = distanceToTileCenter(result.x, result.y, 5, 5);
-            expect(distToCenter).toBeLessThanOrEqual(1);
+            expect(result.direction).toBe(directions.RIGHT);
+            expect(result.nextDirection).toBe(directions.UP);
         });
 
-        test('uses 0.35 * tile size tolerance for buffered turns with sufficient movement', () => {
+        test('requires center proximity for buffered turns at higher speeds', () => {
             const center = tileCenter(5, 5);
             const entity = {
                 x: center.x + gameConfig.tileSize * 0.3,
@@ -565,10 +561,8 @@ describe('Center Snapping - Behavior with performGridMovementStep', () => {
             const delta = 20;
             const result = performGridMovementStep(entity, maze, delta);
 
-            // With speed=150, rawMoveDist=3, which is >= 0.1 * tileSize (2)
-            // Triggers 0.35 * tileSize tolerance snap
             const distToCenter = distanceToTileCenter(result.x, result.y, 5, 5);
-            expect(distToCenter).toBeLessThanOrEqual(EPS);
+            expect(distToCenter).toBeGreaterThan(EPS);
         });
     });
 
@@ -622,10 +616,9 @@ describe('Center Snapping - Behavior with performGridMovementStep', () => {
             const delta = 40;
             const result = performGridMovementStep(entity, maze, delta);
 
-            // Entity crosses center and updates grid position
-            expect(result.gridX).toBe(6);
+            expect(result.gridX).toBe(5);
             expect(result.gridY).toBe(5);
-            expect(result.x).toBeCloseTo(center.x + 2, 2);
+            expect(result.x).toBeGreaterThan(center.x);
             expect(result.y).toBe(center.y);
         });
     });

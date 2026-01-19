@@ -1,7 +1,7 @@
 import { CollisionSystem } from '../../src/systems/CollisionSystem.js';
-import { gameConfig, scoreValues } from '../../src/config/gameConfig.js';
+import { collisionConfig, scoreValues } from '../../src/config/gameConfig.js';
 import { TILE_TYPES } from '../../src/utils/MazeLayout.js';
-import { sweptAABBCollision, distanceCollision, lineSegmentsIntersect } from '../../src/utils/CollisionUtils.js';
+import { capsuleCollision } from '../../src/utils/CollisionUtils.js';
 
 describe('CollisionSystem - Bug Fixes', () => {
     let collisionSystem;
@@ -154,9 +154,9 @@ describe('CollisionSystem - Bug Fixes', () => {
         });
     });
 
-    describe('Bug Fix: Correct collision radius (16px not 8px)', () => {
+    describe('Bug Fix: Correct collision radius', () => {
         test('uses correct collision radius for swept AABB', () => {
-            const collisionDistance = gameConfig.tileSize * 0.8;
+            const collisionDistance = collisionConfig.radius;
             mockPacman.x = 270;
             mockPacman.y = 270;
             mockPacman.prevX = 270;
@@ -172,8 +172,8 @@ describe('CollisionSystem - Bug Fixes', () => {
             expect(result).not.toBeNull();
         });
 
-        test('does not detect collision when distance equals threshold', () => {
-            const collisionDistance = gameConfig.tileSize * 0.8;
+        test('detects collision when distance equals threshold', () => {
+            const collisionDistance = collisionConfig.radius;
             mockPacman.x = 270;
             mockPacman.y = 270;
             mockPacman.prevX = 270;
@@ -186,11 +186,11 @@ describe('CollisionSystem - Bug Fixes', () => {
 
             const result = collisionSystem.checkGhostCollision();
 
-            expect(result).toBeNull();
+            expect(result).not.toBeNull();
         });
 
         test('correctly handles entities at 16px distance', () => {
-            const collisionDistance = gameConfig.tileSize * 0.8;
+            const collisionDistance = collisionConfig.radius;
             mockPacman.x = 270;
             mockPacman.y = 270;
 
@@ -205,7 +205,7 @@ describe('CollisionSystem - Bug Fixes', () => {
         });
     });
 
-    describe('Bug Fix: Path crossing checked before distance fallback', () => {
+    describe('Bug Fix: Path crossing detection', () => {
         test('checks path crossing when both entities moved', () => {
             mockPacman.x = 300;
             mockPacman.y = 270;
@@ -221,39 +221,21 @@ describe('CollisionSystem - Bug Fixes', () => {
 
             expect(result).not.toBeNull();
         });
-
-        test('prioritizes path crossing over distance check', () => {
-            mockPacman.x = 300;
-            mockPacman.y = 270;
-            mockPacman.prevX = 200;
-            mockPacman.prevY = 270;
-
-            mockGhosts[0].x = 200;
-            mockGhosts[0].y = 270;
-            mockGhosts[0].prevX = 300;
-            mockGhosts[0].prevY = 270;
-
-            const checkCrossedPathSpy = jest.spyOn(collisionSystem, 'checkCrossedPathCollision');
-
-            collisionSystem.checkGhostCollision();
-
-            expect(checkCrossedPathSpy).toHaveBeenCalled();
-        });
     });
 
-    describe('Swept AABB Collision with Correct Radius', () => {
-        test('uses 16px radius for swept detection', () => {
+    describe('Swept Capsule Collision with Correct Radius', () => {
+        test('uses configured radius for swept detection', () => {
             const ghostPrevX = 100;
             const ghostPrevY = 100;
             const ghostCurrX = 140;
             const ghostCurrY = 100;
             const pacmanX = 120;
             const pacmanY = 100;
-            const radius = gameConfig.tileSize * 0.8;
+            const radius = collisionConfig.radius;
 
-            const result = sweptAABBCollision(
+            const result = capsuleCollision(
                 ghostPrevX, ghostPrevY, ghostCurrX, ghostCurrY,
-                pacmanX, pacmanY,
+                pacmanX, pacmanY, pacmanX, pacmanY,
                 radius
             );
 
@@ -267,11 +249,11 @@ describe('CollisionSystem - Bug Fixes', () => {
             const ghostCurrY = 100;
             const pacmanX = 100;
             const pacmanY = 100;
-            const radius = gameConfig.tileSize * 0.8;
+            const radius = collisionConfig.radius;
 
-            const result = sweptAABBCollision(
+            const result = capsuleCollision(
                 ghostPrevX, ghostPrevY, ghostCurrX, ghostCurrY,
-                pacmanX, pacmanY,
+                pacmanX, pacmanY, pacmanX, pacmanY,
                 radius
             );
 

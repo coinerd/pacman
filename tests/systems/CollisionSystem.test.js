@@ -1,7 +1,7 @@
 import { CollisionSystem } from '../../src/systems/CollisionSystem.js';
-import { gameConfig, scoreValues } from '../../src/config/gameConfig.js';
+import { collisionConfig, gameConfig, scoreValues } from '../../src/config/gameConfig.js';
 import { TILE_TYPES } from '../../src/utils/MazeLayout.js';
-import { sweptAABBCollision, distanceCollision } from '../../src/utils/CollisionUtils.js';
+import { capsuleCollision } from '../../src/utils/CollisionUtils.js';
 
 describe('CollisionSystem', () => {
     let collisionSystem;
@@ -370,8 +370,8 @@ describe('CollisionSystem', () => {
             expect(result).toBeNull();
         });
 
-        test('uses collision threshold from gameConfig', () => {
-            const threshold = gameConfig.tileSize * 0.8;
+        test('uses collision threshold from collisionConfig', () => {
+            const threshold = collisionConfig.radius;
             mockGhosts[0].x = mockPacman.x + threshold - 1;
             mockGhosts[0].y = mockPacman.y;
 
@@ -540,9 +540,9 @@ describe('CollisionSystem', () => {
             const pacmanY = 100;
             const radius = 10;
 
-            const result = sweptAABBCollision(
+            const result = capsuleCollision(
                 ghostPrevX, ghostPrevY, ghostCurrX, ghostCurrY,
-                pacmanX, pacmanY,
+                pacmanX, pacmanY, pacmanX, pacmanY,
                 radius
             );
 
@@ -558,9 +558,9 @@ describe('CollisionSystem', () => {
             const pacmanY = 100;
             const radius = 10;
 
-            const result = sweptAABBCollision(
+            const result = capsuleCollision(
                 ghostPrevX, ghostPrevY, ghostCurrX, ghostCurrY,
-                pacmanX, pacmanY,
+                pacmanX, pacmanY, pacmanX, pacmanY,
                 radius
             );
 
@@ -576,9 +576,9 @@ describe('CollisionSystem', () => {
             const pacmanY = 100;
             const radius = 10;
 
-            const result = sweptAABBCollision(
+            const result = capsuleCollision(
                 ghostPrevX, ghostPrevY, ghostCurrX, ghostCurrY,
-                pacmanX, pacmanY,
+                pacmanX, pacmanY, pacmanX, pacmanY,
                 radius
             );
 
@@ -594,9 +594,9 @@ describe('CollisionSystem', () => {
             const pacmanY = 80;
             const radius = 10;
 
-            const result = sweptAABBCollision(
+            const result = capsuleCollision(
                 ghostPrevX, ghostPrevY, ghostCurrX, ghostCurrY,
-                pacmanX, pacmanY,
+                pacmanX, pacmanY, pacmanX, pacmanY,
                 radius
             );
 
@@ -612,35 +612,35 @@ describe('CollisionSystem', () => {
             const pacmanY = 100;
             const radius = 10;
 
-            const result = sweptAABBCollision(
+            const result = capsuleCollision(
                 ghostPrevX, ghostPrevY, ghostCurrX, ghostCurrY,
-                pacmanX, pacmanY,
+                pacmanX, pacmanY, pacmanX, pacmanY,
                 radius
             );
 
             expect(result).toBe(true);
         });
 
-        test('distance collision detects nearby objects', () => {
+        test('capsule collision detects nearby objects', () => {
             const x1 = 100;
             const y1 = 100;
             const x2 = 105;
             const y2 = 100;
             const threshold = 10;
 
-            const result = distanceCollision(x1, y1, x2, y2, threshold);
+            const result = capsuleCollision(x1, y1, x1, y1, x2, y2, x2, y2, threshold);
 
             expect(result).toBe(true);
         });
 
-        test('distance collision does not detect far objects', () => {
+        test('capsule collision does not detect far objects', () => {
             const x1 = 100;
             const y1 = 100;
             const x2 = 120;
             const y2 = 120;
             const threshold = 10;
 
-            const result = distanceCollision(x1, y1, x2, y2, threshold);
+            const result = capsuleCollision(x1, y1, x1, y1, x2, y2, x2, y2, threshold);
 
             expect(result).toBe(false);
         });

@@ -1,7 +1,7 @@
 import { CollisionSystem } from '../../src/systems/CollisionSystem.js';
 import Pacman from '../../src/entities/Pacman.js';
 import Ghost from '../../src/entities/Ghost.js';
-import { gameConfig, scoreValues, directions } from '../../src/config/gameConfig.js';
+import { collisionConfig, gameConfig, scoreValues, directions } from '../../src/config/gameConfig.js';
 import { TILE_TYPES } from '../../src/utils/MazeLayout.js';
 import { createMockScene, createMockMaze } from '../utils/testHelpers.js';
 
@@ -223,7 +223,7 @@ describe('Multi Entity Collision Integration', () => {
         });
 
         test('detects ghost passing through pacman in one frame', () => {
-            const threshold = gameConfig.tileSize * 0.8;
+            const threshold = collisionConfig.radius;
 
             ghosts[0].prevX = pacman.x - threshold * 2;
             ghosts[0].prevY = pacman.y;
@@ -240,7 +240,7 @@ describe('Multi Entity Collision Integration', () => {
         });
 
         test('detects swept collision with vertical movement', () => {
-            const threshold = gameConfig.tileSize * 0.8;
+            const threshold = collisionConfig.radius;
 
             ghosts[0].prevX = pacman.x;
             ghosts[0].prevY = pacman.y - threshold * 2;
@@ -256,7 +256,7 @@ describe('Multi Entity Collision Integration', () => {
         });
 
         test('detects swept collision with diagonal movement', () => {
-            const threshold = gameConfig.tileSize * 0.8;
+            const threshold = collisionConfig.radius;
 
             ghosts[0].prevX = pacman.x - threshold * 2;
             ghosts[0].prevY = pacman.y - threshold * 2;
@@ -272,7 +272,7 @@ describe('Multi Entity Collision Integration', () => {
         });
 
         test('does not detect collision when ghost path misses pacman', () => {
-            const threshold = gameConfig.tileSize * 0.8;
+            const threshold = collisionConfig.radius;
 
             ghosts[0].prevX = pacman.x - threshold * 2;
             ghosts[0].prevY = pacman.y - threshold * 4;
@@ -288,7 +288,7 @@ describe('Multi Entity Collision Integration', () => {
         });
 
         test('handles bidirectional swept collision', () => {
-            const threshold = gameConfig.tileSize * 0.8;
+            const threshold = collisionConfig.radius;
 
             pacman.prevX = pacman.x - threshold;
             pacman.x = pacman.x + threshold;
@@ -322,7 +322,7 @@ describe('Multi Entity Collision Integration', () => {
         });
 
         test('detects collision within threshold', () => {
-            const threshold = gameConfig.tileSize * 0.8;
+            const threshold = collisionConfig.radius;
             ghosts[0].x = pacman.x + threshold - 1;
             ghosts[0].y = pacman.y;
             ghosts[0].prevX = ghosts[0].x;
@@ -334,7 +334,7 @@ describe('Multi Entity Collision Integration', () => {
         });
 
         test('does not detect collision outside threshold', () => {
-            const threshold = gameConfig.tileSize * 0.8;
+            const threshold = collisionConfig.radius;
             ghosts[0].x = pacman.x + threshold + 1;
             ghosts[0].y = pacman.y;
             ghosts[0].prevX = ghosts[0].x;
@@ -500,7 +500,7 @@ describe('Multi Entity Collision Integration', () => {
         });
 
         test('fast ghost passes through pacman detection', () => {
-            const threshold = gameConfig.tileSize * 0.8;
+            const threshold = collisionConfig.radius;
 
             pacman.prevX = pacman.x;
             pacman.prevY = pacman.y;
@@ -536,7 +536,7 @@ describe('Multi Entity Collision Integration', () => {
         });
 
         test('handles ghost at exact threshold distance', () => {
-            const threshold = gameConfig.tileSize * 0.8;
+            const threshold = collisionConfig.radius;
             ghosts[0].x = pacman.x + threshold - 0.1;
             ghosts[0].y = pacman.y;
 
@@ -545,7 +545,7 @@ describe('Multi Entity Collision Integration', () => {
         });
 
         test('handles ghost just outside threshold', () => {
-            const threshold = gameConfig.tileSize * 0.8;
+            const threshold = collisionConfig.radius;
             ghosts[0].x = pacman.x + threshold + 0.1;
             ghosts[0].y = pacman.y;
 
