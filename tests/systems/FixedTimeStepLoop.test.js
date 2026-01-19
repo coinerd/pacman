@@ -130,4 +130,30 @@ describe('FixedTimeStepLoop', () => {
             expect(loop.getAccumulator()).toBe(0);
         });
     });
+
+    describe('cadence and unit warnings', () => {
+        test('should execute once per fixed step at 60Hz', () => {
+            const callback = jest.fn();
+            const localLoop = new FixedTimeStepLoop(callback);
+
+            for (let i = 0; i < 60; i += 1) {
+                localLoop.update(FIXED_DT);
+            }
+
+            expect(callback).toHaveBeenCalledTimes(60);
+        });
+
+        test('should warn on implausibly small deltas', () => {
+            const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+            const localLoop = new FixedTimeStepLoop(jest.fn());
+
+            localLoop.update(0.0005);
+
+            expect(warnSpy).toHaveBeenCalledWith(
+                expect.stringContaining('check time units')
+            );
+
+            warnSpy.mockRestore();
+        });
+    });
 });

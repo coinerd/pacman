@@ -352,6 +352,8 @@ export default class GameScene extends Phaser.Scene {
                 'Steps': this.fixedTimeStepLoop.getLastStepCount(),
                 'Accumulator': `${this.fixedTimeStepLoop.getAccumulator().toFixed(4)}s`,
                 'Collision ms': collisionStats ? `${collisionStats.collisionMs.toFixed(2)}ms` : 'n/a',
+                'Collision pellet ms': collisionStats ? `${collisionStats.pelletMs.toFixed(2)}ms` : 'n/a',
+                'Collision ghost ms': collisionStats ? `${collisionStats.ghostMs.toFixed(2)}ms` : 'n/a',
                 'Collision checks': collisionStats ? `${collisionStats.checks.ghosts} ghosts` : 'n/a',
                 'Pellets remaining': collisionStats?.pelletsRemaining ?? 'n/a'
             });

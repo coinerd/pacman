@@ -29,6 +29,13 @@ export function canMove(maze, tileX, tileY, direction) {
     return !isWallTile(maze, nextGridX, nextGridY);
 }
 
+/**
+ * Move an entity on the grid using a delta expressed in seconds.
+ * @param {Object} entity - Entity with grid position and speed in pixels/second.
+ * @param {number[][]} maze - Maze grid.
+ * @param {number} deltaSeconds - Elapsed time in seconds.
+ * @returns {{entity: Object, events: Array}} Movement result.
+ */
 export function moveEntityOnGrid(entity, maze, deltaSeconds) {
     const events = [];
 
