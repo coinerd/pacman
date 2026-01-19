@@ -69,6 +69,9 @@ export default class Ghost extends BaseEntity {
      * @param {Pacman} pacman - Pacman entity for AI targeting
      */
     update(deltaSeconds, maze, pacman) {
+        this.prevX = this.x;
+        this.prevY = this.y;
+
         if (this.isEaten) {
             this.updateEaten(deltaSeconds, maze);
         } else {

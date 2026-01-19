@@ -17,6 +17,8 @@ export class FixedTimeStepLoop {
         this.lastStepCount = 0;
         this.lastRealDt = 0;
         this.hasWarnedAboutDelta = false;
+        this.zeroStepFrames = 0;
+        this.hasWarnedAboutStarvation = false;
     }
 
     /**
@@ -50,6 +52,17 @@ export class FixedTimeStepLoop {
             this.callback();
             this.accumulator -= physicsConfig.FIXED_DT;
             this.lastStepCount += 1;
+        }
+
+        if (this.lastStepCount === 0) {
+            this.zeroStepFrames += 1;
+            if (this.zeroStepFrames >= 10 && !this.hasWarnedAboutStarvation) {
+                console.warn('[FixedTimeStepLoop] Fixed updates have not run for 10 frames.');
+                this.hasWarnedAboutStarvation = true;
+            }
+        } else {
+            this.zeroStepFrames = 0;
+            this.hasWarnedAboutStarvation = false;
         }
 
         if (this.accumulator < Number.EPSILON) {
@@ -86,5 +99,7 @@ export class FixedTimeStepLoop {
      */
     reset() {
         this.accumulator = 0;
+        this.zeroStepFrames = 0;
+        this.hasWarnedAboutStarvation = false;
     }
 }

@@ -63,6 +63,8 @@ export default class GameScene extends Phaser.Scene {
             deathTimer: 0,
             highScore: 0,
             pelletsEaten: 0,
+            pelletsRemaining: 0,
+            totalPellets: 0,
             ghostsEaten: 0,
             maxComboGhosts: 0,
             levelDeaths: 0,
@@ -120,6 +122,9 @@ export default class GameScene extends Phaser.Scene {
         this.collisionSystem.setMaze(this.maze);
         this.collisionSystem.setPelletPool(this.pelletPool);
         this.collisionSystem.setPowerPelletPool(this.powerPelletPool);
+        this.gameState.totalPellets = countPellets(this.maze);
+        this.gameState.pelletsRemaining = this.gameState.totalPellets;
+        this.collisionSystem.setPelletCounts(this.gameState.totalPellets);
 
         this.ghostAISystem = new GhostAISystem();
         this.ghostAISystem.setGhosts(this.ghosts);
@@ -340,11 +345,15 @@ export default class GameScene extends Phaser.Scene {
         this.fixedTimeStepLoop.update(deltaInSeconds);
 
         if (this.debugOverlay.visible) {
+            const collisionStats = this.collisionSystem.getProfilingInfo();
             this.debugOverlay.updateDebugInfo({
                 'Frame dt': `${deltaInSeconds.toFixed(4)}s`,
                 'Fixed dt': `${physicsConfig.FIXED_DT.toFixed(4)}s`,
                 'Steps': this.fixedTimeStepLoop.getLastStepCount(),
-                'Accumulator': `${this.fixedTimeStepLoop.getAccumulator().toFixed(4)}s`
+                'Accumulator': `${this.fixedTimeStepLoop.getAccumulator().toFixed(4)}s`,
+                'Collision ms': collisionStats ? `${collisionStats.collisionMs.toFixed(2)}ms` : 'n/a',
+                'Collision checks': collisionStats ? `${collisionStats.checks.ghosts} ghosts` : 'n/a',
+                'Pellets remaining': collisionStats?.pelletsRemaining ?? 'n/a'
             });
         }
 
@@ -379,6 +388,7 @@ export default class GameScene extends Phaser.Scene {
         if (results.pelletScore > 0) {
             this.gameFlowController.handlePelletEaten(results.pelletScore);
             this.gameState.pelletsEaten++;
+            this.gameState.pelletsRemaining = this.collisionSystem.getPelletsRemaining();
             this.achievementSystem.check(this.gameState);
             this.checkFruitSpawn();
         }
@@ -388,6 +398,7 @@ export default class GameScene extends Phaser.Scene {
             this.gameFlowController.handlePowerPelletEaten(results.powerPelletScore, duration);
             this.effectManager.createPowerPelletEffect();
             this.gameState.currentComboGhosts = 0;
+            this.gameState.pelletsRemaining = this.collisionSystem.getPelletsRemaining();
             this.achievementSystem.check(this.gameState);
         }
 
@@ -433,9 +444,12 @@ export default class GameScene extends Phaser.Scene {
      * Check if fruit should spawn
      */
     checkFruitSpawn() {
-        const totalPellets = countPellets(this.maze);
-        const initialPellets = this.pelletPool.getActiveCount() + this.powerPelletPool.getActiveCount();
-        const eatenPercentage = ((initialPellets - totalPellets) / initialPellets) * 100;
+        const totalPellets = this.gameState.totalPellets;
+        if (!totalPellets) {
+            return;
+        }
+
+        const eatenPercentage = ((totalPellets - this.gameState.pelletsRemaining) / totalPellets) * 100;
 
         if (eatenPercentage >= fruitConfig.pelletThreshold && !this.fruit.active) {
             this.fruit.reset(this.gameState.level - 1);
