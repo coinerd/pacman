@@ -3,6 +3,7 @@ import { GhostAISystem } from '../../src/systems/GhostAISystem.js';
 import { CollisionSystem } from '../../src/systems/CollisionSystem.js';
 import { ghostModes, directions } from '../../src/config/gameConfig.js';
 import { TILE_TYPES } from '../../src/utils/MazeLayout.js';
+import { msToSeconds } from '../../src/utils/Time.js';
 import { createMockScene, createMockMaze, createMockPacman } from '../utils/testHelpers.js';
 
 describe('Ghost Lifecycle Integration', () => {
@@ -27,11 +28,11 @@ describe('Ghost Lifecycle Integration', () => {
         expect(ghost.isEaten).toBe(false);
         expect(ghost.mode).toBe(ghostModes.SCATTER);
 
-        ghost.setFrightened(8000);
+        ghost.setFrightened(msToSeconds(8000));
         expect(ghost.isFrightened).toBe(true);
         expect(ghost.speed).toBe(ghost.baseSpeed * 0.5);
 
-        ghost.updateFrightened(8000);
+        ghost.updateFrightened(msToSeconds(8000));
         expect(ghost.isFrightened).toBe(false);
         expect(ghost.speed).toBe(ghost.baseSpeed);
 

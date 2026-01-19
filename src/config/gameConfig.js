@@ -102,11 +102,11 @@ export const levelConfig = {
     baseSpeed: 150, // Increased from 100
     pacmanSpeedMultiplier: 0.8, // 120 pixels/sec
     ghostSpeedMultiplier: 0.75, // 112.5 pixels/sec
-    frightenedDuration: 8000,
-    scatterDuration: 7000,
-    chaseDuration: 20000,
+    frightenedDuration: 8,
+    scatterDuration: 7,
+    chaseDuration: 20,
     speedIncreasePerLevel: 10,  // Increased from 5
-    frightenedDecreasePerLevel: 500
+    frightenedDecreasePerLevel: 0.5
 };
 
 export const ghostStartPositions = {
@@ -156,7 +156,7 @@ export const fruitConfig = {
         { name: 'bell', score: 3000, color: colors.bell },
         { name: 'key', score: 5000, color: colors.key }
     ],
-    duration: 10000, // Time fruit stays on screen (ms)
+    duration: 10, // Time fruit stays on screen (seconds)
     pelletThreshold: 70 // Percentage of pellets eaten to spawn fruit
 };
 
@@ -167,7 +167,7 @@ export const animationConfig = {
     pacmanMouthSpeed: 15,  // degrees per second
     pacmanDeathSpeed: 30,  // degrees per second
     powerPelletPulseSpeed: 500,  // milliseconds (Phaser tween duration)
-    ghostBlinkSpeed: 200,  // milliseconds (not currently used)
+    ghostBlinkSpeed: 0.2,  // seconds
     textFadeSpeed: 800,  // milliseconds (not currently used)
     countdownDuration: 3000,  // milliseconds (Phaser delayedCall duration)
     deathPauseDuration: 2  // seconds (accumulated with delta in seconds)

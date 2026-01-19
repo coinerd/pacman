@@ -31,13 +31,13 @@ export class DeathHandler {
 
     /**
      * Update death animation
-     * @param {number} delta - Time since last update in milliseconds
+     * @param {number} deltaSeconds - Time since last update in seconds
      * @returns {boolean} True if death animation complete
      */
-    update(delta) {
+    update(deltaSeconds) {
         if (!this.isDying) {return false;}
 
-        this.deathTimer += delta;
+        this.deathTimer += deltaSeconds;
 
         if (this.deathTimer >= animationConfig.deathPauseDuration) {
             this.deathTimer = 0;

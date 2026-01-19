@@ -1,6 +1,7 @@
 import { GhostAISystem } from '../../src/systems/GhostAISystem.js';
 import { ghostModes, directions } from '../../src/config/gameConfig.js';
 import { createMazeData } from '../../src/utils/MazeLayout.js';
+import { msToSeconds } from '../../src/utils/Time.js';
 
 const maze = createMazeData();
 
@@ -105,9 +106,9 @@ describe('GhostAISystem', () => {
         test('has correct cycle durations', () => {
             expect(aiSystem.cycles.length).toBe(8);
             expect(aiSystem.cycles[0].mode).toBe(ghostModes.SCATTER);
-            expect(aiSystem.cycles[0].duration).toBe(7000);
+            expect(aiSystem.cycles[0].duration).toBe(7);
             expect(aiSystem.cycles[1].mode).toBe(ghostModes.CHASE);
-            expect(aiSystem.cycles[1].duration).toBe(20000);
+            expect(aiSystem.cycles[1].duration).toBe(20);
             expect(aiSystem.cycles[aiSystem.cycles.length - 1].duration).toBe(-1);
         });
     });
@@ -122,35 +123,35 @@ describe('GhostAISystem', () => {
 
     describe('updateGlobalMode()', () => {
         test('does not change mode if timer not elapsed', () => {
-            aiSystem.updateGlobalMode(5000);
+            aiSystem.updateGlobalMode(msToSeconds(5000));
             expect(aiSystem.globalMode).toBe(ghostModes.SCATTER);
-            expect(aiSystem.globalModeTimer).toBe(5000);
+            expect(aiSystem.globalModeTimer).toBe(5);
             expect(aiSystem.cycleIndex).toBe(0);
         });
 
         test('transitions to CHASE after first scatter duration', () => {
-            aiSystem.updateGlobalMode(7000);
+            aiSystem.updateGlobalMode(msToSeconds(7000));
             expect(aiSystem.globalMode).toBe(ghostModes.CHASE);
             expect(aiSystem.globalModeTimer).toBe(0);
             expect(aiSystem.cycleIndex).toBe(1);
         });
 
         test('transitions through multiple cycles', () => {
-            aiSystem.updateGlobalMode(7000);
+            aiSystem.updateGlobalMode(msToSeconds(7000));
             expect(aiSystem.globalMode).toBe(ghostModes.CHASE);
             expect(aiSystem.cycleIndex).toBe(1);
 
-            aiSystem.updateGlobalMode(20000);
+            aiSystem.updateGlobalMode(msToSeconds(20000));
             expect(aiSystem.globalMode).toBe(ghostModes.SCATTER);
             expect(aiSystem.cycleIndex).toBe(2);
         });
 
         test('handles partial timer increments', () => {
-            aiSystem.updateGlobalMode(5000);
-            expect(aiSystem.globalModeTimer).toBe(5000);
+            aiSystem.updateGlobalMode(msToSeconds(5000));
+            expect(aiSystem.globalModeTimer).toBe(5);
             expect(aiSystem.globalMode).toBe(ghostModes.SCATTER);
 
-            aiSystem.updateGlobalMode(2000);
+            aiSystem.updateGlobalMode(msToSeconds(2000));
             expect(aiSystem.globalModeTimer).toBe(0);
             expect(aiSystem.globalMode).toBe(ghostModes.CHASE);
         });
@@ -158,9 +159,9 @@ describe('GhostAISystem', () => {
         test('does not change mode when in permanent chase (duration -1)', () => {
             aiSystem.cycleIndex = 7;
             aiSystem.globalMode = ghostModes.CHASE;
-            aiSystem.globalModeTimer = 1000;
+            aiSystem.globalModeTimer = msToSeconds(1000);
 
-            aiSystem.updateGlobalMode(5000);
+            aiSystem.updateGlobalMode(msToSeconds(5000));
 
             expect(aiSystem.globalMode).toBe(ghostModes.CHASE);
             expect(aiSystem.cycleIndex).toBe(7);
@@ -442,8 +443,8 @@ describe('GhostAISystem', () => {
 
     describe('update()', () => {
         test('updates global mode timer', () => {
-            aiSystem.update(5000, maze, mockPacman);
-            expect(aiSystem.globalModeTimer).toBe(5000);
+            aiSystem.update(msToSeconds(5000), maze, mockPacman);
+            expect(aiSystem.globalModeTimer).toBe(5);
         });
 
         test('syncs ghost mode with global mode when not frightened or eaten', () => {
@@ -451,7 +452,7 @@ describe('GhostAISystem', () => {
             blinky.mode = ghostModes.SCATTER;
             aiSystem.globalMode = ghostModes.CHASE;
 
-            aiSystem.update(0, maze, mockPacman);
+            aiSystem.update(msToSeconds(0), maze, mockPacman);
 
             expect(blinky.mode).toBe(ghostModes.CHASE);
         });
@@ -462,7 +463,7 @@ describe('GhostAISystem', () => {
             blinky.isFrightened = true;
             aiSystem.globalMode = ghostModes.CHASE;
 
-            aiSystem.update(0, maze, mockPacman);
+            aiSystem.update(msToSeconds(0), maze, mockPacman);
 
             expect(blinky.mode).toBe(ghostModes.SCATTER);
         });
@@ -473,7 +474,7 @@ describe('GhostAISystem', () => {
             blinky.isEaten = true;
             aiSystem.globalMode = ghostModes.CHASE;
 
-            aiSystem.update(0, maze, mockPacman);
+            aiSystem.update(msToSeconds(0), maze, mockPacman);
 
             expect(blinky.mode).toBe(ghostModes.SCATTER);
         });
@@ -484,7 +485,7 @@ describe('GhostAISystem', () => {
             blinky.direction = directions.RIGHT;
             aiSystem.globalMode = ghostModes.CHASE;
 
-            aiSystem.update(0, maze, mockPacman);
+            aiSystem.update(msToSeconds(0), maze, mockPacman);
 
             expect(blinky.direction).toBe(directions.LEFT);
         });
@@ -496,7 +497,7 @@ describe('GhostAISystem', () => {
             blinky.targetX = 0;
             blinky.targetY = 0;
 
-            aiSystem.update(0, maze, mockPacman);
+            aiSystem.update(msToSeconds(0), maze, mockPacman);
 
             expect(blinky.targetX).toBe(mockPacman.gridX);
             expect(blinky.targetY).toBe(mockPacman.gridY);
@@ -512,7 +513,16 @@ describe('GhostAISystem', () => {
                 ghostModes.SCATTER, ghostModes.CHASE
             ];
 
-            const durations = [7000, 20000, 7000, 20000, 5000, 20000, 5000, 20000];
+            const durations = [
+                msToSeconds(7000),
+                msToSeconds(20000),
+                msToSeconds(7000),
+                msToSeconds(20000),
+                msToSeconds(5000),
+                msToSeconds(20000),
+                msToSeconds(5000),
+                msToSeconds(20000)
+            ];
 
             for (let i = 0; i < expectedModes.length; i++) {
                 expect(aiSystem.globalMode).toBe(expectedModes[i]);

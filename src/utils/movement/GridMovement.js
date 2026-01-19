@@ -29,7 +29,7 @@ export function canMove(maze, tileX, tileY, direction) {
     return !isWallTile(maze, nextGridX, nextGridY);
 }
 
-export function moveEntityOnGrid(entity, maze, delta) {
+export function moveEntityOnGrid(entity, maze, deltaSeconds) {
     const events = [];
 
     if (!entity) {
@@ -52,7 +52,7 @@ export function moveEntityOnGrid(entity, maze, delta) {
         return false;
     };
 
-    const rawMoveDist = entity.speed * (delta / 1000);
+    const rawMoveDist = entity.speed * deltaSeconds;
     const cappedMoveDist = Math.min(rawMoveDist, gameConfig.tileSize * 2 - 1);
     let remainingDist = Math.max(0, cappedMoveDist - (cappedMoveDist <= EPS ? 0.01 : 0));
 

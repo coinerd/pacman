@@ -38,13 +38,13 @@ export default class Pacman extends BaseEntity {
         this.setEndAngle(rotation + 360 - this.mouthAngle);
     }
 
-    update(delta, maze) {
+    update(deltaSeconds, maze) {
         if (this.isDying) {
-            this.updateDeathAnimation(delta);
+            this.updateDeathAnimation(deltaSeconds);
             return;
         }
 
-        this.updateMouthAnimation(delta);
+        this.updateMouthAnimation(deltaSeconds);
 
         const isAtCenter = isAtTileCenter(this.x, this.y, this.gridX, this.gridY);
 
@@ -55,7 +55,7 @@ export default class Pacman extends BaseEntity {
         this.prevX = this.x;
         this.prevY = this.y;
 
-        performGridMovementStep(this, maze, delta);
+        performGridMovementStep(this, maze, deltaSeconds);
 
         this.handleTunnelWrap();
 
@@ -64,8 +64,7 @@ export default class Pacman extends BaseEntity {
         this.setEndAngle(rotation + 360 - this.mouthAngle);
     }
 
-    updateMouthAnimation(delta) {
-        const deltaSeconds = delta / 1000;
+    updateMouthAnimation(deltaSeconds) {
         this.mouthAngle += this.mouthDirection * this.mouthSpeed * (deltaSeconds / 2);
 
         if (this.mouthAngle >= this.maxMouthAngle) {
@@ -77,8 +76,7 @@ export default class Pacman extends BaseEntity {
         }
     }
 
-    updateDeathAnimation(delta) {
-        const deltaSeconds = delta / 1000;
+    updateDeathAnimation(deltaSeconds) {
         this.mouthAngle += animationConfig.pacmanDeathSpeed * (deltaSeconds / 2);
         if (this.mouthAngle > 180) {
             this.mouthAngle = 180;

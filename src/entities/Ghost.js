@@ -64,16 +64,16 @@ export default class Ghost extends BaseEntity {
      * - If eaten: Updates house timer and handles return to playfield
      * - If not eaten: Updates frightened state and moves ghost
      *
-     * @param {number} delta - Time since last frame in milliseconds
+     * @param {number} deltaSeconds - Time since last frame in seconds
      * @param {number[][]} maze - 2D maze array
      * @param {Pacman} pacman - Pacman entity for AI targeting
      */
-    update(delta, maze, pacman) {
+    update(deltaSeconds, maze, pacman) {
         if (this.isEaten) {
-            this.updateEaten(delta, maze);
+            this.updateEaten(deltaSeconds, maze);
         } else {
-            this.updateFrightened(delta);
-            this.moveGhost(delta, maze, pacman);
+            this.updateFrightened(deltaSeconds);
+            this.moveGhost(deltaSeconds, maze, pacman);
         }
         this.updateVisuals();
     }
@@ -87,11 +87,11 @@ export default class Ghost extends BaseEntity {
      * - Makes AI decisions at intersections
      * - Applies buffered direction changes
      *
-     * @param {number} delta - Time since last frame in milliseconds
+     * @param {number} deltaSeconds - Time since last frame in seconds
      * @param {number[][]} maze - 2D maze array
      * @param {Pacman} pacman - Pacman entity for AI targeting
      */
-    moveGhost(delta, maze, _pacman) {
+    moveGhost(deltaSeconds, maze, _pacman) {
         this.isMoving = this.direction !== directions.NONE;
 
         const oldModifier = this.speedModifier;
@@ -99,7 +99,7 @@ export default class Ghost extends BaseEntity {
             this.speedModifier *= ghostSpeedMultipliers.tunnel;
         }
 
-        performGridMovementStep(this, maze, delta);
+        performGridMovementStep(this, maze, deltaSeconds);
         this.speedModifier = oldModifier;
         this.handleTunnelWrap();
     }
@@ -155,13 +155,13 @@ export default class Ghost extends BaseEntity {
      * - Activates blinking when timer < 2 seconds
      * - Returns to normal state when timer expires
      *
-     * @param {number} delta - Time since last frame in milliseconds
+     * @param {number} deltaSeconds - Time since last frame in seconds
      */
-    updateFrightened(delta) {
+    updateFrightened(deltaSeconds) {
         if (this.isFrightened) {
-            this.frightenedTimer -= delta;
-            this.blinkTimer += delta;
-            if (this.frightenedTimer <= 2000) {this.isBlinking = true;}
+            this.frightenedTimer -= deltaSeconds;
+            this.blinkTimer += deltaSeconds;
+            if (this.frightenedTimer <= 2) {this.isBlinking = true;}
             else {this.isBlinking = false;}
             if (this.frightenedTimer <= 0) {
                 this.frightenedTimer = 0;
@@ -195,12 +195,12 @@ export default class Ghost extends BaseEntity {
      * - If in ghost house: Waits for timer then resets
      * - Otherwise: Moves to ghost house entrance (13, 14)
      *
-     * @param {number} delta - Time since last frame in milliseconds
+     * @param {number} deltaSeconds - Time since last frame in seconds
      * @param {number[][]} maze - 2D maze array
      */
-    updateEaten(delta, maze) {
+    updateEaten(deltaSeconds, maze) {
         if (this.inGhostHouse) {
-            this.houseTimer -= delta;
+            this.houseTimer -= deltaSeconds;
             if (this.houseTimer <= 0) {
                 this.houseTimer = 0;
                 this.reset();
@@ -215,14 +215,14 @@ export default class Ghost extends BaseEntity {
 
         if (this.gridX === targetX && this.gridY === targetY) {
             this.inGhostHouse = true;
-            this.houseTimer = 2000;
+            this.houseTimer = 2;
             this.setDirection(directions.NONE);
             this.speedModifier = oldModifier;
             return;
         }
 
         this.chooseDirectionToTarget(maze, targetX, targetY);
-        performGridMovementStep(this, maze, delta);
+        performGridMovementStep(this, maze, deltaSeconds);
         this.speedModifier = oldModifier;
     }
 
@@ -260,7 +260,7 @@ export default class Ghost extends BaseEntity {
      * - Reduces speed by 50%
      * - Reverses current direction
      *
-     * @param {number} duration - Duration of frightened state in milliseconds
+     * @param {number} duration - Duration of frightened state in seconds
      */
     setFrightened(duration) {
         this.isFrightened = true;

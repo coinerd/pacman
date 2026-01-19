@@ -3,6 +3,7 @@ import Ghost from '../../src/entities/Ghost.js';
 import { directions, ghostModes, ghostSpeedMultipliers, gameConfig } from '../../src/config/gameConfig.js';
 import { distanceToTileCenter, EPS } from '../../src/utils/TileMovement.js';
 import { TILE_TYPES } from '../../src/utils/MazeLayout.js';
+import { msToSeconds } from '../../src/utils/Time.js';
 import { createMockScene, createMockMaze } from '../utils/testHelpers.js';
 
 function createSimpleTestMaze() {
@@ -51,7 +52,7 @@ describe('Movement Edge Cases', () => {
             const initialX = pacman.x;
             const initialY = pacman.y;
 
-            pacman.update(100, mockMaze);
+            pacman.update(msToSeconds(100), mockMaze);
 
             expect(pacman.x).toBe(initialX);
             expect(pacman.y).toBe(initialY);
@@ -66,7 +67,7 @@ describe('Movement Edge Cases', () => {
             const initialX = ghost.x;
             const initialY = ghost.y;
 
-            ghost.update(100, mockMaze);
+            ghost.update(msToSeconds(100), mockMaze);
 
             expect(ghost.x).toBe(initialX);
             expect(ghost.y).toBe(initialY);
@@ -80,7 +81,7 @@ describe('Movement Edge Cases', () => {
             const initialX = pacman.x;
             const initialY = pacman.y;
 
-            pacman.update(100, mockMaze);
+            pacman.update(msToSeconds(100), mockMaze);
 
             expect(pacman.x).toBe(initialX);
             expect(pacman.y).toBe(initialY);
@@ -96,7 +97,7 @@ describe('Movement Edge Cases', () => {
             const initialX = pacman.x;
             const initialY = pacman.y;
 
-            pacman.update(100, mockMaze);
+            pacman.update(msToSeconds(100), mockMaze);
 
             expect(pacman.x).toBe(initialX);
             expect(pacman.y).toBe(initialY);
@@ -110,7 +111,7 @@ describe('Movement Edge Cases', () => {
             const initialX = ghost.x;
             const initialY = ghost.y;
 
-            ghost.update(100, mockMaze);
+            ghost.update(msToSeconds(100), mockMaze);
 
             expect(ghost.x).toBe(initialX);
             expect(ghost.y).toBe(initialY);
@@ -122,7 +123,7 @@ describe('Movement Edge Cases', () => {
             pacman.speed = 0.1;
 
             const initialX = pacman.x;
-            pacman.update(1000, mockMaze);
+            pacman.update(msToSeconds(1000), mockMaze);
 
             expect(pacman.x).toBe(initialX);
         });
@@ -136,7 +137,7 @@ describe('Movement Edge Cases', () => {
             const initialX = pacman.x;
             const initialY = pacman.y;
 
-            pacman.update(100, mockMaze);
+            pacman.update(msToSeconds(100), mockMaze);
 
             expect(pacman.x).toBe(initialX);
             expect(pacman.y).toBe(initialY);
@@ -150,7 +151,7 @@ describe('Movement Edge Cases', () => {
             pacman.speed = 1000;
 
             const initialX = pacman.x;
-            pacman.update(100, mockMaze);
+            pacman.update(msToSeconds(100), mockMaze);
 
             expect(pacman.x).toBeGreaterThan(initialX);
             expect(pacman.x).toBeLessThan(mockMaze[0].length * 20);
@@ -162,7 +163,7 @@ describe('Movement Edge Cases', () => {
             ghost.speed = 1000;
 
             const initialX = ghost.x;
-            ghost.update(100, mockMaze);
+            ghost.update(msToSeconds(100), mockMaze);
 
             expect(ghost.x).toBe(initialX);
             expect(ghost.x).toBeLessThan(mockMaze[0].length * 20);
@@ -173,7 +174,7 @@ describe('Movement Edge Cases', () => {
             pacman.direction = directions.RIGHT;
             pacman.speed = 500;
 
-            pacman.update(50, mockMaze);
+            pacman.update(msToSeconds(50), mockMaze);
 
             // Entity moves 25px from tile (2,2) center (x=50)
             // Crosses tile (3,2) center at x=70
@@ -197,7 +198,7 @@ describe('Movement Edge Cases', () => {
 
             for (let i = 0; i < 10; i++) {
                 const prevGridX = pacman.gridX;
-                pacman.update(16.67, mockMaze);
+                pacman.update(msToSeconds(16.67), mockMaze);
 
                 if (prevGridX !== pacman.gridX) {
                     const dist = distanceToTileCenter(pacman.x, pacman.y, pacman.gridX, pacman.gridY);
@@ -216,7 +217,7 @@ describe('Movement Edge Cases', () => {
             const pacman = new Pacman(mockScene, 1, 2);
             pacman.direction = directions.LEFT;
 
-            pacman.update(1000, mockMaze);
+            pacman.update(msToSeconds(1000), mockMaze);
 
             expect(pacman.gridX).toBe(1);
             expect(pacman.x).toBeCloseTo(30, 0);
@@ -226,7 +227,7 @@ describe('Movement Edge Cases', () => {
             const pacman = new Pacman(mockScene, 3, 2);
             pacman.direction = directions.RIGHT;
 
-            pacman.update(1000, mockMaze);
+            pacman.update(msToSeconds(1000), mockMaze);
 
             expect(pacman.gridX).toBe(3);
             expect(pacman.x).toBeLessThan(mockMaze[0].length * 20);
@@ -236,7 +237,7 @@ describe('Movement Edge Cases', () => {
             const pacman = new Pacman(mockScene, 2, 1);
             pacman.direction = directions.UP;
 
-            pacman.update(1000, mockMaze);
+            pacman.update(msToSeconds(1000), mockMaze);
 
             expect(pacman.gridY).toBe(1);
             expect(pacman.y).toBeCloseTo(30, 0);
@@ -246,7 +247,7 @@ describe('Movement Edge Cases', () => {
             const pacman = new Pacman(mockScene, 2, 3);
             pacman.direction = directions.DOWN;
 
-            pacman.update(1000, mockMaze);
+            pacman.update(msToSeconds(1000), mockMaze);
 
             expect(pacman.gridY).toBe(3);
             expect(pacman.y).toBeLessThan(mockMaze.length * 20);
@@ -256,7 +257,7 @@ describe('Movement Edge Cases', () => {
             const ghost = new Ghost(mockScene, 1, 2);
             ghost.direction = directions.LEFT;
 
-            ghost.update(1000, mockMaze);
+            ghost.update(msToSeconds(1000), mockMaze);
 
             expect(ghost.gridX).toBe(1);
         });
@@ -267,7 +268,7 @@ describe('Movement Edge Cases', () => {
 
             const initialX = pacman.x;
             const initialY = pacman.y;
-            pacman.update(100, deadEndMaze);
+            pacman.update(msToSeconds(100), deadEndMaze);
 
             expect(pacman.x).toBe(initialX);
             expect(pacman.y).toBe(initialY);
@@ -326,7 +327,7 @@ describe('Movement Edge Cases', () => {
             pacman.direction = directions.RIGHT;
 
             const initialX = pacman.x;
-            pacman.update(100, mockMaze);
+            pacman.update(msToSeconds(100), mockMaze);
 
             expect(pacman.x).toBeGreaterThan(initialX);
         });
@@ -337,7 +338,7 @@ describe('Movement Edge Cases', () => {
             ghost.direction = directions.RIGHT;
 
             const initialX = ghost.x;
-            ghost.update(100, mockMaze);
+            ghost.update(msToSeconds(100), mockMaze);
 
             expect(ghost.x).toBeGreaterThan(initialX);
         });
@@ -345,7 +346,7 @@ describe('Movement Edge Cases', () => {
         test('Reset maintains correct previous positions', () => {
             const pacman = new Pacman(mockScene, 3, 3);
             pacman.direction = directions.RIGHT;
-            pacman.update(100, mockMaze);
+            pacman.update(msToSeconds(100), mockMaze);
 
             pacman.resetPosition(1, 1);
 
@@ -363,7 +364,7 @@ describe('Movement Edge Cases', () => {
             const initialSpeed = ghost.speed;
             const initialDir = ghost.direction;
 
-            ghost.setFrightened(8000);
+            ghost.setFrightened(msToSeconds(8000));
 
             expect(ghost.isFrightened).toBe(true);
             expect(ghost.speed).toBe(initialSpeed * 0.5);
@@ -374,8 +375,8 @@ describe('Movement Edge Cases', () => {
             const ghost = new Ghost(mockScene, 2, 2, 'blinky', 0xFF0000);
             const baseSpeed = ghost.baseSpeed;
 
-            ghost.setFrightened(8000);
-            ghost.updateFrightened(8000);
+            ghost.setFrightened(msToSeconds(8000));
+            ghost.updateFrightened(msToSeconds(8000));
 
             expect(ghost.isFrightened).toBe(false);
             expect(ghost.speed).toBe(baseSpeed);
@@ -384,14 +385,14 @@ describe('Movement Edge Cases', () => {
         test('Ghost mode change maintains position', () => {
             const ghost = new Ghost(mockScene, 2, 2, 'blinky', 0xFF0000);
             ghost.direction = directions.RIGHT;
-            ghost.update(100, mockMaze);
+            ghost.update(msToSeconds(100), mockMaze);
 
             const posX = ghost.x;
             const posY = ghost.y;
             const gridX = ghost.gridX;
             const gridY = ghost.gridY;
 
-            ghost.setFrightened(8000);
+            ghost.setFrightened(msToSeconds(8000));
 
             expect(ghost.x).toBeCloseTo(posX, 1);
             expect(ghost.y).toBeCloseTo(posY, 1);
@@ -402,7 +403,7 @@ describe('Movement Edge Cases', () => {
         test('Ghost eaten state changes behavior', () => {
             const ghost = new Ghost(mockScene, 2, 2, 'blinky', 0xFF0000);
             ghost.direction = directions.RIGHT;
-            ghost.setFrightened(8000);
+            ghost.setFrightened(msToSeconds(8000));
             ghost.eat();
 
             expect(ghost.isEaten).toBe(true);
@@ -427,10 +428,10 @@ describe('Movement Edge Cases', () => {
             ghost.setSpeedMultiplier(1.5);
             expect(ghost.speed).toBe(baseSpeed * 1.5);
 
-            ghost.setFrightened(8000);
+            ghost.setFrightened(msToSeconds(8000));
             expect(ghost.speed).toBeCloseTo(baseSpeed * 0.5, 1);
 
-            ghost.updateFrightened(8000);
+            ghost.updateFrightened(msToSeconds(8000));
             expect(ghost.speed).toBe(baseSpeed * 1.5);
         });
 
@@ -449,13 +450,13 @@ describe('Movement Edge Cases', () => {
             const ghost = new Ghost(mockScene, 2, 2, 'blinky', 0xFF0000);
             const baseSpeed = ghost.baseSpeed;
 
-            ghost.setFrightened(5000);
+            ghost.setFrightened(msToSeconds(5000));
             const frightenedSpeed = ghost.speed;
 
-            ghost.updateFrightened(5000);
+            ghost.updateFrightened(msToSeconds(5000));
             expect(ghost.speed).toBe(baseSpeed);
 
-            ghost.setFrightened(5000);
+            ghost.setFrightened(msToSeconds(5000));
             ghost.eat();
             expect(ghost.isEaten).toBe(true);
             expect(ghost.isFrightened).toBe(false);
@@ -473,7 +474,7 @@ describe('Movement Edge Cases', () => {
             pacman.direction = directions.RIGHT;
             pacman.nextDirection = directions.DOWN;
 
-            pacman.update(16.67, mockMaze);
+            pacman.update(msToSeconds(16.67), mockMaze);
 
             expect(pacman.direction).toBe(directions.DOWN);
             expect(pacman.nextDirection).toBe(directions.NONE);
@@ -489,7 +490,7 @@ describe('Movement Edge Cases', () => {
 
             expect(pacman.direction).toBe(directions.LEFT);
             expect(pacman.nextDirection).toBe(directions.NONE);
-            pacman.update(100, mockMaze);
+            pacman.update(msToSeconds(100), mockMaze);
             expect(pacman.x).toBeLessThan(initialX);
         });
 
@@ -498,7 +499,7 @@ describe('Movement Edge Cases', () => {
             pacman.direction = directions.RIGHT;
             pacman.nextDirection = directions.LEFT;
 
-            pacman.update(100, mockMaze);
+            pacman.update(msToSeconds(100), mockMaze);
 
             expect(pacman.direction).toBe(directions.RIGHT);
         });
@@ -510,7 +511,7 @@ describe('Movement Edge Cases', () => {
             pacman.setDirection(directions.LEFT);
 
             expect(pacman.nextDirection).toBe(directions.LEFT);
-            pacman.update(100, mockMaze);
+            pacman.update(msToSeconds(100), mockMaze);
         });
     });
 
@@ -524,7 +525,7 @@ describe('Movement Edge Cases', () => {
             pacman.x += EPS - 0.1;
 
             // Perform minimal movement (1ms delta)
-            pacman.update(1, mockMaze);
+            pacman.update(msToSeconds(1), mockMaze);
 
             const center = { x: pacman.gridX * 20 + 10, y: pacman.gridY * 20 + 10 };
             const dist = distanceToTileCenter(pacman.x, pacman.y, pacman.gridX, pacman.gridY);
@@ -540,7 +541,7 @@ describe('Movement Edge Cases', () => {
             pacman.x += EPS + 1;
 
             const initialX = pacman.x;
-            pacman.update(16.67, mockMaze);
+            pacman.update(msToSeconds(16.67), mockMaze);
 
             expect(pacman.x).toBeGreaterThan(initialX);
         });
@@ -551,7 +552,7 @@ describe('Movement Edge Cases', () => {
             pacman.speed = 0.001;
 
             const initialX = pacman.x;
-            pacman.update(1, mockMaze);
+            pacman.update(msToSeconds(1), mockMaze);
 
             expect(pacman.x).toBe(initialX);
         });

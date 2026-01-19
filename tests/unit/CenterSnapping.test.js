@@ -19,6 +19,7 @@
 import { gameConfig, directions } from '../../src/config/gameConfig.js';
 import { isAtTileCenter, distanceToTileCenter, tileCenter, EPS, performGridMovementStep } from '../../src/utils/TileMovement.js';
 import { TILE_TYPES } from '../../src/utils/MazeLayout.js';
+import { msToSeconds } from '../../src/utils/Time.js';
 import { createSimpleMaze } from '../utils/testHelpers.js';
 
 describe('Center Snapping - isAtTileCenter', () => {
@@ -205,7 +206,7 @@ describe('Center Snapping - Behavior with performGridMovementStep', () => {
                 get() { return this.directionBuffer.getBuffered(); }
             });
 
-            const delta = 20;
+            const delta = msToSeconds(20);
             const result = performGridMovementStep(entity, maze, delta);
 
             expect(result.x).toBeGreaterThanOrEqual(entity.x);
@@ -237,7 +238,7 @@ describe('Center Snapping - Behavior with performGridMovementStep', () => {
                 get() { return this.directionBuffer.getBuffered(); }
             });
 
-            const delta = 50;
+            const delta = msToSeconds(50);
             const result = performGridMovementStep(entity, maze, delta);
 
             expect(result.x).toBe(center.x);
@@ -258,7 +259,7 @@ describe('Center Snapping - Behavior with performGridMovementStep', () => {
             };
 
             const initialX = entity.x;
-            const delta = 20;
+            const delta = msToSeconds(20);
             const result = performGridMovementStep(entity, maze, delta);
 
             expect(result.x).toBeGreaterThan(initialX);
@@ -280,7 +281,7 @@ describe('Center Snapping - Behavior with performGridMovementStep', () => {
                 nextDirection: directions.NONE
             };
 
-            const delta = 200;
+            const delta = msToSeconds(200);
             const result = performGridMovementStep(entity, maze, delta);
 
             // Snaps to center, actual continuation depends on remaining distance
@@ -301,7 +302,7 @@ describe('Center Snapping - Behavior with performGridMovementStep', () => {
                 nextDirection: directions.NONE
             };
 
-            const delta = 200;
+            const delta = msToSeconds(200);
             const result = performGridMovementStep(entity, maze, delta);
 
             expect(result.gridX).toBeGreaterThanOrEqual(6);
@@ -324,7 +325,7 @@ describe('Center Snapping - Behavior with performGridMovementStep', () => {
                 wasMoving: true
             };
 
-            const delta = 50;
+            const delta = msToSeconds(50);
             const result = performGridMovementStep(entity, maze, delta);
 
             const distToCenter = distanceToTileCenter(result.x, result.y, 5, 5);
@@ -366,7 +367,7 @@ describe('Center Snapping - Behavior with performGridMovementStep', () => {
                 get() { return this.directionBuffer.getBuffered(); }
             });
 
-            const delta = 30;
+            const delta = msToSeconds(30);
             const result = performGridMovementStep(entity, maze, delta);
 
             expect(result.direction).toBe(directions.UP);
@@ -388,7 +389,7 @@ describe('Center Snapping - Behavior with performGridMovementStep', () => {
                 wasMoving: true
             };
 
-            const delta = 10;
+            const delta = msToSeconds(10);
             const result = performGridMovementStep(entity, maze, delta);
 
             expect(result.direction).toBe(directions.RIGHT);
@@ -421,7 +422,7 @@ describe('Center Snapping - Behavior with performGridMovementStep', () => {
                 get() { return this.directionBuffer.getBuffered(); }
             });
 
-            const delta = 20;
+            const delta = msToSeconds(20);
             const result = performGridMovementStep(entity, maze, delta);
 
             const distToCenter = distanceToTileCenter(result.x, result.y, 5, 5);
@@ -442,7 +443,7 @@ describe('Center Snapping - Behavior with performGridMovementStep', () => {
                 nextDirection: directions.NONE
             };
 
-            const delta = 50;
+            const delta = msToSeconds(50);
             const result = performGridMovementStep(entity, maze, delta);
 
             expect(result.direction).toBe(directions.RIGHT);
@@ -465,7 +466,7 @@ describe('Center Snapping - Behavior with performGridMovementStep', () => {
                 nextDirection: directions.NONE
             };
 
-            const delta = 50;
+            const delta = msToSeconds(50);
             const result = performGridMovementStep(entity, maze, delta);
 
             expect(result.x).toBe(center.x);
@@ -491,7 +492,7 @@ describe('Center Snapping - Behavior with performGridMovementStep', () => {
                 nextDirection: directions.NONE
             };
 
-            const delta = 20;
+            const delta = msToSeconds(20);
             const result = performGridMovementStep(entity, maze, delta);
 
             expect(result.x).toBe(center.x);
@@ -514,7 +515,7 @@ describe('Center Snapping - Behavior with performGridMovementStep', () => {
                 nextDirection: directions.NONE
             };
 
-            const delta = 500;
+            const delta = msToSeconds(500);
             const result = performGridMovementStep(entity, maze, delta);
 
             expect(result.x).toBe(center5.x);
@@ -537,7 +538,7 @@ describe('Center Snapping - Behavior with performGridMovementStep', () => {
                 wasMoving: true
             };
 
-            const delta = 50;
+            const delta = msToSeconds(50);
             const result = performGridMovementStep(entity, maze, delta);
 
             expect(result.direction).toBe(directions.RIGHT);
@@ -558,7 +559,7 @@ describe('Center Snapping - Behavior with performGridMovementStep', () => {
                 wasMoving: true
             };
 
-            const delta = 20;
+            const delta = msToSeconds(20);
             const result = performGridMovementStep(entity, maze, delta);
 
             const distToCenter = distanceToTileCenter(result.x, result.y, 5, 5);
@@ -581,7 +582,7 @@ describe('Center Snapping - Behavior with performGridMovementStep', () => {
                 type: 'pacman'
             };
 
-            const delta = 20;
+            const delta = msToSeconds(20);
             const result = performGridMovementStep(entity, maze, delta);
 
             expect(result.isMoving).toBe(true);
@@ -613,7 +614,7 @@ describe('Center Snapping - Behavior with performGridMovementStep', () => {
                 get() { return this.directionBuffer.getBuffered(); }
             });
 
-            const delta = 40;
+            const delta = msToSeconds(40);
             const result = performGridMovementStep(entity, maze, delta);
 
             expect(result.gridX).toBe(5);

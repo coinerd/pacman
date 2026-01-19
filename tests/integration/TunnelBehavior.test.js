@@ -2,6 +2,7 @@ import Pacman from '../../src/entities/Pacman.js';
 import Ghost from '../../src/entities/Ghost.js';
 import { gameConfig, directions, ghostSpeedMultipliers } from '../../src/config/gameConfig.js';
 import { TILE_TYPES } from '../../src/utils/MazeLayout.js';
+import { msToSeconds } from '../../src/utils/Time.js';
 import { createMockScene, createMockMaze } from '../utils/testHelpers.js';
 
 describe('Tunnel Behavior Integration', () => {
@@ -93,7 +94,7 @@ describe('Tunnel Behavior Integration', () => {
             pacman.setDirection(directions.LEFT);
             pacman.isMoving = true;
 
-            pacman.update(100, mockMaze);
+            pacman.update(msToSeconds(100), mockMaze);
 
             expect(pacman.x).toBeLessThan(pacman.prevX);
         });
@@ -103,7 +104,7 @@ describe('Tunnel Behavior Integration', () => {
             pacman.setDirection(directions.RIGHT);
             pacman.isMoving = true;
 
-            pacman.update(100, mockMaze);
+            pacman.update(msToSeconds(100), mockMaze);
 
             expect(pacman.x).toBeGreaterThan(pacman.prevX);
         });
@@ -114,7 +115,7 @@ describe('Tunnel Behavior Integration', () => {
             ghost.isMoving = true;
             ghost.scene.ghostAISystem = { chooseDirection: jest.fn() };
 
-            ghost.moveGhost(100, mockMaze, pacman);
+            ghost.moveGhost(msToSeconds(100), mockMaze, pacman);
 
             expect(ghost.x).toBeLessThan(ghost.prevX);
         });
@@ -196,10 +197,10 @@ describe('Tunnel Behavior Integration', () => {
 
             const normalSpeed = ghost.speed;
             const tunnelSpeed = normalSpeed * ghostSpeedMultipliers.tunnel;
-            const delta = 100;
+            const deltaSeconds = msToSeconds(100);
 
-            const expectedMoveStep = tunnelSpeed * (delta / 1000);
-            ghost.moveGhost(delta, mockMaze, pacman);
+            const expectedMoveStep = tunnelSpeed * deltaSeconds;
+            ghost.moveGhost(deltaSeconds, mockMaze, pacman);
 
             const actualMoveStep = Math.abs(ghost.x - ghost.prevX);
             expect(actualMoveStep).toBeCloseTo(expectedMoveStep, 1);

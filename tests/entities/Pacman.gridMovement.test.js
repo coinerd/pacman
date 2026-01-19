@@ -2,6 +2,7 @@ import Pacman from '../../src/entities/Pacman.js';
 import { gameConfig, directions } from '../../src/config/gameConfig.js';
 import { createMockScene, createSimpleMaze } from '../utils/testHelpers.js';
 import { tileCenter, distanceToTileCenter } from '../../src/utils/TileMovement.js';
+import { msToSeconds } from '../../src/utils/Time.js';
 
 describe('Pacman - Grid Movement', () => {
     let mockScene;
@@ -23,7 +24,7 @@ describe('Pacman - Grid Movement', () => {
             pacman.isMoving = true;
             pacman.speed = 100;
 
-            pacman.update(20, maze);
+            pacman.update(msToSeconds(20), maze);
 
             const center = tileCenter(5, 5);
             expect(pacman.x).toBeGreaterThanOrEqual(center.x);
@@ -36,7 +37,7 @@ describe('Pacman - Grid Movement', () => {
             pacman.direction = directions.RIGHT;
             pacman.speed = 100;
 
-            pacman.update(20, maze);
+            pacman.update(msToSeconds(20), maze);
 
             const distToCenter = distanceToTileCenter(pacman.x, pacman.y, pacman.gridX, pacman.gridY);
             expect(distToCenter).toBeLessThan(2);
@@ -48,7 +49,7 @@ describe('Pacman - Grid Movement', () => {
             pacman.direction = directions.RIGHT;
             pacman.speed = 100;
 
-            pacman.update(20, maze);
+            pacman.update(msToSeconds(20), maze);
 
             const center = tileCenter(5, 5);
             expect(pacman.x).toBeGreaterThan(center.x);
@@ -60,7 +61,7 @@ describe('Pacman - Grid Movement', () => {
             pacman.direction = directions.RIGHT;
             pacman.speed = 120;
 
-            pacman.update(20, maze);
+            pacman.update(msToSeconds(20), maze);
 
             const distToCenter = distanceToTileCenter(pacman.x, pacman.y, pacman.gridX, pacman.gridY);
             expect(distToCenter).toBeLessThan(3);
@@ -75,7 +76,7 @@ describe('Pacman - Grid Movement', () => {
             pacman.setDirection(directions.UP);
             pacman.isMoving = true;
 
-            pacman.update(10, maze);
+            pacman.update(msToSeconds(10), maze);
 
             expect(pacman.direction).toBe(directions.RIGHT);
         });
@@ -90,7 +91,7 @@ describe('Pacman - Grid Movement', () => {
             maze[5][5] = 0;
             maze[4][5] = 0;
 
-            pacman.update(20, maze);
+            pacman.update(msToSeconds(20), maze);
 
             expect(pacman.direction).toBe(directions.UP);
         });
@@ -105,12 +106,12 @@ describe('Pacman - Grid Movement', () => {
             maze[5][5] = 0;
             maze[4][5] = 0;
 
-            pacman.update(10, maze);
+            pacman.update(msToSeconds(10), maze);
 
             expect(pacman.direction).toBe(directions.RIGHT);
             expect(pacman.nextDirection).toBe(directions.UP);
 
-            pacman.update(100, maze);
+            pacman.update(msToSeconds(100), maze);
 
             expect(pacman.direction).toBe(directions.UP);
             expect(pacman.nextDirection).toBe(directions.NONE);
@@ -126,7 +127,7 @@ describe('Pacman - Grid Movement', () => {
             maze[5][5] = 0;
             maze[4][5] = 1;
 
-            pacman.update(20, maze);
+            pacman.update(msToSeconds(20), maze);
 
             expect(pacman.direction).toBe(directions.RIGHT);
         });
@@ -154,7 +155,7 @@ describe('Pacman - Grid Movement', () => {
             maze[5][5] = 0;
             maze[4][5] = 0;
 
-            pacman.update(100, maze);
+            pacman.update(msToSeconds(100), maze);
 
             expect(pacman.direction).toBe(directions.UP);
             expect(pacman.nextDirection).toBe(directions.NONE);
@@ -183,7 +184,7 @@ describe('Pacman - Grid Movement', () => {
             maze[5][5] = 0;
             maze[4][5] = 0;
 
-            pacman.update(20, maze);
+            pacman.update(msToSeconds(20), maze);
 
             expect(pacman.nextDirection).toBe(directions.NONE);
         });
@@ -204,7 +205,7 @@ describe('Pacman - Grid Movement', () => {
             pacman.direction = directions.RIGHT;
             pacman.isMoving = true;
 
-            pacman.update(100, maze);
+            pacman.update(msToSeconds(100), maze);
 
             expect(pacman.x).toBeCloseTo(center.x, 1);
         });
@@ -223,7 +224,7 @@ describe('Pacman - Grid Movement', () => {
             pacman.direction = directions.LEFT;
             pacman.isMoving = true;
 
-            pacman.update(100, maze);
+            pacman.update(msToSeconds(100), maze);
 
             expect(pacman.x).toBeCloseTo(center.x, 1);
         });
@@ -242,7 +243,7 @@ describe('Pacman - Grid Movement', () => {
             pacman.direction = directions.UP;
             pacman.isMoving = true;
 
-            pacman.update(100, maze);
+            pacman.update(msToSeconds(100), maze);
 
             expect(pacman.y).toBeCloseTo(center.y, 1);
         });
@@ -261,7 +262,7 @@ describe('Pacman - Grid Movement', () => {
             pacman.direction = directions.DOWN;
             pacman.isMoving = true;
 
-            pacman.update(100, maze);
+            pacman.update(msToSeconds(100), maze);
 
             expect(pacman.y).toBeCloseTo(center.y, 1);
         });
@@ -280,7 +281,7 @@ describe('Pacman - Grid Movement', () => {
             pacman.direction = directions.RIGHT;
             pacman.isMoving = true;
 
-            pacman.update(100, maze);
+            pacman.update(msToSeconds(100), maze);
 
             expect(pacman.isMoving).toBe(false);
         });
@@ -301,7 +302,7 @@ describe('Pacman - Grid Movement', () => {
             pacman.direction = directions.RIGHT;
             pacman.isMoving = true;
 
-            pacman.update(100, maze);
+            pacman.update(msToSeconds(100), maze);
 
             expect(pacman.isMoving).toBe(false);
         });
@@ -320,7 +321,7 @@ describe('Pacman - Grid Movement', () => {
             pacman.direction = directions.RIGHT;
             pacman.isMoving = true;
 
-            pacman.update(100, maze);
+            pacman.update(msToSeconds(100), maze);
 
             expect(pacman.direction).toBe(directions.NONE);
         });
@@ -333,7 +334,7 @@ describe('Pacman - Grid Movement', () => {
             pacman.direction = directions.RIGHT;
             pacman.isMoving = true;
 
-            pacman.update(50, maze);
+            pacman.update(msToSeconds(50), maze);
 
             expect(pacman.isMoving).toBe(true);
             expect(pacman.x).toBeGreaterThan(110);
@@ -349,7 +350,7 @@ describe('Pacman - Grid Movement', () => {
             pacman.setDirection(directions.RIGHT);
             pacman.isMoving = true;
 
-            pacman.update(50, maze);
+            pacman.update(msToSeconds(50), maze);
 
             expect(pacman.gridX).toBe(5);
         });
@@ -362,7 +363,7 @@ describe('Pacman - Grid Movement', () => {
             pacman.setDirection(directions.UP);
             pacman.isMoving = true;
 
-            pacman.update(50, maze);
+            pacman.update(msToSeconds(50), maze);
 
             expect(pacman.gridY).toBe(5);
         });
@@ -373,7 +374,7 @@ describe('Pacman - Grid Movement', () => {
             pacman.setDirection(directions.RIGHT);
             pacman.speed = 100;
 
-            pacman.update(250, maze);
+            pacman.update(msToSeconds(250), maze);
 
             const expectedGridX = Math.floor(pacman.x / gameConfig.tileSize);
             const expectedGridY = Math.floor(pacman.y / gameConfig.tileSize);
@@ -389,11 +390,11 @@ describe('Pacman - Grid Movement', () => {
             pacman.speed = 100;
             const initialGridX = pacman.gridX;
 
-            pacman.update(10, maze);
+            pacman.update(msToSeconds(10), maze);
 
             expect(pacman.gridX).toBe(initialGridX);
 
-            pacman.update(20, maze);
+            pacman.update(msToSeconds(20), maze);
 
             expect(pacman.gridX).toBe(initialGridX);
         });
@@ -410,7 +411,7 @@ describe('Pacman - Grid Movement', () => {
             pacman.setDirection(directions.UP);
             pacman.isMoving = true;
 
-            pacman.update(20, maze);
+            pacman.update(msToSeconds(20), maze);
 
             expect(pacman.direction).toBe(directions.RIGHT);
             expect(pacman.nextDirection).toBe(directions.UP);
@@ -427,7 +428,7 @@ describe('Pacman - Grid Movement', () => {
             pacman.setDirection(directions.UP);
             pacman.isMoving = true;
 
-            pacman.update(20, maze);
+            pacman.update(msToSeconds(20), maze);
 
             expect(pacman.nextDirection).toBe(directions.UP);
         });
@@ -452,7 +453,7 @@ describe('Pacman - Grid Movement', () => {
             pacman.direction = directions.NONE;
             pacman.isMoving = false;
 
-            pacman.update(20, maze);
+            pacman.update(msToSeconds(20), maze);
 
             expect(pacman.x).toBe(100);
             expect(pacman.y).toBe(100);
@@ -471,7 +472,7 @@ describe('Pacman - Grid Movement', () => {
             pacman.direction = directions.RIGHT;
             pacman.isMoving = true;
 
-            pacman.update(200, maze);
+            pacman.update(msToSeconds(200), maze);
 
             const center = tileCenter(1, 1);
             const isAtCenter = Math.abs(pacman.x - center.x) < 2 && Math.abs(pacman.y - center.y) < 2;

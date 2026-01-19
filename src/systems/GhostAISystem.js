@@ -15,15 +15,15 @@ export class GhostAISystem {
         this.globalMode = ghostModes.SCATTER;
         this.cycleIndex = 0;
 
-        // Classic Pac-Man Scatter/Chase cycle durations (in ms)
+        // Classic Pac-Man Scatter/Chase cycle durations (in seconds)
         this.cycles = [
-            { mode: ghostModes.SCATTER, duration: 7000 },
-            { mode: ghostModes.CHASE, duration: 20000 },
-            { mode: ghostModes.SCATTER, duration: 7000 },
-            { mode: ghostModes.CHASE, duration: 20000 },
-            { mode: ghostModes.SCATTER, duration: 5000 },
-            { mode: ghostModes.CHASE, duration: 20000 },
-            { mode: ghostModes.SCATTER, duration: 5000 },
+            { mode: ghostModes.SCATTER, duration: 7 },
+            { mode: ghostModes.CHASE, duration: 20 },
+            { mode: ghostModes.SCATTER, duration: 7 },
+            { mode: ghostModes.CHASE, duration: 20 },
+            { mode: ghostModes.SCATTER, duration: 5 },
+            { mode: ghostModes.CHASE, duration: 20 },
+            { mode: ghostModes.SCATTER, duration: 5 },
             { mode: ghostModes.CHASE, duration: -1 } // Permanent chase
         ];
     }
@@ -38,12 +38,12 @@ export class GhostAISystem {
 
     /**
      * Updates all ghosts AI based on current game state
-     * @param {number} delta - Time elapsed since last update in milliseconds
+     * @param {number} deltaSeconds - Time elapsed since last update in seconds
      * @param {MazeLayout} maze - Current maze layout for collision detection
      * @param {Pacman} pacman - Pacman entity for targeting
      */
-    update(delta, maze, pacman) {
-        this.updateGlobalMode(delta);
+    update(deltaSeconds, maze, pacman) {
+        this.updateGlobalMode(deltaSeconds);
 
         for (const ghost of this.ghosts) {
             // Keep ghost mode in sync with global mode unless frightened or eaten
@@ -62,15 +62,15 @@ export class GhostAISystem {
 
     /**
      * Updates the global ghost mode based on cycle timers
-     * @param {number} delta - Time elapsed since last update in milliseconds
+     * @param {number} deltaSeconds - Time elapsed since last update in seconds
      */
-    updateGlobalMode(delta) {
+    updateGlobalMode(deltaSeconds) {
         const currentCycle = this.cycles[this.cycleIndex];
         if (currentCycle.duration === -1) {
             return;
         }
 
-        this.globalModeTimer += delta;
+        this.globalModeTimer += deltaSeconds;
 
         if (this.globalModeTimer >= currentCycle.duration) {
             this.cycleIndex++;

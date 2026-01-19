@@ -1,6 +1,7 @@
 import { GhostFactory } from '../../src/entities/GhostFactory.js';
 import Ghost from '../../src/entities/Ghost.js';
 import { ghostNames, ghostColors, ghostStartPositions } from '../../src/config/gameConfig.js';
+import { msToSeconds } from '../../src/utils/Time.js';
 
 jest.mock('../../src/entities/Ghost.js');
 
@@ -168,12 +169,12 @@ describe('GhostFactory', () => {
             ghosts[2].isEaten = true;
             ghosts[3].isEaten = false;
 
-            GhostFactory.setGhostsFrightened(ghosts, 5000);
+            GhostFactory.setGhostsFrightened(ghosts, msToSeconds(5000));
 
-            expect(ghosts[0].setFrightened).toHaveBeenCalledWith(5000);
-            expect(ghosts[1].setFrightened).toHaveBeenCalledWith(5000);
+            expect(ghosts[0].setFrightened).toHaveBeenCalledWith(msToSeconds(5000));
+            expect(ghosts[1].setFrightened).toHaveBeenCalledWith(msToSeconds(5000));
             expect(ghosts[2].setFrightened).not.toHaveBeenCalled();
-            expect(ghosts[3].setFrightened).toHaveBeenCalledWith(5000);
+            expect(ghosts[3].setFrightened).toHaveBeenCalledWith(msToSeconds(5000));
         });
 
         test('does not call setFrightened() on eaten ghosts', () => {
@@ -182,7 +183,7 @@ describe('GhostFactory', () => {
                 ghost.isEaten = true;
             });
 
-            GhostFactory.setGhostsFrightened(ghosts, 5000);
+            GhostFactory.setGhostsFrightened(ghosts, msToSeconds(5000));
 
             ghosts.forEach(ghost => {
                 expect(ghost.setFrightened).not.toHaveBeenCalled();
@@ -191,7 +192,7 @@ describe('GhostFactory', () => {
 
         test('calls setFrightened() with correct duration', () => {
             const ghosts = GhostFactory.createGhosts(mockScene);
-            const duration = 8000;
+            const duration = msToSeconds(8000);
 
             GhostFactory.setGhostsFrightened(ghosts, duration);
 
@@ -209,7 +210,7 @@ describe('GhostFactory', () => {
             ghosts[2].isEaten = false;
             ghosts[3].isEaten = false;
 
-            GhostFactory.setGhostsFrightened(ghosts, 6000);
+            GhostFactory.setGhostsFrightened(ghosts, msToSeconds(6000));
 
             expect(ghosts[0].setFrightened).toHaveBeenCalledTimes(1);
             expect(ghosts[1].setFrightened).not.toHaveBeenCalled();
@@ -287,11 +288,11 @@ describe('GhostFactory', () => {
                 expect(ghost.reset).toHaveBeenCalled();
             });
 
-            GhostFactory.setGhostsFrightened(ghosts, 5000);
+            GhostFactory.setGhostsFrightened(ghosts, msToSeconds(5000));
 
             ghosts.forEach(ghost => {
                 if (!ghost.isEaten) {
-                    expect(ghost.setFrightened).toHaveBeenCalledWith(5000);
+                    expect(ghost.setFrightened).toHaveBeenCalledWith(msToSeconds(5000));
                 }
             });
         });
@@ -322,7 +323,7 @@ describe('GhostFactory', () => {
             const ghosts = [];
 
             expect(() => {
-                GhostFactory.setGhostsFrightened(ghosts, 5000);
+                GhostFactory.setGhostsFrightened(ghosts, msToSeconds(5000));
             }).not.toThrow();
         });
 

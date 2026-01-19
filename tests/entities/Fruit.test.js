@@ -5,6 +5,7 @@
 import Fruit from '../../src/entities/Fruit.js';
 import { createMockScene } from '../utils/testHelpers.js';
 import { fruitConfig } from '../../src/config/gameConfig.js';
+import { msToSeconds } from '../../src/utils/Time.js';
 
 describe('Fruit (Optimized with Sprites)', () => {
     let scene;
@@ -41,8 +42,8 @@ describe('Fruit (Optimized with Sprites)', () => {
         });
 
         test('should deactivate after timeout', () => {
-            fruit.activate(100);
-            fruit.update(150);
+            fruit.activate(msToSeconds(100));
+            fruit.update(msToSeconds(150));
 
             expect(fruit.active).toBe(false);
         });
@@ -112,21 +113,21 @@ describe('Fruit (Optimized with Sprites)', () => {
 
     describe('update', () => {
         test('should decrement timer when active', () => {
-            fruit.activate(5000);
-            fruit.update(1000);
+            fruit.activate(msToSeconds(5000));
+            fruit.update(msToSeconds(1000));
 
             expect(fruit.active).toBe(true);
         });
 
         test('should deactivate when timer expires', () => {
-            fruit.activate(100);
-            fruit.update(150);
+            fruit.activate(msToSeconds(100));
+            fruit.update(msToSeconds(150));
 
             expect(fruit.active).toBe(false);
         });
 
         test('should not update when inactive', () => {
-            fruit.update(1000);
+            fruit.update(msToSeconds(1000));
 
             expect(fruit.active).toBe(false);
         });

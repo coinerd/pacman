@@ -1,5 +1,6 @@
 import Ghost from '../../src/entities/Ghost.js';
 import { gameConfig, ghostModes, directions, animationConfig, levelConfig } from '../../src/config/gameConfig.js';
+import { msToSeconds } from '../../src/utils/Time.js';
 import { createMockScene, createSimpleMaze, createMockPacman } from '../utils/testHelpers.js';
 
 describe('Ghost Entity', () => {
@@ -68,8 +69,8 @@ describe('Ghost Entity', () => {
         test('calls updateEaten when ghost is eaten', () => {
             ghost.isEaten = true;
             ghost.updateEaten = jest.fn();
-            ghost.update(100, maze, createMockPacman());
-            expect(ghost.updateEaten).toHaveBeenCalledWith(100, maze);
+            ghost.update(msToSeconds(100), maze, createMockPacman());
+            expect(ghost.updateEaten).toHaveBeenCalledWith(msToSeconds(100), maze);
         });
 
         test('calls updateFrightened and moveGhost when not eaten', () => {
@@ -77,14 +78,14 @@ describe('Ghost Entity', () => {
             ghost.updateFrightened = jest.fn();
             ghost.moveGhost = jest.fn();
             const pacman = createMockPacman();
-            ghost.update(100, maze, pacman);
-            expect(ghost.updateFrightened).toHaveBeenCalledWith(100);
-            expect(ghost.moveGhost).toHaveBeenCalledWith(100, maze, pacman);
+            ghost.update(msToSeconds(100), maze, pacman);
+            expect(ghost.updateFrightened).toHaveBeenCalledWith(msToSeconds(100));
+            expect(ghost.moveGhost).toHaveBeenCalledWith(msToSeconds(100), maze, pacman);
         });
 
         test('calls updateVisuals in all cases', () => {
             ghost.updateVisuals = jest.fn();
-            ghost.update(100, maze, createMockPacman());
+            ghost.update(msToSeconds(100), maze, createMockPacman());
             expect(ghost.updateVisuals).toHaveBeenCalled();
         });
     });
@@ -93,26 +94,26 @@ describe('Ghost Entity', () => {
         test('does not move when direction is NONE', () => {
             const initialX = ghost.x;
             ghost.direction = directions.NONE;
-            ghost.moveGhost(100, maze, createMockPacman());
+            ghost.moveGhost(msToSeconds(100), maze, createMockPacman());
             expect(ghost.x).toBe(initialX);
         });
 
         test('moves in current direction', () => {
             ghost.direction = directions.RIGHT;
             const initialX = ghost.x;
-            ghost.moveGhost(1000, maze, createMockPacman());
+            ghost.moveGhost(msToSeconds(1000), maze, createMockPacman());
             expect(ghost.x).toBeGreaterThan(initialX);
         });
 
         test('calculates move step based on speed and delta', () => {
             ghost.direction = directions.RIGHT;
             ghost.baseSpeed = 100;
-            const delta = 100;
-            const expectedMove = 100 * (100 / 1000);
+            const deltaSeconds = msToSeconds(100);
+            const expectedMove = 100 * deltaSeconds;
             const initialX = ghost.x;
-            ghost.moveGhost(delta, maze, createMockPacman());
+            ghost.moveGhost(deltaSeconds, maze, createMockPacman());
             // Ghost is at gridY 14 (tunnel row), so tunnel speed modifier (0.4) is applied
-            const expectedMoveWithTunnel = 100 * 0.4 * (100 / 1000);
+            const expectedMoveWithTunnel = 100 * 0.4 * deltaSeconds;
             expect(ghost.x - initialX).toBeCloseTo(expectedMoveWithTunnel, 1);
         });
 
@@ -120,7 +121,7 @@ describe('Ghost Entity', () => {
             ghost.direction = directions.RIGHT;
             ghost.x = gameConfig.mazeWidth * gameConfig.tileSize;
             ghost.handleTunnelWrap = jest.fn();
-            ghost.moveGhost(100, maze, createMockPacman());
+            ghost.moveGhost(msToSeconds(100), maze, createMockPacman());
             expect(ghost.handleTunnelWrap).toHaveBeenCalled();
         });
     });
@@ -128,35 +129,35 @@ describe('Ghost Entity', () => {
     describe('updateFrightened()', () => {
         test('decrements frightenedTimer when frightened', () => {
             ghost.isFrightened = true;
-            ghost.frightenedTimer = 5000;
-            ghost.updateFrightened(1000);
-            expect(ghost.frightenedTimer).toBe(4000);
+            ghost.frightenedTimer = msToSeconds(5000);
+            ghost.updateFrightened(msToSeconds(1000));
+            expect(ghost.frightenedTimer).toBe(4);
         });
 
         test('does not decrement when not frightened', () => {
             ghost.isFrightened = false;
-            ghost.frightenedTimer = 5000;
-            ghost.updateFrightened(1000);
-            expect(ghost.frightenedTimer).toBe(5000);
+            ghost.frightenedTimer = msToSeconds(5000);
+            ghost.updateFrightened(msToSeconds(1000));
+            expect(ghost.frightenedTimer).toBe(5);
         });
 
         test('increments blinkTimer when frightened', () => {
             ghost.isFrightened = true;
             ghost.blinkTimer = 0;
-            ghost.updateFrightened(100);
-            expect(ghost.blinkTimer).toBe(100);
+            ghost.updateFrightened(msToSeconds(100));
+            expect(ghost.blinkTimer).toBe(0.1);
         });
 
         test('sets isBlinking true when timer <= 2000', () => {
             ghost.isFrightened = true;
-            ghost.frightenedTimer = 2001;
-            ghost.updateFrightened(1);
+            ghost.frightenedTimer = msToSeconds(2001);
+            ghost.updateFrightened(msToSeconds(1));
             expect(ghost.isBlinking).toBe(true);
         });
 
         test('sets isBlinking false when timer > 2000', () => {
             ghost.isFrightened = true;
-            ghost.frightenedTimer = 2001;
+            ghost.frightenedTimer = msToSeconds(2001);
             ghost.isBlinking = false;
             ghost.updateFrightened(0);
             expect(ghost.isBlinking).toBe(false);
@@ -165,8 +166,8 @@ describe('Ghost Entity', () => {
         test('clears frightened state when timer reaches zero', () => {
             ghost.isFrightened = true;
             ghost.isBlinking = true;
-            ghost.frightenedTimer = 100;
-            ghost.updateFrightened(100);
+            ghost.frightenedTimer = msToSeconds(100);
+            ghost.updateFrightened(msToSeconds(100));
             expect(ghost.isFrightened).toBe(false);
             expect(ghost.isBlinking).toBe(false);
             expect(ghost.speed).toBe(ghost.baseSpeed);
@@ -177,23 +178,23 @@ describe('Ghost Entity', () => {
     describe('updateEaten()', () => {
         test('decrements houseTimer when in ghost house', () => {
             ghost.inGhostHouse = true;
-            ghost.houseTimer = 2000;
-            ghost.updateEaten(100, maze);
-            expect(ghost.houseTimer).toBe(1900);
+            ghost.houseTimer = msToSeconds(2000);
+            ghost.updateEaten(msToSeconds(100), maze);
+            expect(ghost.houseTimer).toBeCloseTo(1.9);
         });
 
         test('calls reset when houseTimer reaches zero', () => {
             ghost.inGhostHouse = true;
-            ghost.houseTimer = 100;
+            ghost.houseTimer = msToSeconds(100);
             ghost.reset = jest.fn();
-            ghost.updateEaten(100, maze);
+            ghost.updateEaten(msToSeconds(100), maze);
             expect(ghost.reset).toHaveBeenCalled();
         });
 
         test('does not move when in ghost house', () => {
             ghost.inGhostHouse = true;
             const initialX = ghost.x;
-            ghost.updateEaten(100, maze);
+            ghost.updateEaten(msToSeconds(100), maze);
             expect(ghost.x).toBe(initialX);
         });
     });
@@ -235,35 +236,35 @@ describe('Ghost Entity', () => {
 
     describe('setFrightened()', () => {
         test('sets isFrightened to true', () => {
-            ghost.setFrightened(5000);
+            ghost.setFrightened(msToSeconds(5000));
             expect(ghost.isFrightened).toBe(true);
         });
 
         test('sets frightenedTimer to duration', () => {
-            ghost.setFrightened(3000);
-            expect(ghost.frightenedTimer).toBe(3000);
+            ghost.setFrightened(msToSeconds(3000));
+            expect(ghost.frightenedTimer).toBe(3);
         });
 
         test('sets isBlinking to false', () => {
-            ghost.setFrightened(5000);
+            ghost.setFrightened(msToSeconds(5000));
             expect(ghost.isBlinking).toBe(false);
         });
 
         test('reduces speed to 50%', () => {
             ghost.baseSpeed = 100;
-            ghost.setFrightened(5000);
+            ghost.setFrightened(msToSeconds(5000));
             expect(ghost.speed).toBe(50);
         });
 
         test('reverses direction when direction is not NONE', () => {
             ghost.direction = directions.RIGHT;
-            ghost.setFrightened(5000);
+            ghost.setFrightened(msToSeconds(5000));
             expect(ghost.direction).toBe(directions.LEFT);
         });
 
         test('does not reverse when direction is NONE', () => {
             ghost.direction = directions.NONE;
-            ghost.setFrightened(5000);
+            ghost.setFrightened(msToSeconds(5000));
             expect(ghost.direction).toBe(directions.NONE);
         });
     });
@@ -367,7 +368,7 @@ describe('Ghost Entity', () => {
             ghost.speedMultiplier = 2.0;
             const expectedSpeed = ghost.baseSpeed * 2.0;
 
-            ghost.setFrightened(5000);
+            ghost.setFrightened(msToSeconds(5000));
             expect(ghost.speed).toBe(expectedSpeed * 0.5);
             expect(ghost.speedModifier).toBe(0.5);
 
@@ -436,8 +437,8 @@ describe('Ghost Entity', () => {
     describe('Bug Fix: FrightenedTimer clamping', () => {
         test('clamps frightenedTimer to zero when negative delta', () => {
             ghost.isFrightened = true;
-            ghost.frightenedTimer = 10;
-            ghost.updateFrightened(20);
+            ghost.frightenedTimer = msToSeconds(10);
+            ghost.updateFrightened(msToSeconds(20));
             ghost.updateFrightened(0);
             expect(ghost.frightenedTimer).toBe(0);
             expect(ghost.isFrightened).toBe(false);
@@ -447,9 +448,9 @@ describe('Ghost Entity', () => {
     describe('Bug Fix: HouseTimer clamping', () => {
         test('clamps houseTimer to zero when negative delta', () => {
             ghost.inGhostHouse = true;
-            ghost.houseTimer = 10;
+            ghost.houseTimer = msToSeconds(10);
             ghost.reset = jest.fn();
-            ghost.updateEaten(20, maze);
+            ghost.updateEaten(msToSeconds(20), maze);
             expect(ghost.houseTimer).toBe(0);
             expect(ghost.reset).toHaveBeenCalled();
         });

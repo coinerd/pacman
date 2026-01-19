@@ -17,6 +17,7 @@ import Ghost from '../../src/entities/Ghost.js';
 import { gameConfig, directions, ghostColors, ghostNames } from '../../src/config/gameConfig.js';
 import { TILE_TYPES } from '../../src/utils/MazeLayout.js';
 import { tileCenter, distanceToTileCenter, isAtTileCenter, EPS } from '../../src/utils/TileMovement.js';
+import { msToSeconds } from '../../src/utils/Time.js';
 import { createMockScene, createSimpleMaze } from '../utils/testHelpers.js';
 
 describe('Movement - Wall Collision', () => {
@@ -125,7 +126,7 @@ describe('Movement - Wall Collision', () => {
             pacman.direction = directions.RIGHT;
             pacman.isMoving = true;
 
-            pacman.update(10000, maze);
+            pacman.update(msToSeconds(10000), maze);
 
             expect(pacman.gridX).not.toBe(6);
             expect(maze[5][pacman.gridX]).not.toBe(TILE_TYPES.WALL);
@@ -194,7 +195,7 @@ describe('Movement - Wall Collision', () => {
                 ghost.direction = direction;
                 ghost.isMoving = true;
 
-                ghost.update(500, maze);
+                ghost.update(msToSeconds(500), maze);
 
                 const center = tileCenter(5, 5);
                 if (property === 'x') {
@@ -232,7 +233,7 @@ describe('Movement - Snap-to-Center', () => {
             const gridPos = { x: Math.floor(pacman.x / gameConfig.tileSize), y: Math.floor(pacman.y / gameConfig.tileSize) };
             const centerPixel = { x: gridPos.x * gameConfig.tileSize + gameConfig.tileSize / 2, y: gridPos.y * gameConfig.tileSize + gameConfig.tileSize / 2 };
             const distToCenter = Math.sqrt(Math.pow(pacman.x - centerPixel.x, 2) + Math.pow(pacman.y - centerPixel.y, 2));
-            const moveStep = pacman.speed * (20 / 1000);
+            const moveStep = pacman.speed * msToSeconds(20);
 
             expect(distToCenter).toBeLessThan(moveStep);
         });
@@ -243,7 +244,7 @@ describe('Movement - Snap-to-Center', () => {
             pacman.direction = directions.RIGHT;
             pacman.speed = 100;
 
-            pacman.update(20, maze);
+            pacman.update(msToSeconds(20), maze);
 
             expect(pacman.gridX).toBe(5);
             expect(pacman.gridY).toBe(5);
@@ -264,7 +265,7 @@ describe('Movement - Snap-to-Center', () => {
                 pacman.direction = directions.RIGHT;
                 pacman.speed = 100;
 
-                pacman.update(20, maze);
+                pacman.update(msToSeconds(20), maze);
 
                 const dist = distanceToTileCenter(pacman.x, pacman.y, 5, 5);
                 expect(dist).toBeLessThanOrEqual(EPS + 1);
@@ -292,7 +293,7 @@ describe('Movement - Snap-to-Center', () => {
             pacman.direction = directions.RIGHT;
             pacman.speed = 100;
 
-            pacman.update(50, maze);
+            pacman.update(msToSeconds(50), maze);
 
             const distToCenter = distanceToTileCenter(pacman.x, pacman.y, 5, 5);
             expect(distToCenter).toBeLessThan(5);
@@ -306,7 +307,7 @@ describe('Movement - Snap-to-Center', () => {
             pacman.direction = directions.RIGHT;
             pacman.isMoving = true;
 
-            pacman.update(100, maze);
+            pacman.update(msToSeconds(100), maze);
 
             expect(pacman.x).toBeGreaterThan(tileCenter(5, 5).x);
         });
@@ -320,7 +321,7 @@ describe('Movement - Snap-to-Center', () => {
             ghost.direction = directions.RIGHT;
             ghost.isMoving = true;
 
-            ghost.update(20, maze, pacman);
+            ghost.update(msToSeconds(20), maze, pacman);
 
             const distToCenter = distanceToTileCenter(ghost.x, ghost.y, 5, 5);
             expect(distToCenter).toBeLessThanOrEqual(3);
@@ -331,7 +332,7 @@ describe('Movement - Snap-to-Center', () => {
             ghost.y = tileCenter(5, 5).y;
             ghost.direction = directions.RIGHT;
 
-            ghost.update(20, maze, pacman);
+            ghost.update(msToSeconds(20), maze, pacman);
 
             expect(ghost.gridX).toBe(5);
             expect(ghost.gridY).toBe(5);
@@ -379,7 +380,7 @@ describe('Movement - Corner Turns', () => {
             maze[5][5] = TILE_TYPES.PATH;
             maze[4][5] = TILE_TYPES.PATH;
 
-            pacman.update(20, maze);
+            pacman.update(msToSeconds(20), maze);
 
             expect(pacman.direction).toBe(directions.UP);
             expect(pacman.nextDirection).toBe(directions.NONE);
@@ -394,7 +395,7 @@ describe('Movement - Corner Turns', () => {
             maze[5][5] = TILE_TYPES.PATH;
             maze[4][5] = TILE_TYPES.PATH;
 
-            pacman.update(10, maze);
+            pacman.update(msToSeconds(10), maze);
 
             expect(pacman.direction).toBe(directions.RIGHT);
             expect(pacman.nextDirection).toBe(directions.UP);
@@ -409,11 +410,11 @@ describe('Movement - Corner Turns', () => {
             maze[5][5] = TILE_TYPES.PATH;
             maze[4][5] = TILE_TYPES.PATH;
 
-            pacman.update(10, maze);
+            pacman.update(msToSeconds(10), maze);
             expect(pacman.direction).toBe(directions.RIGHT);
             expect(pacman.nextDirection).toBe(directions.UP);
 
-            pacman.update(80, maze);
+            pacman.update(msToSeconds(80), maze);
             expect(pacman.direction).toBe(directions.UP);
             expect(pacman.nextDirection).toBe(directions.NONE);
         });
@@ -427,7 +428,7 @@ describe('Movement - Corner Turns', () => {
             maze[5][5] = TILE_TYPES.PATH;
             maze[4][5] = TILE_TYPES.WALL;
 
-            pacman.update(20, maze);
+            pacman.update(msToSeconds(20), maze);
 
             expect(pacman.direction).toBe(directions.RIGHT);
             expect(pacman.nextDirection).toBe(directions.UP);
@@ -467,7 +468,7 @@ describe('Movement - Corner Turns', () => {
             maze[5][5] = TILE_TYPES.PATH;
             maze[4][5] = TILE_TYPES.PATH;
 
-            pacman.update(20, maze);
+            pacman.update(msToSeconds(20), maze);
 
             expect(pacman.direction).toBe(directions.UP);
             expect(pacman.isMoving).toBe(true);
@@ -482,7 +483,7 @@ describe('Movement - Corner Turns', () => {
             maze[5][5] = TILE_TYPES.PATH;
             maze[5][6] = TILE_TYPES.PATH;
 
-            pacman.update(20, maze);
+            pacman.update(msToSeconds(20), maze);
 
             expect(pacman.direction).toBe(directions.RIGHT);
             expect(pacman.isMoving).toBe(true);
@@ -502,7 +503,7 @@ describe('Movement - Corner Turns', () => {
             maze[5][5] = TILE_TYPES.PATH;
             maze[5][6] = TILE_TYPES.PATH;
 
-            pacman.update(80, maze);
+            pacman.update(msToSeconds(80), maze);
 
             expect(pacman.direction).toBe(directions.DOWN);
             expect(pacman.nextDirection).toBe(directions.NONE);
@@ -524,7 +525,7 @@ describe('Movement - Corner Turns', () => {
             maze[4][5] = TILE_TYPES.PATH;
 
             mockScene.ghostAISystem.chooseDirection(ghost, maze);
-            ghost.update(20, maze, pacman);
+            ghost.update(msToSeconds(20), maze, pacman);
 
             expect(ghost.direction).toBe(directions.UP);
         });
@@ -544,7 +545,7 @@ describe('Movement - Corner Turns', () => {
             maze[4][5] = TILE_TYPES.PATH;
 
             mockScene.ghostAISystem.chooseDirection(ghost, maze);
-            ghost.update(20, maze, pacman);
+            ghost.update(msToSeconds(20), maze, pacman);
 
             const distToCenter = distanceToTileCenter(ghost.x, ghost.y, 5, 5);
             expect(distToCenter).toBeLessThanOrEqual(3);
@@ -559,7 +560,7 @@ describe('Movement - Corner Turns', () => {
 
             mockScene.ghostAISystem.chooseDirection = jest.fn();
 
-            ghost.update(10, maze, pacman);
+            ghost.update(msToSeconds(10), maze, pacman);
 
             expect(ghost.direction).toBe(initialDirection);
         });
@@ -587,7 +588,7 @@ describe('Movement - Corner Turns', () => {
             maze[5][5] = TILE_TYPES.PATH;
             maze[4][5] = TILE_TYPES.PATH;
 
-            pacman.update(20, maze);
+            pacman.update(msToSeconds(20), maze);
 
             // Should attempt to turn (direction may or may not change depending on moveStep)
             const distToCenter = distanceToTileCenter(pacman.x, pacman.y, 5, 5);
@@ -604,7 +605,7 @@ describe('Movement - Corner Turns', () => {
             maze[5][5] = TILE_TYPES.PATH;
             maze[4][5] = TILE_TYPES.PATH;
 
-            pacman.update(10, maze);
+            pacman.update(msToSeconds(10), maze);
 
             expect(pacman.direction).toBe(directions.RIGHT);
             expect(pacman.nextDirection).toBe(directions.UP);
@@ -639,7 +640,7 @@ describe('Movement - Pure Movement (No Collision Side Effects)', () => {
             pacman.direction = directions.RIGHT;
             pacman.isMoving = true;
 
-            pacman.update(100, maze);
+            pacman.update(msToSeconds(100), maze);
 
             expect(ghost.x).toBe(initialGhostX);
             expect(ghost.y).toBe(initialGhostY);
@@ -654,7 +655,7 @@ describe('Movement - Pure Movement (No Collision Side Effects)', () => {
             ghost.direction = directions.RIGHT;
             ghost.isMoving = true;
 
-            ghost.update(100, maze, pacman);
+            ghost.update(msToSeconds(100), maze, pacman);
 
             expect(pacman.x).toBe(initialPacmanX);
             expect(pacman.y).toBe(initialPacmanY);
@@ -678,9 +679,9 @@ describe('Movement - Pure Movement (No Collision Side Effects)', () => {
             ghost2.direction = directions.LEFT;
             ghost2.isMoving = true;
 
-            pacman.update(50, maze);
-            ghost.update(50, maze, pacman);
-            ghost2.update(50, maze, pacman);
+            pacman.update(msToSeconds(50), maze);
+            ghost.update(msToSeconds(50), maze, pacman);
+            ghost2.update(msToSeconds(50), maze, pacman);
 
             expect(pacman.x).toBeGreaterThan(tileCenter(5, 5).x);
             expect(ghost.y).toBeGreaterThan(tileCenter(5, 5).y);
@@ -705,7 +706,7 @@ describe('Movement - Pure Movement (No Collision Side Effects)', () => {
             pacman.direction = directions.RIGHT;
             pacman.isMoving = true;
 
-            pacman.update(50, maze);
+            pacman.update(msToSeconds(50), maze);
 
             expect(pacman.x).toBeGreaterThan(tileCenter(5, 5).x);
             expect(pacman.isMoving).toBe(true);
@@ -717,8 +718,8 @@ describe('Movement - Pure Movement (No Collision Side Effects)', () => {
             ghost.gridX = 3;
             ghost.gridY = 3;
 
-            pacman.update(10, maze);
-            ghost.update(10, maze, pacman);
+            pacman.update(msToSeconds(10), maze);
+            ghost.update(msToSeconds(10), maze, pacman);
 
             expect(pacman.gridX).toBe(5);
             expect(pacman.gridY).toBe(5);
@@ -757,7 +758,7 @@ describe('Movement - Edge Cases and Integration', () => {
                 pacman.isMoving = true;
 
                 const initialX = pacman.x;
-                pacman.update(100, maze);
+                pacman.update(msToSeconds(100), maze);
 
                 expect(pacman.x).toBeGreaterThan(initialX);
                 expect(pacman.x).toBeLessThan(initialX + speed * 0.15);
@@ -771,13 +772,13 @@ describe('Movement - Edge Cases and Integration', () => {
             ghost.direction = directions.RIGHT;
             ghost.isMoving = true;
 
-            ghost.update(100, maze, pacman);
+            ghost.update(msToSeconds(100), maze, pacman);
             const normalDistance = ghost.x - tileCenter(5, 5).x;
 
             ghost.x = tileCenter(5, 5).x;
             ghost.setSpeedMultiplier(2.0);
 
-            ghost.update(100, maze, pacman);
+            ghost.update(msToSeconds(100), maze, pacman);
             const boostedDistance = ghost.x - tileCenter(5, 5).x;
 
             expect(boostedDistance).toBeCloseTo(normalDistance * 2, 1);
@@ -800,7 +801,7 @@ describe('Movement - Edge Cases and Integration', () => {
             pacman.direction = directions.LEFT;
             pacman.isMoving = true;
 
-            pacman.update(200, wideMaze);
+            pacman.update(msToSeconds(200), wideMaze);
 
             expect(pacman.x).toBeGreaterThan(0);
         });
@@ -817,7 +818,7 @@ describe('Movement - Edge Cases and Integration', () => {
             const initialX = pacman.x;
             const initialY = pacman.y;
 
-            pacman.update(100, maze);
+            pacman.update(msToSeconds(100), maze);
 
             expect(pacman.x).toBe(initialX);
             expect(pacman.y).toBe(initialY);
@@ -833,7 +834,7 @@ describe('Movement - Edge Cases and Integration', () => {
             const initialX = pacman.x;
             const initialY = pacman.y;
 
-            pacman.update(100, maze);
+            pacman.update(msToSeconds(100), maze);
 
             expect(pacman.x).toBe(initialX);
             expect(pacman.y).toBe(initialY);
@@ -850,7 +851,7 @@ describe('Movement - Edge Cases and Integration', () => {
 
             const initialX = pacman.x;
 
-            pacman.update(5000, maze);
+            pacman.update(msToSeconds(5000), maze);
 
             expect(pacman.x).toBeLessThan(tileCenter(6, 5).x + gameConfig.tileSize);
             expect(pacman.x).toBeGreaterThan(initialX);
