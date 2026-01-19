@@ -18,18 +18,18 @@ export function normalizeDeltaSeconds(delta) {
         return 0;
     }
 
-    if ((delta > 1 || (delta > 0 && delta < 0.001)) && !hasWarnedAboutDeltaUnits) {
-        console.warn(`[Time] Delta (${delta}) looks like the wrong unit; normalizing to seconds.`);
+    let normalizedSeconds = delta > 1 ? msToSeconds(delta) : delta;
+
+    if (delta > 0 && delta < 0.001) {
+        normalizedSeconds = delta * 1000;
+    }
+
+    if (!hasWarnedAboutDeltaUnits && (delta > 1000 || (delta > 0 && delta < 0.001))) {
+        console.warn(
+            `[Time] Delta (${delta}) looks like the wrong unit; normalizing to seconds.`
+        );
         hasWarnedAboutDeltaUnits = true;
     }
 
-    if (delta > 1) {
-        return msToSeconds(delta);
-    }
-
-    if (delta > 0 && delta < 0.001) {
-        return delta * 1000;
-    }
-
-    return Math.max(0, delta);
+    return Math.max(0, normalizedSeconds);
 }
