@@ -11,7 +11,7 @@ export const gameConfig = {
     mazeWidth: 28,
     mazeHeight: 31,
     targetFPS: 60,
-    tunnelRow: 14
+    tunnelRow: 1
 };
 
 export const collisionConfig = {
@@ -122,23 +122,23 @@ export const ghostStartPositions = {
 
 export const ghostHouse = {
     entrance: { x: 13, y: 11 },
-    center: { x: 13, y: 14 }
+    center: { x: 12, y: 13 }
 };
 
 export const pacmanStartPosition = { x: 13, y: 22 };
 
 export const powerPelletPositions = [
-    { x: 1, y: 14 },
-    { x: 26, y: 14 },
-    { x: 1, y: 39 },
-    { x: 26, y: 39 }
+    { x: 1, y: 1 },
+    { x: 26, y: 1 },
+    { x: 1, y: 25 },
+    { x: 26, y: 25 }
 ];
 
 export const scatterTargets = {
     blinky: { x: 26, y: 0 },
     pinky: { x: 2, y: 0 },
-    inky: { x: 27, y: 30 },
-    clyde: { x: 0, y: 30 }
+    inky: { x: 27, y: 26 },
+    clyde: { x: 0, y: 26 }
 };
 
 /**
