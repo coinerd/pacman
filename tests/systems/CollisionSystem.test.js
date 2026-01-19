@@ -1,6 +1,6 @@
 import { CollisionSystem } from '../../src/systems/CollisionSystem.js';
 import { collisionConfig, gameConfig, scoreValues } from '../../src/config/gameConfig.js';
-import { TILE_TYPES } from '../../src/utils/MazeLayout.js';
+import { PELLET_TYPES } from '../../src/utils/MazeLayout.js';
 import { capsuleCollision } from '../../src/utils/CollisionUtils.js';
 
 describe('CollisionSystem', () => {
@@ -9,6 +9,7 @@ describe('CollisionSystem', () => {
     let mockPacman;
     let mockGhosts;
     let mockMaze;
+    let mockPelletGrid;
     let mockPelletPool;
     let mockPowerPelletPool;
 
@@ -61,9 +62,17 @@ describe('CollisionSystem', () => {
         mockMaze = [
             [1, 1, 1, 1, 1],
             [1, 0, 0, 0, 1],
-            [1, 0, 2, 0, 1],
+            [1, 0, 0, 0, 1],
             [1, 0, 0, 0, 1],
             [1, 1, 1, 1, 1]
+        ];
+
+        mockPelletGrid = [
+            [0, 0, 0, 0, 0],
+            [0, PELLET_TYPES.PELLET, PELLET_TYPES.PELLET, PELLET_TYPES.PELLET, 0],
+            [0, PELLET_TYPES.PELLET, PELLET_TYPES.POWER_PELLET, PELLET_TYPES.PELLET, 0],
+            [0, PELLET_TYPES.PELLET, PELLET_TYPES.PELLET, PELLET_TYPES.PELLET, 0],
+            [0, 0, 0, 0, 0]
         ];
 
         mockPelletPool = {
@@ -97,6 +106,7 @@ describe('CollisionSystem', () => {
         collisionSystem.setPacman(mockPacman);
         collisionSystem.setGhosts(mockGhosts);
         collisionSystem.setMaze(mockMaze);
+        collisionSystem.setPelletGrid(mockPelletGrid);
         collisionSystem.setPelletSprites([], []);
         collisionSystem.setPelletPool(mockPelletPool);
         collisionSystem.setPowerPelletPool(mockPowerPelletPool);
@@ -197,13 +207,13 @@ describe('CollisionSystem', () => {
             expect(score).toBe(scoreValues.pellet);
         });
 
-        test('removes pellet from maze when eaten', () => {
+        test('removes pellet from pellet grid when eaten', () => {
             mockPacman.x = 1 * 16 + 8;
             mockPacman.y = 1 * 16 + 8;
 
             collisionSystem.checkPelletCollision();
 
-            expect(mockMaze[1][1]).toBe(TILE_TYPES.EMPTY);
+            expect(mockPelletGrid[1][1]).toBe(PELLET_TYPES.NONE);
         });
 
         test('releases pellet from pool when eaten', () => {
@@ -221,7 +231,7 @@ describe('CollisionSystem', () => {
 
             collisionSystem.checkPelletCollision();
 
-            expect(mockMaze[2][1]).toBe(TILE_TYPES.PELLET);
+            expect(mockPelletGrid[2][1]).toBe(PELLET_TYPES.PELLET);
         });
     });
 
@@ -244,13 +254,13 @@ describe('CollisionSystem', () => {
             expect(score).toBe(scoreValues.powerPellet);
         });
 
-        test('removes power pellet from maze when eaten', () => {
+        test('removes power pellet from pellet grid when eaten', () => {
             mockPacman.x = 2 * 16 + 8;
             mockPacman.y = 2 * 16 + 8;
 
             collisionSystem.checkPowerPelletCollision();
 
-            expect(mockMaze[2][2]).toBe(TILE_TYPES.EMPTY);
+            expect(mockPelletGrid[2][2]).toBe(PELLET_TYPES.NONE);
         });
 
         test('releases power pellet from pool when eaten', () => {
@@ -444,15 +454,15 @@ describe('CollisionSystem', () => {
         });
 
         test('returns true when no pellets remain', () => {
-            mockMaze[1][1] = TILE_TYPES.EMPTY;
-            mockMaze[1][2] = TILE_TYPES.EMPTY;
-            mockMaze[1][3] = TILE_TYPES.EMPTY;
-            mockMaze[2][1] = TILE_TYPES.EMPTY;
-            mockMaze[2][2] = TILE_TYPES.EMPTY;
-            mockMaze[2][3] = TILE_TYPES.EMPTY;
-            mockMaze[3][1] = TILE_TYPES.EMPTY;
-            mockMaze[3][2] = TILE_TYPES.EMPTY;
-            mockMaze[3][3] = TILE_TYPES.EMPTY;
+            mockPelletGrid[1][1] = PELLET_TYPES.NONE;
+            mockPelletGrid[1][2] = PELLET_TYPES.NONE;
+            mockPelletGrid[1][3] = PELLET_TYPES.NONE;
+            mockPelletGrid[2][1] = PELLET_TYPES.NONE;
+            mockPelletGrid[2][2] = PELLET_TYPES.NONE;
+            mockPelletGrid[2][3] = PELLET_TYPES.NONE;
+            mockPelletGrid[3][1] = PELLET_TYPES.NONE;
+            mockPelletGrid[3][2] = PELLET_TYPES.NONE;
+            mockPelletGrid[3][3] = PELLET_TYPES.NONE;
 
             const result = collisionSystem.checkWinCondition();
 

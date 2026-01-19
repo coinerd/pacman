@@ -1,6 +1,11 @@
 import { collisionConfig, scoreValues } from '../config/gameConfig.js';
-import { pixelToGrid, countPellets } from '../utils/MazeLayout.js';
-import { TILE_TYPES } from '../utils/MazeLayout.js';
+import {
+    pixelToGrid,
+    countPellets,
+    getPelletType,
+    consumePelletAt,
+    PELLET_TYPES
+} from '../utils/MazeLayout.js';
 import { capsuleCollision } from '../utils/CollisionUtils.js';
 import { DebugLogger } from '../utils/DebugLogger.js';
 
@@ -19,6 +24,7 @@ export class CollisionSystem {
         this.pacman = null;
         this.ghosts = [];
         this.maze = null;
+        this.pelletGrid = null;
         this.pelletSprites = [];
         this.powerPelletSprites = [];
         this.pelletPool = null;
@@ -61,6 +67,10 @@ export class CollisionSystem {
      */
     setMaze(maze) {
         this.maze = maze;
+    }
+
+    setPelletGrid(pelletGrid) {
+        this.pelletGrid = pelletGrid;
     }
 
     setPelletCounts(totalPellets) {
@@ -292,7 +302,10 @@ export class CollisionSystem {
         if (typeof this.pelletsRemaining === 'number') {
             return this.pelletsRemaining === 0;
         }
-        const pelletsRemaining = countPellets(this.maze);
+        if (!this.pelletGrid) {
+            return false;
+        }
+        const pelletsRemaining = countPellets(this.pelletGrid);
         return pelletsRemaining === 0;
     }
 
@@ -359,7 +372,7 @@ export class CollisionSystem {
             pelletsConsumed: 0
         };
 
-        if (!resolvedSnapshot?.pacman || !this.maze) {
+        if (!resolvedSnapshot?.pacman || !this.maze || !this.pelletGrid) {
             return emptyResult;
         }
 
@@ -379,7 +392,7 @@ export class CollisionSystem {
             this.lastPelletGrid = { x: pacmanGrid.x, y: pacmanGrid.y };
         }
 
-        const tileType = this.maze[pacmanGrid.y][pacmanGrid.x];
+        const pelletType = getPelletType(this.pelletGrid, pacmanGrid.x, pacmanGrid.y);
 
         const logData = {
             timestamp: new Date().toISOString(),
@@ -390,16 +403,16 @@ export class CollisionSystem {
                 gridX: pacmanGrid.x,
                 gridY: pacmanGrid.y
             },
-            tileType: tileType,
-            collision: tileType === TILE_TYPES.PELLET || tileType === TILE_TYPES.POWER_PELLET
+            pelletType: pelletType,
+            collision: pelletType === PELLET_TYPES.PELLET || pelletType === PELLET_TYPES.POWER_PELLET
         };
 
         if (this.debugLogger.enabled) {
             console.log(JSON.stringify(logData, null, 2));
         }
 
-        if (tileType === TILE_TYPES.PELLET && options.allowPellet) {
-            this.maze[pacmanGrid.y][pacmanGrid.x] = TILE_TYPES.EMPTY;
+        if (pelletType === PELLET_TYPES.PELLET && options.allowPellet) {
+            consumePelletAt(this.pelletGrid, pacmanGrid.x, pacmanGrid.y);
 
             const pellet = this.pelletPool?.getByGrid(pacmanGrid.x, pacmanGrid.y);
             if (pellet) {
@@ -414,8 +427,8 @@ export class CollisionSystem {
             };
         }
 
-        if (tileType === TILE_TYPES.POWER_PELLET && options.allowPowerPellet) {
-            this.maze[pacmanGrid.y][pacmanGrid.x] = TILE_TYPES.EMPTY;
+        if (pelletType === PELLET_TYPES.POWER_PELLET && options.allowPowerPellet) {
+            consumePelletAt(this.pelletGrid, pacmanGrid.x, pacmanGrid.y);
 
             const powerPellet = this.powerPelletPool?.getByGrid(pacmanGrid.x, pacmanGrid.y);
             if (powerPellet) {

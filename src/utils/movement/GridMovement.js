@@ -1,6 +1,6 @@
 import { gameConfig, directions } from '../../config/gameConfig.js';
 import { tileCenter, EPS } from '../TileMath.js';
-import { isWall as isWallTile } from '../MazeLayout.js';
+import { isWalkableTile } from '../MazeLayout.js';
 import { PORTAL_TILES } from '../WarpTunnel.js';
 
 const MAX_TILES_PER_FRAME = 3;
@@ -26,7 +26,7 @@ export function canMove(maze, tileX, tileY, direction) {
         return false;
     }
 
-    return !isWallTile(maze, nextGridX, nextGridY);
+    return isWalkableTile(maze, nextGridX, nextGridY);
 }
 
 /**
