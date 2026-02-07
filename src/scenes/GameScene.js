@@ -43,6 +43,7 @@ import { PacmanAI } from '../systems/PacmanAI.js';
 import { FixedTimeStepLoop } from '../systems/FixedTimeStepLoop.js';
 import { gameEvents, GAME_EVENTS } from '../core/EventBus.js';
 import { normalizeDeltaSeconds } from '../utils/Time.js';
+import GameModel from '../core/GameModel.js';
 
 export default class GameScene extends Phaser.Scene {
     constructor() {
@@ -54,31 +55,20 @@ export default class GameScene extends Phaser.Scene {
      * @param {Object} data - Scene data
      */
     init(data) {
-        this.gameState = {
+        this.gameModel = new GameModel({
             score: data.score || 0,
             lives: 3,
             level: data.level || 1,
-            isPaused: false,
-            isGameOver: false,
-            isDying: false,
-            deathTimer: 0,
-            highScore: 0,
-            pelletsEaten: 0,
-            pelletsRemaining: 0,
-            totalPellets: 0,
-            ghostsEaten: 0,
-            maxComboGhosts: 0,
-            levelDeaths: 0,
-            fruitsCollected: 0,
-            levelComplete: false
-        };
+            deathPauseDuration: animationConfig.deathPauseDuration
+        });
+        this.gameState = this.gameModel.state;
 
         this.storageManager = new StorageManager();
-        this.gameState.highScore = this.storageManager.getHighScore();
+        this.gameModel.setHighScore(this.storageManager.getHighScore());
         this.soundManager = new SoundManager(this);
 
         this.gameFlowController = new GameFlowController(this);
-        this.levelManager = new LevelManager(this, this.gameState);
+        this.levelManager = new LevelManager(this, this.gameModel);
 
         this.pelletPool = new PelletPool(this);
         this.powerPelletPool = new PowerPelletPool(this);
@@ -117,7 +107,7 @@ export default class GameScene extends Phaser.Scene {
         this.inputController = new InputController(this, this.pacman);
 
         this.effectManager = new EffectManager(this);
-        this.deathHandler = new DeathHandler(this, this.gameState);
+        this.deathHandler = new DeathHandler(this, this.gameModel);
 
         this.collisionSystem = new CollisionSystem(this);
         this.collisionSystem.setPacman(this.pacman);
@@ -126,8 +116,7 @@ export default class GameScene extends Phaser.Scene {
         this.collisionSystem.setPelletPool(this.pelletPool);
         this.collisionSystem.setPowerPelletPool(this.powerPelletPool);
         this.collisionSystem.setPelletGrid(this.pelletGrid);
-        this.gameState.totalPellets = countPellets(this.pelletGrid);
-        this.gameState.pelletsRemaining = this.gameState.totalPellets;
+        this.gameModel.setPelletCounts(countPellets(this.pelletGrid));
         this.collisionSystem.setPelletCounts(this.gameState.totalPellets);
 
         this.ghostAISystem = new GhostAISystem();
@@ -392,19 +381,21 @@ export default class GameScene extends Phaser.Scene {
         const results = this.collisionSystem.checkAllCollisions();
 
         if (results.pelletScore > 0) {
-            this.gameFlowController.handlePelletEaten(results.pelletScore);
-            this.gameState.pelletsEaten++;
-            this.gameState.pelletsRemaining = this.collisionSystem.getPelletsRemaining();
+            const pelletsRemaining = this.collisionSystem.getPelletsRemaining();
+            this.gameFlowController.handlePelletEaten(results.pelletScore, pelletsRemaining);
             this.achievementSystem.check(this.gameState);
             this.checkFruitSpawn();
         }
 
         if (results.powerPelletScore > 0) {
             const duration = this.levelManager.getFrightenedDuration();
-            this.gameFlowController.handlePowerPelletEaten(results.powerPelletScore, duration);
+            const pelletsRemaining = this.collisionSystem.getPelletsRemaining();
+            this.gameFlowController.handlePowerPelletEaten(
+                results.powerPelletScore,
+                duration,
+                pelletsRemaining
+            );
             this.effectManager.createPowerPelletEffect();
-            this.gameState.currentComboGhosts = 0;
-            this.gameState.pelletsRemaining = this.collisionSystem.getPelletsRemaining();
             this.achievementSystem.check(this.gameState);
         }
 
@@ -412,17 +403,9 @@ export default class GameScene extends Phaser.Scene {
             if (results.ghostCollision.type === 'ghost_eaten') {
                 this.gameFlowController.handleGhostCollision(results.ghostCollision);
                 this.effectManager.createGhostEatenEffect();
-                this.gameState.ghostsEaten++;
-                this.gameState.currentComboGhosts++;
-                this.gameState.maxComboGhosts = Math.max(
-                    this.gameState.maxComboGhosts,
-                    this.gameState.currentComboGhosts
-                );
                 this.achievementSystem.check(this.gameState);
             } else if (results.ghostCollision.type === 'pacman_died') {
-                this.deathHandler.handleDeath();
-                this.gameState.levelDeaths++;
-                this.gameState.levelComplete = false;
+                this.gameFlowController.handleGhostCollision(results.ghostCollision);
                 this.achievementSystem.check(this.gameState);
             }
         }
@@ -436,7 +419,6 @@ export default class GameScene extends Phaser.Scene {
             if (dist < gameConfig.tileSize) {
                 this.gameFlowController.handleFruitEaten();
                 this.effectManager.createFruitEatEffect();
-                this.gameState.fruitsCollected++;
                 this.achievementSystem.check(this.gameState);
             }
         }
@@ -450,14 +432,7 @@ export default class GameScene extends Phaser.Scene {
      * Check if fruit should spawn
      */
     checkFruitSpawn() {
-        const totalPellets = this.gameState.totalPellets;
-        if (!totalPellets) {
-            return;
-        }
-
-        const eatenPercentage = ((totalPellets - this.gameState.pelletsRemaining) / totalPellets) * 100;
-
-        if (eatenPercentage >= fruitConfig.pelletThreshold && !this.fruit.active) {
+        if (this.gameModel.shouldSpawnFruit(fruitConfig.pelletThreshold) && !this.fruit.active) {
             this.fruit.reset(this.gameState.level - 1);
             this.fruit.activate();
         }
@@ -561,7 +536,7 @@ export default class GameScene extends Phaser.Scene {
      * Resume from pause
      */
     resume() {
-        this.gameState.isPaused = false;
+        this.gameModel.setPaused(false);
         this.soundManager.resume();
     }
 

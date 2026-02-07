@@ -7,7 +7,8 @@ export default class Pacman extends BaseEntity {
         const radius = gameConfig.tileSize * 0.4;
         super(scene, gridX, gridY, radius, colors.pacman);
 
-        const baseLevelSpeed = levelConfig.baseSpeed + (scene.gameState.level - 1) * levelConfig.speedIncreasePerLevel;
+        const level = scene.gameModel?.getLevel?.() ?? scene.gameState?.level ?? 1;
+        const baseLevelSpeed = levelConfig.baseSpeed + (level - 1) * levelConfig.speedIncreasePerLevel;
         this.speed = baseLevelSpeed * levelConfig.pacmanSpeedMultiplier;
         this.baseSpeed = this.speed;
 

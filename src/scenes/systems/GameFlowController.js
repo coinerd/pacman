@@ -10,7 +10,7 @@ export class GameFlowController {
      */
     constructor(gameScene) {
         this.scene = gameScene;
-        this.gameState = gameScene.gameState;
+        this.gameModel = gameScene.gameModel;
         this.storageManager = gameScene.storageManager;
         this.soundManager = gameScene.soundManager;
     }
@@ -19,8 +19,8 @@ export class GameFlowController {
      * Handle pellet eaten event
      * @param {number} score - Score to add
      */
-    handlePelletEaten(score) {
-        this.gameState.score += score;
+    handlePelletEaten(score, pelletsRemaining) {
+        this.gameModel.onPelletEaten(score, pelletsRemaining);
         this.soundManager.playWakaWaka();
     }
 
@@ -29,8 +29,8 @@ export class GameFlowController {
      * @param {number} score - Score to add
      * @param {number} duration - Frightened duration in seconds
      */
-    handlePowerPelletEaten(score, duration) {
-        this.gameState.score += score;
+    handlePowerPelletEaten(score, duration, pelletsRemaining) {
+        this.gameModel.onPowerPelletEaten(score, pelletsRemaining);
 
         const ghosts = this.scene.ghosts;
         for (const ghost of ghosts) {
@@ -48,9 +48,10 @@ export class GameFlowController {
      */
     handleGhostCollision(result) {
         if (result.type === 'ghost_eaten') {
-            this.gameState.score += result.score;
+            this.gameModel.onGhostEaten(result.score);
             this.soundManager.playGhostEaten();
         } else if (result.type === 'pacman_died') {
+            this.gameModel.onPacmanDeath();
             this.scene.deathHandler.handleDeath();
             this.soundManager.playDeath();
         }
@@ -60,7 +61,7 @@ export class GameFlowController {
      * Handle fruit eaten event
      */
     handleFruitEaten() {
-        this.gameState.score += this.scene.fruit.getScore();
+        this.gameModel.onFruitEaten(this.scene.fruit.getScore());
         this.soundManager.playFruitEat();
         this.scene.fruit.deactivate();
     }
@@ -69,14 +70,14 @@ export class GameFlowController {
      * Handle level completion (win)
      */
     handleWin() {
-        this.gameState.level++;
+        this.gameModel.onLevelComplete();
         this.soundManager.playLevelComplete();
-        this.storageManager.saveHighScore(this.gameState.score);
+        this.storageManager.saveHighScore(this.gameModel.state.score);
 
         this.scene.scene.start('WinScene', {
-            score: this.gameState.score,
-            level: this.gameState.level,
-            highScore: this.gameState.highScore
+            score: this.gameModel.state.score,
+            level: this.gameModel.state.level,
+            highScore: this.gameModel.state.highScore
         });
     }
 
@@ -84,12 +85,12 @@ export class GameFlowController {
      * Handle game over
      */
     handleGameOver() {
-        this.gameState.isGameOver = true;
-        this.storageManager.saveHighScore(this.gameState.score);
+        this.gameModel.setGameOver(true);
+        this.storageManager.saveHighScore(this.gameModel.state.score);
 
         this.scene.scene.start('GameOverScene', {
-            score: this.gameState.score,
-            highScore: this.gameState.highScore
+            score: this.gameModel.state.score,
+            highScore: this.gameModel.state.highScore
         });
     }
 
@@ -98,7 +99,6 @@ export class GameFlowController {
      * @returns {boolean} True if game over (no lives left)
      */
     decrementLives() {
-        this.gameState.lives--;
-        return this.gameState.lives <= 0;
+        return this.gameModel.decrementLives();
     }
 }

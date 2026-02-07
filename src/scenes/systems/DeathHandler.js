@@ -3,28 +3,22 @@
  * Manages death animation and respawn logic
  */
 
-import { animationConfig } from '../../config/gameConfig.js';
-
 export class DeathHandler {
     /**
      * Create DeathHandler
      * @param {Object} gameScene - The GameScene instance
-     * @param {Object} gameState - Game state object
+     * @param {Object} gameModel - Game model
      */
-    constructor(gameScene, gameState) {
+    constructor(gameScene, gameModel) {
         this.scene = gameScene;
-        this.gameState = gameState;
-        this.deathTimer = 0;
-        this.isDying = false;
+        this.gameModel = gameModel;
     }
 
     /**
      * Handle death sequence
      */
     handleDeath() {
-        this.isDying = true;
-        this.gameState.isDying = true;
-        this.deathTimer = 0;
+        this.gameModel.beginDeath();
         this.scene.pacman.die();
         this.scene.soundManager.playDeath();
     }
@@ -35,24 +29,19 @@ export class DeathHandler {
      * @returns {boolean} True if death animation complete
      */
     update(deltaSeconds) {
-        if (!this.isDying) {return false;}
-
-        this.deathTimer += deltaSeconds;
-
-        if (this.deathTimer >= animationConfig.deathPauseDuration) {
-            this.deathTimer = 0;
-            this.isDying = false;
-
-            if (this.gameState.lives <= 0) {
-                this.scene.gameFlowController.handleGameOver();
-            } else {
-                this.gameState.lives--;
-                this.scene.resetPositions();
-                this.scene.uiController.showReadyMessage();
-            }
-            return true;
+        if (!this.gameModel.state.isDying) {
+            return false;
         }
-        return false;
+
+        const result = this.gameModel.step(deltaSeconds);
+        if (result?.event === 'gameOver') {
+            this.scene.gameFlowController.handleGameOver();
+        } else if (result?.event === 'respawn') {
+            this.scene.resetPositions();
+            this.scene.uiController.showReadyMessage();
+        }
+
+        return true;
     }
 
     /**
@@ -60,14 +49,14 @@ export class DeathHandler {
      * @returns {boolean} True if dying
      */
     isDying() {
-        return this.isDying;
+        return this.gameModel.state.isDying;
     }
 
     /**
      * Reset death handler
      */
     reset() {
-        this.deathTimer = 0;
-        this.isDying = false;
+        this.gameModel.state.deathTimer = 0;
+        this.gameModel.state.isDying = false;
     }
 }
