@@ -131,6 +131,10 @@ export default class GameScene extends Phaser.Scene {
         this.uiController.showReadyMessage();
 
         this.resetPositions();
+
+        gameEvents.emit(GAME_EVENTS.GAME_STARTED, {
+            level: this.gameState.level
+        });
     }
 
     /**
