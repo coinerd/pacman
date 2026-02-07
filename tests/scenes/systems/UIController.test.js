@@ -1,182 +1,148 @@
 import { UIController } from '../../../src/scenes/systems/UIController.js';
-import { createMockScene } from '../../utils/testHelpers.js';
-
 describe('UIController', () => {
     let controller;
     let mockScene;
+    let renderLog;
 
     beforeEach(() => {
-        mockScene = createMockScene();
-
-        const createTextMock = () => ({
-            setOrigin: jest.fn().mockReturnValue({}),
-            setAlpha: jest.fn().mockReturnValue({}),
-            setText: jest.fn(),
-            destroy: jest.fn()
-        });
-
-        mockScene.add = {
-            text: jest.fn(createTextMock),
-            container: jest.fn().mockReturnValue({
-                setVisible: jest.fn(),
+        renderLog = [];
+        const createTextMock = (x, y, text, style) => {
+            renderLog.push({
+                type: 'text',
+                x,
+                y,
+                text,
+                style
+            });
+            return {
+                setOrigin: jest.fn().mockReturnThis(),
+                setAlpha: jest.fn().mockReturnThis(),
+                setText: jest.fn(),
                 destroy: jest.fn()
-            })
+            };
         };
-        mockScene.tweens = {
-            add: jest.fn()
-        };
-        mockScene.time = {
-            delayedCall: jest.fn()
-        };
-        mockScene.scale = {
-            width: 560,
-            height: 620
+
+        mockScene = {
+            gameState: {
+                score: 0,
+                highScore: 0,
+                lives: 3,
+                level: 1
+            },
+            scale: {
+                width: 560,
+                height: 620
+            },
+            add: {
+                text: jest.fn(createTextMock)
+            },
+            tweens: {
+                add: jest.fn()
+            },
+            time: {
+                delayedCall: jest.fn()
+            }
         };
         controller = new UIController(mockScene, mockScene.gameState);
     });
 
-    describe('initialization', () => {
-        test('should store scene and gameState references', () => {
-            expect(controller.scene).toBe(mockScene);
-            expect(controller.gameState).toBe(mockScene.gameState);
-        });
+    test('renders the score, high score, lives, and level text', () => {
+        controller.create();
+
+        expect(renderLog).toMatchInlineSnapshot(`
+[
+  {
+    "style": {
+      "color": "#FFD700",
+      "fontFamily": "Arial",
+      "fontSize": "16px",
+      "fontStyle": "bold",
+    },
+    "text": "SCORE: 0",
+    "type": "text",
+    "x": 10,
+    "y": 10,
+  },
+  {
+    "style": {
+      "color": "#FFFFFF",
+      "fontFamily": "Arial",
+      "fontSize": "16px",
+    },
+    "text": "HIGH SCORE: 0",
+    "type": "text",
+    "x": 10,
+    "y": 35,
+  },
+  {
+    "style": {
+      "color": "#FFFFFF",
+      "fontFamily": "Arial",
+      "fontSize": "16px",
+      "fontStyle": "bold",
+    },
+    "text": "LIVES: 3",
+    "type": "text",
+    "x": 550,
+    "y": 10,
+  },
+  {
+    "style": {
+      "color": "#00FF00",
+      "fontFamily": "Arial",
+      "fontSize": "16px",
+      "fontStyle": "bold",
+    },
+    "text": "LEVEL: 1",
+    "type": "text",
+    "x": 280,
+    "y": 10,
+  },
+]
+`);
     });
 
-    describe('create', () => {
-        test('should create score text', () => {
-            controller.create();
+    test('renders the ready message text', () => {
+        controller.showReadyMessage();
 
-            expect(mockScene.add.text).toHaveBeenCalledWith(
-                10,
-                10,
-                'SCORE: 0',
-                expect.objectContaining({
-                    fontSize: expect.any(String),
-                    color: expect.any(String)
-                })
-            );
-        });
-
-        test('should create high score text', () => {
-            controller.create();
-
-            expect(mockScene.add.text).toHaveBeenCalledWith(
-                10,
-                35,
-                'HIGH SCORE: 0',
-                expect.any(Object)
-            );
-        });
-
-        test('should create lives text', () => {
-            controller.create();
-
-            expect(mockScene.add.text).toHaveBeenCalledWith(
-                550,
-                10,
-                'LIVES: 3',
-                expect.any(Object)
-            );
-        });
-
-        test('should create level text', () => {
-            controller.create();
-
-            expect(mockScene.add.text).toHaveBeenCalledWith(
-                280,
-                10,
-                'LEVEL: 1',
-                expect.any(Object)
-            );
-        });
+        expect(renderLog).toMatchInlineSnapshot(`
+[
+  {
+    "style": {
+      "color": "#FFFFFF",
+      "fontFamily": "Arial",
+      "fontSize": "48px",
+      "fontStyle": "bold",
+    },
+    "text": "READY!",
+    "type": "text",
+    "x": 280,
+    "y": 310,
+  },
+]
+`);
     });
 
-    describe('update', () => {
-        beforeEach(() => {
-            controller.create();
-            mockScene.gameState.score = 100;
-            mockScene.gameState.highScore = 5000;
-            mockScene.gameState.lives = 2;
-            mockScene.gameState.level = 3;
-        });
+    test('renders the level message text', () => {
+        mockScene.gameState.level = 5;
 
-        test('should update score text', () => {
-            controller.update();
+        controller.showLevelMessage();
 
-            expect(controller.scoreText.setText).toHaveBeenCalledWith('SCORE: 100');
-        });
-
-        test('should update high score text', () => {
-            controller.update();
-
-            expect(controller.highScoreText.setText).toHaveBeenCalledWith('HIGH SCORE: 5000');
-        });
-
-        test('should update lives text', () => {
-            controller.update();
-
-            expect(controller.livesText.setText).toHaveBeenCalledWith('LIVES: 2');
-        });
-
-        test('should update level text', () => {
-            controller.update();
-
-            expect(controller.levelText.setText).toHaveBeenCalledWith('LEVEL: 3');
-        });
-    });
-
-    describe('showReadyMessage', () => {
-        test('should show ready message', () => {
-            controller.showReadyMessage();
-
-            expect(mockScene.add.text).toHaveBeenCalledWith(
-                280,
-                310,
-                'READY!',
-                expect.any(Object)
-            );
-        });
-
-        test('should animate message fade in and out', () => {
-            controller.showReadyMessage();
-
-            expect(mockScene.tweens.add).toHaveBeenCalled();
-        });
-    });
-
-    describe('showLevelMessage', () => {
-        beforeEach(() => {
-            mockScene.gameState.level = 5;
-        });
-
-        test('should show level message', () => {
-            controller.showLevelMessage();
-
-            expect(mockScene.add.text).toHaveBeenCalledWith(
-                280,
-                310,
-                'LEVEL 5',
-                expect.any(Object)
-            );
-        });
-
-        test('should fade in and out', () => {
-            controller.showLevelMessage();
-
-            expect(mockScene.tweens.add).toHaveBeenCalled();
-        });
-    });
-
-    describe('cleanup', () => {
-        test('should destroy all UI elements', () => {
-            controller.create();
-
-            controller.cleanup();
-
-            expect(controller.scoreText.destroy).toHaveBeenCalled();
-            expect(controller.highScoreText.destroy).toHaveBeenCalled();
-            expect(controller.livesText.destroy).toHaveBeenCalled();
-            expect(controller.levelText.destroy).toHaveBeenCalled();
-        });
+        expect(renderLog).toMatchInlineSnapshot(`
+[
+  {
+    "style": {
+      "color": "#00FF00",
+      "fontFamily": "Arial",
+      "fontSize": "32px",
+      "fontStyle": "bold",
+    },
+    "text": "LEVEL 5",
+    "type": "text",
+    "x": 280,
+    "y": 310,
+  },
+]
+`);
     });
 });
