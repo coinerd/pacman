@@ -1,6 +1,7 @@
 /**
  * GameModel
  * Encapsulates core game state and rules without rendering dependencies.
+ * This model must remain free of Phaser objects and scene references.
  */
 
 export default class GameModel {
@@ -31,7 +32,8 @@ export default class GameModel {
             currentComboGhosts: 0,
             levelDeaths: 0,
             fruitsCollected: 0,
-            levelComplete: false
+            levelComplete: false,
+            desiredDirection: null
         };
         this.levelConfig = null;
     }
@@ -46,6 +48,16 @@ export default class GameModel {
 
     setHighScore(highScore) {
         this.state.highScore = highScore;
+    }
+
+    setDesiredDirection(direction) {
+        this.state.desiredDirection = direction;
+    }
+
+    consumeDesiredDirection() {
+        const direction = this.state.desiredDirection;
+        this.state.desiredDirection = null;
+        return direction;
     }
 
     setPaused(isPaused) {
