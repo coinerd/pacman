@@ -9,31 +9,26 @@ export class LevelManager {
     /**
      * Create LevelManager
      * @param {Object} gameScene - The GameScene instance
-     * @param {Object} gameState - Game state object
+     * @param {Object} gameModel - Game model
      */
-    constructor(gameScene, gameState) {
+    constructor(gameScene, gameModel) {
         this.scene = gameScene;
-        this.gameState = gameState;
+        this.gameModel = gameModel;
+        this.gameModel.setLevelConfig(levelConfig);
     }
 
     /**
      * Apply level-specific settings
      */
     applySettings() {
-        const level = this.gameState.level;
-
-        const speedMultiplier = 1 + (level - 1) * 0.05;
+        const speedMultiplier = this.gameModel.getSpeedMultiplier();
 
         for (const ghost of this.scene.ghosts) {
             if (!ghost.isEaten) {
                 ghost.setSpeedMultiplier(speedMultiplier);
             }
         }
-
-        this.currentFrightenedDuration = Math.max(
-            2,
-            levelConfig.frightenedDuration - (level - 1) * levelConfig.frightenedDecreasePerLevel
-        );
+        this.currentFrightenedDuration = this.gameModel.getFrightenedDuration();
     }
 
     /**

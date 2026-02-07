@@ -72,9 +72,10 @@ export class InputController {
      * Handle pause toggle
      */
     handlePause() {
-        if (!this.scene.gameState.isGameOver && !this.scene.gameState.isDying) {
-            this.scene.gameState.isPaused = !this.scene.gameState.isPaused;
-            if (this.scene.gameState.isPaused) {
+        const gameState = this.scene.gameModel.state;
+        if (!gameState.isGameOver && !gameState.isDying) {
+            const isPaused = this.scene.gameModel.togglePaused();
+            if (isPaused) {
                 this.scene.scene.pause();
                 this.scene.scene.launch('PauseScene');
             }
@@ -85,7 +86,7 @@ export class InputController {
      * Handle return to menu
      */
     handleReturnToMenu() {
-        if (!this.scene.gameState.isGameOver) {
+        if (!this.scene.gameModel.state.isGameOver) {
             this.scene.cleanup();
             this.scene.scene.start('MenuScene');
         }

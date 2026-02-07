@@ -28,7 +28,8 @@ export default class Ghost extends BaseEntity {
         this.startGridX = x;
         this.startGridY = y;
 
-        const baseLevelSpeed = levelConfig.baseSpeed + (scene.gameState.level - 1) * levelConfig.speedIncreasePerLevel;
+        const level = scene.gameModel?.getLevel?.() ?? scene.gameState?.level ?? 1;
+        const baseLevelSpeed = levelConfig.baseSpeed + (level - 1) * levelConfig.speedIncreasePerLevel;
         this.baseSpeed = baseLevelSpeed * levelConfig.ghostSpeedMultiplier;
         this.speedMultiplier = 1.0;
         this.speedModifier = 1.0;
