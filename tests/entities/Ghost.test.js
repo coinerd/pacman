@@ -1,5 +1,5 @@
 import Ghost from '../../src/entities/Ghost.js';
-import { gameConfig, ghostModes, directions, animationConfig, levelConfig } from '../../src/config/gameConfig.js';
+import { gameConfig, ghostModes, directions, animationConfig, levelConfig, ghostSpeedMultipliers } from '../../src/config/gameConfig.js';
 import { msToSeconds } from '../../src/utils/Time.js';
 import { createMockScene, createSimpleMaze, createMockPacman } from '../utils/testHelpers.js';
 
@@ -21,14 +21,14 @@ describe('Ghost Entity', () => {
         });
 
         test('calculates speed based on level', () => {
-            mockScene.gameState = { level: 1 };
+            mockScene.gameState.level = 1;
             ghost = new Ghost(mockScene, 13, 14, 'blinky', 0xFF0000);
             const expectedSpeed = levelConfig.baseSpeed * levelConfig.ghostSpeedMultiplier;
             expect(ghost.speed).toBe(expectedSpeed);
         });
 
         test('increases speed with level progression', () => {
-            mockScene.gameState = { level: 2 };
+            mockScene.gameState.level = 2;
             ghost = new Ghost(mockScene, 13, 14, 'blinky', 0xFF0000);
             const level2Speed = (levelConfig.baseSpeed + levelConfig.speedIncreasePerLevel) * levelConfig.ghostSpeedMultiplier;
             expect(ghost.speed).toBe(level2Speed);
@@ -106,14 +106,14 @@ describe('Ghost Entity', () => {
         });
 
         test('calculates move step based on speed and delta', () => {
+            ghost.resetPosition(13, gameConfig.tunnelRow);
             ghost.direction = directions.RIGHT;
             ghost.baseSpeed = 100;
             const deltaSeconds = msToSeconds(100);
-            const expectedMove = 100 * deltaSeconds;
             const initialX = ghost.x;
             ghost.moveGhost(deltaSeconds, maze, createMockPacman());
-            // Ghost is at gridY 14 (tunnel row), so tunnel speed modifier (0.4) is applied
-            const expectedMoveWithTunnel = 100 * 0.4 * deltaSeconds;
+            // Ghost is at the tunnel row, so tunnel speed modifier is applied
+            const expectedMoveWithTunnel = 100 * ghostSpeedMultipliers.tunnel * deltaSeconds;
             expect(ghost.x - initialX).toBeCloseTo(expectedMoveWithTunnel, 1);
         });
 

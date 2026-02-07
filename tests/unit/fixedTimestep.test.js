@@ -6,6 +6,7 @@
 
 import { FixedTimeStepLoop } from '../../src/systems/FixedTimeStepLoop.js';
 import { physicsConfig } from '../../src/config/gameConfig.js';
+import { createDeterministicDtSequence, runFixedStepSimulation } from '../utils/simulationHelpers.js';
 
 describe('FixedTimestepLoop - Determinismus-Tests (KRITISCH)', () => {
     const FIXED_DT = physicsConfig.FIXED_DT; // 1/60 seconds
@@ -38,17 +39,13 @@ describe('FixedTimestepLoop - Determinismus-Tests (KRITISCH)', () => {
 
         test('Same input sequence produces same output sequence (1000 updates)', () => {
             const SEQUENCE_LENGTH = 1000;
-            const dtSequence = generateDeterministicDtSequence(SEQUENCE_LENGTH);
+            const dtSequence = createDeterministicDtSequence(SEQUENCE_LENGTH, FIXED_DT);
 
             // Run first simulation
-            for (let i = 0; i < SEQUENCE_LENGTH; i++) {
-                simulation1.update(dtSequence[i]);
-            }
+            runFixedStepSimulation(simulation1, dtSequence);
 
             // Run second simulation with same sequence
-            for (let i = 0; i < SEQUENCE_LENGTH; i++) {
-                simulation2.update(dtSequence[i]);
-            }
+            runFixedStepSimulation(simulation2, dtSequence);
 
             // Positions must be exactly the same after each step
             expect(positionHistory1).toEqual(positionHistory2);
@@ -503,32 +500,3 @@ describe('FixedTimestepLoop - Frame-Independence', () => {
         });
     });
 });
-
-/**
- * Helper function to generate deterministic dt sequence for testing
- */
-function generateDeterministicDtSequence(length) {
-    const sequence = [];
-    for (let i = 0; i < length; i++) {
-        // Generate varied but deterministic dt values
-        const pattern = i % 5;
-        switch (pattern) {
-        case 0:
-            sequence.push(physicsConfig.FIXED_DT * 0.5);
-            break;
-        case 1:
-            sequence.push(physicsConfig.FIXED_DT);
-            break;
-        case 2:
-            sequence.push(physicsConfig.FIXED_DT * 1.5);
-            break;
-        case 3:
-            sequence.push(physicsConfig.FIXED_DT * 2);
-            break;
-        case 4:
-            sequence.push(physicsConfig.FIXED_DT * 0.25);
-            break;
-        }
-    }
-    return sequence;
-}

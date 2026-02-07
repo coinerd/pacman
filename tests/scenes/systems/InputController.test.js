@@ -1,5 +1,6 @@
 import { InputController } from '../../../src/scenes/systems/InputController.js';
 import { createMockScene } from '../../utils/testHelpers.js';
+import { createKeyboardInputMock } from '../../utils/inputMocks.js';
 import { directions } from '../../../src/config/gameConfig.js';
 
 describe('InputController', () => {
@@ -9,24 +10,8 @@ describe('InputController', () => {
 
     beforeEach(() => {
         mockScene = createMockScene();
-        mockScene.input = {
-            keyboard: {
-                createCursorKeys: jest.fn().mockReturnValue({
-                    left: { isDown: false },
-                    right: { isDown: false },
-                    up: { isDown: false },
-                    down: { isDown: false }
-                }),
-                addKeys: jest.fn().mockReturnValue({
-                    W: { isDown: false },
-                    A: { isDown: false },
-                    S: { isDown: false },
-                    D: { isDown: false }
-                }),
-                on: jest.fn(),
-                off: jest.fn()
-            }
-        };
+        const { input } = createKeyboardInputMock();
+        mockScene.input = input;
         mockScene.scene = {
             pause: jest.fn(),
             launch: jest.fn(),

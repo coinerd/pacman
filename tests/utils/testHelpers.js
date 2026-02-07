@@ -1,6 +1,7 @@
 // tests/utils/testHelpers.js
 
 import { TILE_TYPES } from '../../src/utils/MazeLayout.js';
+import { createGameModel } from './modelTestUtils.js';
 
 /**
  * Create mock maze for testing
@@ -129,8 +130,8 @@ export const createMockGhostAISystem = () => ({
  * Create mock scene for testing
  * @returns {Object} Mock Phaser scene
  */
-export const createMockScene = () => ({
-    gameState: {
+export const createMockScene = () => {
+    const gameState = {
         score: 0,
         lives: 3,
         level: 1,
@@ -138,76 +139,103 @@ export const createMockScene = () => ({
         isGameOver: false,
         isDying: false,
         deathTimer: 0,
-        highScore: 0
-    },
-    pacman: createMockPacman(),
-    ghosts: [],
-    fruit: { active: false, timer: 0 },
-    soundManager: {
-        playWakaWaka: jest.fn(),
-        playPowerPellet: jest.fn(),
-        playGhostEaten: jest.fn(),
-        playDeath: jest.fn(),
-        playLevelComplete: jest.fn(),
-        playFruitEat: jest.fn()
-    },
-    storageManager: {
-        getHighScore: jest.fn().mockReturnValue(0),
-        saveHighScore: jest.fn()
-    },
-    tweens: {
-        add: jest.fn(),
-        killTweensOf: jest.fn()
-    },
-    time: {
-        delayedCall: jest.fn(),
-        now: () => Date.now()
-    },
-    add: {
-        existing: jest.fn(),
-        graphics: jest.fn(() => ({
-            fillStyle: jest.fn().mockReturnThis(),
-            lineStyle: jest.fn().mockReturnThis(),
-            clear: jest.fn().mockReturnThis(),
-            setDepth: jest.fn().mockReturnThis(),
-            setInteractive: jest.fn().mockReturnThis()
-        })),
-        circle: jest.fn((x, y, radius, color) => {
-            const mockCircle = {
-                x: x,
-                y: y,
-                radius: radius || 3,
-                visible: false,
-                active: false,
-                scale: 1,
+        highScore: 0,
+        pelletsEaten: 0,
+        pelletsRemaining: 0,
+        totalPellets: 0,
+        ghostsEaten: 0,
+        maxComboGhosts: 0,
+        currentComboGhosts: 0,
+        levelDeaths: 0,
+        fruitsCollected: 0,
+        levelComplete: false,
+        desiredDirection: null
+    };
+
+    const gameModel = createGameModel({
+        state: {
+            score: gameState.score,
+            lives: gameState.lives,
+            level: gameState.level,
+            highScore: gameState.highScore,
+            pelletsRemaining: gameState.pelletsRemaining,
+            totalPellets: gameState.totalPellets
+        }
+    });
+    gameModel.state = gameState;
+
+    return {
+        gameState,
+        gameModel,
+        pacman: createMockPacman(),
+        ghosts: [],
+        fruit: { active: false, timer: 0 },
+        soundManager: {
+            playWakaWaka: jest.fn(),
+            playPowerPellet: jest.fn(),
+            playGhostEaten: jest.fn(),
+            playDeath: jest.fn(),
+            playLevelComplete: jest.fn(),
+            playFruitEat: jest.fn()
+        },
+        storageManager: {
+            getHighScore: jest.fn().mockReturnValue(0),
+            saveHighScore: jest.fn()
+        },
+        tweens: {
+            add: jest.fn(),
+            killTweensOf: jest.fn()
+        },
+        time: {
+            delayedCall: jest.fn(),
+            now: () => Date.now()
+        },
+        add: {
+            existing: jest.fn(),
+            graphics: jest.fn(() => ({
+                fillStyle: jest.fn().mockReturnThis(),
+                lineStyle: jest.fn().mockReturnThis(),
+                clear: jest.fn().mockReturnThis(),
                 setDepth: jest.fn().mockReturnThis(),
-                setVisible: jest.fn(function(val) { this.visible = val; return this; }),
-                setActive: jest.fn(function(val) { this.active = val; return this; }),
-                setPosition: jest.fn(function(x, y) { this.x = x; this.y = y; return this; }),
-                destroy: jest.fn()
-            };
-            return mockCircle;
-        }),
-        sprite: jest.fn((x, y, texture, frame) => {
-            const mockSprite = {
-                x,
-                y,
-                texture,
-                frame: { name: frame || 0 },
-                visible: false,
-                active: false,
-                scale: 1,
-                setDepth: jest.fn().mockReturnThis(),
-                setVisible: jest.fn(function(val) { this.visible = val; return this; }),
-                setFrame: jest.fn(function(val) { this.frame.name = val; return this; }),
-                setScale: jest.fn(function(val) { this.scale = val; return this; }),
-                setActive: jest.fn(function(val) { this.active = val; return this; }),
-                setPosition: jest.fn(function(x, y) { this.x = x; this.y = y; return this; })
-            };
-            return mockSprite;
-        })
-    }
-});
+                setInteractive: jest.fn().mockReturnThis()
+            })),
+            circle: jest.fn((x, y, radius, color) => {
+                const mockCircle = {
+                    x: x,
+                    y: y,
+                    radius: radius || 3,
+                    visible: false,
+                    active: false,
+                    scale: 1,
+                    setDepth: jest.fn().mockReturnThis(),
+                    setVisible: jest.fn(function(val) { this.visible = val; return this; }),
+                    setActive: jest.fn(function(val) { this.active = val; return this; }),
+                    setPosition: jest.fn(function(x, y) { this.x = x; this.y = y; return this; }),
+                    destroy: jest.fn()
+                };
+                return mockCircle;
+            }),
+            sprite: jest.fn((x, y, texture, frame) => {
+                const mockSprite = {
+                    x,
+                    y,
+                    texture,
+                    frame: { name: frame || 0 },
+                    visible: false,
+                    active: false,
+                    scale: 1,
+                    setDepth: jest.fn().mockReturnThis(),
+                    setVisible: jest.fn(function(val) { this.visible = val; return this; }),
+                    setFrame: jest.fn(function(val) { this.frame.name = val; return this; }),
+                    setScale: jest.fn(function(val) { this.scale = val; return this; }),
+                    setActive: jest.fn(function(val) { this.active = val; return this; }),
+                    setPosition: jest.fn(function(x, y) { this.x = x; this.y = y; return this; })
+                };
+                return mockSprite;
+            })
+        }
+    };
+};
 
 /**
  * Wait for async operations in tests

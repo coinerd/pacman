@@ -1,5 +1,5 @@
-import GameModel from '../../src/core/GameModel.js';
 import { gameEvents, GAME_EVENTS } from '../../src/core/EventBus.js';
+import { createGameModel } from '../utils/modelTestUtils.js';
 
 describe('GameModel - Zustandslogik und Regeln', () => {
     beforeEach(() => {
@@ -9,7 +9,7 @@ describe('GameModel - Zustandslogik und Regeln', () => {
     test('Punkte erhöhen Score und Highscore bei Pellet', () => {
         const scoreListener = jest.fn();
         const highScoreListener = jest.fn();
-        const model = new GameModel({ score: 90, highScore: 100, pelletsRemaining: 10 });
+        const model = createGameModel({ state: { score: 90, highScore: 100, pelletsRemaining: 10 } });
 
         gameEvents.on(GAME_EVENTS.SCORE_CHANGED, scoreListener);
         gameEvents.on(GAME_EVENTS.HIGH_SCORE_CHANGED, highScoreListener);
@@ -27,8 +27,10 @@ describe('GameModel - Zustandslogik und Regeln', () => {
 
     test('Power-Pellet setzt Combo zurück und liefert Frightened-Dauer', () => {
         const powerPelletListener = jest.fn();
-        const model = new GameModel({ score: 0, level: 3, pelletsRemaining: 5 });
-        model.setLevelConfig({ frightenedDuration: 6, frightenedDecreasePerLevel: 1 });
+        const model = createGameModel({
+            state: { score: 0, level: 3, pelletsRemaining: 5 },
+            levelConfig: { frightenedDuration: 6, frightenedDecreasePerLevel: 1 }
+        });
 
         gameEvents.on(GAME_EVENTS.POWER_PELLET_EATEN, powerPelletListener);
 
@@ -46,7 +48,7 @@ describe('GameModel - Zustandslogik und Regeln', () => {
 
     test('Pellets aufgebraucht → Level-Up und Level-Complete', () => {
         const levelCompleteListener = jest.fn();
-        const model = new GameModel({ level: 1, totalPellets: 1, pelletsRemaining: 1 });
+        const model = createGameModel({ state: { level: 1, totalPellets: 1, pelletsRemaining: 1 } });
 
         gameEvents.on(GAME_EVENTS.LEVEL_COMPLETE, levelCompleteListener);
 
@@ -61,7 +63,7 @@ describe('GameModel - Zustandslogik und Regeln', () => {
 
     test('Geisterkollision (Tod) setzt Dying-State und Level-Deaths', () => {
         const livesLostListener = jest.fn();
-        const model = new GameModel({ lives: 2 });
+        const model = createGameModel({ state: { lives: 2 } });
 
         gameEvents.on(GAME_EVENTS.LIVES_LOST, livesLostListener);
 
@@ -74,7 +76,7 @@ describe('GameModel - Zustandslogik und Regeln', () => {
     });
 
     test('Death-Tick: Respawn bei verbleibendem Leben, Game-Over ohne Leben', () => {
-        const model = new GameModel({ lives: 1, deathPauseDuration: 0.5 });
+        const model = createGameModel({ state: { lives: 1, deathPauseDuration: 0.5 } });
 
         model.beginDeath();
         expect(model.step(0.1)).toEqual({ event: 'deathTick' });
@@ -85,7 +87,7 @@ describe('GameModel - Zustandslogik und Regeln', () => {
         expect(model.getStateSnapshot().isDying).toBe(false);
 
         const gameOverListener = jest.fn();
-        const gameOverModel = new GameModel({ lives: 0, deathPauseDuration: 0.2 });
+        const gameOverModel = createGameModel({ state: { lives: 0, deathPauseDuration: 0.2 } });
         gameEvents.on(GAME_EVENTS.GAME_OVER, gameOverListener);
 
         gameOverModel.beginDeath();

@@ -82,11 +82,11 @@ describe('Ghost Lifecycle Integration', () => {
     });
 
     test('ghost behavior across level progression', () => {
-        mockScene.gameState = { level: 1 };
+        mockScene.gameState.level = 1;
         ghost = new Ghost(mockScene, 13, 14, 'blinky', 0xFF0000);
         const level1Speed = ghost.speed;
 
-        mockScene.gameState = { level: 2 };
+        mockScene.gameState.level = 2;
         ghost = new Ghost(mockScene, 13, 14, 'blinky', 0xFF0000);
         const level2Speed = ghost.speed;
 

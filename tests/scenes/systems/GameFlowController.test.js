@@ -24,17 +24,17 @@ describe('GameFlowController', () => {
     describe('initialization', () => {
         test('should store references to scene components', () => {
             expect(controller.scene).toBe(mockScene);
-            expect(controller.gameState).toBe(mockScene.gameState);
+            expect(controller.gameModel).toBe(mockScene.gameModel);
             expect(controller.soundManager).toBe(mockScene.soundManager);
         });
     });
 
     describe('pellet handling', () => {
         test('should update score when pellet is eaten', () => {
-            const initialScore = mockScene.gameState.score;
+            const initialScore = mockScene.gameModel.state.score;
             controller.handlePelletEaten(10);
 
-            expect(mockScene.gameState.score).toBe(initialScore + 10);
+            expect(mockScene.gameModel.state.score).toBe(initialScore + 10);
         });
 
         test('should play waka-waka sound', () => {
@@ -46,10 +46,10 @@ describe('GameFlowController', () => {
 
     describe('power pellet handling', () => {
         test('should update score when power pellet is eaten', () => {
-            const initialScore = mockScene.gameState.score;
+            const initialScore = mockScene.gameModel.state.score;
             controller.handlePowerPelletEaten(50, msToSeconds(8000));
 
-            expect(mockScene.gameState.score).toBe(initialScore + 50);
+            expect(mockScene.gameModel.state.score).toBe(initialScore + 50);
         });
 
         test('should set ghosts frightened for correct duration', () => {
@@ -76,11 +76,11 @@ describe('GameFlowController', () => {
     describe('ghost collision handling', () => {
         test('should update score when ghost is eaten', () => {
             const result = { type: 'ghost_eaten', score: 200 };
-            const initialScore = mockScene.gameState.score;
+            const initialScore = mockScene.gameModel.state.score;
 
             controller.handleGhostCollision(result);
 
-            expect(mockScene.gameState.score).toBe(initialScore + 200);
+            expect(mockScene.gameModel.state.score).toBe(initialScore + 200);
         });
 
         test('should play ghost eaten sound when ghost is eaten', () => {
@@ -119,11 +119,11 @@ describe('GameFlowController', () => {
         });
 
         test('should update score when fruit is eaten', () => {
-            const initialScore = mockScene.gameState.score;
+            const initialScore = mockScene.gameModel.state.score;
 
             controller.handleFruitEaten();
 
-            expect(mockScene.gameState.score).toBe(initialScore + 100);
+            expect(mockScene.gameModel.state.score).toBe(initialScore + 100);
         });
 
         test('should play fruit eat sound', () => {
@@ -141,18 +141,18 @@ describe('GameFlowController', () => {
 
     describe('level completion', () => {
         test('should increment level on win', () => {
-            const initialLevel = mockScene.gameState.level;
+            const initialLevel = mockScene.gameModel.state.level;
 
             controller.handleWin();
 
-            expect(mockScene.gameState.level).toBe(initialLevel + 1);
+            expect(mockScene.gameModel.state.level).toBe(initialLevel + 1);
         });
 
         test('should save high score on win', () => {
             controller.handleWin();
 
             expect(mockScene.storageManager.saveHighScore).toHaveBeenCalledWith(
-                mockScene.gameState.score
+                mockScene.gameModel.state.score
             );
         });
 
@@ -166,9 +166,9 @@ describe('GameFlowController', () => {
             controller.handleWin();
 
             expect(mockScene.scene.start).toHaveBeenCalledWith('WinScene', {
-                score: mockScene.gameState.score,
-                level: mockScene.gameState.level,
-                highScore: mockScene.gameState.highScore
+                score: mockScene.gameModel.state.score,
+                level: mockScene.gameModel.state.level,
+                highScore: mockScene.gameModel.state.highScore
             });
         });
     });
@@ -177,14 +177,14 @@ describe('GameFlowController', () => {
         test('should set game over flag', () => {
             controller.handleGameOver();
 
-            expect(mockScene.gameState.isGameOver).toBe(true);
+            expect(mockScene.gameModel.state.isGameOver).toBe(true);
         });
 
         test('should save high score', () => {
             controller.handleGameOver();
 
             expect(mockScene.storageManager.saveHighScore).toHaveBeenCalledWith(
-                mockScene.gameState.score
+                mockScene.gameModel.state.score
             );
         });
 
@@ -192,23 +192,23 @@ describe('GameFlowController', () => {
             controller.handleGameOver();
 
             expect(mockScene.scene.start).toHaveBeenCalledWith('GameOverScene', {
-                score: mockScene.gameState.score,
-                highScore: mockScene.gameState.highScore
+                score: mockScene.gameModel.state.score,
+                highScore: mockScene.gameModel.state.highScore
             });
         });
     });
 
     describe('lives handling', () => {
         test('should decrement lives', () => {
-            const initialLives = mockScene.gameState.lives;
+            const initialLives = mockScene.gameModel.state.lives;
 
             controller.decrementLives();
 
-            expect(mockScene.gameState.lives).toBe(initialLives - 1);
+            expect(mockScene.gameModel.state.lives).toBe(initialLives - 1);
         });
 
         test('should return true when lives reach zero', () => {
-            mockScene.gameState.lives = 1;
+            mockScene.gameModel.state.lives = 1;
 
             const result = controller.decrementLives();
 
@@ -216,7 +216,7 @@ describe('GameFlowController', () => {
         });
 
         test('should return false when lives remain', () => {
-            mockScene.gameState.lives = 3;
+            mockScene.gameModel.state.lives = 3;
 
             const result = controller.decrementLives();
 
