@@ -8,6 +8,7 @@ Welcome to the developer documentation for the Pac-Man project. This folder is i
 - **Gameplay & Systems Deep Dive:** `docs/developer/gameplay.md`
 - **Comprehensive File Map:** `docs/developer/file-map.md`
 - **Testing & Tooling:** `docs/developer/testing.md`
+- **Change Task: Test Suite MVC Alignment:** `docs/developer/change-task-test-suite-mvc.md`
 - **Product Requirements Document (PRD):** `docs/developer/prd.md`
 
 ## Quick Start
