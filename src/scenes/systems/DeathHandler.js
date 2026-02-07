@@ -18,9 +18,7 @@ export class DeathHandler {
      * Handle death sequence
      */
     handleDeath() {
-        this.gameModel.beginDeath();
         this.scene.pacman.die();
-        this.scene.soundManager.playDeath();
     }
 
     /**
@@ -34,9 +32,7 @@ export class DeathHandler {
         }
 
         const result = this.gameModel.step(deltaSeconds);
-        if (result?.event === 'gameOver') {
-            this.scene.gameFlowController.handleGameOver();
-        } else if (result?.event === 'respawn') {
+        if (result?.event === 'respawn') {
             this.scene.resetPositions();
             this.scene.uiController.showReadyMessage();
         }

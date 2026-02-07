@@ -6,36 +6,19 @@
 import Phaser from 'phaser';
 import {
     gameConfig,
-    colors,
     directions,
     pacmanStartPosition,
     fruitConfig,
     animationConfig,
     physicsConfig
 } from '../config/gameConfig.js';
-import {
-    createMazeData,
-    gridToPixel,
-    getCenterPixel,
-    TILE_TYPES,
-    PELLET_TYPES,
-    countPellets
-} from '../utils/MazeLayout.js';
-import Pacman from '../entities/Pacman.js';
-import { GhostFactory } from '../entities/GhostFactory.js';
+import { createMazeData } from '../utils/MazeLayout.js';
 import { GhostAISystem } from '../systems/GhostAISystem.js';
 import { CollisionSystem } from '../systems/CollisionSystem.js';
-import Fruit, { generateFruitTextures } from '../entities/Fruit.js';
-import { SoundManager } from '../managers/SoundManager.js';
 import { StorageManager } from '../managers/StorageManager.js';
-import { GameFlowController } from './systems/GameFlowController.js';
 import { UIController } from './systems/UIController.js';
 import { InputController } from './systems/InputController.js';
-import { EffectManager } from './systems/EffectManager.js';
-import { DeathHandler } from './systems/DeathHandler.js';
 import { LevelManager } from './systems/LevelManager.js';
-import { PelletPool } from '../pools/PelletPool.js';
-import { PowerPelletPool } from '../pools/PowerPelletPool.js';
 import { AchievementSystem } from '../systems/AchievementSystem.js';
 import { DebugOverlay } from '../systems/DebugOverlay.js';
 import { ReplaySystem } from '../systems/ReplaySystem.js';
@@ -45,6 +28,7 @@ import { gameEvents, GAME_EVENTS } from '../core/EventBus.js';
 import { normalizeDeltaSeconds } from '../utils/Time.js';
 import GameModel from '../core/GameModel.js';
 import { GameController } from '../controllers/GameController.js';
+import PhaserGameView from '../views/PhaserGameView.js';
 
 export default class GameScene extends Phaser.Scene {
     constructor() {
@@ -66,13 +50,7 @@ export default class GameScene extends Phaser.Scene {
 
         this.storageManager = new StorageManager();
         this.gameModel.setHighScore(this.storageManager.getHighScore());
-        this.soundManager = new SoundManager(this);
-
-        this.gameFlowController = new GameFlowController(this);
         this.levelManager = new LevelManager(this, this.gameModel);
-
-        this.pelletPool = new PelletPool(this);
-        this.powerPelletPool = new PowerPelletPool(this);
 
         this.achievementSystem = new AchievementSystem(this);
         this.achievementSystem.init();
@@ -80,27 +58,36 @@ export default class GameScene extends Phaser.Scene {
         this.replaySystem = new ReplaySystem();
         this.settings = this.storageManager.getSettings();
 
-        if (this.settings) {
-            if (this.settings.soundEnabled !== undefined) {
-                this.soundManager.setEnabled(this.settings.soundEnabled);
-            }
-            if (this.settings.volume !== undefined) {
-                this.soundManager.setVolume(this.settings.volume);
-            }
-        }
     }
 
     create() {
-        const { maze, pelletGrid } = createMazeData();
-        this.maze = maze;
-        this.pelletGrid = pelletGrid;
+        const levelData = createMazeData();
+        this.gameModel.setLevelData(levelData);
+        const levelSnapshot = this.gameModel.getLevelSnapshot();
+        const liveLevelData = this.gameModel.getLevelData();
+        this.maze = liveLevelData.maze;
+        this.pelletGrid = liveLevelData.pelletGrid;
 
-        this.createBackground();
-        this.createMaze();
-        this.createPellets();
-        this.createEntities();
-        generateFruitTextures(this);
-        this.createFruit();
+        this.gameView = new PhaserGameView({
+            scene: this,
+            model: this.gameModel,
+            storageManager: this.storageManager
+        });
+        this.gameView.applySettings(this.settings);
+
+        this.gameView.createBackground();
+        this.gameView.createMaze(levelSnapshot);
+        const { pelletPool, powerPelletPool } = this.gameView.createPelletPools();
+        this.pelletPool = pelletPool;
+        this.powerPelletPool = powerPelletPool;
+        this.gameView.createPellets(levelSnapshot);
+
+        const entities = this.gameView.createEntities();
+        this.pacman = entities.pacman;
+        this.ghosts = entities.ghosts;
+        this.fruit = entities.fruit;
+        this.deathHandler = this.gameView.deathHandler;
+        this.gameView.bindModelEvents();
 
         this.uiController = new UIController(this, this.gameState);
         this.uiController.create();
@@ -112,9 +99,6 @@ export default class GameScene extends Phaser.Scene {
         });
         this.inputController = new InputController(this, this.gameController);
 
-        this.effectManager = new EffectManager(this);
-        this.deathHandler = new DeathHandler(this, this.gameModel);
-
         this.collisionSystem = new CollisionSystem(this);
         this.collisionSystem.setPacman(this.pacman);
         this.collisionSystem.setGhosts(this.ghosts);
@@ -122,7 +106,6 @@ export default class GameScene extends Phaser.Scene {
         this.collisionSystem.setPelletPool(this.pelletPool);
         this.collisionSystem.setPowerPelletPool(this.powerPelletPool);
         this.collisionSystem.setPelletGrid(this.pelletGrid);
-        this.gameModel.setPelletCounts(countPellets(this.pelletGrid));
         this.collisionSystem.setPelletCounts(this.gameState.totalPellets);
 
         this.ghostAISystem = new GhostAISystem();
@@ -148,138 +131,6 @@ export default class GameScene extends Phaser.Scene {
         this.uiController.showReadyMessage();
 
         this.resetPositions();
-    }
-
-    /**
-     * Create background with pattern
-     */
-    createBackground() {
-        this.add.rectangle(
-            this.scale.width / 2,
-            this.scale.height / 2,
-            this.scale.width,
-            this.scale.height,
-            colors.background
-        );
-
-        const graphics = this.make.graphics({ x: 0, y: 0, add: false });
-        graphics.lineStyle(1, 0x111111, 0.3);
-
-        for (let x = 0; x <= this.scale.width; x += gameConfig.tileSize) {
-            graphics.moveTo(x, 0);
-            graphics.lineTo(x, this.scale.height);
-        }
-
-        for (let y = 0; y <= this.scale.height; y += gameConfig.tileSize) {
-            graphics.moveTo(0, y);
-            graphics.lineTo(this.scale.width, y);
-        }
-
-        graphics.strokePath();
-        graphics.generateTexture('backgroundGrid', this.scale.width, this.scale.height);
-        graphics.destroy();
-
-        this.add.image(
-            this.scale.width / 2,
-            this.scale.height / 2,
-            'backgroundGrid'
-        );
-    }
-
-    /**
-     * Create maze with enhanced visuals
-     */
-    createMaze() {
-        const graphics = this.make.graphics({ x: 0, y: 0, add: false });
-
-        for (let y = 0; y < this.maze.length; y++) {
-            for (let x = 0; x < this.maze[y].length; x++) {
-                if (this.maze[y][x] === TILE_TYPES.WALL) {
-                    this.drawWallToGraphics(graphics, x, y);
-                }
-            }
-        }
-
-        const mazeWidth = this.maze[0].length * gameConfig.tileSize;
-        const mazeHeight = this.maze.length * gameConfig.tileSize;
-        graphics.generateTexture('mazeWalls', mazeWidth, mazeHeight);
-        graphics.destroy();
-
-        this.mazeImage = this.add.image(
-            mazeWidth / 2,
-            mazeHeight / 2,
-            'mazeWalls'
-        );
-    }
-
-    drawWallToGraphics(graphics, x, y) {
-        const pixel = gridToPixel(x, y);
-        const size = gameConfig.tileSize;
-
-        graphics.fillStyle(colors.wallShadow, 1);
-        graphics.fillRect(pixel.x + 2, pixel.y + 2, size, size);
-
-        graphics.fillStyle(colors.wall, 1);
-        graphics.fillRect(pixel.x, pixel.y, size, size);
-
-        graphics.fillStyle(0x3333FF, 0.3);
-        graphics.fillRect(pixel.x + 2, pixel.y + 2, size - 4, size - 4);
-
-        graphics.lineStyle(1, 0x4444FF, 0.5);
-        graphics.strokeRect(pixel.x, pixel.y, size, size);
-    }
-
-    createPellets() {
-        this.pelletPool.init();
-        this.powerPelletPool.init(4);
-
-        for (let y = 0; y < this.maze.length; y++) {
-            for (let x = 0; x < this.maze[y].length; x++) {
-                const pelletType = this.pelletGrid[y][x];
-
-                if (pelletType === PELLET_TYPES.PELLET) {
-                    this.pelletPool.get(x, y);
-                } else if (pelletType === PELLET_TYPES.POWER_PELLET) {
-                    const powerPellet = this.powerPelletPool.get(x, y);
-                    if (powerPellet) {
-                        this.tweens.add({
-                            targets: powerPellet,
-                            scale: { from: 1, to: 1.5 },
-                            alpha: { from: 1, to: 0.7 },
-                            duration: animationConfig.powerPelletPulseSpeed,
-                            yoyo: true,
-                            repeat: -1,
-                            ease: 'Sine.easeInOut'
-                        });
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Create game entities
-     */
-    createEntities() {
-        this.pacman = new Pacman(
-            this,
-            pacmanStartPosition.x,
-            pacmanStartPosition.y
-        );
-
-        this.ghosts = GhostFactory.createGhosts(this);
-    }
-
-    /**
-     * Create fruit entity
-     */
-    createFruit() {
-        this.fruit = new Fruit(
-            this,
-            fruitConfig.positions[0].x,
-            fruitConfig.positions[0].y,
-            0
-        );
     }
 
     /**
@@ -391,32 +242,18 @@ export default class GameScene extends Phaser.Scene {
     handleCollisions() {
         const results = this.collisionSystem.checkAllCollisions();
 
-        if (results.pelletScore > 0) {
-            const pelletsRemaining = this.collisionSystem.getPelletsRemaining();
-            this.gameFlowController.handlePelletEaten(results.pelletScore, pelletsRemaining);
+        if (results.pelletScore > 0 || results.powerPelletScore > 0) {
+            this.gameModel.applyPelletCollision(results);
             this.achievementSystem.check(this.gameState);
             this.checkFruitSpawn();
         }
 
-        if (results.powerPelletScore > 0) {
-            const duration = this.levelManager.getFrightenedDuration();
-            const pelletsRemaining = this.collisionSystem.getPelletsRemaining();
-            this.gameFlowController.handlePowerPelletEaten(
-                results.powerPelletScore,
-                duration,
-                pelletsRemaining
-            );
-            this.effectManager.createPowerPelletEffect();
-            this.achievementSystem.check(this.gameState);
-        }
-
         if (results.ghostCollision) {
             if (results.ghostCollision.type === 'ghost_eaten') {
-                this.gameFlowController.handleGhostCollision(results.ghostCollision);
-                this.effectManager.createGhostEatenEffect();
+                this.gameModel.applyGhostCollision(results.ghostCollision);
                 this.achievementSystem.check(this.gameState);
             } else if (results.ghostCollision.type === 'pacman_died') {
-                this.gameFlowController.handleGhostCollision(results.ghostCollision);
+                this.gameModel.applyGhostCollision(results.ghostCollision);
                 this.achievementSystem.check(this.gameState);
             }
         }
@@ -428,14 +265,9 @@ export default class GameScene extends Phaser.Scene {
             );
 
             if (dist < gameConfig.tileSize) {
-                this.gameFlowController.handleFruitEaten();
-                this.effectManager.createFruitEatEffect();
+                this.gameModel.onFruitEaten(this.fruit.getScore());
                 this.achievementSystem.check(this.gameState);
             }
-        }
-
-        if (this.collisionSystem.checkWinCondition()) {
-            this.gameFlowController.handleWin();
         }
     }
 
@@ -464,7 +296,7 @@ export default class GameScene extends Phaser.Scene {
 
     setupEventListeners() {
         gameEvents.on(GAME_EVENTS.ACHIEVEMENT_UNLOCKED, (achievement) => {
-            this.showAchievementNotification(achievement);
+            this.gameView.showAchievementNotification(achievement);
         });
 
         if (this.replaySystem && !this.replaySystem.isReplaying) {
@@ -496,82 +328,26 @@ export default class GameScene extends Phaser.Scene {
         }
     }
 
-    showAchievementNotification(achievement) {
-        const notification = this.add.container(
-            this.scale.width / 2,
-            this.scale.height - 100
-        );
-
-        const bg = this.add.rectangle(0, 0, 300, 80, 0x000000)
-            .setAlpha(0.8)
-            .setStrokeStyle(2, 0xFFD700);
-
-        const icon = this.add.text(-130, 0, achievement.icon, {
-            fontSize: '32px'
-        }).setOrigin(0.5);
-
-        const name = this.add.text(-20, -15, achievement.name, {
-            fontSize: '18px',
-            color: '#FFD700',
-            fontStyle: 'bold'
-        }).setOrigin(0, 0.5);
-
-        const desc = this.add.text(-20, 15, achievement.description, {
-            fontSize: '12px',
-            color: '#FFFFFF'
-        }).setOrigin(0, 0.5);
-
-        notification.add([bg, icon, name, desc]);
-        notification.setAlpha(0);
-
-        this.tweens.add({
-            targets: notification,
-            alpha: 1,
-            y: this.scale.height - 150,
-            duration: 500,
-            ease: 'Power2'
-        });
-
-        this.time.delayedCall(3000, () => {
-            this.tweens.add({
-                targets: notification,
-                alpha: 0,
-                duration: 500,
-                ease: 'Power2',
-                onComplete: () => notification.destroy()
-            });
-        });
-    }
-
     /**
      * Resume from pause
      */
     resume() {
         this.gameModel.setPaused(false);
-        this.soundManager.resume();
+        this.gameView.resumeAudio();
     }
 
     /**
      * Cleanup resources
      */
     cleanup() {
-        if (this.soundManager) {
-            this.soundManager.setEnabled(false);
-        }
-        if (this.effectManager) {
-            this.effectManager.cleanup();
-        }
         if (this.uiController) {
             this.uiController.cleanup();
         }
         if (this.inputController) {
             this.inputController.cleanup();
         }
-        if (this.pelletPool) {
-            this.pelletPool.destroy();
-        }
-        if (this.powerPelletPool) {
-            this.powerPelletPool.destroy();
+        if (this.gameView) {
+            this.gameView.cleanup();
         }
         if (this.debugOverlay) {
             this.debugOverlay.cleanup();
