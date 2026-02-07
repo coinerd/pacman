@@ -101,6 +101,7 @@ export class EventBus {
    */
     emit(event, data = null) {
         if (!this.listeners.has(event)) {
+            this.emitTelemetry(event, data);
             return;
         }
 
@@ -114,6 +115,22 @@ export class EventBus {
                 console.error(`Error in event listener for '${event}':`, error);
             }
         });
+
+        this.emitTelemetry(event, data);
+    }
+
+    emitTelemetry(event, data) {
+        const target = typeof window !== 'undefined' ? window : null;
+        if (!target?.dispatchEvent || typeof CustomEvent === 'undefined') {
+            return;
+        }
+
+        target.dispatchEvent(new CustomEvent('pacman:telemetry', {
+            detail: {
+                event,
+                payload: data
+            }
+        }));
     }
 
     /**
