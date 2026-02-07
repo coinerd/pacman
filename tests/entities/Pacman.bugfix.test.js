@@ -193,8 +193,8 @@ describe('Pacman - Bug Fixes', () => {
     });
 
     describe('Bug Fix: Tunnel wrapping on correct row only', () => {
-        test('wraps through tunnel on row 14', () => {
-            pacman.gridY = 14;
+        test('wraps through tunnel on tunnel row', () => {
+            pacman.gridY = gameConfig.tunnelRow;
             pacman.x = -5;
             pacman.y = 280;
             pacman.direction = directions.LEFT;
@@ -202,7 +202,7 @@ describe('Pacman - Bug Fixes', () => {
 
             pacman.handleTunnelWrap();
 
-            expect(pacman.x).toBe(560);
+            expect(pacman.x).toBe(gameConfig.mazeWidth * gameConfig.tileSize);
         });
 
         test('does not wrap on wrong row', () => {
@@ -220,7 +220,7 @@ describe('Pacman - Bug Fixes', () => {
         });
 
         test('no vertical drift during horizontal tunnel wrap', () => {
-            pacman.gridY = 14;
+            pacman.gridY = gameConfig.tunnelRow;
             pacman.x = -5;
             pacman.y = 280;
             pacman.direction = directions.LEFT;

@@ -19,8 +19,8 @@ describe('Ghost - Bug Fixes', () => {
     });
 
     describe('Bug Fix: Tunnel wrapping on correct row only', () => {
-        test('wraps through tunnel on row 14', () => {
-            ghost.gridY = 14;
+        test('wraps through tunnel on tunnel row', () => {
+            ghost.gridY = gameConfig.tunnelRow;
             ghost.x = -20;
             ghost.y = 280;
             ghost.direction = directions.LEFT;
@@ -28,7 +28,7 @@ describe('Ghost - Bug Fixes', () => {
 
             ghost.handleTunnelWrap();
 
-            expect(ghost.x).toBeGreaterThan(500);
+            expect(ghost.x).toBe(gameConfig.mazeWidth * gameConfig.tileSize);
         });
 
         test('does not wrap on wrong row', () => {
@@ -46,7 +46,7 @@ describe('Ghost - Bug Fixes', () => {
         });
 
         test('no vertical drift during horizontal tunnel wrap', () => {
-            ghost.gridY = 14;
+            ghost.gridY = gameConfig.tunnelRow;
             ghost.x = -20;
             ghost.y = 280;
             ghost.direction = directions.LEFT;
@@ -60,15 +60,15 @@ describe('Ghost - Bug Fixes', () => {
         });
 
         test('wraps correctly from right to left', () => {
-            ghost.gridY = 14;
-            ghost.x = 600;
+            ghost.gridY = gameConfig.tunnelRow;
+            ghost.x = gameConfig.mazeWidth * gameConfig.tileSize + 20;
             ghost.y = 280;
             ghost.direction = directions.RIGHT;
             ghost.isMoving = true;
 
             ghost.handleTunnelWrap();
 
-            expect(ghost.x).toBeLessThan(20);
+            expect(ghost.x).toBe(0);
         });
     });
 
@@ -187,7 +187,7 @@ describe('Ghost - Bug Fixes', () => {
 
     describe('Bug Fix: Speed variations with tunnel', () => {
         test('uses tunnel speed multiplier on tunnel row', () => {
-            ghost.gridY = 14;
+            ghost.resetPosition(ghost.gridX, gameConfig.tunnelRow);
             ghost.speed = 100;
             const deltaSeconds = msToSeconds(100);
 
@@ -201,7 +201,7 @@ describe('Ghost - Bug Fixes', () => {
         });
 
         test('uses normal speed multiplier off tunnel row', () => {
-            ghost.gridY = 10;
+            ghost.resetPosition(ghost.gridX, 10);
             ghost.speed = 100;
             const deltaSeconds = msToSeconds(100);
 

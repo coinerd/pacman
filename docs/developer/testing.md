@@ -38,5 +38,7 @@ Tests are organized by concern:
 ## Mocking & Test Utilities
 
 - `tests/setup.js` provides mock Canvas and Web Audio APIs.
-- `__mocks__/phaser.js` stubs core Phaser classes for unit tests.
+- `__mocks__/phaser.js` stubs Phaser renderer essentials (Display/Scene/Graphics) for unit tests.
 - `tests/utils/testHelpers.js` contains shared helpers for entity creation and maze setup.
+- `tests/utils/modelTestUtils.js`, `tests/utils/simulationHelpers.js`, and `tests/utils/inputMocks.js` cover model instantiation, deterministic simulation, and controller input mocks.
+- See `docs/developer/test-utilities.md` for examples.

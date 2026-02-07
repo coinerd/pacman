@@ -82,7 +82,7 @@ describe('BaseEntity', () => {
     describe('grid-based movement', () => {
 
         test('should handle tunnel wrapping', () => {
-            const entity = new BaseEntity(scene, 0, 14, 10, 0xFFFFFF);
+            const entity = new BaseEntity(scene, 0, gameConfig.tunnelRow, 10, 0xFFFFFF);
             entity.direction = directions.LEFT;
             entity.isMoving = true;
 

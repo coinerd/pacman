@@ -142,6 +142,9 @@ This document catalogs every project file (excluding vendored dependencies under
 | --- | --- |
 | `tests/setup.js` | JSDOM + Phaser mocks for unit tests. |
 | `tests/utils/testHelpers.js` | Shared test helpers. |
+| `tests/utils/modelTestUtils.js` | GameModel instantiation helpers for tests. |
+| `tests/utils/simulationHelpers.js` | Deterministic simulation helpers for tests. |
+| `tests/utils/inputMocks.js` | Keyboard/touch controller input mocks. |
 
 ### Core & Utilities
 
@@ -220,4 +223,3 @@ This document catalogs every project file (excluding vendored dependencies under
 | `tests/integration/MultiEntityCollision.test.js` | Collision interactions across entities. |
 | `tests/integration/TunnelBehavior.test.js` | Tunnel warp integration tests. |
 | `tests/integration/GhostLifecycle.test.js` | Ghost state transitions integration. |
-
