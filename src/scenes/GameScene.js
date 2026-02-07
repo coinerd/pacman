@@ -44,6 +44,7 @@ import { FixedTimeStepLoop } from '../systems/FixedTimeStepLoop.js';
 import { gameEvents, GAME_EVENTS } from '../core/EventBus.js';
 import { normalizeDeltaSeconds } from '../utils/Time.js';
 import GameModel from '../core/GameModel.js';
+import { GameController } from '../controllers/GameController.js';
 
 export default class GameScene extends Phaser.Scene {
     constructor() {
@@ -104,7 +105,12 @@ export default class GameScene extends Phaser.Scene {
         this.uiController = new UIController(this, this.gameState);
         this.uiController.create();
 
-        this.inputController = new InputController(this, this.pacman);
+        this.gameController = new GameController({
+            scene: this,
+            gameModel: this.gameModel,
+            replaySystem: this.replaySystem
+        });
+        this.inputController = new InputController(this, this.gameController);
 
         this.effectManager = new EffectManager(this);
         this.deathHandler = new DeathHandler(this, this.gameModel);
@@ -296,17 +302,17 @@ export default class GameScene extends Phaser.Scene {
             if (Math.abs(deltaX) > Math.abs(deltaY)) {
                 if (Math.abs(deltaX) > threshold) {
                     if (deltaX > 0) {
-                        this.pacman.setDirection(directions.RIGHT);
+                        this.gameController.handleInput({ direction: directions.RIGHT });
                     } else {
-                        this.pacman.setDirection(directions.LEFT);
+                        this.gameController.handleInput({ direction: directions.LEFT });
                     }
                 }
             } else {
                 if (Math.abs(deltaY) > threshold) {
                     if (deltaY > 0) {
-                        this.pacman.setDirection(directions.DOWN);
+                        this.gameController.handleInput({ direction: directions.DOWN });
                     } else {
-                        this.pacman.setDirection(directions.UP);
+                        this.gameController.handleInput({ direction: directions.UP });
                     }
                 }
             }
@@ -333,6 +339,11 @@ export default class GameScene extends Phaser.Scene {
             this.pacmanAI.update(this.pacman, this.maze, this.pelletGrid, this.ghosts);
         } else {
             this.inputController.handleInput();
+        }
+
+        const desiredDirection = this.gameModel.consumeDesiredDirection();
+        if (desiredDirection) {
+            this.pacman.setDirection(desiredDirection);
         }
 
         this.fixedTimeStepLoop.update(deltaInSeconds);

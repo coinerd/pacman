@@ -4,19 +4,24 @@
  */
 
 import { directions } from '../../config/gameConfig.js';
-import { gameEvents, GAME_EVENTS } from '../../core/EventBus.js';
 
 export class InputController {
     /**
      * Create InputController
      * @param {Object} gameScene - The GameScene instance
-     * @param {Object} pacman - The Pacman entity
+     * @param {Object} gameController - The GameController instance
      */
-    constructor(gameScene, pacman) {
+    constructor(gameScene, gameController) {
         this.scene = gameScene;
-        this.pacman = pacman;
+        this.gameController = gameController;
         this.cursors = null;
         this.wasd = null;
+        this.pendingActions = {
+            pause: false,
+            replayToggle: false,
+            returnToMenu: false,
+            loadReplay: false
+        };
         this.setupInput();
     }
 
@@ -28,19 +33,19 @@ export class InputController {
         this.wasd = this.scene.input.keyboard.addKeys('W,A,S,D');
 
         this.scene.input.keyboard.on('keydown-P', () => {
-            this.handlePause();
+            this.pendingActions.pause = true;
         });
 
         this.scene.input.keyboard.on('keydown-ESC', () => {
-            this.handleReturnToMenu();
+            this.pendingActions.returnToMenu = true;
         });
 
         this.scene.input.keyboard.on('keydown-R', () => {
-            this.handleReplayToggle();
+            this.pendingActions.replayToggle = true;
         });
 
         this.scene.input.keyboard.on('keydown-L', () => {
-            this.handleLoadReplay();
+            this.pendingActions.loadReplay = true;
         });
     }
 
@@ -48,8 +53,6 @@ export class InputController {
      * Handle directional input
      */
     handleInput() {
-        if (this.pacman.isDying) {return;}
-
         let newDirection = null;
 
         if (this.cursors.left.isDown || this.wasd.A.isDown) {
@@ -62,60 +65,18 @@ export class InputController {
             newDirection = directions.DOWN;
         }
 
-        if (newDirection) {
-            this.pacman.setDirection(newDirection);
-            gameEvents.emit(GAME_EVENTS.DIRECTION_CHANGED, { direction: newDirection });
-        }
-    }
+        this.gameController.handleInput({
+            direction: newDirection,
+            pause: this.pendingActions.pause,
+            replayToggle: this.pendingActions.replayToggle,
+            returnToMenu: this.pendingActions.returnToMenu,
+            loadReplay: this.pendingActions.loadReplay
+        });
 
-    /**
-     * Handle pause toggle
-     */
-    handlePause() {
-        const gameState = this.scene.gameModel.state;
-        if (!gameState.isGameOver && !gameState.isDying) {
-            const isPaused = this.scene.gameModel.togglePaused();
-            if (isPaused) {
-                this.scene.scene.pause();
-                this.scene.scene.launch('PauseScene');
-            }
-        }
-    }
-
-    /**
-     * Handle return to menu
-     */
-    handleReturnToMenu() {
-        if (!this.scene.gameModel.state.isGameOver) {
-            this.scene.cleanup();
-            this.scene.scene.start('MenuScene');
-        }
-    }
-
-    /**
-     * Handle replay toggle (record/stop)
-     */
-    handleReplayToggle() {
-        if (this.scene.replaySystem) {
-            if (this.scene.replaySystem.isRecording) {
-                this.scene.replaySystem.stopRecording();
-            } else if (!this.scene.replaySystem.isReplaying) {
-                this.scene.replaySystem.startRecording();
-            }
-        }
-    }
-
-    /**
-     * Handle load and play last replay
-     */
-    handleLoadReplay() {
-        if (this.scene.replaySystem && !this.scene.replaySystem.isReplaying) {
-            const recordings = this.scene.replaySystem.getRecordings();
-            if (recordings.length > 0) {
-                const lastRecording = recordings[recordings.length - 1];
-                this.scene.replaySystem.loadRecording(lastRecording);
-            }
-        }
+        this.pendingActions.pause = false;
+        this.pendingActions.replayToggle = false;
+        this.pendingActions.returnToMenu = false;
+        this.pendingActions.loadReplay = false;
     }
 
     /**

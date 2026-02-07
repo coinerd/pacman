@@ -1,11 +1,11 @@
 import { InputController } from '../../../src/scenes/systems/InputController.js';
-import { createMockScene, createMockPacman } from '../../utils/testHelpers.js';
+import { createMockScene } from '../../utils/testHelpers.js';
 import { directions } from '../../../src/config/gameConfig.js';
 
 describe('InputController', () => {
     let controller;
     let mockScene;
-    let mockPacman;
+    let mockGameController;
 
     beforeEach(() => {
         mockScene = createMockScene();
@@ -32,15 +32,14 @@ describe('InputController', () => {
             launch: jest.fn(),
             start: jest.fn()
         };
-        mockPacman = createMockPacman();
-        mockPacman.setDirection = jest.fn();
-        controller = new InputController(mockScene, mockPacman);
+        mockGameController = { handleInput: jest.fn() };
+        controller = new InputController(mockScene, mockGameController);
     });
 
     describe('initialization', () => {
-        test('should store scene and pacman references', () => {
+        test('should store scene and game controller references', () => {
             expect(controller.scene).toBe(mockScene);
-            expect(controller.pacman).toBe(mockPacman);
+            expect(controller.gameController).toBe(mockGameController);
         });
 
         test('should setup keyboard input', () => {
@@ -66,7 +65,13 @@ describe('InputController', () => {
 
             controller.handleInput();
 
-            expect(mockPacman.setDirection).toHaveBeenCalledWith(directions.LEFT);
+            expect(mockGameController.handleInput).toHaveBeenCalledWith({
+                direction: directions.LEFT,
+                pause: false,
+                replayToggle: false,
+                returnToMenu: false,
+                loadReplay: false
+            });
         });
 
         test('should move right when right arrow pressed', () => {
@@ -74,7 +79,13 @@ describe('InputController', () => {
 
             controller.handleInput();
 
-            expect(mockPacman.setDirection).toHaveBeenCalledWith(directions.RIGHT);
+            expect(mockGameController.handleInput).toHaveBeenCalledWith({
+                direction: directions.RIGHT,
+                pause: false,
+                replayToggle: false,
+                returnToMenu: false,
+                loadReplay: false
+            });
         });
 
         test('should move up when up arrow pressed', () => {
@@ -82,7 +93,13 @@ describe('InputController', () => {
 
             controller.handleInput();
 
-            expect(mockPacman.setDirection).toHaveBeenCalledWith(directions.UP);
+            expect(mockGameController.handleInput).toHaveBeenCalledWith({
+                direction: directions.UP,
+                pause: false,
+                replayToggle: false,
+                returnToMenu: false,
+                loadReplay: false
+            });
         });
 
         test('should move down when down arrow pressed', () => {
@@ -90,7 +107,13 @@ describe('InputController', () => {
 
             controller.handleInput();
 
-            expect(mockPacman.setDirection).toHaveBeenCalledWith(directions.DOWN);
+            expect(mockGameController.handleInput).toHaveBeenCalledWith({
+                direction: directions.DOWN,
+                pause: false,
+                replayToggle: false,
+                returnToMenu: false,
+                loadReplay: false
+            });
         });
     });
 
@@ -111,7 +134,13 @@ describe('InputController', () => {
 
             controller.handleInput();
 
-            expect(mockPacman.setDirection).toHaveBeenCalledWith(directions.UP);
+            expect(mockGameController.handleInput).toHaveBeenCalledWith({
+                direction: directions.UP,
+                pause: false,
+                replayToggle: false,
+                returnToMenu: false,
+                loadReplay: false
+            });
         });
 
         test('should move left when A pressed', () => {
@@ -119,7 +148,13 @@ describe('InputController', () => {
 
             controller.handleInput();
 
-            expect(mockPacman.setDirection).toHaveBeenCalledWith(directions.LEFT);
+            expect(mockGameController.handleInput).toHaveBeenCalledWith({
+                direction: directions.LEFT,
+                pause: false,
+                replayToggle: false,
+                returnToMenu: false,
+                loadReplay: false
+            });
         });
 
         test('should move down when S pressed', () => {
@@ -127,7 +162,13 @@ describe('InputController', () => {
 
             controller.handleInput();
 
-            expect(mockPacman.setDirection).toHaveBeenCalledWith(directions.DOWN);
+            expect(mockGameController.handleInput).toHaveBeenCalledWith({
+                direction: directions.DOWN,
+                pause: false,
+                replayToggle: false,
+                returnToMenu: false,
+                loadReplay: false
+            });
         });
 
         test('should move right when D pressed', () => {
@@ -135,7 +176,13 @@ describe('InputController', () => {
 
             controller.handleInput();
 
-            expect(mockPacman.setDirection).toHaveBeenCalledWith(directions.RIGHT);
+            expect(mockGameController.handleInput).toHaveBeenCalledWith({
+                direction: directions.RIGHT,
+                pause: false,
+                replayToggle: false,
+                returnToMenu: false,
+                loadReplay: false
+            });
         });
     });
 
@@ -149,44 +196,19 @@ describe('InputController', () => {
             controller.wasd.A.isDown = false;
             controller.wasd.S.isDown = false;
             controller.wasd.D.isDown = true;
-            mockPacman.setDirection.mockClear();
+            mockGameController.handleInput.mockClear();
         });
 
         test('should prefer arrow keys over WASD', () => {
             controller.handleInput();
 
-            expect(mockPacman.setDirection).toHaveBeenCalledWith(directions.LEFT);
-        });
-    });
-
-    describe('pause handling', () => {
-        test('should toggle pause when P key pressed', () => {
-            mockScene.gameState.isGameOver = false;
-            mockScene.gameState.isDying = false;
-
-            controller.handlePause();
-
-            expect(mockScene.gameState.isPaused).toBe(true);
-            expect(mockScene.scene.pause).toHaveBeenCalled();
-            expect(mockScene.scene.launch).toHaveBeenCalledWith('PauseScene');
-        });
-
-        test('should not pause if game is over', () => {
-            mockScene.gameState.isGameOver = true;
-
-            controller.handlePause();
-
-            expect(mockScene.gameState.isPaused).toBe(false);
-            expect(mockScene.scene.pause).not.toHaveBeenCalled();
-        });
-
-        test('should not pause if pacman is dying', () => {
-            mockScene.gameState.isDying = true;
-
-            controller.handlePause();
-
-            expect(mockScene.gameState.isPaused).toBe(false);
-            expect(mockScene.scene.pause).not.toHaveBeenCalled();
+            expect(mockGameController.handleInput).toHaveBeenCalledWith({
+                direction: directions.LEFT,
+                pause: false,
+                replayToggle: false,
+                returnToMenu: false,
+                loadReplay: false
+            });
         });
     });
 
