@@ -47,6 +47,86 @@ Key points:
 - **GameOverScene**: End-of-run summary and return to menu.
 - **SettingsScene**: Persistent configuration for sound, volume, FPS overlay, and difficulty.
 
+## 3.1. MVC Architecture (NEW)
+
+The game now uses a hybrid architecture combining Phaser scenes with an MVC pattern for better separation of concerns, testability, and decoupling.
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      Input Layer                           │
+│  Keyboard/Touch → GameController → DIRECTION_CHANGED event   │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────────┐
+│                      Model Layer                           │
+│  GameModel (pure state):                                   │
+│  - score, lives, level, pelletsEaten                      │
+│  - ghostsEaten, frightenedGhosts, ghostComboMultiplier     │
+│  - deathTimer, winTimer                                   │
+│  Emits: PELLET_EATEN, GHOST_EATEN, LEVEL_COMPLETE, etc.   │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────────┐
+│                   EventBus (decoupler)                     │
+│  Pub/sub system connects all components without direct deps   │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+         ┌───────────────┴───────────────┐
+         ▼                               ▼
+┌──────────────────────┐      ┌──────────────────────────┐
+│   View Layer        │      │   GameScene              │
+│   (Rendering)       │      │   (Coordinator)          │
+│   PhaserGameView    │◄─────┤   - Creates MVC components│
+│   ConsoleGameView   │      │   - Integrates with       │
+│                    │      │     existing entities      │
+└─────────────────────┘      └──────────────────────────┘
+```
+
+### MVC Components
+
+**GameModel** (`src/core/GameModel.js`)
+- Pure game state and rules (295 lines)
+- ZERO Phaser dependencies (runs headless in Node)
+- State: score, lives, level, highScore, pelletsEaten, ghostsEaten, frightenedGhosts, ghostComboMultiplier, deathTimer, winTimer
+- Methods: `addScore()`, `onPelletEaten()`, `onGhostEaten()`, `step(dt)`, `getSpeedMultiplier()`, `getFrightenedDuration()`, `reset()`
+- Emits events via EventBus: `PELLET_EATEN`, `GHOST_EATEN`, `LEVEL_COMPLETE`, `GAME_OVER`, `WIN`, `SCORE_CHANGED`, `LIVES_CHANGED`
+
+**GameController** (`src/controllers/GameController.js`)
+- Input translation layer (101 lines)
+- Translates raw keyboard/touch input to model intents
+- Orchestrates scene transitions (pause, menu, replay)
+- Emits `DIRECTION_CHANGED` events for entity movement
+
+**PhaserGameView** (`src/views/PhaserGameView.js`)
+- Full rendering logic extracted from GameScene (310 lines)
+- All visual/audio updates bind to model events
+- Separated concerns: no game logic, only rendering
+
+**ConsoleGameView** (`src/views/ConsoleGameView.js`)
+- Headless testing view (43 lines)
+- Logs events to console for debugging
+- No rendering, no Phaser dependencies
+
+### Integration with GameScene
+
+GameScene now acts as coordinator:
+- Creates `gameModel`, `gameController`, and views during initialization
+- `InputController` delegates to `gameController.handleInput()`
+- `DeathHandler` uses `gameModel.step()` for death timer
+- `LevelManager` uses `gameModel.getSpeedMultiplier()` and `gameModel.getFrightenedDuration()`
+- `UIController` observes `gameState` (reference to `gameModel.state`)
+- Views subscribe to EventBus events for rendering updates
+
+### Benefits
+
+- **Separation of Concerns**: Game logic (Model) isolated from rendering (View) and input (Controller)
+- **Testability**: Model and Controller can be tested without Phaser (pure JavaScript, headless in Node)
+- **Decoupling**: EventBus removes direct dependencies between components
+- **Flexibility**: Easy to add new views (e.g., React UI, console logger) without changing model logic
+- **Maintainability**: Clear boundaries make the code easier to understand and modify
+
 ## 4. Entities
 
 ### Pacman

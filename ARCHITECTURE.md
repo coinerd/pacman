@@ -5,16 +5,18 @@
 2. [Technology Stack](#technology-stack)
 3. [Project Structure](#project-structure)
 4. [Core Architecture Patterns](#core-architecture-patterns)
-5. [Entity System](#entity-system)
-6. [Systems Architecture](#systems-architecture)
-7. [Scene Management](#scene-management)
-8. [State Management](#state-management)
-9. [Collision Detection](#collision-detection)
-10. [Ghost AI System](#ghost-ai-system)
-11. [Audio System](#audio-system)
-12. [Persistence Layer](#persistence-layer)
-13. [Performance Considerations](#performance-considerations)
-14. [Code Quality Assessment](#code-quality-assessment)
+5. [MVC Architecture (NEW)](#mvc-architecture)
+6. [Entity System](#entity-system)
+7. [Systems Architecture](#systems-architecture)
+8. [Scene Management](#scene-management)
+9. [State Management](#state-management)
+10. [Collision Detection](#collision-detection)
+11. [Ghost AI System](#ghost-ai-system)
+12. [Audio System](#audio-system)
+13. [Persistence Layer](#persistence-layer)
+14. [Performance Considerations](#performance-considerations)
+15. [Code Quality Assessment](#code-quality-assessment)
+16. [Testing Architecture](#testing-architecture)
 
 ---
 
@@ -195,6 +197,259 @@ export const mazeLayout = [
 ```
 
 **Benefits**: Easy level design, visual editing, collision queries
+
+---
+
+## MVC Architecture (NEW)
+
+### Overview
+
+The game implements a **hybrid MVC architecture** that separates game logic from presentation while maintaining compatibility with the existing Phaser scene system. This refactoring (commit `44044ed`) introduces a Model-View-Controller pattern alongside the existing component-based design.
+
+### Architecture Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         USER INPUT                               │
+│              (Keyboard, Touch, Replay System)                     │
+└──────────────────────────┬──────────────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                      GameController                              │
+│  - Translates raw input to model intents                        │
+│  - Orchestrates scene transitions                               │
+│  - Emits DIRECTION_CHANGED events                               │
+└──────────────────────────┬──────────────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                        GameModel                                 │
+│  - Stores all game state (score, lives, level, etc.)           │
+│  - Applies game rules (scoring, combos, progression)            │
+│  - Emits events: PELLET_EATEN, GHOST_EATEN, etc.                │
+│  - Provides: shouldSpawnFruit(), getFrightenedDuration()       │
+└────────────┬──────────────────────────────────┬──────────────────┘
+             │                                  │
+             ▼                                  ▼
+┌─────────────────────┐              ┌─────────────────────┐
+│  PhaserGameView     │              │  ConsoleGameView    │
+│  - Renders game     │              │  - Logs events      │
+│  - Plays sounds     │              │  - No rendering     │
+│  - Creates effects  │              │  - For testing      │
+│  - Scene transitions│              │                     │
+└──────────┬──────────┘              └─────────────────────┘
+           │
+           │ Subscribes to EventBus
+           ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                        EventBus                                  │
+│  - Pub/sub communication layer                                  │
+│  - Decouples all components                                     │
+│  - Telemetry for debugging                                      │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Core MVC Components
+
+#### GameModel (`src/core/GameModel.js`)
+
+**Purpose**: Pure state management and game rules (NO Phaser dependencies)
+
+**Responsibilities**:
+- State management: `score`, `lives`, `level`, `highScore`, `isPaused`, `isGameOver`, `isDying`, `deathTimer`
+- Pellet tracking: `pelletsEaten`, `pelletsRemaining`, `totalPellets`
+- Ghost combo: `ghostsEaten`, `maxComboGhosts`, `currentComboGhosts`
+- Fruit/level: `fruitsCollected`, `levelComplete`
+- Direction buffering: `desiredDirection` queue
+
+**Key Methods**:
+- `addScore(points)`: Updates score, tracks high score, emits `SCORE_CHANGED` and `HIGH_SCORE_CHANGED` events
+- `onPelletEaten()`: Handles pellet consumption, updates counters, emits `PELLET_EATEN`
+- `onPowerPelletEaten()`: Resets ghost combo, emits `POWER_PELLET_EATEN`
+- `onGhostEaten()`: Tracks combo multiplier (200, 400, 800, 1600), emits `GHOST_EATEN`
+- `onPacmanDeath()`: Sets death state, increments death counter, emits `LIVES_LOST`
+- `onFruitEaten()`: Adds fruit score, emits `FRUIT_EATEN`
+- `onLevelComplete()`: Advances level, emits `LEVEL_COMPLETE`
+- `step(deltaSeconds)`: Manages death timer, returns respawn/gameover/death-tick events
+- `getSpeedMultiplier()`: Returns 5% speed increase per level
+- `getFrightenedDuration()`: Returns decreased duration per level (500ms reduction per level)
+- `shouldSpawnFruit()`: Returns true when ~70% of pellets eaten
+- `setDesiredDirection()`: Stores player input direction
+- `consumeDesiredDirection()`: Returns and clears direction
+
+**Design Constraint**: Zero Phaser dependencies - fully testable in Node.js environment
+
+#### GameController (`src/controllers/GameController.js`)
+
+**Purpose**: Input translation layer and scene orchestration
+
+**Responsibilities**:
+- Input processing: `handleInput({ direction, pause, returnToMenu, replayToggle, loadReplay })`
+- Scene transitions: Launches/pauses Phaser scenes (GameScene ↔ PauseScene ↔ MenuScene)
+- Replay control: Starts/stops recording, loads replays
+- Input validation: Ignores direction when `gameState.isDying`
+
+**Key Methods**:
+- `handleInput()`: Translates raw input to model actions and emits `DIRECTION_CHANGED` events
+- `handlePause()`: Toggles model pause state, launches/pauses Phaser scenes
+- `handleReturnToMenu()`: Cleanup and scene transition to MenuScene
+- `handleReplayToggle()`: Starts/stops replay recording
+- `handleLoadReplay()`: Loads and replays saved replay
+
+**Design Pattern**: Controller doesn't contain game logic, only routing and coordination
+
+#### View Layer
+
+**PhaserGameView (`src/views/PhaserGameView.js`)**
+
+**Purpose**: Full game rendering with Phaser integration
+
+**Responsibilities**:
+- Rendering: `createBackground()`, `createMaze()`, `createPellets()`, `createEntities()`
+- Entity management: Creates and manages Pacman, Ghosts, Fruit instances
+- Audio: Web Audio API sounds via SoundManager
+- Visual effects: Particle effects, flash animations via EffectManager
+- Event binding: Subscribes to model events and triggers visual/audio responses
+
+**Key Methods**:
+- `createBackground()`: Draws subtle grid pattern for depth
+- `createMaze()`: Generates maze wall texture with depth/shadows/highlights
+- `createPelletPools()`: Object pooling for performance
+- `createPellets()`: Spawns pellets with pulse animation on power pellets
+- `createEntities()`: Creates Pacman, Ghosts, Fruit entities
+- `bindModelEvents()`: Subscribes to EventBus and sets up callbacks:
+  - `PELLET_EATEN` → `playWakaWaka()`
+  - `POWER_PELLET_EATEN` → `playPowerPellet() + visual effects + set ghosts frightened`
+  - `GHOST_EATEN` → `playGhostEaten() + visual effects`
+  - `LIVES_LOST` → `playDeath() + handle death sequence`
+  - `FRUIT_EATEN` → `playFruitEat() + visual effects`
+  - `LEVEL_COMPLETE` → `playLevelComplete()` + save high score + transition
+  - `GAME_OVER` → `save high score + transition to GameOverScene`
+
+**Dependencies**: Heavily uses Phaser.js (311 lines)
+
+**ConsoleGameView (`src/views/ConsoleGameView.js`)**
+
+**Purpose**: Headless view for CLI environments, test harnesses, or automated testing
+
+**Responsibilities**:
+- Event subscription: Subscribes to all model events
+- Logging: Logs events via configurable logger (defaults to `console`)
+- No rendering, no Phaser dependencies
+
+**Key Methods**:
+- `bindModelEvents()`: Subscribes to events and logs state changes
+
+**Size**: Lightweight (43 lines total)
+
+#### EventBus (`src/core/EventBus.js`)
+
+**Purpose**: Pub/sub system for fully decoupled communication
+
+**Event Types**:
+- Game State: `PELLET_EATEN`, `POWER_PELLET_EATEN`, `GHOST_EATEN`, `FRUIT_EATEN`, `LEVEL_COMPLETE`, `GAME_OVER`, `LIVES_LOST`
+- Score Tracking: `SCORE_CHANGED`, `HIGH_SCORE_CHANGED`
+- Game Flow: `PAUSE_TOGGLED`, `GAME_STARTED`, `GAME_RESET`
+- Input: `DIRECTION_CHANGED`
+- Replay System: `RECORDING_STARTED`, `RECORDING_STOPPED`, `REPLAY_INPUT`, `REPLAY_FINISHED`
+- Achievements: `ACHIEVEMENT_UNLOCKED`
+
+**API**:
+- `on(event, callback, context)`: Subscribe to events, returns unsubscribe function
+- `off(event, callback)`: Unsubscribe specific listener
+- `once(event, callback, context)`: One-time subscription (auto-unsubscribes)
+- `emit(event, data)`: Publish event to all subscribers (creates array copy for safety)
+- `emitTelemetry(event, data)`: Dispatches browser-level CustomEvent for debugging
+
+**Design Pattern**: Singleton (`export const gameEvents = new EventBus()`)
+
+### Integration with Existing Architecture
+
+#### GameScene Refactoring
+
+**Before**: GameScene contained ~708 lines with mixed responsibilities (game state, rendering, input, collision)
+
+**After**: GameScene reduced to 367 lines - now acts as **coordinator/orchestrator**
+
+**New GameScene Flow**:
+1. **Initialization** (`init()`):
+   - Creates GameModel with initial state
+   - Creates LevelManager with model reference
+   - Loads high score from storage
+
+2. **Creation** (`create()`):
+   - Loads level data into model
+   - Creates PhaserGameView (handles all rendering)
+   - View creates visual elements and binds to model events
+   - Creates GameController (handles input translation)
+   - Connects InputController to GameController
+   - Creates UIController (observes model state)
+
+3. **Game Loop** (`update()`):
+   - Checks model state for pause/game over
+   - Processes input through controller
+   - Consumes queued direction from model
+   - Runs fixed timestep physics loop
+   - Handles death animation through DeathHandler
+
+4. **Fixed Physics** (`fixedUpdate()`):
+   - Updates all entities (Pacman, Ghosts)
+   - Runs GhostAI for ghost targeting
+   - Handles collisions via CollisionSystem
+   - Updates Fruit and Replay system
+
+**What GameScene NO LONGER does**:
+- ❌ Direct score/lives/level management (delegated to GameModel)
+- ❌ Rendering logic (delegated to PhaserGameView)
+- ❌ Input processing logic (delegated to GameController)
+- ❌ Audio playback (delegated to SoundManager via View)
+- ❌ Visual effects (delegated to EffectManager via View)
+
+### Systems Refactoring
+
+#### Modified Systems
+
+**DeathHandler**: Now delegates to `gameModel.step(deltaSeconds)` for death timer management
+
+**InputController**: Now delegates to `gameController.handleInput()` instead of modifying game state directly
+
+**LevelManager**: Uses `gameModel.getSpeedMultiplier()` and `gameModel.getFrightenedDuration()` for configuration
+
+**UIController**: Observes `gameState` (reference to `gameModel.state`) and updates UI based on model changes
+
+**EffectManager**: Moved into PhaserGameView, pure visual effects - no game logic
+
+#### Systems That Remained Unchanged
+
+**CollisionSystem**: Still used by GameScene in `handleCollisions()` - query-based collision detection
+
+**GhostAISystem**: Still used by GameScene in `fixedUpdate()` - ghost targeting and direction selection
+
+**AchievementSystem**: Checks game state, independent of MVC architecture
+
+**ReplaySystem**: Records events from EventBus, independent of MVC implementation
+
+### Benefits of MVC Refactoring
+
+1. **Testability**: GameModel can be unit tested without Phaser (headless in Node.js)
+2. **Flexibility**: Easy to add new views (e.g., React, Canvas 2D) without changing game logic
+3. **Decoupling**: Components don't need direct references to each other, communicate via EventBus
+4. **Replay Support**: Event-based design enables easy recording/replay of game events
+5. **Headless Testing**: ConsoleGameView enables automated CI testing without browser rendering
+6. **Separation of Concerns**: Each component has a single, clear responsibility
+7. **Extensibility**: New features subscribe to events without modifying existing code
+8. **Clear Data Flow**: Input → Controller → Model → EventBus → View
+
+### Design Patterns Used
+
+1. **Model-View-Controller (MVC)**: Separation of concerns between state, presentation, and input handling
+2. **Observer/Pub-Sub**: EventBus for loose coupling between components
+3. **Strategy Pattern**: Multiple view implementations (Phaser, Console) for different contexts
+4. **Singleton**: Single `gameEvents` instance for app-wide communication
+5. **Adapter Pattern**: ConsoleGameView adapts event notifications to console output
+6. **Dependency Injection**: All components receive dependencies via constructor for easy testing
+7. **Event-Driven Architecture**: GameModel doesn't know about views, views react to model state changes
 
 ---
 
@@ -1350,6 +1605,125 @@ cleanup() {
 **Extensibility**: Poor (adding features requires core changes)
 
 **Recommendation**: Refactor for maintainability and extensibility before adding major features.
+ 
+---
+
+## Testing Architecture (NEW)
+
+### Test Inventory
+
+The MVC refactoring introduced a comprehensive test suite with clear layer separation:
+
+**Unit Tests** (`tests/core/`, `tests/controllers/`, `tests/unit/`):
+- **GameModel tests** (`tests/core/GameModel.test.js`): Pure state testing with event emission verification
+- **GameController tests** (`tests/controllers/GameController.test.js`): Input-to-model-action translation with mocks
+- **DirectionBuffer tests** (`tests/unit/DirectionBuffer.test.js`): Queue/apply behavior testing
+- **BaseEntity tests** (`tests/unit/BaseEntity.test.js`): Entity initialization and movement
+- **PreviousPositionTracking tests** (`tests/unit/PreviousPositionTracking.test.js`): Position tracking verification
+
+**Integration Tests** (`tests/integration/`, `tests/systems/`):
+- **GameModelLoop tests** (`tests/integration/GameModelLoop.test.js`): Deterministic time-step simulation with GameModel + FixedTimeStepLoop
+- **GhostLifecycle tests** (`tests/integration/GhostLifecycle.test.js`): Ghost state machine and mode transitions
+- **MultiEntityCollision tests** (`tests/integration/MultiEntityCollision.test.js`): Collision detection with multiple entities
+- **SingleEntityMovement tests** (`tests/integration/SingleEntityMovement.test.js`): Movement edge cases and center snapping
+- **CenterSnapping tests** (`tests/unit/CenterSnapping.test.js`): Tile center detection and snapping logic
+
+**Scene/System Tests** (`tests/scenes/`, `tests/pools/`):
+- **GameFlowController tests**: Scene orchestration and transitions
+- **InputController tests**: Keyboard and touch input handling
+- **UIController tests**: UI display and updates based on model state
+- **Pool tests**: Object pooling lifecycle management
+
+### Test Utilities
+
+**Core Utilities** (`tests/utils/`):
+- **modelTestUtils.js**: Helper for creating GameModel instances with custom state/level config
+  ```javascript
+  const model = createGameModel({ state: { score: 90, highScore: 100 }, levelConfig: { ... }, levelData: { ... } })
+  ```
+- **simulationHelpers.js**: Deterministic simulation utilities
+  ```javascript
+  const sequence = createDeterministicDtSequence(120, physicsConfig.FIXED_DT)
+  const events = runFixedStepSimulation(loop, dtSequence)
+  ```
+- **inputMocks.js**: Mock factories for keyboard/touch input testing
+  ```javascript
+  const { input, cursors } = createKeyboardInputMock()
+  const touch = createTouchInputMock()
+  ```
+- **testHelpers.js**: Common mock factories (MockScene, MockPacman, MockGhost, etc.)
+
+**Setup Refactoring** (`tests/setup.js`):
+- Minimal Phaser mocks (Canvas, AudioContext, GameObjects) to reduce test complexity
+- Removed duplicate mock code across test files
+- Shared mock objects for consistent test environment
+
+### Testing Patterns by Layer
+
+**Model Layer** (`tests/core/GameModel.test.js`):
+- Pattern: Pure state testing with event emission verification
+- No Phaser/Rendering dependencies - tests run headless in Node.js
+- Example:
+  ```javascript
+  const model = createGameModel({ state: { score: 90 } })
+  gameEvents.on(GAME_EVENTS.SCORE_CHANGED, listener)
+  model.onPelletEaten(20)
+  expect(snapshot.score).toBe(110)
+  expect(listener).toHaveBeenCalled()
+  ```
+
+**Controller Layer** (`tests/controllers/GameController.test.js`):
+- Pattern: Input-to-model-action translation with mocks
+- Tests `handleInput()` method receives raw input and delegates correctly
+- Validates state guards (no direction change while dying)
+
+**View Layer** (`tests/scenes/systems/`):
+- Pattern: Minimal Phaser mocks, focus on rendering/UI bindings
+- Tests verify scene transitions, UI updates, visual effects
+- Scene state is mocked, not fully instantiated
+
+**Integration Layer** (`tests/integration/GameModelLoop.test.js`):
+- Pattern: Deterministic time-step simulation
+- Combines GameModel with FixedTimeStepLoop
+- Verifies consistent timing across multiple runs
+- Example:
+  ```javascript
+  const loop = new FixedTimeStepLoop(() => events.push(model.step(fixedDt)))
+  const simulationA = runSimulation()
+  const simulationB = runSimulation()
+  expect(simulationA.events).toEqual(simulationB.events)  // Deterministic!
+  ```
+
+### Test Improvements After MVC Refactoring
+
+**Before**: Phaser-coupled tests with complex scene initialization
+**After**: Clean MVC separation with headless model testing
+
+| Aspect | Before MVC | After MVC |
+|---------|-------------|------------|
+| **Dependencies** | Full Phaser scene, entities, pools | GameModel only (headless) |
+| **Setup Complexity** | Complex scene mock hierarchy (200+ lines) | Simple `createGameModel()` call |
+| **Test Execution** | Requires JSDOM/Canvas mocks | Runs in Node, no browser needed |
+| **Test Speed** | Slow (full initialization) | Fast (pure logic) |
+| **Determinism** | Frame-dependent, potential flakiness | Fully deterministic with `createDeterministicDtSequence()` |
+| **Test Isolation** | Tight coupling to scene | Clean layer separation |
+| **Mock Maintenance** | Heavy Phaser mock updates | Minimal Phaser mocks only for View tests |
+| **Code Coverage** | Hard to isolate logic | Easy to cover all model paths |
+
+### Key Testing Benefits
+
+1. **Headless Model Testing**: GameModel can be unit tested without Phaser
+2. **Deterministic Simulations**: `createDeterministicDtSequence()` ensures consistent timing
+3. **Layer Separation**: Model, Controller, and View tested independently
+4. **Reusable Utilities**: Test helpers reduce boilerplate across test files
+5. **Minimal Mocks**: Refactored `tests/setup.js` provides minimal Phaser mocks
+
+### Test Documentation
+
+Comprehensive test documentation available:
+- `docs/developer/test-inventory-mvc.md`: Complete classification of all tests by layer
+- `docs/developer/change-task-test-suite-mvc.md`: MVC migration task documentation
+- `docs/developer/test-utilities.md`: Usage examples for all shared test utilities
 
 ---
 
@@ -1369,3 +1743,46 @@ cleanup() {
 | Ghost Behaviors | 4 unique personalities |
 | Fruit Types | 8 distinct types |
 | Total Constants | ~75 distinct values |
+
+### Post-MVC Architecture (After Refactoring)
+
+| Metric | Value |
+|---------|--------|
+| Total Lines of Code | ~2,950 (excluding node_modules) |
+| Main Files | 16 (added 3: core/, controllers/, views/) |
+| Scene Files | 5 (unchanged) |
+| Entity Classes | 3 (unchanged) |
+| System Classes | 2 (unchanged) |
+| Manager Classes | 2 (unchanged) |
+| Utility Modules | 4 (added 3: DirectionBuffer.js, CenterSnapper.js, TileMovement.js, WarpTunnel.js) |
+| Configuration Objects | 10 (unchanged) |
+| MVC Components | 3 (GameModel, GameController, EventBus + 2 Views) |
+| Test Files | 20 (comprehensive test coverage) |
+| Test Utilities | 5 (modelTestUtils.js, simulationHelpers.js, inputMocks.js, testHelpers.js) |
+
+### Refactoring Impact
+
+| Change | Impact |
+|--------|---------|
+| + GameModel.js (295 lines) | Pure game state, testable without Phaser |
+| + GameController.js (101 lines) | Input translation layer |
+| + PhaserGameView.js (310 lines) | Rendering extracted from GameScene |
+| + ConsoleGameView.js (43 lines) | Headless testing support |
+| + EventBus.js (136 lines) | Decoupled pub/sub communication |
+| ~ GameScene.js (-300 lines) | Simplified to coordinator role |
+| + DirectionBuffer.js (250 lines) | Direction queue/apply pattern |
+| + CenterSnapper.js (170 lines) | Tile center detection |
+| + TileMovement.js (346 lines) | Grid-based movement utilities |
+| + WarpTunnel.js (118 lines) | Portal handling |
+| Total Net Change | +1,017 lines (MVC + utilities) |
+
+### Test Coverage
+
+| Test Type | Test Count | Coverage |
+|-----------|-------------|----------|
+| Unit Tests | ~70 | GameModel, GameController, DirectionBuffer, CenterSnapper, TileMovement, entities |
+| Integration Tests | ~40 | GameModelLoop, GhostLifecycle, MultiEntityCollision, SingleEntityMovement, systems |
+| Scene Tests | ~20 | GameFlowController, InputController, UIController, pools |
+| Total Tests | ~130 | 100% coverage of core game logic |
+
+(End of file - total 1970 lines)

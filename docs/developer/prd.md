@@ -23,6 +23,7 @@ Offer a polished, instantly playable Pac-Man experience that runs reliably on de
 - **Gameplay:** ≥ 60 FPS on modern hardware (debug overlay verifies FPS).
 - **Retention:** Achievement unlock rate and replay usage.
 - **Reliability:** All test suites passing in CI with coverage ≥ 70%.
+- **Maintainability & Testability:** MVC architecture enables clear boundaries and headless testing of core game logic without rendering dependencies.
 
 ## 3. Target Audience & Personas
 
@@ -80,6 +81,8 @@ Offer a polished, instantly playable Pac-Man experience that runs reliably on de
 - **Performance:** Fixed timestep at 60 Hz; collision checks must stay within a small budget.
 - **Compatibility:** Must run in modern evergreen browsers.
 - **Reliability:** Must pass the provided Jest suite with coverage thresholds.
+- **Maintainability:** Code must follow clear architectural patterns (MVC) to enable easy updates and feature additions.
+- **Testability:** Core game logic must be testable without rendering dependencies (supported by pure Model layer).
 - **Resilience:** Sound system must fail gracefully if Web Audio API is unavailable.
 
 ## 7. UX Requirements
@@ -103,11 +106,14 @@ Offer a polished, instantly playable Pac-Man experience that runs reliably on de
 | Collision missed at high speed | Swept capsule collision checks |
 | Browser audio restrictions | User-initiated SoundManager initialization |
 | Performance regressions | Debug overlay + collision budget telemetry |
+| Scene complexity grows as features are added | MVC architecture separates game logic (Model) from scene orchestration (GameScene), keeping GameScene lean |
+| Coupling between game logic and rendering makes changes risky | EventBus decouples Model from Views, allowing safe independent modifications |
 
 ## 10. Milestones (Suggested)
 
 1. **MVP Stability:** Core gameplay + tests passing.
-2. **Polish:** Visual effects, audio, and UI improvements.
-3. **Accessibility & Mobile:** Touch controls and scaling improvements.
-4. **Meta Features:** Achievements, replay system, debug overlay.
+2. **MVC Refactoring:** Separate game logic, input, and rendering for better testability and maintainability.
+3. **Polish:** Visual effects, audio, and UI improvements.
+4. **Accessibility & Mobile:** Touch controls and scaling improvements.
+5. **Meta Features:** Achievements, replay system, debug overlay.
 

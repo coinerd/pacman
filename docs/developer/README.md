@@ -27,6 +27,7 @@ npm run dev
 ## Key Concepts (TL;DR)
 
 - **Phaser scenes** define the UI flow (Menu → Game → Pause/Win/GameOver/Settings).
+- **MVC pattern** separates game logic (GameModel), input (GameController), and rendering (Views) for testability.
 - **Entities** (Pacman, Ghosts, Fruit) are Phaser display objects with grid-aware movement.
 - **Systems** encapsulate logic such as collision detection, AI, achievements, replay, and debug overlay.
 - **Utilities** provide grid math, maze layout, movement, warping, and low-level helpers.
@@ -35,10 +36,11 @@ npm run dev
 ## High-Level Flow
 
 1. `src/main.js` boots Phaser and registers scenes.
-2. `GameScene` creates the maze, entities, UI, pools, and systems.
+2. `GameScene` creates the maze, entities, UI, pools, systems, and MVC components (GameModel, GameController, Views).
 3. The per-frame loop runs `update()`, which drives a fixed-step loop for deterministic movement.
-4. Collisions and scoring are resolved in the fixed update, which updates game state and UI.
-5. Scene transitions (pause, win, game over) are handled by Phaser scene lifecycle calls.
+4. `GameController` translates input to model intents, `GameModel` updates state, and EventBus distributes events to Views and entities.
+5. Collisions and scoring are resolved in the fixed update, which updates game state and UI.
+6. Scene transitions (pause, win, game over) are handled by Phaser scene lifecycle calls.
 
 ## Working Guidelines
 

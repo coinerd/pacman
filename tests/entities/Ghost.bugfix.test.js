@@ -187,12 +187,15 @@ describe('Ghost - Bug Fixes', () => {
 
     describe('Bug Fix: Speed variations with tunnel', () => {
         test('uses tunnel speed multiplier on tunnel row', () => {
-            ghost.resetPosition(ghost.gridX, gameConfig.tunnelRow);
+            // Create a larger maze that includes the tunnel row (row 14)
+            maze = createSimpleMaze(20, 20);
+            ghost.resetPosition(5, gameConfig.tunnelRow);
             ghost.speed = 100;
             const deltaSeconds = msToSeconds(100);
 
             const moveStep = ghost.speed * ghostSpeedMultipliers.tunnel * deltaSeconds;
             ghost.direction = directions.RIGHT;
+            ghost.isMoving = true;  // resetPosition() sets isMoving=false, so we need to set it true
             const initialX = ghost.x;
 
             ghost.update(deltaSeconds, maze, { x: 0, y: 0 });

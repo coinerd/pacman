@@ -80,6 +80,15 @@ This document catalogs every project file (excluding vendored dependencies under
 | `src/scenes/systems/DeathHandler.js` | Death flow and respawn logic. |
 | `src/scenes/systems/LevelManager.js` | Per-level difficulty adjustments. |
 
+### MVC Components (NEW)
+
+| Path | Purpose |
+| --- | --- |
+| `src/core/GameModel.js` | Pure game state and rules (score, lives, level, timers). Zero Phaser dependencies. |
+| `src/controllers/GameController.js` | Input translation layer, orchestrates scene transitions, emits direction events. |
+| `src/views/PhaserGameView.js` | Full rendering logic extracted from GameScene, binds to model events. |
+| `src/views/ConsoleGameView.js` | Headless testing view, logs events to console (no rendering). |
+
 ### Entities
 
 | Path | Purpose |
@@ -151,6 +160,8 @@ This document catalogs every project file (excluding vendored dependencies under
 | Path | Purpose |
 | --- | --- |
 | `tests/core/EventBus.test.js` | Event bus behavior. |
+| `tests/core/GameModel.test.js` | Model state and rules testing. |
+| `tests/controllers/GameController.test.js` | Controller input handling and scene orchestration. |
 | `tests/utils/DebugLogger.test.js` | Debug logger tests. |
 | `tests/utils/ErrorHandler.test.js` | Error handler tests. |
 | `tests/utils/Time.test.js` | Delta normalization tests. |
@@ -223,3 +234,4 @@ This document catalogs every project file (excluding vendored dependencies under
 | `tests/integration/MultiEntityCollision.test.js` | Collision interactions across entities. |
 | `tests/integration/TunnelBehavior.test.js` | Tunnel warp integration tests. |
 | `tests/integration/GhostLifecycle.test.js` | Ghost state transitions integration. |
+| `tests/integration/GameModelLoop.test.js` | GameModel + FixedTimeStepLoop integration. |
