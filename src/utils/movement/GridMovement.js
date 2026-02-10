@@ -71,13 +71,70 @@ export function moveEntityOnGrid(entity, maze, deltaSeconds) {
         const distToCenter = Math.hypot(center.x - entity.x, center.y - entity.y);
         const atCenter = distToCenter <= EPS;
 
-        if (atCenter) {
+        // Determine if we're moving toward or away from center
+        const movingTowardCenter = entity.direction.x !== 0
+            ? Math.sign(center.x - entity.x) === entity.direction.x
+            : Math.sign(center.y - entity.y) === entity.direction.y;
+
+        // Check if we have a buffered turn to apply
+        const hasBufferedTurn = entity.directionBuffer?.queue?.length > 0 ||
+                                (entity.nextDirection && (entity.nextDirection.x !== 0 || entity.nextDirection.y !== 0));
+
+        // At center, we need to:
+        // 1. Snap to center and apply buffered turns if moving toward center OR have buffered turn
+        // 2. If moving away from center with no buffered turn, just continue straight
+        const shouldProcessCenter = atCenter && (movingTowardCenter || hasBufferedTurn);
+        const shouldContinueStraight = atCenter && !movingTowardCenter && !hasBufferedTurn &&
+                                       (entity.direction.x !== 0 || entity.direction.y !== 0);
+
+        if (shouldProcessCenter) {
             entity.x = center.x;
             entity.y = center.y;
             const applied = applyBufferedTurn((dir) => canMove(maze, entity.gridX, entity.gridY, dir));
             if (applied) {
                 entity.isMoving = true;
             }
+            // If no buffered turn was applied but we have a valid current direction,
+            // ensure we continue moving (don't require buffered direction to continue straight)
+            if (!applied && (entity.direction.x !== 0 || entity.direction.y !== 0)) {
+                // Check if we can continue in current direction
+                if (!canMove(maze, entity.gridX, entity.gridY, entity.direction)) {
+                    // Can't continue, stop
+                    entity.direction = directions.NONE;
+                    entity.isMoving = false;
+                    break;
+                }
+                // Can continue - move away from center immediately
+                entity.isMoving = true;
+
+                // IMPORTANT: When at center with valid direction but no buffered turn,
+                // we need to actually move! The movement code below is inside !atCenter block,
+                // so we must handle it here.
+                // Move using remainingDist (don't require > EPS, any positive amount is valid)
+                if (remainingDist > 0) {
+                    entity.x += entity.direction.x * remainingDist;
+                    entity.y += entity.direction.y * remainingDist;
+                    movedAwayFromCenter = true;  // CRITICAL: Prevent snap-back at end of function
+                    remainingDist = 0;
+                }
+                break;
+            }
+        } else if (shouldContinueStraight) {
+            // We're at center but moving away from it with no buffered turn
+            // Just continue straight without snapping to center
+            if (!canMove(maze, entity.gridX, entity.gridY, entity.direction)) {
+                entity.direction = directions.NONE;
+                entity.isMoving = false;
+                break;
+            }
+            entity.isMoving = true;
+            if (remainingDist > 0) {
+                entity.x += entity.direction.x * remainingDist;
+                entity.y += entity.direction.y * remainingDist;
+                movedAwayFromCenter = true;
+                remainingDist = 0;
+            }
+            break;
         }
 
         if (entity.direction.x === 0 && entity.direction.y === 0) {

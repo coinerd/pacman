@@ -13,11 +13,13 @@ import {
     ghostSpeedMultipliers,
     ghostColors,
     ghostNames,
-    animationConfig
+    animationConfig,
+    scatterTargets
 } from '../../config/gameConfig.js';
 import { moveEntityOnGrid } from '../../utils/movement/GridMovement.js';
 import { getCenterPixel, getValidDirections, getDistance, isWalkableTile } from '../../utils/MazeLayout.js';
 import { getOpposite } from '../../config/gameConfig.js';
+import { isAtTileCenter } from '../../utils/TileMath.js';
 
 export class GhostState extends ModelEntity {
     /**
@@ -110,6 +112,11 @@ export class GhostState extends ModelEntity {
      */
     moveGhost(deltaSeconds, maze, pacmanState) {
         const events = [];
+
+        // AI: Choose direction at tile center
+        if (isAtTileCenter(this.x, this.y, this.gridX, this.gridY)) {
+            this.updateAI(maze, pacmanState);
+        }
 
         this.isMoving = this.direction !== directions.NONE;
 
@@ -239,6 +246,121 @@ export class GhostState extends ModelEntity {
     }
 
     /**
+     * Update AI - choose target and direction
+     * @param {Array<Array<number>>} maze - Maze grid
+     * @param {Object} pacmanState - Pacman state for targeting
+     */
+    updateAI(maze, pacmanState) {
+        // Update target based on mode and ghost type
+        this.updateTarget(pacmanState);
+
+        // Choose direction toward target
+        this.chooseDirectionToTarget(maze, this.targetX, this.targetY);
+    }
+
+    /**
+     * Update target based on ghost type and mode
+     * @param {Object} pacmanState - Pacman state for targeting
+     */
+    updateTarget(pacmanState) {
+        if (this.isEaten) {
+            this.targetX = 13; // Ghost house entrance
+            this.targetY = 14;
+            return;
+        }
+
+        if (this.isFrightened) {
+            // Target is random when frightened - direction chosen randomly in chooseDirectionToTarget
+            return;
+        }
+
+        switch (this.ghostType) {
+        case 'blinky':
+            this.updateBlinkyTarget(pacmanState);
+            break;
+        case 'pinky':
+            this.updatePinkyTarget(pacmanState);
+            break;
+        case 'inky':
+            this.updateInkyTarget(pacmanState);
+            break;
+        case 'clyde':
+            this.updateClydeTarget(pacmanState);
+            break;
+        }
+    }
+
+    /**
+     * Update Blinky's target
+     * @param {Object} pacmanState - Pacman state
+     */
+    updateBlinkyTarget(pacmanState) {
+        if (this.mode === ghostModes.SCATTER) {
+            this.targetX = scatterTargets.blinky.x;
+            this.targetY = scatterTargets.blinky.y;
+        } else if (pacmanState) {
+            this.targetX = pacmanState.gridX;
+            this.targetY = pacmanState.gridY;
+        }
+    }
+
+    /**
+     * Update Pinky's target (4 tiles ahead of Pacman)
+     * @param {Object} pacmanState - Pacman state
+     */
+    updatePinkyTarget(pacmanState) {
+        if (this.mode === ghostModes.SCATTER) {
+            this.targetX = scatterTargets.pinky.x;
+            this.targetY = scatterTargets.pinky.y;
+        } else if (pacmanState) {
+            // Pinky targets 4 tiles ahead of Pacman
+            this.targetX = pacmanState.gridX + (pacmanState.direction.x * 4);
+            this.targetY = pacmanState.gridY + (pacmanState.direction.y * 4);
+
+            // Replicate original arcade bug: Up also moves target left
+            if (pacmanState.direction.y === -1) {
+                this.targetX -= 4;
+            }
+        }
+    }
+
+    /**
+     * Update Inky's target (vector from Blinky through 2 tiles ahead of Pacman)
+     * @param {Object} pacmanState - Pacman state
+     */
+    updateInkyTarget(pacmanState) {
+        if (this.mode === ghostModes.SCATTER) {
+            this.targetX = scatterTargets.inky.x;
+            this.targetY = scatterTargets.inky.y;
+        } else if (pacmanState) {
+            // Simplified: target 2 tiles ahead of Pacman
+            this.targetX = pacmanState.gridX + (pacmanState.direction.x * 2);
+            this.targetY = pacmanState.gridY + (pacmanState.direction.y * 2);
+        }
+    }
+
+    /**
+     * Update Clyde's target (chase unless too close, then scatter)
+     * @param {Object} pacmanState - Pacman state
+     */
+    updateClydeTarget(pacmanState) {
+        if (this.mode === ghostModes.SCATTER) {
+            this.targetX = scatterTargets.clyde.x;
+            this.targetY = scatterTargets.clyde.y;
+        } else if (pacmanState) {
+            const dist = getDistance(this.gridX, this.gridY, pacmanState.gridX, pacmanState.gridY);
+            if (dist > 8) {
+                this.targetX = pacmanState.gridX;
+                this.targetY = pacmanState.gridY;
+            } else {
+                // Return to scatter corner if too close
+                this.targetX = scatterTargets.clyde.x;
+                this.targetY = scatterTargets.clyde.y;
+            }
+        }
+    }
+
+    /**
      * Choose direction to reach target
      * @param {Array<Array<number>>} maze - Maze grid
      * @param {number} targetX - Target grid X
@@ -251,24 +373,46 @@ export class GhostState extends ModelEntity {
             return;
         }
 
-        let bestDir = validDirs[0];
-        let bestDist = Infinity;
-
-        for (const dir of validDirs) {
-            const newX = this.gridX + dir.x;
-            const newY = this.gridY + dir.y;
-            const dist = getDistance(newX, newY, targetX, targetY);
-
-            if (dist < bestDist) {
-                bestDist = dist;
-                bestDir = dir;
-            }
+        // Filter out reverse direction (ghosts can't reverse)
+        let filteredDirs = validDirs;
+        if (this.direction !== directions.NONE) {
+            const opposite = getOpposite(this.direction);
+            filteredDirs = validDirs.filter(d => !(d.x === opposite.x && d.y === opposite.y));
         }
 
-        if (this.direction === directions.NONE) {
-            this.directionBuffer.apply(bestDir);
+        if (filteredDirs.length === 0) {
+            filteredDirs = validDirs;
+        }
+
+        let chosenDir;
+
+        if (this.isFrightened) {
+            // Random direction when frightened
+            const randomIndex = Math.floor(Math.random() * filteredDirs.length);
+            chosenDir = filteredDirs[randomIndex];
         } else {
-            this.setDirection(bestDir);
+            // Choose direction that minimizes distance to target
+            let bestDir = filteredDirs[0];
+            let bestDist = Infinity;
+
+            for (const dir of filteredDirs) {
+                const newX = this.gridX + dir.x;
+                const newY = this.gridY + dir.y;
+                const dist = getDistance(newX, newY, targetX, targetY);
+
+                if (dist < bestDist) {
+                    bestDist = dist;
+                    bestDir = dir;
+                }
+            }
+            chosenDir = bestDir;
+        }
+
+        // Apply direction immediately if not moving, otherwise queue it
+        if (this.direction === directions.NONE) {
+            this.direction = chosenDir; // Apply immediately
+        } else {
+            this.setDirection(chosenDir); // Queue for later
         }
     }
 

@@ -1,7 +1,7 @@
 // @ts-check
 import { test, expect } from '@playwright/test';
 
-const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:5173';
+const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000';
 const gameURL = `${baseURL}/?e2e`;
 
 test('Pacman moves when pressing arrow keys', async ({ page }) => {

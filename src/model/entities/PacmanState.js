@@ -111,9 +111,13 @@ export class PacmanState extends ModelEntity {
             this.isMoving = true;
         } else if (this.direction !== directions.NONE) {
             // Check if current direction is still valid
-            if (!this.canMoveInDirection(this.direction, maze)) {
+            const canContinue = this.canMoveInDirection(this.direction, maze);
+            if (!canContinue) {
                 this.direction = directions.NONE;
                 this.isMoving = false;
+            } else {
+                // Can continue in current direction - keep moving!
+                this.isMoving = true;
             }
         }
     }

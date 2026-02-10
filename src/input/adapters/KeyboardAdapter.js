@@ -44,7 +44,7 @@ export class KeyboardAdapter extends InputAdapter {
             return;
         }
 
-        // Setup directional keys
+        // Setup directional keys via Phaser
         if (this.options.useArrowKeys) {
             this.cursors = this.phaserInput.keyboard.createCursorKeys();
         }
@@ -55,6 +55,48 @@ export class KeyboardAdapter extends InputAdapter {
 
         // Setup action keys
         this.setupActionKeys();
+
+        // Also setup native keyboard listeners as fallback
+        this.setupNativeKeyboardListeners();
+    }
+
+    /**
+     * Setup native browser keyboard listeners (fallback)
+     * @private
+     */
+    setupNativeKeyboardListeners() {
+        this.keyState = {
+            ArrowLeft: false,
+            ArrowRight: false,
+            ArrowUp: false,
+            ArrowDown: false,
+            KeyA: false,
+            KeyD: false,
+            KeyW: false,
+            KeyS: false
+        };
+
+        this.nativeKeyDownHandler = (event) => {
+            if (Object.prototype.hasOwnProperty.call(this.keyState, event.code)) {
+                this.keyState[event.code] = true;
+            }
+            // Also handle action keys
+            if (event.code === 'KeyP') {
+                this.emitInput({ type: INPUT_TYPES.ACTION, value: INPUT_ACTIONS.PAUSE });
+            }
+            if (event.code === 'Escape') {
+                this.emitInput({ type: INPUT_TYPES.ACTION, value: INPUT_ACTIONS.RETURN_TO_MENU });
+            }
+        };
+
+        this.nativeKeyUpHandler = (event) => {
+            if (Object.prototype.hasOwnProperty.call(this.keyState, event.code)) {
+                this.keyState[event.code] = false;
+            }
+        };
+
+        window.addEventListener('keydown', this.nativeKeyDownHandler);
+        window.addEventListener('keyup', this.nativeKeyUpHandler);
     }
 
     /**
@@ -132,20 +174,36 @@ export class KeyboardAdapter extends InputAdapter {
      * @returns {Object|null} Direction object or null
      */
     getDirectionFromKeys() {
-        // Check arrow keys
-        if (this.cursors) {
-            if (this.cursors.left.isDown) {return directions.LEFT;}
-            if (this.cursors.right.isDown) {return directions.RIGHT;}
-            if (this.cursors.up.isDown) {return directions.UP;}
-            if (this.cursors.down.isDown) {return directions.DOWN;}
+        // Check native key state first (more reliable)
+        if (this.keyState) {
+            if (this.keyState.ArrowLeft || this.keyState.KeyA) {
+                return directions.LEFT;
+            }
+            if (this.keyState.ArrowRight || this.keyState.KeyD) {
+                return directions.RIGHT;
+            }
+            if (this.keyState.ArrowUp || this.keyState.KeyW) {
+                return directions.UP;
+            }
+            if (this.keyState.ArrowDown || this.keyState.KeyS) {
+                return directions.DOWN;
+            }
         }
 
-        // Check WASD keys
+        // Fall back to Phaser cursors
+        if (this.cursors) {
+            if (this.cursors.left?.isDown) {return directions.LEFT;}
+            if (this.cursors.right?.isDown) {return directions.RIGHT;}
+            if (this.cursors.up?.isDown) {return directions.UP;}
+            if (this.cursors.down?.isDown) {return directions.DOWN;}
+        }
+
+        // Fall back to Phaser WASD
         if (this.wasd) {
-            if (this.wasd.A.isDown) {return directions.LEFT;}
-            if (this.wasd.D.isDown) {return directions.RIGHT;}
-            if (this.wasd.W.isDown) {return directions.UP;}
-            if (this.wasd.S.isDown) {return directions.DOWN;}
+            if (this.wasd.A?.isDown) {return directions.LEFT;}
+            if (this.wasd.D?.isDown) {return directions.RIGHT;}
+            if (this.wasd.W?.isDown) {return directions.UP;}
+            if (this.wasd.S?.isDown) {return directions.DOWN;}
         }
 
         return null;
@@ -154,12 +212,14 @@ export class KeyboardAdapter extends InputAdapter {
     /**
      * Update method - polls for directional input
      * @param {number} deltaTime - Time since last frame in ms
+     * @returns {Object|null} Input object or null
      */
     update(deltaTime) {
         const input = this.getCurrentInput();
         if (input) {
             this.emitInput(input);
         }
+        return input;
     }
 
     /**
@@ -174,6 +234,16 @@ export class KeyboardAdapter extends InputAdapter {
         this.keyListeners = [];
         this.cursors = null;
         this.wasd = null;
+
+        // Clean up native listeners
+        if (this.nativeKeyDownHandler) {
+            window.removeEventListener('keydown', this.nativeKeyDownHandler);
+        }
+        if (this.nativeKeyUpHandler) {
+            window.removeEventListener('keyup', this.nativeKeyUpHandler);
+        }
+        this.keyState = null;
+
         super.destroy();
     }
 }
