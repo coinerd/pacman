@@ -2,11 +2,13 @@
  * CollisionAdapter
  * Bridges the decoupled CollisionEngine with the existing GameModel.
  * Maintains backward compatibility while using the new pure collision system.
+ * Includes tunnel-aware collision detection for warp tunnel scenarios.
  */
 
 import { CollisionEngine } from '../../collision/CollisionEngine.js';
 import { gameConfig, scoreValues } from '../../config/gameConfig.js';
 import { PELLET_TYPES } from '../../utils/MazeLayout.js';
+import { isWarping } from '../../utils/WarpTunnel.js';
 
 /**
  * Adapter that wraps the decoupled CollisionEngine for use with existing GameModel
@@ -164,18 +166,21 @@ export class CollisionAdapter {
             return null;
         }
 
-        // Use decoupled collision engine
-        const pacmanEntity = {
-            id: pacman.id,
-            x: pacman.x,
-            y: pacman.y,
-            prevX: pacman.prevX ?? pacman.x,
-            prevY: pacman.prevY ?? pacman.y
-        };
+        // Check for tunnel collisions separately (warp tunnel edge case)
+        const tunnelCollision = this.checkTunnelCollisions(pacman, ghostEntities);
+        if (tunnelCollision) {
+            this.stats.checksPerformed++;
+            this.stats.collisionsDetected++;
+            return this.handleGhostCollision(tunnelCollision.ghost);
+        }
+
+        // Use decoupled collision engine with adjusted positions for tunnel warping
+        const adjustedPacman = this.adjustEntityForTunnel(pacman);
+        const adjustedGhosts = ghostEntities.map(g => this.adjustEntityForTunnel(g));
 
         const collisions = this.collisionEngine.getAllEntityCollisions(
-            pacmanEntity,
-            ghostEntities,
+            adjustedPacman,
+            adjustedGhosts,
             { collisionRadius: gameConfig.tileSize * 0.6 }
         );
 
@@ -262,6 +267,86 @@ export class CollisionAdapter {
             score: score,
             fruitType: fruit.getFruitType().name
         };
+    }
+
+    /**
+     * Check for collisions in the warp tunnel
+     * Handles edge case where entities are on opposite sides due to tunnel wrap
+     * @param {Object} pacman - Pacman entity
+     * @param {Array<Object>} ghostEntities - List of ghost entities
+     * @returns {Object|null} - Ghost that collided or null
+     */
+    checkTunnelCollisions(pacman, ghostEntities) {
+        // Only check if pacman is in tunnel area
+        const pacmanInTunnel = isWarping(pacman.x, pacman.y);
+        if (!pacmanInTunnel) {
+            return null;
+        }
+
+        const tileSize = gameConfig.tileSize;
+        const collisionDist = tileSize * 0.6; // Collision radius
+        const mazeWidthPx = 28 * tileSize; // 28 tiles wide
+
+        for (const ghost of ghostEntities) {
+            // Skip eaten ghosts
+            if (ghost.ghost && ghost.ghost.isEaten) {
+                continue;
+            }
+
+            const ghostInTunnel = isWarping(ghost.x, ghost.y);
+            if (!ghostInTunnel) {
+                continue;
+            }
+
+            // Calculate tunnel-aware distance
+            // If entities are on opposite sides, they might be close through the wrap
+            let dx = Math.abs(pacman.x - ghost.x);
+            let dy = Math.abs(pacman.y - ghost.y);
+
+            // Handle wrap-around: if distance is large, check if they're on opposite edges
+            if (dx > mazeWidthPx / 2) {
+                dx = mazeWidthPx - dx;
+            }
+
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance <= collisionDist) {
+                return ghost;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Adjust entity position for tunnel warping in collision detection
+     * This prevents false positives when entities wrap around
+     * @param {Object} entity - Entity with x, y, prevX, prevY
+     * @returns {Object} - Adjusted entity for collision detection
+     */
+    adjustEntityForTunnel(entity) {
+        const mazeWidthPx = 28 * gameConfig.tileSize;
+        const result = {
+            id: entity.id,
+            x: entity.x,
+            y: entity.y,
+            prevX: entity.prevX ?? entity.x,
+            prevY: entity.prevY ?? entity.y,
+            ghost: entity.ghost // Preserve ghost reference for collision handling
+        };
+
+        // If entity wrapped from right to left (x decreased significantly)
+        if (entity.prevX && entity.x < entity.prevX - mazeWidthPx / 2) {
+            // Entity wrapped right to left, adjust prevX to be on the "other side"
+            result.prevX = entity.prevX - mazeWidthPx;
+        }
+        // If entity wrapped from left to right (x increased significantly)
+        else if (entity.prevX && entity.x > entity.prevX + mazeWidthPx / 2) {
+            // Entity wrapped left to right, adjust prevX to be on the "other side"
+            result.prevX = entity.prevX + mazeWidthPx;
+        }
+
+        return result;
     }
 
     /**

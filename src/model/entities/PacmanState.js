@@ -41,9 +41,10 @@ export class PacmanState extends ModelEntity {
      * @param {number} deltaSeconds - Time since last frame
      * @param {Array<Array<number>>} maze - Maze grid
      * @param {Object} inputDirection - Desired direction from input (optional)
+     * @param {boolean} useDecoupledSystems - Whether using decoupled movement
      * @returns {Array<Object>} - Events generated
      */
-    update(deltaSeconds, maze, inputDirection = null) {
+    update(deltaSeconds, maze, inputDirection = null, useDecoupledSystems = false) {
         const events = [];
 
         if (this.isDying) {
@@ -51,47 +52,73 @@ export class PacmanState extends ModelEntity {
             return events;
         }
 
-        // Update mouth animation
+        // Update mouth animation (always needed)
         this.updateMouthAnimation(deltaSeconds);
 
-        // Apply input direction if provided
-        if (inputDirection && inputDirection !== directions.NONE) {
-            this.setDirection(inputDirection);
-        }
+        if (useDecoupledSystems) {
+            // In decoupled mode, MovementAdapter handles all movement
+            // PacmanState only handles animations and state
+            // Direction changes are applied via directionBuffer by MovementAdapter
 
-        // Update previous position before movement
-        this.updatePreviousPosition();
+            // Apply input direction to buffer if provided
+            if (inputDirection && inputDirection !== directions.NONE) {
+                this.setDirection(inputDirection);
+            }
 
-        // Check if at tile center for direction changes
-        const isAtCenter = isAtTileCenter(this.x, this.y, this.gridX, this.gridY);
+            // Update moving state based on current direction
+            this.isMoving = this.direction !== directions.NONE;
 
-        if (isAtCenter) {
-            this.makeDecisionAtIntersection(maze);
-        }
-
-        // Perform movement
-        if (this.direction !== directions.NONE) {
-            const moveResult = moveEntityOnGrid(this, maze, deltaSeconds);
-
-            // Process movement events
-            for (const event of moveResult.events) {
+            // Handle tunnel wrapping (if not handled by MovementAdapter)
+            if (this.handleTunnelWrap()) {
                 events.push({
-                    ...event,
+                    type: 'tunnel_wrap',
                     entityId: this.id,
-                    entityType: 'pacman'
+                    entityType: 'pacman',
+                    gridX: this.gridX,
+                    gridY: this.gridY
                 });
             }
-        }
+        } else {
+            // Legacy mode - full update with movement
+            // Apply input direction if provided
+            if (inputDirection && inputDirection !== directions.NONE) {
+                this.setDirection(inputDirection);
+            }
 
-        // Handle tunnel wrapping
-        if (this.handleTunnelWrap()) {
-            events.push({
-                type: 'tunnel_wrap',
-                entityId: this.id,
-                entityType: 'pacman',
-                gridX: this.gridX,
-                gridY: this.gridY
-            });
+            // Update previous position before movement
+            this.updatePreviousPosition();
+
+            // Check if at tile center for direction changes
+            const isAtCenter = isAtTileCenter(this.x, this.y, this.gridX, this.gridY);
+
+            if (isAtCenter) {
+                this.makeDecisionAtIntersection(maze);
+            }
+
+            // Perform movement using legacy system
+            if (this.direction !== directions.NONE) {
+                const moveResult = moveEntityOnGrid(this, maze, deltaSeconds);
+
+                // Process movement events
+                for (const event of moveResult.events) {
+                    events.push({
+                        ...event,
+                        entityId: this.id,
+                        entityType: 'pacman'
+                    });
+                }
+            }
+
+            // Handle tunnel wrapping
+            if (this.handleTunnelWrap()) {
+                events.push({
+                    type: 'tunnel_wrap',
+                    entityId: this.id,
+                    entityType: 'pacman',
+                    gridX: this.gridX,
+                    gridY: this.gridY
+                });
+            }
         }
 
         return events;

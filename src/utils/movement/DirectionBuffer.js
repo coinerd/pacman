@@ -95,4 +95,11 @@ export class DirectionBuffer {
         this.current = directions.NONE;
         this.buffered = directions.NONE;
     }
+
+    /**
+     * Clear the buffered direction without changing current direction
+     */
+    clear() {
+        this.buffered = directions.NONE;
+    }
 }

@@ -5,3 +5,4 @@
 
 export { MovementAdapter, createMovementAdapter } from './MovementAdapter.js';
 export { CollisionAdapter, createCollisionAdapter } from './CollisionAdapter.js';
+export { GhostAIAdapter } from './GhostAIAdapter.js';

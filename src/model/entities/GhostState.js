@@ -83,21 +83,49 @@ export class GhostState extends ModelEntity {
      * @param {number} deltaSeconds - Time since last frame
      * @param {Array<Array<number>>} maze - Maze grid
      * @param {Object} pacmanState - Pacman state for AI targeting
+     * @param {boolean} useDecoupledSystems - Whether using decoupled movement
      * @returns {Array<Object>} - Events generated
      */
-    update(deltaSeconds, maze, pacmanState = null) {
+    update(deltaSeconds, maze, pacmanState = null, useDecoupledSystems = false) {
         const events = [];
 
-        // Update previous position
-        this.updatePreviousPosition();
+        if (useDecoupledSystems) {
+            // In decoupled mode:
+            // - GhostAIAdapter handles AI and direction setting
+            // - MovementAdapter handles movement
+            // - GhostState only handles state updates (timers, flags)
 
-        if (this.isEaten) {
-            const eatenEvents = this.updateEaten(deltaSeconds, maze);
-            events.push(...eatenEvents);
+            if (this.isEaten) {
+                // Eaten state still needs special handling for returning to house
+                // This is handled by GhostAIAdapter.updateEatenGhost()
+                // Just update timers here
+                if (this.inGhostHouse) {
+                    this.houseTimer -= deltaSeconds;
+                    if (this.houseTimer <= 0) {
+                        this.reset();
+                    }
+                }
+            }
+
+            // Update frightened timer
+            if (this.isFrightened) {
+                this.updateFrightened(deltaSeconds);
+            }
+
+            this.isMoving = this.direction !== directions.NONE;
         } else {
-            this.updateFrightened(deltaSeconds);
-            const moveEvents = this.moveGhost(deltaSeconds, maze, pacmanState);
-            events.push(...moveEvents);
+            // Legacy mode - full update
+            // Update previous position
+            this.updatePreviousPosition();
+
+            if (this.isEaten) {
+                const eatenEvents = this.updateEaten(deltaSeconds, maze);
+                events.push(...eatenEvents);
+            } else {
+                this.updateFrightened(deltaSeconds);
+                const moveEvents = this.moveGhost(deltaSeconds, maze, pacmanState);
+                events.push(...moveEvents);
+            }
         }
 
         return events;

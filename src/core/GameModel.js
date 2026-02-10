@@ -15,7 +15,7 @@ import { PacmanState } from '../model/entities/PacmanState.js';
 import { GhostState } from '../model/entities/GhostState.js';
 import { FruitState } from '../model/entities/FruitState.js';
 import { ModelCollisionSystem } from '../model/systems/ModelCollisionSystem.js';
-import { MovementAdapter, CollisionAdapter } from '../model/adapters/index.js';
+import { MovementAdapter, CollisionAdapter, GhostAIAdapter } from '../model/adapters/index.js';
 import {
     gameConfig,
     ghostStartPositions,
@@ -101,11 +101,13 @@ export default class GameModel {
             // Use new decoupled systems
             this.movementAdapter = new MovementAdapter(this);
             this.collisionAdapter = new CollisionAdapter(this);
+            this.ghostAIAdapter = new GhostAIAdapter(this);
             this.collisionSystem = null; // Not used in decoupled mode
         } else {
             // Use legacy systems
             this.movementAdapter = null;
             this.collisionAdapter = null;
+            this.ghostAIAdapter = null;
             this.collisionSystem = new ModelCollisionSystem(this);
         }
 
@@ -222,18 +224,38 @@ export default class GameModel {
 
         if (this.useDecoupledSystems) {
             // Use decoupled movement and collision systems
-            // Update Pacman
-            const pacmanMoveEvents = this.movementAdapter.updateEntity(
+            // Update Pacman movement
+            const pacmanMoveEvents = this.movementAdapter.updatePacman(
                 this.pacman,
                 deltaSeconds,
                 this.desiredDirection
             );
             events.push(...pacmanMoveEvents);
 
-            // Update ghosts
+            // Update Pacman state (animations, etc.)
+            const pacmanStateEvents = this.pacman.update(
+                deltaSeconds,
+                this.maze,
+                null, // Input already handled by adapter
+                true  // useDecoupledSystems
+            );
+            events.push(...pacmanStateEvents);
+
+            // Update Ghost AI (sets directions for all ghosts)
+            this.ghostAIAdapter.update(deltaSeconds);
+
+            // Update ghosts movement and state
             for (const ghost of this.ghosts) {
-                const ghostMoveEvents = this.movementAdapter.updateEntity(ghost, deltaSeconds);
+                const ghostMoveEvents = this.movementAdapter.updateGhost(ghost, deltaSeconds);
                 events.push(...ghostMoveEvents);
+
+                const ghostStateEvents = ghost.update(
+                    deltaSeconds,
+                    this.maze,
+                    this.pacman,
+                    true  // useDecoupledSystems
+                );
+                events.push(...ghostStateEvents);
             }
 
             // Update fruit
@@ -258,12 +280,12 @@ export default class GameModel {
         } else {
             // Use legacy systems
             // Update Pacman
-            const pacmanEvents = this.pacman.update(deltaSeconds, this.maze, this.desiredDirection);
+            const pacmanEvents = this.pacman.update(deltaSeconds, this.maze, this.desiredDirection, false);
             events.push(...pacmanEvents);
 
             // Update ghosts
             for (const ghost of this.ghosts) {
-                const ghostEvents = ghost.update(deltaSeconds, this.maze, this.pacman);
+                const ghostEvents = ghost.update(deltaSeconds, this.maze, this.pacman, false);
                 events.push(...ghostEvents);
             }
 
@@ -420,6 +442,7 @@ export default class GameModel {
         if (this.useDecoupledSystems) {
             this.movementAdapter.reset();
             this.collisionAdapter.reset();
+            this.ghostAIAdapter.reset();
         } else {
             this.collisionSystem.reset();
         }
@@ -449,6 +472,7 @@ export default class GameModel {
             this.movementAdapter.updateMaze(this.maze);
             this.movementAdapter.reset();
             this.collisionAdapter.reset();
+            this.ghostAIAdapter.reset();
         } else {
             this.collisionSystem.reset();
         }

@@ -32,7 +32,14 @@ function createMockEntity(x, y, gridX, gridY) {
         speed: 100,
         isMoving: false,
         prevX: x,
-        prevY: y
+        prevY: y,
+        nextDirection: null,
+        directionBuffer: {
+            clear: jest.fn()
+        },
+        setDirection: jest.fn(function(dir) {
+            this.nextDirection = dir;
+        })
     };
 }
 
