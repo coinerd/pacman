@@ -77,8 +77,13 @@ export class GridMovementStrategy extends MovementInterface {
             return this.createResult(MOVEMENT_RESULTS.STOPPED, entity, 0, events);
         }
 
-        // Check if we can move in current direction
-        if (!this.canMove(entity, context, currentDirection)) {
+        // Check if we're at tile center and blocked
+        // If not at center, we allow movement (handle in performMovement)
+        const center = mazeQuery.getTileCenter(entity.gridX, entity.gridY);
+        const distToCenter = Math.hypot(center.x - entity.x, center.y - entity.y);
+        const atCenter = distToCenter <= this.eps;
+
+        if (atCenter && !this.canMove(entity, context, currentDirection)) {
             return this.createResult(MOVEMENT_RESULTS.BLOCKED, entity, 0, events);
         }
 
@@ -203,6 +208,44 @@ export class GridMovementStrategy extends MovementInterface {
             const movingTowardCenter = direction.x !== 0
                 ? Math.sign(center.x - x) === direction.x
                 : Math.sign(center.y - y) === direction.y;
+
+            if (!atCenter && !movingTowardCenter) {
+                // Moving away from center - check for wall ahead
+                const blockedAhead = !this.canMoveInDirection(
+                    { x, y, gridX, gridY },
+                    mazeQuery,
+                    direction
+                );
+
+                if (blockedAhead) {
+                    // Calculate boundary position (edge of current tile)
+                    const boundary = {
+                        x: center.x + direction.x * (this.tileSize / 2),
+                        y: center.y + direction.y * (this.tileSize / 2)
+                    };
+                    const distToBoundary = direction.x !== 0
+                        ? Math.abs(boundary.x - x)
+                        : Math.abs(boundary.y - y);
+                    const moveDist = Math.min(distToBoundary, remainingDist);
+
+                    x += direction.x * moveDist;
+                    y += direction.y * moveDist;
+                    remainingDist -= moveDist;
+                    totalDistanceMoved += moveDist;
+
+                    if (distToBoundary <= moveDist + this.eps) {
+                        // Reached the wall
+                        x = boundary.x;
+                        y = boundary.y;
+                        events.push({
+                            type: MOVEMENT_EVENTS.WALL_HIT,
+                            tileX: gridX + direction.x,
+                            tileY: gridY + direction.y
+                        });
+                    }
+                    break;
+                }
+            }
 
             // At center with valid direction - check for warp or continue
             if (atCenter) {

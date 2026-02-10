@@ -86,12 +86,28 @@ export class GhostAIAdapter {
             ghost.mode = this.currentMode;
         }
 
-        // AI only chooses direction at tile center
+        // AI chooses direction at tile center OR when blocked
+        // When blocked, ghost is at tile boundary (10px from center of current tile,
+        // which is the center of the tile we're trying to enter)
         const center = this.getTileCenter(ghost.gridX, ghost.gridY);
         const distToCenter = Math.hypot(center.x - ghost.x, center.y - ghost.y);
+        const EPSILON = 3;
+        const BLOCKED_EPSILON = 12; // Allow direction choice when blocked near boundary
 
-        if (distToCenter > 3) { // epsilon tolerance
+        // Check if we're close enough to center to make a decision
+        // OR if we're blocked (not moving but have a direction)
+        const isAtDecisionPoint = distToCenter <= EPSILON;
+        const isBlocked = !ghost.isMoving && ghost.direction !== directions.NONE;
+
+        if (!isAtDecisionPoint && !isBlocked) {
             return;
+        }
+
+        // When blocked at boundary, snap to center of the tile we're in
+        // This ensures the AI makes decision from a valid grid position
+        if (isBlocked && distToCenter <= BLOCKED_EPSILON) {
+            ghost.x = center.x;
+            ghost.y = center.y;
         }
 
         // Choose direction based on AI
