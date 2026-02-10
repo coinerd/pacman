@@ -1,3 +1,11 @@
+/**
+ * @deprecated This class is deprecated. Use the decoupled collision system instead:
+ * - CollisionEngine in src/collision/CollisionEngine.js
+ * - CollisionAdapter in src/model/adapters/CollisionAdapter.js
+ *
+ * This legacy Phaser-dependent class will be removed in a future release.
+ */
+
 import { collisionConfig, scoreValues } from '../config/gameConfig.js';
 import {
     pixelToGrid,
@@ -9,6 +17,14 @@ import {
 import { capsuleCollision } from '../utils/CollisionUtils.js';
 import { DebugLogger } from '../utils/DebugLogger.js';
 
+// Deprecation warning (only shown once)
+let deprecationWarningShown = false;
+function showDeprecationWarning() {
+    if (!deprecationWarningShown && typeof console !== 'undefined') {
+        console.warn('[DEPRECATED] CollisionSystem is deprecated. Use CollisionEngine with CollisionAdapter instead.');
+        deprecationWarningShown = true;
+    }
+}
 
 export class CollisionSystem {
     /**
@@ -20,6 +36,7 @@ export class CollisionSystem {
      * @param {Phaser.Scene} scene - The scene this collision system belongs to
      */
     constructor(scene) {
+        showDeprecationWarning();
         this.scene = scene;
         this.pacman = null;
         this.ghosts = [];

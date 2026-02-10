@@ -3,6 +3,12 @@
  * Pure collision detection using model entity states.
  * NO Phaser dependencies.
  *
+ * @deprecated This class is deprecated. Use the decoupled collision system instead:
+ * - CollisionEngine in src/collision/CollisionEngine.js
+ * - CollisionAdapter in src/model/adapters/CollisionAdapter.js
+ *
+ * This legacy class will be removed in a future release.
+ *
  * Phase 3 Update: Collision system now only DETECTS collisions.
  * Score and state updates are handled by GameModel.applyCollisionEffect()
  */
@@ -12,11 +18,21 @@ import { PELLET_TYPES } from '../../utils/MazeLayout.js';
 import { pixelToGrid, getDistance } from '../../utils/MazeLayout.js';
 import { capsuleCollision } from '../../utils/CollisionUtils.js';
 
+// Deprecation warning (only shown once)
+let deprecationWarningShown = false;
+function showDeprecationWarning() {
+    if (!deprecationWarningShown && typeof console !== 'undefined') {
+        console.warn('[DEPRECATED] ModelCollisionSystem is deprecated. Use CollisionEngine with CollisionAdapter instead.');
+        deprecationWarningShown = true;
+    }
+}
+
 export class ModelCollisionSystem {
     /**
      * @param {GameModel} gameState - Game model reference
      */
     constructor(gameState) {
+        showDeprecationWarning();
         this.gameState = gameState;
         this.collisionRadius = gameConfig.tileSize * 0.6;
         this.lastPelletGrid = { x: null, y: null };

@@ -1,9 +1,27 @@
+/**
+ * @deprecated This file is deprecated. Use the decoupled movement system instead:
+ * - MovementEngine in src/movement/MovementEngine.js
+ * - GridMovementStrategy in src/movement/strategies/GridMovementStrategy.js
+ * - MovementAdapter in src/model/adapters/MovementAdapter.js
+ *
+ * This legacy file will be removed in a future release.
+ */
+
 import { gameConfig, directions } from '../../config/gameConfig.js';
 import { tileCenter, EPS } from '../TileMath.js';
 import { isWalkableTile } from '../MazeLayout.js';
 import { PORTAL_TILES } from '../WarpTunnel.js';
 
 const MAX_TILES_PER_FRAME = 3;
+
+// Deprecation warning (only shown once)
+let deprecationWarningShown = false;
+function showDeprecationWarning() {
+    if (!deprecationWarningShown && typeof console !== 'undefined') {
+        console.warn('[DEPRECATED] GridMovement.js is deprecated. Use MovementEngine with GridMovementStrategy instead.');
+        deprecationWarningShown = true;
+    }
+}
 
 export function isInBounds(tileX, tileY, maze) {
     return tileY >= 0 && tileY < maze.length &&
@@ -37,6 +55,7 @@ export function canMove(maze, tileX, tileY, direction) {
  * @returns {{entity: Object, events: Array}} Movement result.
  */
 export function moveEntityOnGrid(entity, maze, deltaSeconds) {
+    showDeprecationWarning();
     const events = [];
 
     if (!entity) {

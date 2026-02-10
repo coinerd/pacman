@@ -117,11 +117,11 @@ export class MovementEngine {
 
         const startTime = performance.now();
         const result = strategy.move(entity, context, deltaSeconds);
-        
+
         // Update statistics
         this.stats.totalMoves++;
         this.stats.totalTime += performance.now() - startTime;
-        
+
         return result;
     }
 

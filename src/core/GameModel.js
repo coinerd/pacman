@@ -41,8 +41,8 @@ export default class GameModel {
         this.level = config.level || 1;
         this.levelConfig = null;
 
-        // Feature flag for decoupled systems (default false for backward compatibility)
-        this.useDecoupledSystems = config.useDecoupledSystems ?? false;
+        // Feature flag for decoupled systems (default true - decoupled is now standard)
+        this.useDecoupledSystems = config.useDecoupledSystems ?? true;
 
         // World state
         const mazeData = config.maze && config.pelletGrid

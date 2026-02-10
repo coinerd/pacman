@@ -23,8 +23,11 @@ export class GameStateController {
      * @param {Array<Array<number>>} config.pelletGrid - Optional pellet grid override
      */
     constructor(config = {}) {
-        // Create unified GameModel
-        this.model = new GameModel(config);
+        // Create unified GameModel with legacy systems for backward compatibility
+        this.model = new GameModel({
+            ...config,
+            useDecoupledSystems: false
+        });
 
         // For backward compatibility: state should reference the model itself
         // since GameModel now has all the properties GameState had
