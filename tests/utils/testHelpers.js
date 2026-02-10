@@ -131,38 +131,16 @@ export const createMockGhostAISystem = () => ({
  * @returns {Object} Mock Phaser scene
  */
 export const createMockScene = () => {
-    const gameState = {
+    // Phase 3: Unified GameModel has properties directly, not nested in state
+    const gameModel = createGameModel({
         score: 0,
         lives: 3,
         level: 1,
-        isPaused: false,
-        isGameOver: false,
-        isDying: false,
-        deathTimer: 0,
-        highScore: 0,
-        pelletsEaten: 0,
-        pelletsRemaining: 0,
-        totalPellets: 0,
-        ghostsEaten: 0,
-        maxComboGhosts: 0,
-        currentComboGhosts: 0,
-        levelDeaths: 0,
-        fruitsCollected: 0,
-        levelComplete: false,
-        desiredDirection: null
-    };
-
-    const gameModel = createGameModel({
-        state: {
-            score: gameState.score,
-            lives: gameState.lives,
-            level: gameState.level,
-            highScore: gameState.highScore,
-            pelletsRemaining: gameState.pelletsRemaining,
-            totalPellets: gameState.totalPellets
-        }
+        highScore: 0
     });
-    gameModel.state = gameState;
+
+    // For backward compatibility with tests that use gameState
+    const gameState = gameModel;
 
     return {
         gameState,

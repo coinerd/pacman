@@ -72,12 +72,12 @@ export class GameFlowController {
     handleWin() {
         this.gameModel.onLevelComplete();
         this.soundManager.playLevelComplete();
-        this.storageManager.saveHighScore(this.gameModel.state.score);
+        this.storageManager.saveHighScore(this.gameModel.score);
 
         this.scene.scene.start('WinScene', {
-            score: this.gameModel.state.score,
-            level: this.gameModel.state.level,
-            highScore: this.gameModel.state.highScore
+            score: this.gameModel.score,
+            level: this.gameModel.level,
+            highScore: this.gameModel.highScore
         });
     }
 
@@ -86,11 +86,11 @@ export class GameFlowController {
      */
     handleGameOver() {
         this.gameModel.setGameOver(true);
-        this.storageManager.saveHighScore(this.gameModel.state.score);
+        this.storageManager.saveHighScore(this.gameModel.score);
 
         this.scene.scene.start('GameOverScene', {
-            score: this.gameModel.state.score,
-            highScore: this.gameModel.state.highScore
+            score: this.gameModel.score,
+            highScore: this.gameModel.highScore
         });
     }
 

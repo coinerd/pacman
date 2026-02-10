@@ -23,21 +23,37 @@ export class PacmanAI {
             return;
         }
 
+        const direction = this.getDirection(pacman, maze, pelletGrid, ghosts);
+        if (direction && direction !== directions.NONE) {
+            pacman.setDirection(direction);
+        }
+    }
+
+    /**
+     * Get the best direction for Pacman (model-driven approach)
+     * @param {Object} pacman - Pacman model entity
+     * @param {Array} maze - Maze layout
+     * @param {Array} pelletGrid - Pellet grid
+     * @param {Array} ghosts - Ghost entities
+     * @returns {Object} - Direction to move
+     */
+    getDirection(pacman, maze, pelletGrid, ghosts) {
         const pacmanGridX = pacman.gridX;
         const pacmanGridY = pacman.gridY;
 
+        // Only make new decision at new grid position
         if (pacmanGridX === this.lastDecisionGridX && pacmanGridY === this.lastDecisionGridY) {
-            pacman.setDirection(this.lastDirection);
-            return;
+            return this.lastDirection;
         }
 
         const direction = this.decideDirection(pacman, maze, pelletGrid, ghosts);
         if (direction !== directions.NONE) {
-            pacman.setDirection(direction);
             this.lastDecisionGridX = pacmanGridX;
             this.lastDecisionGridY = pacmanGridY;
             this.lastDirection = direction;
         }
+
+        return direction;
     }
 
     decideDirection(pacman, maze, pelletGrid, ghosts) {

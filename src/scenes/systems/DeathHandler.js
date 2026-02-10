@@ -27,7 +27,7 @@ export class DeathHandler {
      * @returns {boolean} True if death animation complete
      */
     update(deltaSeconds) {
-        if (!this.gameModel.state.isDying) {
+        if (!this.gameModel.isDying) {
             return false;
         }
 
@@ -45,14 +45,14 @@ export class DeathHandler {
      * @returns {boolean} True if dying
      */
     isDying() {
-        return this.gameModel.state.isDying;
+        return this.gameModel.isDying;
     }
 
     /**
      * Reset death handler
      */
     reset() {
-        this.gameModel.state.deathTimer = 0;
-        this.gameModel.state.isDying = false;
+        this.gameModel.deathTimer = 0;
+        this.gameModel.isDying = false;
     }
 }

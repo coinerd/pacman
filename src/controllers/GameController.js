@@ -73,7 +73,7 @@ export class GameController {
     }
 
     handleReturnToMenu() {
-        if (!this.gameModel.state.isGameOver) {
+        if (!this.gameModel.isGameOver) {
             this.scene.cleanup();
             this.scene.scene.start('MenuScene');
         }

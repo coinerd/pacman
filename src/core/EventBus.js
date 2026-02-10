@@ -4,6 +4,7 @@
  */
 
 export const GAME_EVENTS = {
+    // Game State Events
     PELLET_EATEN: 'pellet:eaten',
     POWER_PELLET_EATEN: 'power-pellet:eaten',
     FRUIT_EATEN: 'fruit:eaten',
@@ -18,8 +19,19 @@ export const GAME_EVENTS = {
     GAME_RESET: 'game:reset',
     ACHIEVEMENT_UNLOCKED: 'achievement:unlocked',
     DIRECTION_CHANGED: 'direction:changed',
+    RESPAWN: 'game:respawn',
+
+    // Controller Action Events (Phase 6)
+    PAUSE_REQUESTED: 'controller:pause-requested',
+    RESUME_REQUESTED: 'controller:resume-requested',
+    RETURN_TO_MENU_REQUESTED: 'controller:return-to-menu-requested',
+    RESTART_LEVEL_REQUESTED: 'controller:restart-level-requested',
+
+    // Replay Events
     RECORDING_STARTED: 'recording:started',
     RECORDING_STOPPED: 'recording:stopped',
+    REPLAY_TOGGLE_REQUESTED: 'controller:replay-toggle-requested',
+    LOAD_REPLAY_REQUESTED: 'controller:load-replay-requested',
     REPLAY_INPUT: 'replay:input',
     REPLAY_FINISHED: 'replay:finished'
 };

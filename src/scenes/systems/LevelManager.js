@@ -23,11 +23,13 @@ export class LevelManager {
     applySettings() {
         const speedMultiplier = this.gameModel.getSpeedMultiplier();
 
-        for (const ghost of this.scene.ghosts) {
+        // Apply to model ghosts
+        for (const ghost of this.gameModel.ghosts) {
             if (!ghost.isEaten) {
                 ghost.setSpeedMultiplier(speedMultiplier);
             }
         }
+
         this.currentFrightenedDuration = this.gameModel.getFrightenedDuration();
     }
 

@@ -8,6 +8,174 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **MVC Phase 6 & 7 - Clean Controller & Scene Management via Events** (2026-02-09)
+    - Created `ActionRouter` for input action routing
+        - Routes input actions to handlers with game state validation
+        - `ActionContext` with `canAcceptInput()`, `canPause()`, `canResume()`
+        - Pluggable handler system for custom actions
+    - Created clean `GameController` (no scene references)
+        - Zero Phaser dependencies - pure JavaScript logic
+        - Uses `InputManager` for input subscription
+        - Routes all input through `ActionRouter`
+    - Updated `EventBus` with controller action events
+        - `PAUSE_REQUESTED`, `RESUME_REQUESTED`
+        - `RETURN_TO_MENU_REQUESTED`
+        - `RESTART_LEVEL_REQUESTED`
+        - `REPLAY_TOGGLE_REQUESTED`, `LOAD_REPLAY_REQUESTED`
+    - Updated `ModelDrivenGameView` for scene transitions
+        - `bindControllerEvents()` handles controller events
+        - Scene pause/resume via events (View concern)
+        - Menu navigation via events (View concern)
+        - Level restart via events (View concern)
+    - Updated `ModelDrivenGameScene` with clean architecture
+        - Uses `InputManager` instead of `InputController`
+        - Uses clean `GameController` (no scene reference)
+        - Auto-subscribes to input events
+    - Complete test coverage for Phases 6 & 7 (63 new tests)
+        - ActionRouter routing tests
+        - ActionContext validation tests
+        - GameController integration tests
+        - Scene transition event tests
+    - All 1,488 tests passing (63 test suites)
+
+### Added
+- **MVC Phase 5 - Abstract Input System** (2026-02-09)
+    - Created `InputAdapter` base class
+        - Abstract interface for all input sources
+        - `onInput(callback)` with unsubscribe support
+        - `emitInput(input)` for normalized event emission
+        - `enable()/disable()` for adapter state control
+        - `update(deltaTime)` for polling-based input
+        - Constants: INPUT_TYPES and INPUT_ACTIONS
+    - Created `InputManager` for multi-adapter coordination
+        - `registerAdapter(name, adapter)` - Register input sources
+        - `setActiveAdapter(name)` - Switch between sources
+        - Input history tracking for debugging
+        - Support for multiple simultaneous adapters
+    - Created `KeyboardAdapter` - Phaser keyboard wrapper
+        - Supports arrow keys and WASD
+        - Emits continuous DIRECTION inputs when keys held
+        - Emits ACTION inputs on key press (P, ESC, R, L)
+    - Created `ReplayAdapter` and `ReplayRecorder`
+        - Record and playback input sequences
+        - Playback speed control and looping
+        - JSON serialization for save/load
+    - Created `AIInputAdapter` and `ScriptedAIAdapter`
+        - Wraps existing PacmanAI for bot gameplay
+        - Scripted sequences for demos/testing
+    - Complete test coverage for Phase 5 (167 new tests)
+        - InputAdapter base class tests
+        - InputManager coordination tests
+        - KeyboardAdapter key mapping tests
+        - ReplayAdapter playback tests
+        - AIInputAdapter integration tests
+    - All 1,425 tests passing (61 test suites)
+
+### Added
+- **MVC Phase 4 - View as Pure Observer** (2026-02-09)
+    - Created `ModelDrivenGameScene` - pure MVC game scene
+        - Model owns all game state via unified `GameModel`
+        - Model runs complete game loop via `gameModel.step(deltaSeconds)`
+        - View creates Visual wrappers from model entities
+        - View syncs to model state each frame - pure observer pattern
+    - Created `ModelDrivenGameView` - pure observer View
+        - Creates `VisualPacman`, `VisualGhost`, `VisualFruit` from model entities
+        - Does NOT create visual entities (Pacman, Ghost classes)
+        - Handles model events for sounds, effects, and scene transitions
+        - Syncs visual representation to model state via `sync()`
+    - Updated supporting systems for model-driven approach
+        - `PacmanAI` - Added `getDirection()` method for model-driven input
+        - `LevelManager` - Uses `gameModel.ghosts` instead of `scene.ghosts`
+        - `EventBus` - Added `RESPAWN` event for death sequence
+    - Complete test coverage for Phase 4 (21 new tests)
+        - `ModelDrivenGameScene.test.js` - Architecture verification tests
+        - Visual wrapper sync tests
+        - Event system tests
+    - All 1,258 tests passing (56 test suites)
+
+### Added
+- **MVC Phase 3 - Unified GameModel** (2026-02-09)
+    - Merged GameModel and GameState into unified GameModel class
+        - GameModel now owns all entity states (PacmanState, GhostState, FruitState)
+        - GameModel manages world state (maze, pelletGrid) directly
+        - GameModel runs complete game loop via `step(deltaSeconds)`
+        - ModelCollisionSystem integrated for collision detection
+    - Full backward compatibility maintained
+        - `gameModel.state.xxx` pattern preserved via getter
+        - Legacy methods: `onPelletEaten()`, `onGhostEaten()`, `onFruitEaten()`, etc.
+        - Legacy `step()` return format during death sequence
+        - All existing tests pass without modification
+    - Updated dependent files for new interface
+        - GameController, DeathHandler, GameFlowController
+        - Test helpers for mock scene creation
+    - Fixed ghost combo tracking in ModelCollisionSystem
+        - `handleGhostCollision()` now increments combo counter
+        - Score calculation uses correct combo index
+    - New tests:
+        - `tests/model/UnifiedGameModel.test.js` - 47 comprehensive tests
+    - All 1,237 tests passing (55 test suites)
+
+### Added
+- **MVC Phase 2 - Collision System Integration** (2026-02-09)
+    - Created `GameStateController` for headless game simulation
+        - Manages complete game loop using pure model entities
+        - Bridges model events to EventBus for view consumption
+        - Supports serialization for save/replay functionality
+        - Zero Phaser dependencies - fully headless capable
+    - Created `ModelStateAdapter` to sync visual and model entities
+        - Registers Phaser visual entities and syncs positions to model
+        - Applies collision results back to visual entities
+        - Enables dual-system operation during migration
+    - Created `ModelIntegratedGameScene` using model-based collision
+        - Uses ModelCollisionSystem for ghost and fruit collisions
+        - Maintains legacy pellet collision for sprite pool management
+        - Demonstrates complete integration of model architecture
+    - Enhanced ModelCollisionSystem with event generation
+        - Pellet collision events with score and level completion
+        - Ghost collision events (eaten vs pacman died) with combo tracking
+        - Fruit collision events with score
+    - Complete test coverage for Phase 2 (69 new tests, 204 total model tests)
+        - ModelStateAdapter: Visual to model sync, collision result application
+        - GameStateController: Input handling, event emission, game flow
+        - Integration tests: End-to-end collision detection scenarios
+    - New files:
+        - `src/model/GameStateController.js` - Headless game controller
+        - `src/model/ModelStateAdapter.js` - Visual/Model bridge
+        - `src/scenes/ModelIntegratedGameScene.js` - Integrated game scene
+    - All 1,204 tests passing (54 test suites)
+
+### Added
+- **MVC Phase 1 - Model Entity Separation** (2026-02-09)
+    - Created pure data entity classes with NO Phaser dependencies
+        - `ModelEntity` - Base class for all model entities with position, movement, and state
+        - `PacmanState` - Pure data Pacman with mouth animation, death state, and movement
+        - `GhostState` - Pure data Ghost with AI modes, frightened state, eaten behavior
+        - `FruitState` - Pure data Fruit with bobbing animation and spawn logic
+    - Created `GameState` aggregator that owns all entity states and world data
+        - Manages maze, pellet grid, score, lives, and game flow
+        - Provides deterministic update loop with event generation
+        - Supports serialization for save/replay functionality
+    - Created `ModelCollisionSystem` for pure collision detection
+        - Uses model entity positions (no visual sprite references)
+        - Handles pellet eating, ghost collisions, and fruit collection
+        - Generates collision events for game logic
+    - Created Visual Entity wrappers for Phaser rendering
+        - `VisualPacman` - Renders Pacman with mouth animation and eye
+        - `VisualGhost` - Renders Ghost with color changes and eyes
+        - `VisualFruit` - Renders all 8 fruit types procedurally
+    - Complete test coverage for all model classes (135 tests)
+        - ModelEntity: Core entity functionality
+        - PacmanState: Movement, animation, death
+        - GhostState: AI, frightened mode, eaten behavior
+        - GameState: State aggregation, game flow
+    - New file structure:
+        - `src/model/` - Pure data entities and systems
+        - `src/model/entities/` - Entity state classes
+        - `src/model/systems/` - Model-based game systems
+        - `src/view/visuals/` - Phaser visual wrappers
+        - `tests/model/` - Unit tests for model classes
+
+### Added
 - **Phase 4 & 5 Integration** (2026-01-03)
     - PelletPool and PowerPelletPool fully integrated into GameScene
     - SettingsScene added to main.js and accessible via 'S' key from menu
