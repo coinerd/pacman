@@ -23,6 +23,11 @@ export class MovementEngine {
         this.strategies = new Map();
         /** @type {MovementInterface|null} */
         this.defaultStrategy = config.defaultStrategy || null;
+        /** @type {Object} Statistics tracking */
+        this.stats = {
+            totalMoves: 0,
+            totalTime: 0
+        };
     }
 
     /**
@@ -110,7 +115,14 @@ export class MovementEngine {
             );
         }
 
-        return strategy.move(entity, context, deltaSeconds);
+        const startTime = performance.now();
+        const result = strategy.move(entity, context, deltaSeconds);
+        
+        // Update statistics
+        this.stats.totalMoves++;
+        this.stats.totalTime += performance.now() - startTime;
+        
+        return result;
     }
 
     /**
@@ -213,7 +225,18 @@ export class MovementEngine {
         return {
             registeredStrategies: this.strategies.size,
             strategyNames: this.getStrategyNames(),
-            hasDefaultStrategy: this.defaultStrategy !== null
+            hasDefaultStrategy: this.defaultStrategy !== null,
+            ...this.stats
+        };
+    }
+
+    /**
+     * Reset engine statistics
+     */
+    resetStats() {
+        this.stats = {
+            totalMoves: 0,
+            totalTime: 0
         };
     }
 }

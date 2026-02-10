@@ -15,6 +15,7 @@ import { PacmanState } from '../model/entities/PacmanState.js';
 import { GhostState } from '../model/entities/GhostState.js';
 import { FruitState } from '../model/entities/FruitState.js';
 import { ModelCollisionSystem } from '../model/systems/ModelCollisionSystem.js';
+import { MovementAdapter, CollisionAdapter } from '../model/adapters/index.js';
 import {
     gameConfig,
     ghostStartPositions,
@@ -33,11 +34,15 @@ export default class GameModel {
      * @param {number} config.highScore - High score
      * @param {Array<Array<number>>} config.maze - Optional maze override
      * @param {Array<Array<number>>} config.pelletGrid - Optional pellet grid override
+     * @param {boolean} config.useDecoupledSystems - Use new decoupled movement/collision
      */
     constructor(config = {}) {
         // Level and configuration
         this.level = config.level || 1;
         this.levelConfig = null;
+
+        // Feature flag for decoupled systems (default false for backward compatibility)
+        this.useDecoupledSystems = config.useDecoupledSystems ?? false;
 
         // World state
         const mazeData = config.maze && config.pelletGrid
@@ -91,8 +96,18 @@ export default class GameModel {
         // Frame/tick counter for replay determinism
         this.tickCount = 0;
 
-        // Collision system
-        this.collisionSystem = new ModelCollisionSystem(this);
+        // Initialize movement/collision systems
+        if (this.useDecoupledSystems) {
+            // Use new decoupled systems
+            this.movementAdapter = new MovementAdapter(this);
+            this.collisionAdapter = new CollisionAdapter(this);
+            this.collisionSystem = null; // Not used in decoupled mode
+        } else {
+            // Use legacy systems
+            this.movementAdapter = null;
+            this.collisionAdapter = null;
+            this.collisionSystem = new ModelCollisionSystem(this);
+        }
 
         // Profiling
         this.lastUpdateTime = 0;
@@ -205,34 +220,72 @@ export default class GameModel {
             this.desiredDirection = inputDirection;
         }
 
-        // Update Pacman
-        const pacmanEvents = this.pacman.update(deltaSeconds, this.maze, this.desiredDirection);
-        events.push(...pacmanEvents);
+        if (this.useDecoupledSystems) {
+            // Use decoupled movement and collision systems
+            // Update Pacman
+            const pacmanMoveEvents = this.movementAdapter.updateEntity(
+                this.pacman,
+                deltaSeconds,
+                this.desiredDirection
+            );
+            events.push(...pacmanMoveEvents);
 
-        // Update ghosts
-        for (const ghost of this.ghosts) {
-            const ghostEvents = ghost.update(deltaSeconds, this.maze, this.pacman);
-            events.push(...ghostEvents);
-        }
+            // Update ghosts
+            for (const ghost of this.ghosts) {
+                const ghostMoveEvents = this.movementAdapter.updateEntity(ghost, deltaSeconds);
+                events.push(...ghostMoveEvents);
+            }
 
-        // Update fruit
-        const fruitEvents = this.fruit.update(deltaSeconds);
-        events.push(...fruitEvents);
+            // Update fruit
+            const fruitEvents = this.fruit.update(deltaSeconds);
+            events.push(...fruitEvents);
 
-        // Clear consumed direction if it was applied
-        if (this.pacman.direction !== directions.NONE &&
-            this.desiredDirection === this.pacman.direction) {
-            this.desiredDirection = null;
-            this.inputDirection = null;
-        }
+            // Clear consumed direction if it was applied
+            if (this.pacman.direction !== directions.NONE &&
+                this.desiredDirection === this.pacman.direction) {
+                this.desiredDirection = null;
+                this.inputDirection = null;
+            }
 
-        // Check collisions
-        const collisionEvents = this.collisionSystem.checkAllCollisions();
-        events.push(...collisionEvents);
+            // Check collisions using decoupled system
+            const collisionEvents = this.collisionAdapter.checkAllCollisions();
+            events.push(...collisionEvents);
 
-        // Apply collision effects
-        for (const event of collisionEvents) {
-            this.applyCollisionEffect(event);
+            // Apply collision effects
+            for (const event of collisionEvents) {
+                this.applyCollisionEffect(event);
+            }
+        } else {
+            // Use legacy systems
+            // Update Pacman
+            const pacmanEvents = this.pacman.update(deltaSeconds, this.maze, this.desiredDirection);
+            events.push(...pacmanEvents);
+
+            // Update ghosts
+            for (const ghost of this.ghosts) {
+                const ghostEvents = ghost.update(deltaSeconds, this.maze, this.pacman);
+                events.push(...ghostEvents);
+            }
+
+            // Update fruit
+            const fruitEvents = this.fruit.update(deltaSeconds);
+            events.push(...fruitEvents);
+
+            // Clear consumed direction if it was applied
+            if (this.pacman.direction !== directions.NONE &&
+                this.desiredDirection === this.pacman.direction) {
+                this.desiredDirection = null;
+                this.inputDirection = null;
+            }
+
+            // Check collisions using legacy system
+            const collisionEvents = this.collisionSystem.checkAllCollisions();
+            events.push(...collisionEvents);
+
+            // Apply collision effects
+            for (const event of collisionEvents) {
+                this.applyCollisionEffect(event);
+            }
         }
 
         // Profiling
@@ -363,7 +416,13 @@ export default class GameModel {
 
         this.fruit.reset();
         this.currentComboGhosts = 0;
-        this.collisionSystem.reset();
+
+        if (this.useDecoupledSystems) {
+            this.movementAdapter.reset();
+            this.collisionAdapter.reset();
+        } else {
+            this.collisionSystem.reset();
+        }
     }
 
     /**
@@ -386,7 +445,13 @@ export default class GameModel {
         this.fruit = this.createFruit();
         this.currentComboGhosts = 0;
 
-        this.collisionSystem.reset();
+        if (this.useDecoupledSystems) {
+            this.movementAdapter.updateMaze(this.maze);
+            this.movementAdapter.reset();
+            this.collisionAdapter.reset();
+        } else {
+            this.collisionSystem.reset();
+        }
     }
 
     /**
@@ -703,12 +768,25 @@ export default class GameModel {
      * @returns {Object}
      */
     getStats() {
-        return {
+        const baseStats = {
             updateTime: this.lastUpdateTime,
             updateCount: this.updateCount,
             tickCount: this.tickCount,
-            collisionStats: this.collisionSystem.getStats()
+            useDecoupledSystems: this.useDecoupledSystems
         };
+
+        if (this.useDecoupledSystems) {
+            return {
+                ...baseStats,
+                movementStats: this.movementAdapter.getStats(),
+                collisionStats: this.collisionAdapter.getStats()
+            };
+        } else {
+            return {
+                ...baseStats,
+                collisionStats: this.collisionSystem.getStats()
+            };
+        }
     }
 
     // ============================================================
