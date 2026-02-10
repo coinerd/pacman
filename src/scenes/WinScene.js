@@ -27,7 +27,7 @@ export default class WinScene extends Phaser.Scene {
         this.input.keyboard.once('keydown-SPACE', () => {
             this.scene.start('ModelDrivenGameScene', {
                 score: this.score,
-                level: this.level
+                level: this.level + 1
             });
         });
 

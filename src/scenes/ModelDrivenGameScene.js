@@ -198,17 +198,22 @@ export default class ModelDrivenGameScene extends Phaser.Scene {
 
         const deltaInSeconds = normalizeDeltaSeconds(delta);
 
-        // Handle death sequence UI updates
+        // Run fixed timestep updates (NEVER skip - death timer needs to increment)
+        this.fixedTimeStepLoop.update(deltaInSeconds);
+
+        // Handle death sequence UI updates separately
         if (this.isDeathSequence) {
             this.gameView.updateDeathAnimation(deltaInSeconds);
+            // Still sync view during death
+            this.gameView.sync();
+            // Update UI
+            this.uiController.update();
+            this.debugOverlay.update(time, delta);
             return;
         }
 
         // Update input manager (handles keyboard polling and AI decisions)
         this.inputManager.update(deltaInSeconds * 1000); // Convert to ms
-
-        // Run fixed timestep updates
-        this.fixedTimeStepLoop.update(deltaInSeconds);
 
         // Sync view to model state
         this.gameView.sync();
@@ -243,6 +248,11 @@ export default class ModelDrivenGameScene extends Phaser.Scene {
         // Single source of truth: model.step() runs all game logic
         const events = this.gameModel.step(deltaSeconds);
 
+        // Debug logging for death sequence
+        if (this.gameModel.isDying) {
+            console.log(`Death: timer=${this.gameModel.deathTimer.toFixed(3)}/${this.gameModel.deathPauseDuration}, isDeathSequence=${this.isDeathSequence}`);
+        }
+
         // Process events for achievements
         for (const event of events) {
             this.achievementSystem.check(this.gameModel);
@@ -262,6 +272,11 @@ export default class ModelDrivenGameScene extends Phaser.Scene {
             if (event.type === 'respawn') {
                 this.isDeathSequence = false;
                 this.gameView.endDeathAnimation();
+            }
+
+            // Handle level complete
+            if (event.type === 'level_complete') {
+                this.gameModel.nextLevel();
             }
         }
 

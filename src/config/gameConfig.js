@@ -148,7 +148,7 @@ export const scatterTargets = {
  */
 export const fruitConfig = {
     positions: [
-        { x: 13, y: 17 }
+        { x: 13, y: 22 }
     ],
     types: [
         { name: 'cherry', score: 100, color: colors.cherry },
