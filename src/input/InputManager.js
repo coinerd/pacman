@@ -219,7 +219,10 @@ export class InputManager {
         this.activeAdapters.forEach(name => {
             const adapter = this.adapters.get(name);
             if (adapter) {
-                adapter.update(deltaTime);
+                const input = adapter.update(deltaTime);
+                if (input) {
+                    this.handleAdapterInput(name, input);
+                }
             }
         });
     }

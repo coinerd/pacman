@@ -39,7 +39,7 @@ export default class MenuScene extends Phaser.Scene {
                 }
             }
 
-            this.scene.start('GameScene', { level: 1, score: 0 });
+            this.scene.start('ModelDrivenGameScene', { level: 1, score: 0 });
         });
 
         this.input.keyboard.once('keydown-H', () => {

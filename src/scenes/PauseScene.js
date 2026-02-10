@@ -18,18 +18,18 @@ export default class PauseScene extends Phaser.Scene {
         this.createControls();
 
         this.input.keyboard.once('keydown-P', () => {
-            this.scene.resume('GameScene');
+            this.scene.resume('ModelDrivenGameScene');
             this.scene.stop();
         });
 
         this.input.keyboard.once('keydown-SPACE', () => {
-            this.scene.resume('GameScene');
+            this.scene.resume('ModelDrivenGameScene');
             this.scene.stop();
         });
 
         this.input.keyboard.once('keydown-ESC', () => {
             this.scene.stop();
-            const gameScene = this.scene.get('GameScene');
+            const gameScene = this.scene.get('ModelDrivenGameScene');
             if (gameScene) {
                 gameScene.cleanup();
             }
