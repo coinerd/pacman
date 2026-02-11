@@ -87,17 +87,25 @@ The game now uses a hybrid architecture combining Phaser scenes with an MVC patt
 ### MVC Components
 
 **GameModel** (`src/core/GameModel.js`)
-- Pure game state and rules (295 lines)
+- Pure game state and rules (295+ lines)
 - ZERO Phaser dependencies (runs headless in Node)
 - State: score, lives, level, highScore, pelletsEaten, ghostsEaten, frightenedGhosts, ghostComboMultiplier, deathTimer, winTimer
 - Methods: `addScore()`, `onPelletEaten()`, `onGhostEaten()`, `step(dt)`, `getSpeedMultiplier()`, `getFrightenedDuration()`, `reset()`
 - Emits events via EventBus: `PELLET_EATEN`, `GHOST_EATEN`, `LEVEL_COMPLETE`, `GAME_OVER`, `WIN`, `SCORE_CHANGED`, `LIVES_CHANGED`
 
+**ActionRouter** (`src/controllers/ActionRouter.js`)
+- Routes input actions to handlers with state validation (Phase 6 & 7)
+- `ActionContext` provides `canAcceptInput()`, `canPause()`, `canResume()` utilities
+- NO Phaser dependencies, NO scene references
+- Supports pluggable handler system for custom actions
+- Emits controller events for View-layer concerns
+
 **GameController** (`src/controllers/GameController.js`)
-- Input translation layer (101 lines)
-- Translates raw keyboard/touch input to model intents
-- Orchestrates scene transitions (pause, menu, replay)
-- Emits `DIRECTION_CHANGED` events for entity movement
+- Clean input translation layer (101+ lines)
+- ZERO Phaser dependencies, NO scene references (Phase 6 & 7)
+- Uses ActionRouter for action routing
+- Delegates scene transitions to View via events
+- Routes input through InputManager for swappable sources
 
 **PhaserGameView** (`src/views/PhaserGameView.js`)
 - Full rendering logic extracted from GameScene (310 lines)
@@ -111,13 +119,19 @@ The game now uses a hybrid architecture combining Phaser scenes with an MVC patt
 
 ### Integration with GameScene
 
-GameScene now acts as coordinator:
-- Creates `gameModel`, `gameController`, and views during initialization
-- `InputController` delegates to `gameController.handleInput()`
+**ModelDrivenGameScene** acts as coordinator:
+- Creates `gameModel`, clean `gameController` (no scene refs), and views during initialization
+- `InputManager` subscribes to input adapters (Keyboard, Replay, AI)
+- Clean `GameController` routes all input through `ActionRouter`
 - `DeathHandler` uses `gameModel.step()` for death timer
 - `LevelManager` uses `gameModel.getSpeedMultiplier()` and `gameModel.getFrightenedDuration()`
-- `UIController` observes `gameState` (reference to `gameModel.state`)
+- `ModelDrivenGameView` observes model state and handles scene transitions via events
 - Views subscribe to EventBus events for rendering updates
+
+**Scene Transitions (Phase 7)**:
+- Controller emits request events: `PAUSE_REQUESTED`, `RESUME_REQUESTED`, `RETURN_TO_MENU_REQUESTED`
+- View binds to controller events and handles scene transitions (proper MVC separation)
+- No scene references in Controller - transitions are View-layer concerns
 
 ### Benefits
 
@@ -125,9 +139,43 @@ GameScene now acts as coordinator:
 - **Testability**: Model and Controller can be tested without Phaser (pure JavaScript, headless in Node)
 - **Decoupling**: EventBus removes direct dependencies between components
 - **Flexibility**: Easy to add new views (e.g., React UI, console logger) without changing model logic
-- **Maintainability**: Clear boundaries make the code easier to understand and modify
+- **Maintainability**: Clear boundaries make code easier to understand and modify
 
-## 4. Entities
+## 4. Input System (Phase 5)
+
+The game uses an abstract input system that supports multiple input sources via the Adapter pattern:
+
+### Components
+
+**InputManager** (`src/input/InputManager.js`)
+- Central coordinator for multiple input adapters
+- `registerAdapter(name, adapter)` - Register input sources
+- `setActiveAdapter(name)` - Switch between sources (keyboard, replay, AI)
+- Input history tracking for debugging
+- Support for multiple simultaneous adapters
+
+**InputAdapter Base Class** (`src/input/InputAdapter.js`)
+- Abstract interface defining common adapter API
+- `onInput(callback)` - Subscribe with unsubscribe support
+- `emitInput(input)` - Emit normalized input events
+- `enable()/disable()` - State control
+- `update(deltaTime)` - Poll-based input for continuous sources
+
+**Adapters**:
+- `KeyboardAdapter` - Phaser keyboard wrapper (arrows, WASD)
+- `ReplayAdapter` - Playback of recorded input sequences
+- `ReplayRecorder` - Records input events with timestamps
+- `AIInputAdapter` - AI-controlled input for bot gameplay
+- `ScriptedAIAdapter` - Predefined input sequences
+
+### Benefits
+
+- **Swappable Input Sources**: Switch between keyboard, replay, AI without changing game logic
+- **Testability**: Input adapters can be unit tested without Phaser
+- **Record/Replay**: Debug issues by recording and replaying exact input sequences
+- **Extensibility**: Easy to add new sources (voice, network, gestures)
+
+## 5. Entities
 
 ### Pacman
 - Extends `BaseEntity`, using grid movement and a buffered input system.

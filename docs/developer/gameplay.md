@@ -95,8 +95,13 @@ Achievement notifications are emitted via the `EventBus` and displayed as UI pop
 
 ## 10. Replay & Demo Mode
 
-- **Replay**: Records input, score, and level to localStorage.
-- **Demo Mode**: If the query string includes `?demo`, PacmanAI takes control.
+- **Replay System**: Records input events with timestamps via `ReplayRecorder`
+  - Supports recording, playback, speed control, and looping
+  - Persists to localStorage (keeps last 10 recordings)
+  - Playback via `ReplayAdapter` (one of multiple input sources)
+- **Demo Mode**: If the query string includes `?demo`, `AIInputAdapter` takes control
+  - Uses `PacmanAI` for autonomous gameplay
+  - Swappable input system enables easy switching between keyboard/replay/AI
 
 ## 11. Audio
 
