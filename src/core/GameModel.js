@@ -197,23 +197,11 @@ export default class GameModel {
 
         this.tickCount++;
 
-        // Handle death sequence (legacy mode returns single object)
         if (this.isDying) {
             const deathEvents = this.updateDeathSequence(deltaSeconds);
             this.lastUpdateTime = performance.now() - startTime;
             this.emitEvents(deathEvents);
-
-            // Backward compatibility: return single event object for legacy tests
-            const deathEvent = deathEvents[0];
-            if (deathEvent) {
-                const legacyEventMap = {
-                    'death_tick': 'deathTick',
-                    'respawn': 'respawn',
-                    'game_over': 'gameOver'
-                };
-                return { event: legacyEventMap[deathEvent.type] || deathEvent.type };
-            }
-            return null;
+            return deathEvents;
         }
 
         // Get input direction (from parameter or queued input)

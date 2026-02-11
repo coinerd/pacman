@@ -79,10 +79,10 @@ describe('GameModel - Zustandslogik und Regeln', () => {
         const model = createGameModel({ state: { lives: 1, deathPauseDuration: 0.5 } });
 
         model.beginDeath();
-        expect(model.step(0.1)).toEqual({ event: 'deathTick' });
+        expect(model.step(0.1)).toEqual([{ type: 'death_tick', progress: 0.2 }]);
         expect(model.getStateSnapshot().isDying).toBe(true);
 
-        expect(model.step(0.4)).toEqual({ event: 'respawn' });
+        expect(model.step(0.4)).toEqual([{ type: 'respawn' }]);
         expect(model.getStateSnapshot().lives).toBe(0);
         expect(model.getStateSnapshot().isDying).toBe(false);
 
@@ -91,7 +91,7 @@ describe('GameModel - Zustandslogik und Regeln', () => {
         gameEvents.on(GAME_EVENTS.GAME_OVER, gameOverListener);
 
         gameOverModel.beginDeath();
-        expect(gameOverModel.step(0.2)).toEqual({ event: 'gameOver' });
+        expect(gameOverModel.step(0.2)).toEqual([{ type: 'game_over' }]);
         expect(gameOverModel.getStateSnapshot().isGameOver).toBe(true);
         expect(gameOverListener).toHaveBeenCalledTimes(1);
     });

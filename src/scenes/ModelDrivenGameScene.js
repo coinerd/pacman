@@ -273,11 +273,6 @@ export default class ModelDrivenGameScene extends Phaser.Scene {
                 this.isDeathSequence = false;
                 this.gameView.endDeathAnimation();
             }
-
-            // Handle level complete
-            if (event.type === 'level_complete') {
-                this.gameModel.nextLevel();
-            }
         }
 
         // Update replay system

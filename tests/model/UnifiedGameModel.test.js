@@ -279,10 +279,9 @@ describe('Unified GameModel', () => {
         test('should emit death_tick events during death sequence', () => {
             model.onPacmanDeath();
 
-            const result = model.step(0.5); // Halfway through death pause
+            const result = model.step(0.5); // 0.5s out of 2s death pause
 
-            // Legacy format: step() returns { event: 'deathTick' }
-            expect(result).toEqual({ event: 'deathTick' });
+            expect(result).toEqual([{ type: 'death_tick', progress: 0.25 }]);
         });
 
         test('should decrement lives and respawn after death sequence', () => {
@@ -292,8 +291,7 @@ describe('Unified GameModel', () => {
             // Step through death sequence
             const result = model.step(model.deathPauseDuration);
 
-            // Legacy format: step() returns { event: 'respawn' }
-            expect(result).toEqual({ event: 'respawn' });
+            expect(result).toEqual([{ type: 'respawn' }]);
             expect(model.isDying).toBe(false);
         });
 
@@ -303,8 +301,7 @@ describe('Unified GameModel', () => {
 
             const result = model.step(model.deathPauseDuration);
 
-            // Legacy format: step() returns { event: 'gameOver' }
-            expect(result).toEqual({ event: 'gameOver' });
+            expect(result).toEqual([{ type: 'game_over' }]);
             expect(model.isGameOver).toBe(true);
         });
     });

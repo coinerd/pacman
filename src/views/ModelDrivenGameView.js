@@ -251,7 +251,8 @@ export default class ModelDrivenGameView {
             // Power pellet eaten
             gameEvents.on(GAME_EVENTS.POWER_PELLET_EATEN, (data) => {
                 this.soundManager.playPowerPellet();
-                this.effectManager.createPowerPelletEffect();
+                const pixel = gridToPixel(data.gridX, data.gridY);
+                this.effectManager.createPowerPelletEffect(pixel.x, pixel.y);
 
                 // Remove the visual power pellet
                 const key = `${data.gridX},${data.gridY}`;
@@ -265,7 +266,10 @@ export default class ModelDrivenGameView {
             // Ghost eaten
             gameEvents.on(GAME_EVENTS.GHOST_EATEN, (data) => {
                 this.soundManager.playGhostEaten();
-                this.effectManager.createGhostEatenEffect();
+                const ghost = this.gameModel.ghosts.find(g => g.ghostType === data.ghostType);
+                if (ghost) {
+                    this.effectManager.createGhostEatenEffect(ghost.x, ghost.y);
+                }
             }),
 
             // Pacman died
@@ -276,7 +280,9 @@ export default class ModelDrivenGameView {
             // Fruit eaten
             gameEvents.on(GAME_EVENTS.FRUIT_EATEN, (data) => {
                 this.soundManager.playFruitEat();
-                this.effectManager.createFruitEatEffect();
+                const fruit = this.gameModel.fruit;
+                const color = fruit.fruitType?.color || 0xFF00FF;
+                this.effectManager.createFruitEatEffect(fruit.x, fruit.y, color);
                 this.visualFruit.showScore(data.score);
             }),
 

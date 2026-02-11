@@ -29,7 +29,7 @@ describe('GameModel + FixedTimeStepLoop Integration', () => {
 
         expect(simulationA.events).toEqual(simulationB.events);
         expect(simulationA.events).toHaveLength(3);
-        expect(simulationA.events[2]).toEqual({ event: 'respawn' });
+        expect(simulationA.events[2]).toEqual([{ type: 'respawn' }]);
         expect(simulationA.snapshot.lives).toBe(0);
     });
 });

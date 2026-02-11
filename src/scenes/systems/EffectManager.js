@@ -16,11 +16,13 @@ export class EffectManager {
 
     /**
      * Create power pellet activation flash effect
+     * @param {number} x - X position in pixels
+     * @param {number} y - Y position in pixels
      */
-    createPowerPelletEffect() {
+    createPowerPelletEffect(x, y) {
         const graphics = this.scene.add.graphics();
         graphics.fillStyle(0xFFFFFF, 0.5);
-        graphics.fillCircle(this.scene.pacman.x, this.scene.pacman.y, gameConfig.tileSize * 2);
+        graphics.fillCircle(x, y, gameConfig.tileSize * 2);
 
         this.scene.tweens.add({
             targets: graphics,
@@ -33,11 +35,13 @@ export class EffectManager {
 
     /**
      * Create ghost eaten flash effect
+     * @param {number} x - X position in pixels
+     * @param {number} y - Y position in pixels
      */
-    createGhostEatenEffect() {
+    createGhostEatenEffect(x, y) {
         const graphics = this.scene.add.graphics();
         graphics.fillStyle(0xFFFFFF, 0.8);
-        graphics.fillCircle(this.scene.pacman.x, this.scene.pacman.y, gameConfig.tileSize * 1.5);
+        graphics.fillCircle(x, y, gameConfig.tileSize * 1.5);
 
         this.scene.tweens.add({
             targets: graphics,
@@ -50,11 +54,14 @@ export class EffectManager {
 
     /**
      * Create fruit eat effect
+     * @param {number} x - X position in pixels
+     * @param {number} y - Y position in pixels
+     * @param {string} color - Color of the fruit effect
      */
-    createFruitEatEffect() {
+    createFruitEatEffect(x, y, color) {
         const graphics = this.scene.add.graphics();
-        graphics.fillStyle(this.scene.fruit.fruitType.color, 0.8);
-        graphics.fillCircle(this.scene.fruit.x, this.scene.fruit.y, gameConfig.tileSize * 1.5);
+        graphics.fillStyle(color, 0.8);
+        graphics.fillCircle(x, y, gameConfig.tileSize * 1.5);
 
         this.scene.tweens.add({
             targets: graphics,
