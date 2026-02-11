@@ -1,6 +1,6 @@
 /**
  * CollisionAdapter
- * Bridges the decoupled CollisionEngine with the existing GameModel.
+ * Bridges decoupled CollisionEngine with existing GameModel.
  * Maintains backward compatibility while using the new pure collision system.
  * Includes tunnel-aware collision detection for warp tunnel scenarios.
  */
@@ -10,9 +10,6 @@ import { gameConfig, scoreValues } from '../../config/gameConfig.js';
 import { PELLET_TYPES } from '../../utils/MazeLayout.js';
 import { isWarping } from '../../utils/WarpTunnel.js';
 
-/**
- * Adapter that wraps the decoupled CollisionEngine for use with existing GameModel
- */
 export class CollisionAdapter {
     /**
      * @param {GameModel} gameModel - The game model to adapt for
@@ -20,7 +17,7 @@ export class CollisionAdapter {
     constructor(gameModel) {
         this.gameModel = gameModel;
 
-        // Initialize the decoupled collision engine
+        // Initialize decoupled collision engine
         this.collisionEngine = new CollisionEngine({
             cellSize: gameConfig.tileSize,
             collisionRadius: gameConfig.tileSize * 0.6,
@@ -44,11 +41,8 @@ export class CollisionAdapter {
     checkAllCollisions() {
         const events = [];
 
-        // Check pellet collisions
-        const pelletEvent = this.checkPelletCollision();
-        if (pelletEvent) {
-            events.push(pelletEvent);
-        }
+        const pelletEvents = this.checkPelletCollision();
+        events.push(...pelletEvents);
 
         // Check ghost collisions
         const ghostEvent = this.checkGhostCollisions();
@@ -67,28 +61,24 @@ export class CollisionAdapter {
 
     /**
      * Check pellet collision at Pacman's position
-     * @returns {Object|null}
+     * @returns {Array<Object>} - Array of collision events (0, 1, or 2 events)
      */
     checkPelletCollision() {
         const pacman = this.gameModel.pacman;
 
-        // Get grid position
         const gridX = Math.floor(pacman.x / gameConfig.tileSize);
         const gridY = Math.floor(pacman.y / gameConfig.tileSize);
 
-        // Prevent duplicate checks on same tile
         if (gridX === this.lastPelletGrid.x && gridY === this.lastPelletGrid.y) {
-            return null;
+            return [];
         }
 
-        // Check if there's a pellet at this position
         const pelletType = this.gameModel.getPelletAt(gridX, gridY);
 
         if (pelletType === PELLET_TYPES.NONE) {
-            return null;
+            return [];
         }
 
-        // Use decoupled collision engine to check pellet collision
         const eatRadius = gameConfig.tileSize * 0.5;
 
         const pelletCollisions = this.collisionEngine.checkPelletCollisions(
@@ -103,23 +93,21 @@ export class CollisionAdapter {
         );
 
         if (pelletCollisions.length === 0) {
-            return null;
+            return [];
         }
 
-        // Eat the pellet
         const result = this.gameModel.eatPelletAt(gridX, gridY);
 
         if (!result) {
-            return null;
+            return [];
         }
 
         this.lastPelletGrid = { x: gridX, y: gridY };
 
-        // Determine event type and score
         const isPowerPellet = result.type === 'power_pellet';
         const score = isPowerPellet ? scoreValues.powerPellet : scoreValues.pellet;
 
-        const event = {
+        const pelletEvent = {
             type: isPowerPellet ? 'power_pellet_eaten' : 'pellet_eaten',
             gridX: result.gridX,
             gridY: result.gridY,
@@ -127,20 +115,23 @@ export class CollisionAdapter {
             pelletsRemaining: result.pelletsRemaining
         };
 
-        // If power pellet, include frightened duration
         if (isPowerPellet) {
-            event.frightenedDuration = this.gameModel.getFrightenedDuration();
-        }
-
-        // Check level complete
-        if (result.levelComplete) {
-            event.levelComplete = true;
+            pelletEvent.frightenedDuration = this.gameModel.getFrightenedDuration();
         }
 
         this.stats.checksPerformed++;
         this.stats.collisionsDetected++;
 
-        return event;
+        const events = [pelletEvent];
+        if (result.levelComplete) {
+            events.push({
+                type: 'level_complete',
+                score: this.gameModel.score,
+                level: this.gameModel.level
+            });
+        }
+
+        return events;
     }
 
     /**
@@ -188,7 +179,7 @@ export class CollisionAdapter {
             return null;
         }
 
-        // Get the first collision
+        // Get first collision
         const collision = collisions[0];
         const ghost = collision.entityB.ghost;
 
@@ -270,7 +261,7 @@ export class CollisionAdapter {
     }
 
     /**
-     * Check for collisions in the warp tunnel
+     * Check for collisions in warp tunnel
      * Handles edge case where entities are on opposite sides due to tunnel wrap
      * @param {Object} pacman - Pacman entity
      * @param {Array<Object>} ghostEntities - List of ghost entities
@@ -374,11 +365,6 @@ export class CollisionAdapter {
     }
 }
 
-/**
- * Factory function to create collision adapter
- * @param {GameModel} gameModel - Game model instance
- * @returns {CollisionAdapter}
- */
 export function createCollisionAdapter(gameModel) {
     return new CollisionAdapter(gameModel);
 }

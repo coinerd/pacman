@@ -642,6 +642,7 @@ export default class GameModel {
         if (this.pelletsRemaining === 0 && !this.levelComplete) {
             this.levelComplete = true;
             result.levelComplete = true;
+            result.level = this.level;
         }
 
         return result;

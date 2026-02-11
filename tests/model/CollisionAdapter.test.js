@@ -57,6 +57,8 @@ function createMockGameModel() {
         }),
         currentComboGhosts: 0,
         lives: 3,
+        level: 1,
+        score: 100,
         getFrightenedDuration: jest.fn(() => 5)
     };
 }
@@ -110,15 +112,15 @@ describe('CollisionAdapter', () => {
     });
 
     describe('checkPelletCollision', () => {
-        test('returns null when no pellet', () => {
+        test('returns empty array when no pellet', () => {
             mockGameModel.getPelletAt = jest.fn(() => PELLET_TYPES.NONE);
 
             const result = adapter.checkPelletCollision();
 
-            expect(result).toBeNull();
+            expect(result).toEqual([]);
         });
 
-        test('returns null when on same tile as last check', () => {
+        test('returns empty array when on same tile as last check', () => {
             mockGameModel.getPelletAt = jest.fn(() => PELLET_TYPES.PELLET);
             adapter.lastPelletGrid = { x: 1, y: 1 };
             mockGameModel.pacman.x = 30;
@@ -126,10 +128,10 @@ describe('CollisionAdapter', () => {
 
             const result = adapter.checkPelletCollision();
 
-            expect(result).toBeNull();
+            expect(result).toEqual([]);
         });
 
-        test('returns pellet event when pellet eaten', () => {
+        test('returns pellet event array when pellet eaten', () => {
             mockGameModel.getPelletAt = jest.fn(() => PELLET_TYPES.PELLET);
             mockGameModel.eatPelletAt = jest.fn(() => ({
                 type: 'pellet',
@@ -140,15 +142,14 @@ describe('CollisionAdapter', () => {
 
             const result = adapter.checkPelletCollision();
 
-            if (result) {
-                expect(result.type).toBe('pellet_eaten');
-                expect(result.score).toBeDefined();
-                expect(result.gridX).toBe(1);
-                expect(result.gridY).toBe(1);
-            }
+            expect(result.length).toBe(1);
+            expect(result[0].type).toBe('pellet_eaten');
+            expect(result[0].score).toBeDefined();
+            expect(result[0].gridX).toBe(1);
+            expect(result[0].gridY).toBe(1);
         });
 
-        test('returns power pellet event', () => {
+        test('returns power pellet event array', () => {
             mockGameModel.getPelletAt = jest.fn(() => PELLET_TYPES.POWER_PELLET);
             mockGameModel.eatPelletAt = jest.fn(() => ({
                 type: 'power_pellet',
@@ -159,10 +160,39 @@ describe('CollisionAdapter', () => {
 
             const result = adapter.checkPelletCollision();
 
-            if (result) {
-                expect(result.type).toBe('power_pellet_eaten');
-                expect(result.frightenedDuration).toBeDefined();
-            }
+            expect(result.length).toBe(1);
+            expect(result[0].type).toBe('power_pellet_eaten');
+            expect(result[0].frightenedDuration).toBeDefined();
+        });
+
+        test('returns level_complete event in array', () => {
+            mockGameModel.getPelletAt = jest.fn(() => PELLET_TYPES.PELLET);
+            mockGameModel.eatPelletAt = jest.fn(() => ({
+                type: 'pellet',
+                gridX: 1,
+                gridY: 1,
+                pelletsRemaining: 0,
+                levelComplete: true,
+                level: 1
+            }));
+
+            const result = adapter.checkPelletCollision();
+
+            expect(result.length).toBe(2);
+            expect(result[0].type).toBe('pellet_eaten');
+            expect(result[1].type).toBe('level_complete');
+            expect(result[1].level).toBeDefined();
+            expect(result[1].score).toBeDefined();
+        });
+
+        test('returns empty array when collision engine returns no pellets', () => {
+            mockGameModel.getPelletAt = jest.fn(() => PELLET_TYPES.PELLET);
+            // Mock collisionEngine to return no collisions
+            adapter.collisionEngine.checkPelletCollisions = jest.fn(() => []);
+
+            const result = adapter.checkPelletCollision();
+
+            expect(result).toEqual([]);
         });
     });
 
@@ -194,11 +224,10 @@ describe('CollisionAdapter', () => {
 
             const result = adapter.checkGhostCollisions();
 
-            if (result) {
-                expect(result.type).toBe('ghost_eaten');
-                expect(result.score).toBeDefined();
-                expect(result.ghostType).toBe('blinky');
-            }
+            expect(result.type).toBe('ghost_eaten');
+            expect(result.score).toBeDefined();
+            expect(result.ghostType).toBe('blinky');
+            expect(mockGameModel.ghosts[0].eat).toHaveBeenCalled();
         });
 
         test('returns pacman_died when ghost not frightened', () => {
@@ -208,9 +237,8 @@ describe('CollisionAdapter', () => {
 
             const result = adapter.checkGhostCollisions();
 
-            if (result) {
-                expect(result.type).toBe('pacman_died');
-            }
+            expect(result.type).toBe('pacman_died');
+            expect(result.livesRemaining).toBe(3);
         });
     });
 
@@ -276,17 +304,14 @@ describe('CollisionAdapter', () => {
 
             const result = adapter.checkFruitCollision();
 
-            if (result) {
-                expect(result.type).toBe('fruit_eaten');
-                expect(result.score).toBe(100);
-            }
+            expect(result.type).toBe('fruit_eaten');
+            expect(result.score).toBe(100);
         });
     });
 
     describe('reset', () => {
         test('resets last pellet grid', () => {
             adapter.lastPelletGrid = { x: 1, y: 1 };
-
             adapter.reset();
 
             expect(adapter.lastPelletGrid).toEqual({ x: null, y: null });
@@ -295,7 +320,6 @@ describe('CollisionAdapter', () => {
         test('resets statistics', () => {
             adapter.stats.checksPerformed = 10;
             adapter.stats.collisionsDetected = 5;
-
             adapter.reset();
 
             expect(adapter.stats.checksPerformed).toBe(0);

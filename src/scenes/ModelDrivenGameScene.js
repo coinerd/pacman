@@ -297,6 +297,14 @@ export default class ModelDrivenGameScene extends Phaser.Scene {
             this.gameView.showAchievementNotification(achievement);
         });
 
+        gameEvents.on(GAME_EVENTS.LEVEL_COMPLETE, () => {
+            this.scene.start('WinScene', {
+                score: this.gameModel.score,
+                level: this.gameModel.level,
+                highScore: this.gameModel.highScore
+            });
+        });
+
         // Replay recording
         if (this.replaySystem && !this.replaySystem.isReplaying) {
             gameEvents.on(GAME_EVENTS.DIRECTION_CHANGED, (data) => {
