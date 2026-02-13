@@ -63,6 +63,7 @@ export default class GameModel {
 
         this.maze = mazeData.maze;
         this.pelletGrid = mazeData.pelletGrid;
+        this.spawnPoints = mazeData.spawnPoints;
         this.totalPellets = countPellets(this.pelletGrid);
         this.pelletsRemaining = this.totalPellets;
 
@@ -148,11 +149,8 @@ export default class GameModel {
 	 * @returns {PlayerState}
 	 */
     createPacman() {
-        return new PlayerState(
-            playerStartPosition.x,
-            playerStartPosition.y,
-            this.level
-        );
+        const pos = this.spawnPoints?.player || playerStartPosition;
+        return new PlayerState(pos.x, pos.y, this.level);
     }
 
     /**
@@ -164,7 +162,8 @@ export default class GameModel {
         const enemies = [];
 
         for (const enemyType of enemyTypes) {
-            const pos = enemyStartPositions[enemyType];
+            const pos =
+				this.spawnPoints?.ghosts?.[enemyType] || enemyStartPositions[enemyType];
             if (pos) {
                 enemies.push(new EnemyState(pos.x, pos.y, enemyType, this.level));
             }

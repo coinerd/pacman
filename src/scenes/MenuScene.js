@@ -263,7 +263,7 @@ export default class MenuScene extends Phaser.Scene {
                 fontSize: techBody.size,
                 fontStyle: techBody.style,
                 fontWeight: techBody.weight,
-                color: `#${colors.text.info.toString(16).padStart(6, '0')}`
+                color: `#${colors.status.info.toString(16).padStart(6, '0')}`
             }
         );
         closeText.setOrigin(0.5);
@@ -291,7 +291,7 @@ export default class MenuScene extends Phaser.Scene {
                 fontStyle: techHeader.style,
                 fontWeight: techHeader.weight,
                 letterSpacing: techHeader.letterSpacing,
-                color: `#${colors.text.info.toString(16).padStart(6, '0')}`
+                color: `#${colors.status.info.toString(16).padStart(6, '0')}`
             }
         );
         title.setOrigin(0.5);

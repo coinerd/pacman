@@ -195,8 +195,7 @@ export class MovementAdapter {
             entity.direction = result.newDirection;
         }
 
-        // Update movement state
-        entity.isMoving = result.result === MOVEMENT_RESULTS.MOVED;
+        entity.isMoving = result.isMoving;
     }
 
     /**

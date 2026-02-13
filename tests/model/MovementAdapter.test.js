@@ -37,7 +37,7 @@ function createMockEntity(x, y, gridX, gridY) {
         directionBuffer: {
             clear: jest.fn()
         },
-        setDirection: jest.fn(function(dir) {
+        setDirection: jest.fn(function (dir) {
             this.nextDirection = dir;
         })
     };
@@ -146,6 +146,7 @@ describe('MovementAdapter', () => {
             // When moved
             adapter.applyMovementResult(entity, {
                 result: MOVEMENT_RESULTS.MOVED,
+                isMoving: true,
                 events: []
             });
             expect(entity.isMoving).toBe(true);
@@ -153,6 +154,7 @@ describe('MovementAdapter', () => {
             // When blocked
             adapter.applyMovementResult(entity, {
                 result: MOVEMENT_RESULTS.BLOCKED,
+                isMoving: false,
                 events: []
             });
             expect(entity.isMoving).toBe(false);
@@ -181,7 +183,11 @@ describe('MovementAdapter', () => {
 
         test('converts warp event', () => {
             const entity = createMockEntity(30, 30, 1, 1);
-            const event = { type: 'warp', from: { x: 0, y: 14 }, to: { x: 27, y: 14 } };
+            const event = {
+                type: 'warp',
+                from: { x: 0, y: 14 },
+                to: { x: 27, y: 14 }
+            };
 
             const converted = adapter.convertMovementEvent(event, entity);
 
@@ -200,7 +206,11 @@ describe('MovementAdapter', () => {
 
         test('converts turned event', () => {
             const entity = createMockEntity(30, 30, 1, 1);
-            const event = { type: 'turned', fromDirection: { x: 1, y: 0 }, toDirection: { x: 0, y: 1 } };
+            const event = {
+                type: 'turned',
+                fromDirection: { x: 1, y: 0 },
+                toDirection: { x: 0, y: 1 }
+            };
 
             const converted = adapter.convertMovementEvent(event, entity);
 
@@ -210,7 +220,10 @@ describe('MovementAdapter', () => {
 
     describe('updateMaze', () => {
         test('updates maze query', () => {
-            const newMaze = [[0, 0], [0, 0]];
+            const newMaze = [
+                [0, 0],
+                [0, 0]
+            ];
 
             adapter.updateMaze(newMaze);
 

@@ -42,8 +42,8 @@ export default class PauseScene extends Phaser.Scene {
     }
 
     /**
-     * Create semi-transparent overlay with circuit grid
-     */
+	 * Create semi-transparent overlay with circuit grid
+	 */
     createOverlay() {
         const colors = this.theme.colors;
         const animConfig = this.theme.animations;
@@ -73,8 +73,8 @@ export default class PauseScene extends Phaser.Scene {
     }
 
     /**
-     * Create pause title with tech styling
-     */
+	 * Create pause title with tech styling
+	 */
     createTitle() {
         const titleFont = this.theme.fonts.overlay.title;
         const colors = this.theme.colors;
@@ -129,8 +129,8 @@ export default class PauseScene extends Phaser.Scene {
     }
 
     /**
-     * Create instructions
-     */
+	 * Create instructions
+	 */
     createInstructions() {
         const overlayFont = this.theme.fonts.overlay.message;
         const colors = this.theme.colors;
@@ -142,26 +142,23 @@ export default class PauseScene extends Phaser.Scene {
 
         let y = this.scale.height * 0.5;
         for (const instruction of instructions) {
-            this.add.text(
-                this.scale.width / 2,
-                y,
-                instruction,
-                {
+            this.add
+                .text(this.scale.width / 2, y, instruction, {
                     fontFamily: overlayFont.family,
                     fontSize: overlayFont.size,
                     fontStyle: overlayFont.style,
                     fontWeight: overlayFont.weight,
                     lineHeight: overlayFont.lineHeight,
                     color: `#${colors.text.primary.toString(16).padStart(6, '0')}`
-                }
-            ).setOrigin(0.5);
+                })
+                .setOrigin(0.5);
             y += 40;
         }
     }
 
     /**
-     * Create controls display
-     */
+	 * Create controls display
+	 */
     createControls() {
         const techBody = this.theme.fonts.tech.body;
         const colors = this.theme.colors;
@@ -174,18 +171,15 @@ export default class PauseScene extends Phaser.Scene {
 
         let y = this.scale.height * 0.7;
         for (const control of controls) {
-            this.add.text(
-                this.scale.width / 2,
-                y,
-                control,
-                {
+            this.add
+                .text(this.scale.width / 2, y, control, {
                     fontFamily: techBody.family,
                     fontSize: techBody.size,
                     fontStyle: techBody.style,
                     fontWeight: techBody.weight,
-                    color: `#${colors.text.info.toString(16).padStart(6, '0')}`
-                }
-            ).setOrigin(0.5);
+                    color: `#${colors.status.info.toString(16).padStart(6, '0')}`
+                })
+                .setOrigin(0.5);
             y += 25;
         }
     }
