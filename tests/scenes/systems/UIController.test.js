@@ -1,4 +1,5 @@
 import { UIController } from '../../../src/scenes/systems/UIController.js';
+
 describe('UIController', () => {
     let controller;
     let mockScene;
@@ -34,7 +35,16 @@ describe('UIController', () => {
                 height: 620
             },
             add: {
-                text: jest.fn(createTextMock)
+                text: jest.fn(createTextMock),
+                graphics: jest.fn(() => ({
+                    fillStyle: jest.fn().mockReturnThis(),
+                    fillRoundedRect: jest.fn().mockReturnThis(),
+                    lineStyle: jest.fn().mockReturnThis(),
+                    strokeRoundedRect: jest.fn().mockReturnThis(),
+                    strokePoints: jest.fn().mockReturnThis(),
+                    fillCircle: jest.fn().mockReturnThis(),
+                    destroy: jest.fn()
+                }))
             },
             tweens: {
                 add: jest.fn()
@@ -50,77 +60,142 @@ describe('UIController', () => {
         controller.create();
 
         expect(renderLog).toMatchInlineSnapshot(`
-[
-  {
-    "style": {
-      "color": "#FFD700",
-      "fontFamily": "Arial",
-      "fontSize": "16px",
-      "fontStyle": "bold",
-    },
-    "text": "SCORE: 0",
-    "type": "text",
-    "x": 10,
-    "y": 10,
-  },
-  {
-    "style": {
-      "color": "#FFFFFF",
-      "fontFamily": "Arial",
-      "fontSize": "16px",
-    },
-    "text": "HIGH SCORE: 0",
-    "type": "text",
-    "x": 10,
-    "y": 35,
-  },
-  {
-    "style": {
-      "color": "#FFFFFF",
-      "fontFamily": "Arial",
-      "fontSize": "16px",
-      "fontStyle": "bold",
-    },
-    "text": "LIVES: 3",
-    "type": "text",
-    "x": 550,
-    "y": 10,
-  },
-  {
-    "style": {
-      "color": "#00FF00",
-      "fontFamily": "Arial",
-      "fontSize": "16px",
-      "fontStyle": "bold",
-    },
-    "text": "LEVEL: 1",
-    "type": "text",
-    "x": 280,
-    "y": 10,
-  },
-]
-`);
+     [
+       {
+         "style": {
+           "color": "#aaaaaa",
+           "fontFamily": "Arial, sans-serif",
+           "fontSize": "14px",
+         },
+         "text": "SCORE",
+         "type": "text",
+         "x": 26,
+         "y": 20,
+       },
+       {
+         "style": {
+           "color": "#00ffaa",
+           "fontFamily": "Courier New, monospace",
+           "fontSize": "28px",
+           "fontStyle": "bold",
+           "fontWeight": "bold",
+           "letterSpacing": "3px",
+           "shadowBlur": 6,
+           "shadowColor": "#00ced1",
+           "shadowOffsetX": 0,
+           "shadowOffsetY": 0,
+         },
+         "text": "0",
+         "type": "text",
+         "x": 101,
+         "y": 20,
+       },
+       {
+         "style": {
+           "color": "#aaaaaa",
+           "fontFamily": "Arial, sans-serif",
+           "fontSize": "14px",
+         },
+         "text": "HIGH SCORE",
+         "type": "text",
+         "x": 26,
+         "y": 70,
+       },
+       {
+         "style": {
+           "color": "#00ced1",
+           "fontFamily": "Courier New, monospace",
+           "fontSize": "28px",
+           "fontStyle": "bold",
+           "fontWeight": "bold",
+           "letterSpacing": "3px",
+         },
+         "text": "0",
+         "type": "text",
+         "x": 111,
+         "y": 70,
+       },
+       {
+         "style": {
+           "color": "#aaaaaa",
+           "fontFamily": "Arial, sans-serif",
+           "fontSize": "14px",
+         },
+         "text": "LIVES",
+         "type": "text",
+         "x": 444,
+         "y": 20,
+       },
+       {
+         "style": {
+           "color": "#00ced1",
+           "fontFamily": "Arial, sans-serif",
+           "fontSize": "24px",
+           "fontStyle": "bold",
+         },
+         "text": "3",
+         "type": "text",
+         "x": 534,
+         "y": 20,
+       },
+       {
+         "style": {
+           "color": "#aaaaaa",
+           "fontFamily": "Arial, sans-serif",
+           "fontSize": "14px",
+         },
+         "text": "LVL",
+         "type": "text",
+         "x": 230,
+         "y": 20,
+       },
+       {
+         "style": {
+           "color": "#00ffaa",
+           "fontFamily": "Courier New, monospace",
+           "fontSize": "28px",
+           "fontStyle": "bold",
+           "fontWeight": "bold",
+           "letterSpacing": "3px",
+           "shadowBlur": 6,
+           "shadowColor": "#00ced1",
+           "shadowOffsetX": 0,
+           "shadowOffsetY": 0,
+         },
+         "text": "1",
+         "type": "text",
+         "x": 330,
+         "y": 20,
+       },
+     ]
+    `);
     });
 
     test('renders the ready message text', () => {
         controller.showReadyMessage();
 
         expect(renderLog).toMatchInlineSnapshot(`
-[
-  {
-    "style": {
-      "color": "#FFFFFF",
-      "fontFamily": "Arial",
-      "fontSize": "48px",
-      "fontStyle": "bold",
-    },
-    "text": "READY!",
-    "type": "text",
-    "x": 280,
-    "y": 310,
-  },
-]
-`);
+     [
+       {
+         "style": {
+           "color": "#ffffff",
+           "fontFamily": "Arial Black, Arial, sans-serif",
+           "fontSize": "64px",
+           "fontStyle": "bold",
+           "fontWeight": "900",
+           "letterSpacing": "2px",
+           "shadowBlur": 12,
+           "shadowColor": "#00ffff",
+           "shadowOffsetX": 0,
+           "shadowOffsetY": 0,
+         },
+         "text": "READY!",
+         "type": "text",
+         "x": 280,
+         "y": 310,
+       },
+     ]
+    `);
     });
 
     test('renders the level message text', () => {
@@ -129,20 +204,23 @@ describe('UIController', () => {
         controller.showLevelMessage();
 
         expect(renderLog).toMatchInlineSnapshot(`
-[
-  {
-    "style": {
-      "color": "#00FF00",
-      "fontFamily": "Arial",
-      "fontSize": "32px",
-      "fontStyle": "bold",
-    },
-    "text": "LEVEL 5",
-    "type": "text",
-    "x": 280,
-    "y": 310,
-  },
-]
-`);
+     [
+       {
+         "style": {
+           "color": "#ffffff",
+           "fontFamily": "Arial, sans-serif",
+           "fontSize": "32px",
+           "fontStyle": "bold",
+           "fontWeight": "700",
+           "letterSpacing": "1px",
+           "textTransform": "uppercase",
+         },
+         "text": "LEVEL 5",
+         "type": "text",
+         "x": 280,
+         "y": 310,
+       },
+     ]
+    `);
     });
 });

@@ -11,27 +11,32 @@
 
 import Phaser from 'phaser';
 import {
-    gameConfig,
+    animationConfig,
     directions,
     fruitConfig,
-    animationConfig,
+    gameConfig,
     physicsConfig
 } from '../config/gameConfig.js';
-import { createMazeData } from '../utils/MazeLayout.js';
+import { themeConfig } from '../config/themeConfig.js';
+import { GameController } from '../controllers/ActionRouter.js'; // Phase 6: Clean Controller
+import { GAME_EVENTS, gameEvents } from '../core/EventBus.js';
+import GameModel from '../core/GameModel.js';
+import {
+    AIInputAdapter,
+    InputManager,
+    KeyboardAdapter
+} from '../input/index.js'; // Phase 5: Input System
 import { StorageManager } from '../managers/StorageManager.js';
-import { UIController } from './systems/UIController.js';
-import { LevelManager } from './systems/LevelManager.js';
 import { AchievementSystem } from '../systems/AchievementSystem.js';
 import { DebugOverlay } from '../systems/DebugOverlay.js';
-import { ReplaySystem } from '../systems/ReplaySystem.js';
-import { PacmanAI } from '../systems/PacmanAI.js';
 import { FixedTimeStepLoop } from '../systems/FixedTimeStepLoop.js';
-import { gameEvents, GAME_EVENTS } from '../core/EventBus.js';
+import { PlayerAI } from '../systems/PlayerAI.js';
+import { ReplaySystem } from '../systems/ReplaySystem.js';
+import { createMazeData } from '../utils/MazeLayout.js';
 import { normalizeDeltaSeconds } from '../utils/Time.js';
-import GameModel from '../core/GameModel.js';
-import { GameController } from '../controllers/ActionRouter.js'; // Phase 6: Clean Controller
-import { InputManager, KeyboardAdapter, AIInputAdapter } from '../input/index.js'; // Phase 5: Input System
 import ModelDrivenGameView from '../views/ModelDrivenGameView.js';
+import { LevelManager } from './systems/LevelManager.js';
+import { UIController } from './systems/UIController.js';
 
 export default class ModelDrivenGameScene extends Phaser.Scene {
     constructor() {
@@ -66,6 +71,9 @@ export default class ModelDrivenGameScene extends Phaser.Scene {
     }
 
     create() {
+        // Set camera background color from theme
+        this.cameras.main.setBackgroundColor(themeConfig.colors.background);
+
         // Create maze data
         const levelData = createMazeData();
         this.gameModel.maze = levelData.maze;
@@ -90,7 +98,10 @@ export default class ModelDrivenGameScene extends Phaser.Scene {
 
         // Phase 5 & 6: Setup InputManager and clean GameController
         this.inputManager = new InputManager();
-        this.inputManager.registerAdapter('keyboard', new KeyboardAdapter(this.input));
+        this.inputManager.registerAdapter(
+            'keyboard',
+            new KeyboardAdapter(this.input)
+        );
 
         // Setup AI adapter for demo mode
         this.aiAdapter = new AIInputAdapter();
@@ -98,7 +109,9 @@ export default class ModelDrivenGameScene extends Phaser.Scene {
         this.inputManager.registerAdapter('ai', this.aiAdapter);
 
         // Set active adapter based on mode
-        this.inputManager.setActiveAdapter(this.sys.game.isDemo ? 'ai' : 'keyboard');
+        this.inputManager.setActiveAdapter(
+            this.sys.game.isDemo ? 'ai' : 'keyboard'
+        );
 
         // Phase 6: Setup clean GameController (no scene reference)
         this.gameController = new GameController({
@@ -138,21 +151,23 @@ export default class ModelDrivenGameScene extends Phaser.Scene {
     }
 
     /**
-     * Count pellets in grid
-     */
+	 * Count pellets in grid
+	 */
     countPellets(pelletGrid) {
         let count = 0;
         for (const row of pelletGrid) {
             for (const cell of row) {
-                if (cell !== 0) {count++;}
+                if (cell !== 0) {
+                    count++;
+                }
             }
         }
         return count;
     }
 
     /**
-     * Setup touch controls for mobile
-     */
+	 * Setup touch controls for mobile
+	 */
     setupTouchControls() {
         let startX = 0;
         let startY = 0;
@@ -188,9 +203,9 @@ export default class ModelDrivenGameScene extends Phaser.Scene {
     }
 
     /**
-     * Main Phaser update loop
-     * Handles input, syncs view to model, updates UI
-     */
+	 * Main Phaser update loop
+	 * Handles input, syncs view to model, updates UI
+	 */
     update(time, delta) {
         if (this.gameModel.isPaused || this.gameModel.isGameOver) {
             return;
@@ -228,8 +243,8 @@ export default class ModelDrivenGameScene extends Phaser.Scene {
             this.debugOverlay.updateDebugInfo({
                 'Frame dt': `${deltaInSeconds.toFixed(4)}s`,
                 'Fixed dt': `${physicsConfig.FIXED_DT.toFixed(4)}s`,
-                'Steps': this.fixedTimeStepLoop.getLastStepCount(),
-                'Accumulator': `${this.fixedTimeStepLoop.getAccumulator().toFixed(4)}s`,
+                Steps: this.fixedTimeStepLoop.getLastStepCount(),
+                Accumulator: `${this.fixedTimeStepLoop.getAccumulator().toFixed(4)}s`,
                 'Model update ms': `${stats.updateTime.toFixed(2)}ms`,
                 'Tick count': stats.tickCount,
                 'Pellets remaining': this.gameModel.pelletsRemaining,
@@ -239,9 +254,9 @@ export default class ModelDrivenGameScene extends Phaser.Scene {
     }
 
     /**
-     * Fixed timestep update - runs at 60 Hz
-     * All game logic happens here via model.step()
-     */
+	 * Fixed timestep update - runs at 60 Hz
+	 * All game logic happens here via model.step()
+	 */
     fixedUpdate() {
         const deltaSeconds = physicsConfig.FIXED_DT;
 
@@ -250,7 +265,9 @@ export default class ModelDrivenGameScene extends Phaser.Scene {
 
         // Debug logging for death sequence
         if (this.gameModel.isDying) {
-            console.log(`Death: timer=${this.gameModel.deathTimer.toFixed(3)}/${this.gameModel.deathPauseDuration}, isDeathSequence=${this.isDeathSequence}`);
+            console.log(
+                `Death: timer=${this.gameModel.deathTimer.toFixed(3)}/${this.gameModel.deathPauseDuration}, isDeathSequence=${this.isDeathSequence}`
+            );
         }
 
         // Process events for achievements
@@ -258,7 +275,10 @@ export default class ModelDrivenGameScene extends Phaser.Scene {
             this.achievementSystem.check(this.gameModel);
 
             // Handle fruit spawn
-            if (event.type === 'pellet_eaten' || event.type === 'power_pellet_eaten') {
+            if (
+                event.type === 'pellet_eaten' ||
+				event.type === 'power_pellet_eaten'
+            ) {
                 this.checkFruitSpawn();
             }
 
@@ -280,8 +300,8 @@ export default class ModelDrivenGameScene extends Phaser.Scene {
     }
 
     /**
-     * Check if fruit should spawn
-     */
+	 * Check if fruit should spawn
+	 */
     checkFruitSpawn() {
         if (this.gameModel.shouldSpawnFruit() && !this.gameModel.fruit.active) {
             this.gameModel.fruit.activate(this.gameModel.level);
@@ -289,8 +309,8 @@ export default class ModelDrivenGameScene extends Phaser.Scene {
     }
 
     /**
-     * Setup event listeners
-     */
+	 * Setup event listeners
+	 */
     setupEventListeners() {
         // Achievement notifications
         gameEvents.on(GAME_EVENTS.ACHIEVEMENT_UNLOCKED, (achievement) => {
@@ -336,16 +356,16 @@ export default class ModelDrivenGameScene extends Phaser.Scene {
     }
 
     /**
-     * Resume from pause
-     */
+	 * Resume from pause
+	 */
     resume() {
         this.gameModel.setPaused(false);
         this.gameView.resumeAudio();
     }
 
     /**
-     * Cleanup resources
-     */
+	 * Cleanup resources
+	 */
     cleanup() {
         if (this.uiController) {
             this.uiController.cleanup();

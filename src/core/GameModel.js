@@ -4,38 +4,49 @@
  * Pure data model - NO Phaser dependencies.
  *
  * Phase 3 Refactor: Merged GameState into GameModel
- * - Owns entity states (PacmanState, GhostState, FruitState)
+ * - Owns entity states (PlayerState, EnemyState, FruitState)
  * - Owns world state (maze, pelletGrid)
  * - Runs complete game loop (update + collision)
  * - Emits events via EventBus
  */
 
-import { gameEvents, GAME_EVENTS } from './EventBus.js';
-import { PacmanState } from '../model/entities/PacmanState.js';
-import { GhostState } from '../model/entities/GhostState.js';
-import { FruitState } from '../model/entities/FruitState.js';
-import { ModelCollisionSystem } from '../model/systems/ModelCollisionSystem.js';
-import { MovementAdapter, CollisionAdapter, GhostAIAdapter } from '../model/adapters/index.js';
 import {
-    gameConfig,
-    ghostStartPositions,
-    pacmanStartPosition,
     directions,
-    fruitConfig
+    enemyStartPositions,
+    fruitConfig,
+    playerStartPosition
 } from '../config/gameConfig.js';
-import { createMazeData, countPellets, PELLET_TYPES } from '../utils/MazeLayout.js';
+import {
+    CollisionAdapter,
+    EnemyAIAdapter,
+    MovementAdapter
+} from '../model/adapters/index.js';
+import { EnemyState } from '../model/entities/EnemyState.js';
+import { FruitState } from '../model/entities/FruitState.js';
+import { PlayerState } from '../model/entities/PlayerState.js';
+import { ModelCollisionSystem } from '../model/systems/ModelCollisionSystem.js';
+import AdditionalPowerUpSystem from '../systems/AdditionalPowerUpSystem.js';
+import BossBattleSystem from '../systems/BossBattleSystem.js';
+import StoryMode from '../systems/StoryMode.js';
+import MazeGenerator from '../utils/MazeGenerator.js';
+import {
+    countPellets,
+    createMazeData,
+    PELLET_TYPES
+} from '../utils/MazeLayout.js';
+import { GAME_EVENTS, gameEvents } from './EventBus.js';
 
 export default class GameModel {
     /**
-     * @param {Object} config - Game configuration
-     * @param {number} config.level - Starting level
-     * @param {number} config.score - Initial score
-     * @param {number} config.lives - Initial lives
-     * @param {number} config.highScore - High score
-     * @param {Array<Array<number>>} config.maze - Optional maze override
-     * @param {Array<Array<number>>} config.pelletGrid - Optional pellet grid override
-     * @param {boolean} config.useDecoupledSystems - Use new decoupled movement/collision
-     */
+	 * @param {Object} config - Game configuration
+	 * @param {number} config.level - Starting level
+	 * @param {number} config.score - Initial score
+	 * @param {number} config.lives - Initial lives
+	 * @param {number} config.highScore - High score
+	 * @param {Array<Array<number>>} config.maze - Optional maze override
+	 * @param {Array<Array<number>>} config.pelletGrid - Optional pellet grid override
+	 * @param {boolean} config.useDecoupledSystems - Use new decoupled movement/collision
+	 */
     constructor(config = {}) {
         // Level and configuration
         this.level = config.level || 1;
@@ -45,9 +56,10 @@ export default class GameModel {
         this.useDecoupledSystems = config.useDecoupledSystems ?? true;
 
         // World state
-        const mazeData = config.maze && config.pelletGrid
-            ? { maze: config.maze, pelletGrid: config.pelletGrid }
-            : createMazeData();
+        const mazeData =
+			config.maze && config.pelletGrid
+			    ? { maze: config.maze, pelletGrid: config.pelletGrid }
+			    : this.generateMazeForLevel(config.level || 1);
 
         this.maze = mazeData.maze;
         this.pelletGrid = mazeData.pelletGrid;
@@ -101,7 +113,7 @@ export default class GameModel {
             // Use new decoupled systems
             this.movementAdapter = new MovementAdapter(this);
             this.collisionAdapter = new CollisionAdapter(this);
-            this.ghostAIAdapter = new GhostAIAdapter(this);
+            this.ghostAIAdapter = new EnemyAIAdapter(this);
             this.collisionSystem = null; // Not used in decoupled mode
         } else {
             // Use legacy systems
@@ -111,70 +123,106 @@ export default class GameModel {
             this.collisionSystem = new ModelCollisionSystem(this);
         }
 
+        this.bossBattleSystem = new BossBattleSystem(this);
+
+        this.additionalPowerUpSystem = new AdditionalPowerUpSystem(this);
+
+        this.storyMode = new StoryMode(this);
+
         // Profiling
         this.lastUpdateTime = 0;
         this.updateCount = 0;
     }
 
     /**
-     * Backward compatibility: state property
-     * Returns 'this' to support old pattern gameModel.state.score
-     * @deprecated Access properties directly: gameModel.score
-     */
+	 * Backward compatibility: state property
+	 * Returns 'this' to support old pattern gameModel.state.score
+	 * @deprecated Access properties directly: gameModel.score
+	 */
     get state() {
         return this;
     }
 
     /**
-     * Create Pacman entity
-     * @returns {PacmanState}
-     */
+	 * Create Player entity
+	 * @returns {PlayerState}
+	 */
     createPacman() {
-        return new PacmanState(
-            pacmanStartPosition.x,
-            pacmanStartPosition.y,
+        return new PlayerState(
+            playerStartPosition.x,
+            playerStartPosition.y,
             this.level
         );
     }
 
     /**
-     * Create Ghost entities
-     * @returns {Array<GhostState>}
-     */
+	 * Create Ghost entities
+	 * @returns {Array<EnemyState>}
+	 */
     createGhosts() {
-        const ghostTypes = ['blinky', 'pinky', 'inky', 'clyde'];
-        const ghosts = [];
+        const enemyTypes = ['alpha', 'beta', 'gamma', 'delta'];
+        const enemies = [];
 
-        for (const ghostType of ghostTypes) {
-            const pos = ghostStartPositions[ghostType];
+        for (const enemyType of enemyTypes) {
+            const pos = enemyStartPositions[enemyType];
             if (pos) {
-                ghosts.push(new GhostState(pos.x, pos.y, ghostType, this.level));
+                enemies.push(new EnemyState(pos.x, pos.y, enemyType, this.level));
             }
         }
 
-        return ghosts;
+        return enemies;
     }
 
     /**
-     * Create Fruit entity
-     * @returns {FruitState}
-     */
+	 * Create Fruit entity
+	 * @returns {FruitState}
+	 */
     createFruit() {
         return new FruitState();
     }
 
     /**
-     * Set level configuration
-     * @param {Object} levelConfig
-     */
+	 * Generate maze for specific level using MazeGenerator
+	 * @param {number} level - Level number
+	 * @returns {Object} - { maze, pelletGrid }
+	 */
+    generateMazeForLevel(level) {
+        const mazeData = MazeGenerator.generate({
+            width: 25,
+            height: 33,
+            pathDensity: 0.6 + level * 0.05,
+            deadEndFactor: 0.4 - level * 0.02,
+            symmetry: level % 2 === 0 ? 'horizontal' : 'vertical',
+            cellularAutomataIterations: 0,
+            seed: Date.now() + level * 1000
+        });
+
+        return {
+            maze: mazeData.maze,
+            pelletGrid: mazeData.pelletGrid
+        };
+    }
+
+    /**
+	 * Set level configuration
+	 * @param {Object} levelConfig
+	 */
     setLevelConfig(levelConfig) {
         this.levelConfig = levelConfig;
     }
 
     /**
-     * Set input direction for next update
-     * @param {Object} direction - Direction from directions enum
-     */
+	 * Start level - handle story chapter
+	 * @param {number} level - Level to start
+	 */
+    startLevel(level) {
+        this.storyMode.startLevel(level);
+    }
+
+    /**
+	 * Set input direction for next update
+	 * @param {Object} direction - Direction from directions enum
+	 */
     setInputDirection(direction) {
         if (direction && direction !== directions.NONE) {
             this.inputDirection = direction;
@@ -182,11 +230,11 @@ export default class GameModel {
     }
 
     /**
-     * Main game step - runs simulation for one frame
-     * @param {number} deltaSeconds - Time since last frame
-     * @param {Object} input - Optional input override
-     * @returns {Array<Object>} - Events generated this frame
-     */
+	 * Main game step - runs simulation for one frame
+	 * @param {number} deltaSeconds - Time since last frame
+	 * @param {Object} input - Optional input override
+	 * @returns {Array<Object>} - Events generated this frame
+	 */
     step(deltaSeconds, input = null) {
         const startTime = performance.now();
         const events = [];
@@ -225,7 +273,7 @@ export default class GameModel {
                 deltaSeconds,
                 this.maze,
                 null, // Input already handled by adapter
-                true  // useDecoupledSystems
+                true // useDecoupledSystems
             );
             events.push(...pacmanStateEvents);
 
@@ -234,14 +282,17 @@ export default class GameModel {
 
             // Update ghosts movement and state
             for (const ghost of this.ghosts) {
-                const ghostMoveEvents = this.movementAdapter.updateGhost(ghost, deltaSeconds);
+                const ghostMoveEvents = this.movementAdapter.updateGhost(
+                    ghost,
+                    deltaSeconds
+                );
                 events.push(...ghostMoveEvents);
 
                 const ghostStateEvents = ghost.update(
                     deltaSeconds,
                     this.maze,
                     this.pacman,
-                    true  // useDecoupledSystems
+                    true // useDecoupledSystems
                 );
                 events.push(...ghostStateEvents);
             }
@@ -251,8 +302,10 @@ export default class GameModel {
             events.push(...fruitEvents);
 
             // Clear consumed direction if it was applied
-            if (this.pacman.direction !== directions.NONE &&
-                this.desiredDirection === this.pacman.direction) {
+            if (
+                this.pacman.direction !== directions.NONE &&
+				this.desiredDirection === this.pacman.direction
+            ) {
                 this.desiredDirection = null;
                 this.inputDirection = null;
             }
@@ -268,12 +321,22 @@ export default class GameModel {
         } else {
             // Use legacy systems
             // Update Pacman
-            const pacmanEvents = this.pacman.update(deltaSeconds, this.maze, this.desiredDirection, false);
+            const pacmanEvents = this.pacman.update(
+                deltaSeconds,
+                this.maze,
+                this.desiredDirection,
+                false
+            );
             events.push(...pacmanEvents);
 
             // Update ghosts
             for (const ghost of this.ghosts) {
-                const ghostEvents = ghost.update(deltaSeconds, this.maze, this.pacman, false);
+                const ghostEvents = ghost.update(
+                    deltaSeconds,
+                    this.maze,
+                    this.pacman,
+                    false
+                );
                 events.push(...ghostEvents);
             }
 
@@ -282,8 +345,10 @@ export default class GameModel {
             events.push(...fruitEvents);
 
             // Clear consumed direction if it was applied
-            if (this.pacman.direction !== directions.NONE &&
-                this.desiredDirection === this.pacman.direction) {
+            if (
+                this.pacman.direction !== directions.NONE &&
+				this.desiredDirection === this.pacman.direction
+            ) {
                 this.desiredDirection = null;
                 this.inputDirection = null;
             }
@@ -298,6 +363,9 @@ export default class GameModel {
             }
         }
 
+        this.bossBattleSystem.update(deltaSeconds);
+        this.additionalPowerUpSystem.update(deltaSeconds);
+
         // Profiling
         this.lastUpdateTime = performance.now() - startTime;
         this.updateCount++;
@@ -309,10 +377,10 @@ export default class GameModel {
     }
 
     /**
-     * Update death sequence timer
-     * @param {number} deltaSeconds - Time since last frame
-     * @returns {Array<Object>} - Death events
-     */
+	 * Update death sequence timer
+	 * @param {number} deltaSeconds - Time since last frame
+	 * @returns {Array<Object>} - Death events
+	 */
     updateDeathSequence(deltaSeconds) {
         const events = [];
 
@@ -341,9 +409,9 @@ export default class GameModel {
     }
 
     /**
-     * Apply effects from collision events
-     * @param {Object} event - Collision event
-     */
+	 * Apply effects from collision events
+	 * @param {Object} event - Collision event
+	 */
     applyCollisionEffect(event) {
         switch (event.type) {
         case 'pellet_eaten':
@@ -363,7 +431,10 @@ export default class GameModel {
             this.score += event.score;
             this.ghostsEaten++;
             this.currentComboGhosts++;
-            this.maxComboGhosts = Math.max(this.maxComboGhosts, this.currentComboGhosts);
+            this.maxComboGhosts = Math.max(
+                this.maxComboGhosts,
+                this.currentComboGhosts
+            );
             this.checkHighScore();
             break;
 
@@ -384,8 +455,8 @@ export default class GameModel {
     }
 
     /**
-     * Check and update high score
-     */
+	 * Check and update high score
+	 */
     checkHighScore() {
         if (this.score > this.highScore) {
             this.highScore = this.score;
@@ -393,9 +464,9 @@ export default class GameModel {
     }
 
     /**
-     * Set all ghosts to frightened mode
-     * @param {number} duration - Duration in seconds
-     */
+	 * Set all ghosts to frightened mode
+	 * @param {number} duration - Duration in seconds
+	 */
     setGhostsFrightened(duration) {
         for (const ghost of this.ghosts) {
             if (!ghost.isEaten) {
@@ -405,8 +476,8 @@ export default class GameModel {
     }
 
     /**
-     * Handle Pacman death
-     */
+	 * Handle Pacman death
+	 */
     onPacmanDeath() {
         this.isDying = true;
         this.deathTimer = 0;
@@ -415,10 +486,10 @@ export default class GameModel {
     }
 
     /**
-     * Reset positions after death
-     */
+	 * Reset positions after death
+	 */
     resetPositions() {
-        this.pacman.reset(pacmanStartPosition.x, pacmanStartPosition.y);
+        this.pacman.reset(playerStartPosition.x, playerStartPosition.y);
 
         for (const ghost of this.ghosts) {
             ghost.reset();
@@ -426,6 +497,7 @@ export default class GameModel {
 
         this.fruit.reset();
         this.currentComboGhosts = 0;
+        this.additionalPowerUpSystem.reset();
 
         if (this.useDecoupledSystems) {
             this.movementAdapter.reset();
@@ -437,14 +509,27 @@ export default class GameModel {
     }
 
     /**
-     * Advance to next level
-     */
+	 * Advance to next level
+	 */
     nextLevel() {
+        // Complete story chapter if applicable
+        this.storyMode.completeChapter();
+
         this.level++;
         this.levelComplete = false;
 
+        // Start new level's story chapter
+        this.storyMode.startLevel(this.level);
+
         // Recreate maze with fresh pellets
-        const mazeData = createMazeData();
+        const mazeData = MazeGenerator.generate({
+            width: 25,
+            height: 33,
+            seed: this.level * 12345,
+            pathDensity: 0.7,
+            symmetry: 'none',
+            cellularAutomataIterations: 0
+        });
         this.maze = mazeData.maze;
         this.pelletGrid = mazeData.pelletGrid;
         this.totalPellets = countPellets(this.pelletGrid);
@@ -455,6 +540,7 @@ export default class GameModel {
         this.ghosts = this.createGhosts();
         this.fruit = this.createFruit();
         this.currentComboGhosts = 0;
+        this.additionalPowerUpSystem.reset();
 
         if (this.useDecoupledSystems) {
             this.movementAdapter.updateMaze(this.maze);
@@ -467,9 +553,9 @@ export default class GameModel {
     }
 
     /**
-     * Emit events via EventBus for view layer
-     * @param {Array<Object>} events - Events to emit
-     */
+	 * Emit events via EventBus for view layer
+	 * @param {Array<Object>} events - Events to emit
+	 */
     emitEvents(events) {
         for (const event of events) {
             switch (event.type) {
@@ -546,7 +632,10 @@ export default class GameModel {
 
             default:
                 // Unknown event type - log for debugging
-                if (typeof process !== 'undefined' && process.env?.NODE_ENV === 'development') {
+                if (
+                    typeof process !== 'undefined' &&
+						process.env?.NODE_ENV === 'development'
+                ) {
                     console.warn('Unknown model event:', event.type);
                 }
             }
@@ -554,18 +643,18 @@ export default class GameModel {
     }
 
     /**
-     * Set paused state
-     * @param {boolean} paused
-     */
+	 * Set paused state
+	 * @param {boolean} paused
+	 */
     setPaused(paused) {
         this.isPaused = paused;
         gameEvents.emit(GAME_EVENTS.PAUSE_TOGGLED, { isPaused: paused });
     }
 
     /**
-     * Toggle paused state
-     * @returns {boolean} - New paused state
-     */
+	 * Toggle paused state
+	 * @returns {boolean} - New paused state
+	 */
     togglePaused() {
         this.isPaused = !this.isPaused;
         gameEvents.emit(GAME_EVENTS.PAUSE_TOGGLED, { isPaused: this.isPaused });
@@ -573,9 +662,9 @@ export default class GameModel {
     }
 
     /**
-     * Set game over state
-     * @param {boolean} isGameOver
-     */
+	 * Set game over state
+	 * @param {boolean} isGameOver
+	 */
     setGameOver(isGameOver) {
         this.isGameOver = isGameOver;
         if (isGameOver) {
@@ -587,37 +676,45 @@ export default class GameModel {
     }
 
     /**
-     * Get ghost by type
-     * @param {string} ghostType - Ghost type name
-     * @returns {GhostState|null}
-     */
+	 * Get ghost by type
+	 * @param {string} ghostType - Ghost type name
+	 * @returns {EnemyState|null}
+	 */
     getGhostByType(ghostType) {
-        return this.ghosts.find(g => g.ghostType === ghostType) || null;
+        return this.ghosts.find((g) => g.ghostType === ghostType) || null;
     }
 
     /**
-     * Get pellet type at position
-     * @param {number} gridX - Grid X
-     * @param {number} gridY - Grid Y
-     * @returns {number} - Pellet type
-     */
+	 * Get pellet type at position
+	 * @param {number} gridX - Grid X
+	 * @param {number} gridY - Grid Y
+	 * @returns {number} - Pellet type
+	 */
     getPelletAt(gridX, gridY) {
-        if (gridY < 0 || gridY >= this.pelletGrid.length ||
-            gridX < 0 || gridX >= this.pelletGrid[0].length) {
+        if (
+            gridY < 0 ||
+			gridY >= this.pelletGrid.length ||
+			gridX < 0 ||
+			gridX >= this.pelletGrid[0].length
+        ) {
             return PELLET_TYPES.NONE;
         }
         return this.pelletGrid[gridY][gridX];
     }
 
     /**
-     * Eat a pellet at position (called by collision system)
-     * @param {number} gridX - Grid X position
-     * @param {number} gridY - Grid Y position
-     * @returns {Object|null} - Pellet eat result or null
-     */
+	 * Eat a pellet at position (called by collision system)
+	 * @param {number} gridX - Grid X position
+	 * @param {number} gridY - Grid Y position
+	 * @returns {Object|null} - Pellet eat result or null
+	 */
     eatPelletAt(gridX, gridY) {
-        if (gridY < 0 || gridY >= this.pelletGrid.length ||
-            gridX < 0 || gridX >= this.pelletGrid[0].length) {
+        if (
+            gridY < 0 ||
+			gridY >= this.pelletGrid.length ||
+			gridX < 0 ||
+			gridX >= this.pelletGrid[0].length
+        ) {
             return null;
         }
 
@@ -632,7 +729,8 @@ export default class GameModel {
         this.pelletsRemaining--;
 
         const result = {
-            type: pelletType === PELLET_TYPES.POWER_PELLET ? 'power_pellet' : 'pellet',
+            type:
+				pelletType === PELLET_TYPES.POWER_PELLET ? 'power_pellet' : 'pellet',
             gridX,
             gridY,
             pelletsRemaining: this.pelletsRemaining
@@ -649,10 +747,10 @@ export default class GameModel {
     }
 
     /**
-     * Eat a ghost (called by collision system)
-     * @param {GhostState} ghost - Ghost to eat
-     * @returns {Object|null} - Eat result with score
-     */
+	 * Eat a ghost (called by collision system)
+	 * @param {EnemyState} ghost - Enemy to eat
+	 * @returns {Object|null} - Eat result with score
+	 */
     eatGhost(ghost) {
         if (!ghost.isFrightened || ghost.isEaten) {
             return null;
@@ -674,26 +772,30 @@ export default class GameModel {
     }
 
     /**
-     * Get percentage of pellets eaten
-     * @returns {number}
-     */
+	 * Get percentage of pellets eaten
+	 * @returns {number}
+	 */
     getPelletsEatenPercentage() {
-        if (this.totalPellets === 0) {return 0;}
-        return ((this.totalPellets - this.pelletsRemaining) / this.totalPellets) * 100;
+        if (this.totalPellets === 0) {
+            return 0;
+        }
+        return (
+            ((this.totalPellets - this.pelletsRemaining) / this.totalPellets) * 100
+        );
     }
 
     /**
-     * Check if fruit should spawn
-     * @returns {boolean}
-     */
+	 * Check if fruit should spawn
+	 * @returns {boolean}
+	 */
     shouldSpawnFruit() {
         return this.getPelletsEatenPercentage() >= fruitConfig.pelletThreshold;
     }
 
     /**
-     * Get frightened duration for current level
-     * @returns {number}
-     */
+	 * Get frightened duration for current level
+	 * @returns {number}
+	 */
     getFrightenedDuration() {
         if (!this.levelConfig) {
             return Math.max(2, 8 - (this.level - 1) * 0.5);
@@ -701,22 +803,22 @@ export default class GameModel {
         return Math.max(
             2,
             this.levelConfig.frightenedDuration -
-                (this.level - 1) * this.levelConfig.frightenedDecreasePerLevel
+				(this.level - 1) * this.levelConfig.frightenedDecreasePerLevel
         );
     }
 
     /**
-     * Get speed multiplier for current level
-     * @returns {number}
-     */
+	 * Get speed multiplier for current level
+	 * @returns {number}
+	 */
     getSpeedMultiplier() {
         return 1 + (this.level - 1) * 0.05;
     }
 
     /**
-     * Get complete state snapshot for view sync
-     * @returns {Object}
-     */
+	 * Get complete state snapshot for view sync
+	 * @returns {Object}
+	 */
     getSnapshot() {
         return {
             level: this.level,
@@ -731,40 +833,43 @@ export default class GameModel {
             totalPellets: this.totalPellets,
             pelletsEatenPercent: this.getPelletsEatenPercentage(),
             pacman: this.pacman.getSnapshot(),
-            ghosts: this.ghosts.map(g => g.getSnapshot()),
+            ghosts: this.ghosts.map((g) => g.getSnapshot()),
             fruit: this.fruit.getSnapshot(),
+            boss: this.bossBattleSystem.getSnapshot(),
+            powerUps: this.additionalPowerUpSystem.getSnapshot(),
+            story: this.storyMode.getSnapshot(),
             tickCount: this.tickCount
         };
     }
 
     /**
-     * Get level snapshot for save/load
-     * @returns {Object|null}
-     */
+	 * Get level snapshot for save/load
+	 * @returns {Object|null}
+	 */
     getLevelSnapshot() {
         return {
-            maze: this.maze.map(row => [...row]),
-            pelletGrid: this.pelletGrid.map(row => [...row])
+            maze: this.maze.map((row) => [...row]),
+            pelletGrid: this.pelletGrid.map((row) => [...row])
         };
     }
 
     /**
-     * Serialize state for save/replay
-     * @returns {Object}
-     */
+	 * Serialize state for save/replay
+	 * @returns {Object}
+	 */
     serialize() {
         return {
             level: this.level,
             score: this.score,
             lives: this.lives,
             highScore: this.highScore,
-            pelletGrid: this.pelletGrid.map(row => [...row]),
+            pelletGrid: this.pelletGrid.map((row) => [...row]),
             pacman: {
                 gridX: this.pacman.gridX,
                 gridY: this.pacman.gridY,
                 direction: this.pacman.direction
             },
-            ghosts: this.ghosts.map(g => ({
+            ghosts: this.ghosts.map((g) => ({
                 ghostType: g.ghostType,
                 gridX: g.gridX,
                 gridY: g.gridY,
@@ -777,9 +882,9 @@ export default class GameModel {
     }
 
     /**
-     * Get collision system stats for debugging
-     * @returns {Object}
-     */
+	 * Get collision system stats for debugging
+	 * @returns {Object}
+	 */
     getStats() {
         const baseStats = {
             updateTime: this.lastUpdateTime,
@@ -809,17 +914,17 @@ export default class GameModel {
     // uses the old GameModel interface from before Phase 3 refactor.
 
     /**
-     * Legacy: state property for backward compatibility
-     * Old code used gameModel.state.score, now uses gameModel.score directly
-     * This getter returns 'this' to support the old pattern
-     * @returns {GameModel} - Returns this for compatibility
-     * @deprecated Access properties directly: gameModel.score instead of gameModel.state.score
-     */
+	 * Legacy: state property for backward compatibility
+	 * Old code used gameModel.state.score, now uses gameModel.score directly
+	 * This getter returns 'this' to support the old pattern
+	 * @returns {GameModel} - Returns this for compatibility
+	 * @deprecated Access properties directly: gameModel.score instead of gameModel.state.score
+	 */
     /**
-     * Legacy: Get state snapshot in old nested format
-     * @returns {Object} - State snapshot with nested state object
-     * @deprecated Use getSnapshot() instead
-     */
+	 * Legacy: Get state snapshot in old nested format
+	 * @returns {Object} - State snapshot with nested state object
+	 * @deprecated Use getSnapshot() instead
+	 */
     getStateSnapshot() {
         return {
             score: this.score,
@@ -843,10 +948,10 @@ export default class GameModel {
     }
 
     /**
-     * Legacy: Add score and emit events
-     * @param {number} amount - Score to add
-     * @deprecated Use applyCollisionEffect() instead
-     */
+	 * Legacy: Add score and emit events
+	 * @param {number} amount - Score to add
+	 * @deprecated Use applyCollisionEffect() instead
+	 */
     addScore(amount) {
         const previousHighScore = this.highScore;
         this.score += amount;
@@ -866,11 +971,11 @@ export default class GameModel {
     }
 
     /**
-     * Legacy: Handle pellet eaten event
-     * @param {number} score - Score to add
-     * @param {number} pelletsRemaining - Pellets remaining
-     * @deprecated Use applyCollisionEffect() instead
-     */
+	 * Legacy: Handle pellet eaten event
+	 * @param {number} score - Score to add
+	 * @param {number} pelletsRemaining - Pellets remaining
+	 * @deprecated Use applyCollisionEffect() instead
+	 */
     onPelletEaten(score, pelletsRemaining) {
         this.addScore(score);
         this.pelletsEaten++;
@@ -884,11 +989,11 @@ export default class GameModel {
     }
 
     /**
-     * Legacy: Handle power pellet eaten event
-     * @param {number} score - Score to add
-     * @param {number} pelletsRemaining - Pellets remaining
-     * @deprecated Use applyCollisionEffect() instead
-     */
+	 * Legacy: Handle power pellet eaten event
+	 * @param {number} score - Score to add
+	 * @param {number} pelletsRemaining - Pellets remaining
+	 * @deprecated Use applyCollisionEffect() instead
+	 */
     onPowerPelletEaten(score, pelletsRemaining) {
         this.addScore(score);
         this.pelletsEaten++;
@@ -905,32 +1010,35 @@ export default class GameModel {
     }
 
     /**
-     * Legacy: Handle ghost eaten event
-     * @param {number} score - Score to add
-     * @deprecated Use applyCollisionEffect() instead
-     */
+	 * Legacy: Handle ghost eaten event
+	 * @param {number} score - Score to add
+	 * @deprecated Use applyCollisionEffect() instead
+	 */
     onGhostEaten(score) {
         this.addScore(score);
         this.ghostsEaten++;
         this.currentComboGhosts++;
-        this.maxComboGhosts = Math.max(this.maxComboGhosts, this.currentComboGhosts);
+        this.maxComboGhosts = Math.max(
+            this.maxComboGhosts,
+            this.currentComboGhosts
+        );
         gameEvents.emit(GAME_EVENTS.GHOST_EATEN, { score });
     }
 
     /**
-     * Legacy: Handle fruit eaten event
-     * @param {number} score - Score to add
-     * @deprecated Use applyCollisionEffect() instead
-     */
+	 * Legacy: Handle fruit eaten event
+	 * @param {number} score - Score to add
+	 * @deprecated Use applyCollisionEffect() instead
+	 */
     onFruitEaten(score) {
         this.addScore(score);
         gameEvents.emit(GAME_EVENTS.FRUIT_EATEN, { score });
     }
 
     /**
-     * Legacy: Handle level complete event
-     * @deprecated Use nextLevel() instead
-     */
+	 * Legacy: Handle level complete event
+	 * @deprecated Use nextLevel() instead
+	 */
     onLevelComplete() {
         this.level++;
         this.levelComplete = true;
@@ -938,13 +1046,16 @@ export default class GameModel {
     }
 
     /**
-     * Legacy: Apply pellet collision results
-     * @param {Object} result - Collision result
-     * @deprecated Use step() with collision detection instead
-     */
+	 * Legacy: Apply pellet collision results
+	 * @param {Object} result - Collision result
+	 * @deprecated Use step() with collision detection instead
+	 */
     applyPelletCollision({ pelletScore, powerPelletScore, pelletsConsumed }) {
         if (typeof pelletsConsumed === 'number' && pelletsConsumed > 0) {
-            this.pelletsRemaining = Math.max(0, this.pelletsRemaining - pelletsConsumed);
+            this.pelletsRemaining = Math.max(
+                0,
+                this.pelletsRemaining - pelletsConsumed
+            );
         }
 
         if (pelletScore > 0) {
@@ -961,18 +1072,18 @@ export default class GameModel {
     }
 
     /**
-     * Legacy: Begin death sequence
-     * @deprecated Use onPacmanDeath() instead
-     */
+	 * Legacy: Begin death sequence
+	 * @deprecated Use onPacmanDeath() instead
+	 */
     beginDeath() {
         this.onPacmanDeath();
     }
 
     /**
-     * Legacy: Apply ghost collision result
-     * @param {Object} result - Collision result
-     * @deprecated Use applyCollisionEffect() instead
-     */
+	 * Legacy: Apply ghost collision result
+	 * @param {Object} result - Collision result
+	 * @deprecated Use applyCollisionEffect() instead
+	 */
     applyGhostCollision(result) {
         if (!result) {
             return;
@@ -991,39 +1102,39 @@ export default class GameModel {
     }
 
     /**
-     * Legacy: Set pellet counts
-     * @param {number} totalPellets - Total pellets
-     * @deprecated Use constructor options instead
-     */
+	 * Legacy: Set pellet counts
+	 * @param {number} totalPellets - Total pellets
+	 * @deprecated Use constructor options instead
+	 */
     setPelletCounts(totalPellets) {
         this.totalPellets = totalPellets;
         this.pelletsRemaining = totalPellets;
     }
 
     /**
-     * Legacy: Decrement lives
-     * @returns {boolean} - True if game over
-     * @deprecated Death handling is now automatic in step()
-     */
+	 * Legacy: Decrement lives
+	 * @returns {boolean} - True if game over
+	 * @deprecated Death handling is now automatic in step()
+	 */
     decrementLives() {
         this.lives--;
         return this.lives <= 0;
     }
 
     /**
-     * Legacy: Set desired direction
-     * @param {Object} direction - Direction
-     * @deprecated Use setInputDirection() instead
-     */
+	 * Legacy: Set desired direction
+	 * @param {Object} direction - Direction
+	 * @deprecated Use setInputDirection() instead
+	 */
     setDesiredDirection(direction) {
         this.setInputDirection(direction);
     }
 
     /**
-     * Legacy: Consume desired direction
-     * @returns {Object} - Direction
-     * @deprecated Input is now consumed automatically in step()
-     */
+	 * Legacy: Consume desired direction
+	 * @returns {Object} - Direction
+	 * @deprecated Input is now consumed automatically in step()
+	 */
     consumeDesiredDirection() {
         const direction = this.desiredDirection;
         this.desiredDirection = null;
@@ -1031,10 +1142,10 @@ export default class GameModel {
     }
 
     /**
-     * Legacy: Get level data
-     * @returns {Object} - Level data
-     * @deprecated Use maze and pelletGrid properties directly
-     */
+	 * Legacy: Get level data
+	 * @returns {Object} - Level data
+	 * @deprecated Use maze and pelletGrid properties directly
+	 */
     getLevelData() {
         return {
             maze: this.maze,
@@ -1043,19 +1154,105 @@ export default class GameModel {
     }
 
     /**
-     * Legacy: Set level data
-     * @param {Object} data - Level data
-     * @deprecated Use constructor options instead
-     */
+	 * Legacy: Set level data
+	 * @param {Object} data - Level data
+	 * @deprecated Use constructor options instead
+	 */
     setLevelData({ maze, pelletGrid }) {
         this.maze = maze;
         this.pelletGrid = pelletGrid;
         this.totalPellets = 0;
         for (const row of pelletGrid) {
             for (const cell of row) {
-                if (cell !== 0) {this.totalPellets++;}
+                if (cell !== 0) {
+                    this.totalPellets++;
+                }
             }
         }
         this.pelletsRemaining = this.totalPellets;
+    }
+
+    spawnBoss(bossType) {
+        return this.bossBattleSystem.spawnBoss(bossType, this.level);
+    }
+
+    damageBoss(amount) {
+        return this.bossBattleSystem.damageBoss(amount);
+    }
+
+    defeatBoss() {
+        this.bossBattleSystem.defeatBoss();
+    }
+
+    isBossBattleActive() {
+        return this.bossBattleSystem.isBossBattleActive();
+    }
+
+    getBossHealth() {
+        return this.bossBattleSystem.getBossHealth();
+    }
+
+    getBossMaxHealth() {
+        return this.bossBattleSystem.getBossMaxHealth();
+    }
+
+    getBossPhase() {
+        return this.bossBattleSystem.getBossPhase();
+    }
+
+    getBossType() {
+        return this.bossBattleSystem.getBossType();
+    }
+
+    getBossEntity() {
+        return this.bossBattleSystem.getBossEntity();
+    }
+
+    shouldSpawnBoss() {
+        return this.bossBattleSystem.shouldSpawnBoss(this.level);
+    }
+
+    getBossTypeForLevel() {
+        return this.bossBattleSystem.getBossTypeForLevel(this.level);
+    }
+
+    spawnPowerUp(type, x, y) {
+        return this.additionalPowerUpSystem.spawnPowerUp(type, x, y);
+    }
+
+    collectPowerUp(powerUp) {
+        return this.additionalPowerUpSystem.collectPowerUp(powerUp);
+    }
+
+    shouldSpawnPowerUp(pelletsCollected) {
+        return this.additionalPowerUpSystem.shouldSpawnPowerUp(pelletsCollected);
+    }
+
+    hasActivePowerUp(type) {
+        return this.additionalPowerUpSystem.hasActivePowerUp(type);
+    }
+
+    getRemainingPowerUpTime(type) {
+        return this.additionalPowerUpSystem.getRemainingTime(type);
+    }
+
+    getActivePowerUps() {
+        return this.additionalPowerUpSystem.getActivePowerUps();
+    }
+
+    getSpawnedPowerUps() {
+        return this.additionalPowerUpSystem.getSpawnedPowerUps();
+    }
+
+    getCurrentChapter() {
+        return this.storyMode.getCurrentChapter();
+    }
+
+    getChapterProgress() {
+        return this.storyMode.getChapterProgress();
+    }
+
+    completeChapter() {
+        return this.storyMode.completeChapter();
     }
 }

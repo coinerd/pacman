@@ -1,9 +1,9 @@
-import Pacman from '../../src/entities/Pacman.js';
-import Ghost from '../../src/entities/Ghost.js';
 import { directions, gameConfig } from '../../src/config/gameConfig.js';
+import Enemy from '../../src/entities/Enemy.js';
+import Pacman from '../../src/entities/Pacman.js';
 import { TILE_TYPES } from '../../src/utils/MazeLayout.js';
 import { msToSeconds } from '../../src/utils/Time.js';
-import { createMockScene, createMockMaze } from '../utils/testHelpers.js';
+import { createMockMaze, createMockScene } from '../utils/testHelpers.js';
 
 /**
  * Fuzz Testing for Movement System
@@ -25,54 +25,75 @@ describe('Movement Fuzz Tests', () => {
             const pacman = new Pacman(mockScene, 3, 3);
             const positions = [];
             const frameCount = 1000;
-            const directionsArray = [directions.UP, directions.DOWN, directions.LEFT, directions.RIGHT, directions.NONE];
+            const directionsArray = [
+                directions.UP,
+                directions.DOWN,
+                directions.LEFT,
+                directions.RIGHT,
+                directions.NONE
+            ];
 
             for (let i = 0; i < frameCount; i++) {
-                const randomDir = directionsArray[Math.floor(Math.random() * directionsArray.length)];
+                const randomDir =
+					directionsArray[Math.floor(Math.random() * directionsArray.length)];
                 pacman.setDirection(randomDir);
                 pacman.update(msToSeconds(16.67), mockMaze);
 
                 positions.push({ x: pacman.x, y: pacman.y });
             }
 
-            positions.forEach(pos => {
+            positions.forEach((pos) => {
                 expect(Number.isFinite(pos.x)).toBe(true);
                 expect(Number.isFinite(pos.y)).toBe(true);
             });
 
-            positions.forEach(pos => {
+            positions.forEach((pos) => {
                 expect(pos.x).toBeGreaterThanOrEqual(-gameConfig.tileSize);
-                expect(pos.x).toBeLessThanOrEqual(gameConfig.mazeWidth * gameConfig.tileSize + gameConfig.tileSize);
+                expect(pos.x).toBeLessThanOrEqual(
+                    gameConfig.mazeWidth * gameConfig.tileSize + gameConfig.tileSize
+                );
                 expect(pos.y).toBeGreaterThanOrEqual(0);
-                expect(pos.y).toBeLessThanOrEqual(gameConfig.mazeHeight * gameConfig.tileSize);
+                expect(pos.y).toBeLessThanOrEqual(
+                    gameConfig.mazeHeight * gameConfig.tileSize
+                );
             });
         });
 
-        test('Ghost random direction changes maintain consistency', () => {
+        test('Enemy random direction changes maintain consistency', () => {
             const pacman = new Pacman(mockScene, 3, 3);
-            const ghost = new Ghost(mockScene, 5, 5, 'blinky', 0xFF0000);
+            const enemy = new Enemy(mockScene, 5, 5, 'blinky', 0xff0000);
             const positions = [];
             const frameCount = 1000;
-            const directionsArray = [directions.UP, directions.DOWN, directions.LEFT, directions.RIGHT];
+            const directionsArray = [
+                directions.UP,
+                directions.DOWN,
+                directions.LEFT,
+                directions.RIGHT
+            ];
 
             for (let i = 0; i < frameCount; i++) {
-                const randomDir = directionsArray[Math.floor(Math.random() * directionsArray.length)];
-                ghost.direction = randomDir;
-                ghost.update(msToSeconds(16.67), mockMaze, pacman);
+                const randomDir =
+					directionsArray[Math.floor(Math.random() * directionsArray.length)];
+                enemy.direction = randomDir;
+                enemy.update(msToSeconds(16.67), mockMaze, pacman);
 
-                positions.push({ x: ghost.x, y: ghost.y });
+                positions.push({ x: enemy.x, y: enemy.y });
             }
 
-            positions.forEach(pos => {
+            positions.forEach((pos) => {
                 expect(Number.isFinite(pos.x)).toBe(true);
                 expect(Number.isFinite(pos.y)).toBe(true);
             });
 
-            positions.forEach(pos => {
+            positions.forEach((pos) => {
                 expect(pos.x).toBeGreaterThanOrEqual(-gameConfig.tileSize);
-                expect(pos.x).toBeLessThanOrEqual(gameConfig.mazeWidth * gameConfig.tileSize + gameConfig.tileSize);
+                expect(pos.x).toBeLessThanOrEqual(
+                    gameConfig.mazeWidth * gameConfig.tileSize + gameConfig.tileSize
+                );
                 expect(pos.y).toBeGreaterThanOrEqual(0);
-                expect(pos.y).toBeLessThanOrEqual(gameConfig.mazeHeight * gameConfig.tileSize);
+                expect(pos.y).toBeLessThanOrEqual(
+                    gameConfig.mazeHeight * gameConfig.tileSize
+                );
             });
         });
     });
@@ -83,7 +104,7 @@ describe('Movement Fuzz Tests', () => {
             const originalSpeed = pacman.speed;
 
             for (let i = 0; i < 500; i++) {
-                pacman.speed = Math.random() * 300 + 50; ;
+                pacman.speed = Math.random() * 300 + 50;
                 pacman.setDirection(directions.RIGHT);
                 pacman.update(msToSeconds(16.67), mockMaze);
 
@@ -91,19 +112,19 @@ describe('Movement Fuzz Tests', () => {
                 expect(Number.isFinite(pacman.y)).toBe(true);
             }
 
-            pacman.speed = originalSpeed; ;
+            pacman.speed = originalSpeed;
         });
 
         test('High speed does not break collision detection', () => {
             const pacman = new Pacman(mockScene, 3, 3);
-            const ghost = new Ghost(mockScene, 10, 3, 'blinky', 0xFF0000);
+            const enemy = new Enemy(mockScene, 10, 3, 'blinky', 0xff0000);
 
-            ghost.speed = 400; ;
+            enemy.speed = 400;
 
             expect(() => {
                 for (let i = 0; i < 100; i++) {
                     pacman.update(msToSeconds(16.67), mockMaze);
-                    ghost.update(msToSeconds(16.67), mockMaze, pacman);
+                    enemy.update(msToSeconds(16.67), mockMaze, pacman);
                 }
             }).not.toThrow();
         });
@@ -134,7 +155,8 @@ describe('Movement Fuzz Tests', () => {
             }
 
             for (let i = 0; i < 100; i++) {
-                const randomTile = validTiles[Math.floor(Math.random() * validTiles.length)];
+                const randomTile =
+					validTiles[Math.floor(Math.random() * validTiles.length)];
                 const pacman = new Pacman(mockScene, randomTile.x, randomTile.y);
 
                 expect(pacman.gridX).toBe(randomTile.x);
@@ -144,7 +166,7 @@ describe('Movement Fuzz Tests', () => {
             }
         });
 
-        test('Ghost spawn at random positions works correctly', () => {
+        test('Enemy spawn at random positions works correctly', () => {
             const validTiles = [];
             for (let y = 1; y < mockMaze.length - 1; y++) {
                 for (let x = 1; x < mockMaze[0].length - 1; x++) {
@@ -155,13 +177,20 @@ describe('Movement Fuzz Tests', () => {
             }
 
             for (let i = 0; i < 100; i++) {
-                const randomTile = validTiles[Math.floor(Math.random() * validTiles.length)];
-                const ghost = new Ghost(mockScene, randomTile.x, randomTile.y, 'blinky', 0xFF0000);
+                const randomTile =
+					validTiles[Math.floor(Math.random() * validTiles.length)];
+                const enemy = new Enemy(
+                    mockScene,
+                    randomTile.x,
+                    randomTile.y,
+                    'blinky',
+                    0xff0000
+                );
 
-                expect(ghost.gridX).toBe(randomTile.x);
-                expect(ghost.gridY).toBe(randomTile.y);
-                expect(ghost.x).toBeGreaterThan(0);
-                expect(ghost.y).toBeGreaterThan(0);
+                expect(enemy.gridX).toBe(randomTile.x);
+                expect(enemy.gridY).toBe(randomTile.y);
+                expect(enemy.x).toBeGreaterThan(0);
+                expect(enemy.y).toBeGreaterThan(0);
             }
         });
     });
@@ -169,9 +198,9 @@ describe('Movement Fuzz Tests', () => {
     describe('Long-Running Movement Simulations', () => {
         test('1000+ frames of movement without errors', () => {
             const pacman = new Pacman(mockScene, 3, 3);
-            const ghosts = [
-                new Ghost(mockScene, 5, 3, 'blinky', 0xFF0000),
-                new Ghost(mockScene, 3, 5, 'pinky', 0xFFB8FF)
+            const enemys = [
+                new Enemy(mockScene, 5, 3, 'blinky', 0xff0000),
+                new Enemy(mockScene, 3, 5, 'pinky', 0xffb8ff)
             ];
 
             const frameCount = 2000;
@@ -180,24 +209,23 @@ describe('Movement Fuzz Tests', () => {
             expect(() => {
                 for (let i = 0; i < frameCount; i++) {
                     pacman.update(msToSeconds(16.67), mockMaze);
-                    ghosts.forEach(g => g.update(msToSeconds(16.67), mockMaze, pacman));
+                    enemys.forEach((g) => g.update(msToSeconds(16.67), mockMaze, pacman));
 
                     positions.push({
                         pacman: { x: pacman.x, y: pacman.y },
-                        ghost1: { x: ghosts[0].x, y: ghosts[0].y },
-                        ghost2: { x: ghosts[1].x, y: ghosts[1].y }
+                        enemy1: { x: enemys[0].x, y: enemys[0].y },
+                        enemy2: { x: enemys[1].x, y: enemys[1].y }
                     });
                 }
             }).not.toThrow();
 
-            ;
-            positions.forEach(p => {
+            positions.forEach((p) => {
                 expect(Number.isFinite(p.pacman.x)).toBe(true);
                 expect(Number.isFinite(p.pacman.y)).toBe(true);
-                expect(Number.isFinite(p.ghost1.x)).toBe(true);
-                expect(Number.isFinite(p.ghost1.y)).toBe(true);
-                expect(Number.isFinite(p.ghost2.x)).toBe(true);
-                expect(Number.isFinite(p.ghost2.y)).toBe(true);
+                expect(Number.isFinite(p.enemy1.x)).toBe(true);
+                expect(Number.isFinite(p.enemy1.y)).toBe(true);
+                expect(Number.isFinite(p.enemy2.x)).toBe(true);
+                expect(Number.isFinite(p.enemy2.y)).toBe(true);
             });
         });
 
@@ -210,13 +238,15 @@ describe('Movement Fuzz Tests', () => {
 
             for (let i = 0; i < frameCount; i++) {
                 pacman.update(msToSeconds(16.67), mockMaze);
-
-                ;
                 const gridX = Math.floor(pacman.x / gameConfig.tileSize);
                 const gridY = Math.floor(pacman.y / gameConfig.tileSize);
 
-                if (gridX >= 0 && gridX < mockMaze[0].length &&
-                    gridY >= 0 && gridY < mockMaze.length) {
+                if (
+                    gridX >= 0 &&
+					gridX < mockMaze[0].length &&
+					gridY >= 0 &&
+					gridY < mockMaze.length
+                ) {
                     if (mockMaze[gridY][gridX] === TILE_TYPES.WALL) {
                         stuckInWall = true;
                         break;
@@ -246,11 +276,17 @@ describe('Movement Fuzz Tests', () => {
     describe('Performance Fuzz Tests', () => {
         test('High entity count maintains acceptable performance', () => {
             const pacman = new Pacman(mockScene, 3, 3);
-            const ghosts = [];
-
-            ;
+            const enemys = [];
             for (let i = 0; i < 20; i++) {
-                ghosts.push(new Ghost(mockScene, 5 + (i % 5), 5 + Math.floor(i / 5), `ghost${i}`, 0xFF0000));
+                enemys.push(
+                    new Enemy(
+                        mockScene,
+                        5 + (i % 5),
+                        5 + Math.floor(i / 5),
+                        `enemy${i}`,
+                        0xff0000
+                    )
+                );
             }
 
             const startTime = Date.now();
@@ -258,34 +294,30 @@ describe('Movement Fuzz Tests', () => {
 
             for (let i = 0; i < frameCount; i++) {
                 pacman.update(msToSeconds(16.67), mockMaze);
-                ghosts.forEach(g => g.update(msToSeconds(16.67), mockMaze, pacman));
+                enemys.forEach((g) => g.update(msToSeconds(16.67), mockMaze, pacman));
             }
 
             const elapsedTime = Date.now() - startTime;
             const avgTimePerFrame = elapsedTime / frameCount;
 
-            ;
             expect(avgTimePerFrame).toBeLessThan(10);
         });
 
         test('Memory does not leak during long simulation', () => {
             const pacman = new Pacman(mockScene, 3, 3);
-            const ghosts = [
-                new Ghost(mockScene, 5, 3, 'blinky', 0xFF0000),
-                new Ghost(mockScene, 3, 5, 'pinky', 0xFFB8FF),
-                new Ghost(mockScene, 5, 5, 'inky', 0x00FFFF)
+            const enemys = [
+                new Enemy(mockScene, 5, 3, 'blinky', 0xff0000),
+                new Enemy(mockScene, 3, 5, 'pinky', 0xffb8ff),
+                new Enemy(mockScene, 5, 5, 'inky', 0x00ffff)
             ];
 
-            const initialPositionsCount = 0; ;
-
-            ;
+            const initialPositionsCount = 0;
             for (let i = 0; i < 5000; i++) {
                 pacman.update(msToSeconds(16.67), mockMaze);
-                ghosts.forEach(g => g.update(msToSeconds(16.67), mockMaze, pacman));
+                enemys.forEach((g) => g.update(msToSeconds(16.67), mockMaze, pacman));
             }
-
-            ;
             // In a real scenario, we'd track memory usage
+
             expect(true).toBe(true);
         });
     });
@@ -293,12 +325,18 @@ describe('Movement Fuzz Tests', () => {
     describe('Stress Test: Edge Cases', () => {
         test('Rapid direction changes do not crash', () => {
             const pacman = new Pacman(mockScene, 3, 3);
-            const directionsArray = [directions.UP, directions.DOWN, directions.LEFT, directions.RIGHT];
+            const directionsArray = [
+                directions.UP,
+                directions.DOWN,
+                directions.LEFT,
+                directions.RIGHT
+            ];
 
             for (let i = 0; i < 1000; i++) {
-                const randomDir = directionsArray[Math.floor(Math.random() * directionsArray.length)];
+                const randomDir =
+					directionsArray[Math.floor(Math.random() * directionsArray.length)];
                 pacman.setDirection(randomDir);
-                pacman.update(msToSeconds(1), mockMaze); ;
+                pacman.update(msToSeconds(1), mockMaze);
             }
 
             expect(Number.isFinite(pacman.x)).toBe(true);
@@ -309,9 +347,9 @@ describe('Movement Fuzz Tests', () => {
             const pacman = new Pacman(mockScene, 3, 3);
             pacman.setDirection(directions.RIGHT);
 
-            const deltas = [1, 16.67, 33.33, 100, 200]; ;
+            const deltas = [1, 16.67, 33.33, 100, 200];
 
-            deltas.forEach(delta => {
+            deltas.forEach((delta) => {
                 pacman.update(delta, mockMaze);
                 expect(Number.isFinite(pacman.x)).toBe(true);
                 expect(Number.isFinite(pacman.y)).toBe(true);
@@ -320,19 +358,25 @@ describe('Movement Fuzz Tests', () => {
 
         test('Multiple entities change state simultaneously', () => {
             const pacman = new Pacman(mockScene, 3, 3);
-            const ghosts = Array.from({ length: 10 }, (_, i) =>
-                new Ghost(mockScene, 5 + (i % 3), 5 + Math.floor(i / 3), `ghost${i}`, 0xFF0000)
+            const enemys = Array.from(
+                { length: 10 },
+                (_, i) =>
+                    new Enemy(
+                        mockScene,
+                        5 + (i % 3),
+                        5 + Math.floor(i / 3),
+                        `enemy${i}`,
+                        0xff0000
+                    )
             );
-
-            ;
             for (let i = 0; i < 500; i++) {
-                ghosts.forEach(g => {
+                enemys.forEach((g) => {
                     g.isFrightened = Math.random() > 0.5;
                     g.isEaten = Math.random() > 0.9;
                 });
 
                 pacman.update(msToSeconds(16.67), mockMaze);
-                ghosts.forEach(g => g.update(msToSeconds(16.67), mockMaze, pacman));
+                enemys.forEach((g) => g.update(msToSeconds(16.67), mockMaze, pacman));
             }
 
             expect(Number.isFinite(pacman.x)).toBe(true);
@@ -365,7 +409,7 @@ function createTunnelMaze() {
             if (y === 0 || y === 14) {
                 row.push(TILE_TYPES.WALL);
             } else if (y === 8) {
-                row.push(TILE_TYPES.PATH); ;
+                row.push(TILE_TYPES.PATH);
             } else if (x > 0 && x < 19) {
                 row.push(TILE_TYPES.WALL);
             } else {

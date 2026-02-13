@@ -1,36 +1,36 @@
-# Pac-Man Game
+# ADA-Woman
 
-A modern, fully-featured Pac-Man game built with Phaser.js and Vite. This implementation includes all classic gameplay mechanics enhanced with modern visual effects, sound, mobile support, progressive difficulty, and a clean MVC architecture with decoupled systems.
+A modern, fully-featured tech-themed maze game built with Phaser.js and Vite. This implementation includes maze-chase gameplay mechanics enhanced with modern visual effects, sound, mobile support, progressive difficulty, and a clean MVC architecture with decoupled systems.
 
-![Pac-Man](https://img.shields.io/badge/Status-Stable-green) ![Phaser](https://img.shields.io/badge/Phaser-3.90+-blue) ![License](https://img.shields.io/badge/License-MIT-orange) ![Tests](https://img.shields.io/badge/Tests-1488%20passing-brightgreen)
+![ADA-Woman](https://img.shields.io/badge/Status-Stable-green) ![Phaser](https://img.shields.io/badge/Phaser-3.90+-blue) ![License](https://img.shields.io/badge/License-MIT-orange) ![Tests](https://img.shields.io/badge/Tests-1488%20passing-brightgreen)
 
 ## Features
 
 ### Core Gameplay
-- **Classic Pac-Man mechanics**: Navigate the maze, eat pellets, avoid ghosts
-- **Four unique ghosts**: Blinky, Pinky, Inky, and Clyde with distinct AI behaviors
-- **Power pellets**: Turn ghosts blue and eat them for bonus points
-- **Fruit bonuses**: Collect fruits for extra points (cherry, strawberry, orange, apple, melon, galaxian, bell, key)
-- **Level progression**: Increasing difficulty with faster ghosts and shorter frightened durations
+- **Tech-themed maze mechanics**: Navigate the digital network, collect data bits, avoid viruses
+- **Four unique viruses**: Alpha, Beta, Gamma, and Delta with distinct AI behaviors
+- **Power packets**: Decrypt viruses temporarily, allowing you to eliminate them for bonus points
+- **Data fragments**: Collect data for extra points
+- **Level progression**: Increasing difficulty with faster viruses and shorter decrypted durations
 - **High score system**: Persistent high scores saved to localStorage
 
 ### Visual Enhancements
-- **Enhanced maze rendering**: Walls with depth, shadows, and inner highlights
-- **Improved Pac-Man**: Eye with pupil and shine, smooth mouth animation, rotation based on direction
-- **Detailed ghosts**: Eyes that follow movement direction, wavy bottom, 3D highlights
-- **Power pellet animations**: Pulsing effect with scale and alpha changes
-- **Visual feedback**: Flash effects when eating ghosts and fruits
-- **Background patterns**: Subtle grid pattern for depth
+- **Enhanced maze rendering**: Circuit-style walls with glow and digital aesthetics
+- **Detailed ADA-Woman**: Hexagonal design with digital eye, smooth rotation and pulse animations
+- **Detailed viruses**: Geometric shapes with eyes that track movement direction
+- **Power packet animations**: Glowing pulsing effects with scale and alpha changes
+- **Visual feedback**: Flash effects when eliminating viruses and collecting data
+- **Background patterns**: Digital grid pattern for depth
 - **Animated UI**: Pulsing prompts, smooth transitions, glow effects
 
 ### Audio
-- **Sound effects**: Web Audio API-generated sounds for:
-  - Waka-waka when eating pellets
-  - Power pellet activation
-  - Ghost eaten
-  - Death sequence
-  - Level complete
-  - Fruit collection
+- **Sound effects**: Web Audio API-generated tech-themed sounds for:
+  - Digital data crunch when collecting data bits
+  - Power packet activation
+  - Virus elimination
+  - System crash sequence
+  - Data upload complete
+  - Data fragment collection
 
 ### Mobile Support
 - **Touch controls**: Swipe gestures for movement
@@ -91,14 +91,14 @@ The optimized files will be in the `dist` directory.
 ## Controls
 
 ### Desktop
-- **Arrow Keys** or **WASD**: Move Pac-Man
+- **Arrow Keys** or **WASD**: Move ADA-Woman
 - **P**: Pause/Resume game
 - **ESC**: Return to menu
 - **SPACE**: Start game / Continue / Return to menu
 - **H**: Toggle "How to Play" section (from menu)
 
 ### Mobile
-- **Swipe gestures**: Move Pac-Man in any direction
+- **Swipe gestures**: Move ADA-Woman in any direction
 - **Tap**: Interact with UI elements
 
 ## Game Mechanics
@@ -107,57 +107,42 @@ The optimized files will be in the `dist` directory.
 
 | Item | Points |
 |-------|---------|
-| Pellet | 10 |
-| Power Pellet | 50 |
-| Ghost (1st) | 200 |
-| Ghost (2nd) | 400 |
-| Ghost (3rd) | 800 |
-| Ghost (4th) | 1600 |
-| Cherry | 100 |
-| Strawberry | 300 |
-| Orange | 500 |
-| Apple | 700 |
-| Melon | 1000 |
-| Galaxian | 2000 |
-| Bell | 3000 |
-| Key | 5000 |
+| Data Bit | 10 |
+| Power Packet | 50 |
+| Virus (1st) | 200 |
+| Virus (2nd) | 400 |
+| Virus (3rd) | 800 |
+| Virus (4th) | 1600 |
+| Data Fragment | Various |
 
-**Ghost Combo**: Eating multiple ghosts while frightened increases the score multiplier (200, 400, 800, 1600).
+**Virus Combo**: Eliminating multiple viruses while decrypted increases the score multiplier (200, 400, 800, 1600).
 
-### Ghost Behaviors
+### Virus Behaviors
 
-- **Blinky (Red)**: Directly chases Pac-Man
-- **Pinky (Pink)**: Targets 4 tiles ahead of Pac-Man
-- **Inky (Cyan)**: Uses Blinky's position to calculate target
-- **Clyde (Orange)**: Chases Pac-Man unless too close, then retreats
+- **Alpha (Purple)**: Directly chases ADA-Woman
+- **Beta (Green)**: Predicts movement, cuts off paths
+- **Gamma (Red)**: Moves erratically/randomly
+- **Delta (Orange)**: Follows ADA-Woman slowly but relentlessly
 
-### Ghost Modes
+### Virus Modes
 
-1. **Scatter**: Ghosts move to their corner targets
-2. **Chase**: Ghosts actively pursue Pac-Man
-3. **Frightened**: Ghosts move randomly and can be eaten
-4. **Eaten**: Ghost returns to the ghost house
+1. **Patrol**: Viruses move to their patrol targets
+2. **Hunt**: Viruses actively pursue ADA-Woman
+3. **Decrypted**: Viruses move randomly and can be eliminated
+4. **Eliminated**: Virus returns to the virus core
 
 ### Level Progression
 
 Each level increases difficulty:
-- Ghosts move faster (5% speed increase per level)
-- Frightened mode duration decreases (500ms less per level)
-- New fruit types appear at higher levels
+- Viruses move faster (5% speed increase per level)
+- Decrypted mode duration decreases (500ms less per level)
+- New data fragment types appear at higher levels
 
-### Fruit System
+### Data Fragment System
 
-Fruits appear when approximately 70% of pellets have been eaten:
-- **Level 1**: Cherry (100 points)
-- **Level 2**: Strawberry (300 points)
-- **Level 3**: Orange (500 points)
-- **Level 4**: Apple (700 points)
-- **Level 5**: Melon (1000 points)
-- **Level 6**: Galaxian (2000 points)
-- **Level 7**: Bell (3000 points)
-- **Level 8+**: Key (5000 points)
-
-Fruits disappear after 10 seconds if not collected.
+Data fragments appear when approximately 70% of data bits have been collected:
+- Fragments disappear after 10 seconds if not collected
+- Each level introduces new fragment types with increasing point values
 
 ## Technical Details
 
@@ -172,8 +157,8 @@ src/
 │   └── EventBus.js          # Pub/sub for decoupled communication
 ├── model/
 │   ├── GameStateController.js  # Headless game simulation
-│   ├── entities/            # Pure data entities (PacmanState, GhostState, FruitState)
-│   ├── systems/             # Model-level systems (ModelCollisionSystem, GhostAIAdapter)
+│   ├── entities/            # Pure data entities (PlayerState, EnemyState, FruitState)
+│   ├── systems/             # Model-level systems (ModelCollisionSystem, EnemyAIAdapter)
 │   └── adapters/            # Model/View bridge (CollisionAdapter, MovementAdapter)
 ├── controllers/
 │   ├── GameController.js      # Input translation (no scene refs)
@@ -188,8 +173,8 @@ src/
 ├── views/
 │   ├── ModelDrivenGameView.js  # Pure observer view
 │   └── visuals/
-│       ├── VisualPacman.js   # Visual wrapper for Pacman
-│       ├── VisualGhost.js    # Visual wrapper for Ghosts
+│       ├── VisualPlayer.js   # Visual wrapper for Player
+│       ├── VisualEnemy.js    # Visual wrapper for Enemies
 │       └── VisualFruit.js   # Visual wrapper for Fruit
 ├── collision/
 │   ├── CollisionEngine.js     # Decoupled collision detection
@@ -201,9 +186,9 @@ src/
 │   └── adapters/            # Maze query adapters
 ├── entities/
 │   ├── BaseEntity.js         # Base entity class
-│   ├── Pacman.js           # Player character
-│   ├── Ghost.js            # Enemy entities
-│   └── Fruit.js            # Bonus fruit entities
+│   ├── Player.js           # Player character
+│   ├── Enemy.js            # Enemy entities
+│   └── Fruit.js            # Bonus data fragment entities
 ├── scenes/
 │   ├── ModelDrivenGameScene.js  # Main MVC game scene
 │   ├── MenuScene.js             # Main menu
@@ -212,7 +197,7 @@ src/
 │   ├── WinScene.js              # Level complete screen
 │   └── SettingsScene.js         # Settings configuration
 ├── systems/
-│   ├── GhostAISystem.js     # Ghost AI logic
+│   ├── EnemyAISystem.js     # Enemy AI logic
 │   ├── ReplaySystem.js      # Replay recording/playback
 │   └── AchievementSystem.js  # Achievement tracking
 ├── managers/
@@ -233,6 +218,7 @@ src/
 3. **Decoupling**: EventBus removes direct dependencies between components
 4. **Swappable Input Sources**: Keyboard, Replay, AI all use the same interface via InputManager
 5. **Pure Observer View**: View only renders model state, never modifies game logic
+6. **Easy Theming**: Visual layer can be completely replaced without touching game logic
 
 ### Key Technologies
 
@@ -277,8 +263,8 @@ src/
 
 ### Adding New Features
 
-1. **New ghost type**: Add ghost state to `src/model/entities/GhostState.js` and update `GhostAIAdapter`
-2. **New fruit**: Add to `fruitConfig` in `src/config/gameConfig.js`
+1. **New enemy type**: Add enemy state to `src/model/entities/EnemyState.js` and update `EnemyAIAdapter`
+2. **New data fragment**: Add to `fruitConfig` in `src/config/gameConfig.js`
 3. **New sound**: Add method to `src/managers/SoundManager.js`
 4. **New scene**: Create in `src/scenes/` and register in `src/main.js`
 5. **New input source**: Implement `InputAdapter` interface and register with `InputManager`
@@ -292,12 +278,8 @@ src/
 
 ## Credits
 
-### Original Game
-- **Created by**: Toru Iwatani
-- **Released by**: Namco (1980)
-- **Inspired by**: Pizza with a slice missing
-
-### This Implementation
+### This Game
+- **Game**: ADA-Woman
 - **Built with**: Phaser.js
 - **Design**: Modern web technologies
 - **License**: MIT
@@ -309,10 +291,12 @@ MIT License - feel free to use this code for learning and projects.
 ## Contributing
 
 Contributions are welcome! Please:
-1. Fork the repository
+1. Fork repository
 2. Create a feature branch
 3. Make your changes
 4. Submit a pull request
+
+Please ensure all changes align with the tech-themed aesthetic of ADA-Woman.
 
 ## Troubleshooting
 
@@ -349,4 +333,5 @@ For issues, questions, or suggestions, please open an issue on the repository.
 
 ---
 
-**Enjoy the game! 🎮**
+**Enjoy ADA-Woman! 🎮**
+

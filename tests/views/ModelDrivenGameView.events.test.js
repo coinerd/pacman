@@ -2,16 +2,16 @@
  * Tests for ModelDrivenGameView controller event handling (Phase 7)
  */
 
+import { GAME_EVENTS, gameEvents } from '../../src/core/EventBus.js';
 import ModelDrivenGameView from '../../src/views/ModelDrivenGameView.js';
-import { gameEvents, GAME_EVENTS } from '../../src/core/EventBus.js';
 
 // Mocks
 jest.mock('../../src/managers/SoundManager.js');
 jest.mock('../../src/scenes/systems/EffectManager.js');
 jest.mock('../../src/pools/PelletPool.js');
 jest.mock('../../src/pools/PowerPelletPool.js');
-jest.mock('../../src/view/visuals/VisualPacman.js');
-jest.mock('../../src/view/visuals/VisualGhost.js');
+jest.mock('../../src/view/visuals/VisualPlayer.js');
+jest.mock('../../src/view/visuals/VisualEnemy.js');
 jest.mock('../../src/view/visuals/VisualFruit.js');
 
 describe('ModelDrivenGameView - Controller Events (Phase 7)', () => {
@@ -24,10 +24,14 @@ describe('ModelDrivenGameView - Controller Events (Phase 7)', () => {
         mockScene = {
             scale: { width: 800, height: 600 },
             add: {
-                rectangle: jest.fn().mockReturnValue({ setAlpha: jest.fn(), setStrokeStyle: jest.fn() }),
+                rectangle: jest
+                    .fn()
+                    .mockReturnValue({ setAlpha: jest.fn(), setStrokeStyle: jest.fn() }),
                 image: jest.fn(),
                 text: jest.fn().mockReturnValue({ setOrigin: jest.fn() }),
-                container: jest.fn().mockReturnValue({ add: jest.fn(), setAlpha: jest.fn() })
+                container: jest
+                    .fn()
+                    .mockReturnValue({ add: jest.fn(), setAlpha: jest.fn() })
             },
             make: {
                 graphics: jest.fn().mockReturnValue({
@@ -221,7 +225,9 @@ describe('ModelDrivenGameView - Controller Events (Phase 7)', () => {
                     replaySystem: mockReplaySystem
                 });
 
-                expect(mockReplaySystem.loadRecording).toHaveBeenCalledWith(mockRecording);
+                expect(mockReplaySystem.loadRecording).toHaveBeenCalledWith(
+                    mockRecording
+                );
             });
 
             it('should not load when replaying', () => {

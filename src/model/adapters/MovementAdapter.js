@@ -4,19 +4,19 @@
  * Maintains backward compatibility while allowing gradual migration.
  */
 
-import { MovementEngine } from '../../movement/MovementEngine.js';
-import { GridMovementStrategy } from '../../movement/strategies/GridMovementStrategy.js';
+import { directions, gameConfig } from '../../config/gameConfig.js';
 import { MazeQueryAdapter } from '../../movement/adapters/MazeQueryAdapter.js';
+import { MovementEngine } from '../../movement/MovementEngine.js';
 import { MOVEMENT_RESULTS } from '../../movement/MovementInterface.js';
-import { gameConfig, directions } from '../../config/gameConfig.js';
+import { GridMovementStrategy } from '../../movement/strategies/GridMovementStrategy.js';
 
 /**
  * Adapter that wraps the decoupled MovementEngine for use with existing GameModel
  */
 export class MovementAdapter {
     /**
-     * @param {GameModel} gameModel - The game model to adapt for
-     */
+	 * @param {GameModel} gameModel - The game model to adapt for
+	 */
     constructor(gameModel) {
         this.gameModel = gameModel;
 
@@ -40,12 +40,12 @@ export class MovementAdapter {
     }
 
     /**
-     * Update Pacman movement with direction buffer integration
-     * @param {PacmanState} pacman - Pacman entity
-     * @param {number} deltaSeconds - Time delta
-     * @param {Object} inputDirection - Input direction from player
-     * @returns {Array<Object>} - Movement events
-     */
+	 * Update Pacman movement with direction buffer integration
+	 * @param {PacmanState} pacman - Pacman entity
+	 * @param {number} deltaSeconds - Time delta
+	 * @param {Object} inputDirection - Input direction from player
+	 * @returns {Array<Object>} - Movement events
+	 */
     updatePacman(pacman, deltaSeconds, inputDirection = null) {
         // Store previous position for swept collision
         pacman.prevX = pacman.x;
@@ -74,14 +74,18 @@ export class MovementAdapter {
         this.applyMovementResult(pacman, result);
 
         // If a turn was successfully made, clear the buffer
-        if (result.result === MOVEMENT_RESULTS.TURNED ||
-            (result.newDirection && result.newDirection !== pacman.direction)) {
+        if (
+            result.result === MOVEMENT_RESULTS.TURNED ||
+			(result.newDirection && result.newDirection !== pacman.direction)
+        ) {
             // Direction was applied, clear from buffer
             pacman.directionBuffer.clear();
         }
 
         // Convert movement events to GameModel event format
-        const events = result.events.map(event => this.convertMovementEvent(event, pacman));
+        const events = result.events.map((event) =>
+            this.convertMovementEvent(event, pacman)
+        );
 
         this.stats.movesProcessed++;
         this.stats.eventsGenerated += events.length;
@@ -90,17 +94,17 @@ export class MovementAdapter {
     }
 
     /**
-     * Update ghost movement
-     * @param {GhostState} ghost - Ghost entity
-     * @param {number} deltaSeconds - Time delta
-     * @returns {Array<Object>} - Movement events
-     */
+	 * Update ghost movement
+	 * @param {GhostState} ghost - Ghost entity
+	 * @param {number} deltaSeconds - Time delta
+	 * @returns {Array<Object>} - Movement events
+	 */
     updateGhost(ghost, deltaSeconds) {
         // Store previous position for swept collision
         ghost.prevX = ghost.x;
         ghost.prevY = ghost.y;
 
-        // Ghost direction is set by GhostAIAdapter before this call
+        // Ghost direction is set by EnemyAIAdapter before this call
         // We use ghost.nextDirection (buffered) or ghost.direction (current)
         const direction = ghost.nextDirection || ghost.direction;
 
@@ -118,7 +122,9 @@ export class MovementAdapter {
             ghost.directionBuffer.clear();
         }
 
-        const events = result.events.map(event => this.convertMovementEvent(event, ghost));
+        const events = result.events.map((event) =>
+            this.convertMovementEvent(event, ghost)
+        );
 
         this.stats.movesProcessed++;
         this.stats.eventsGenerated += events.length;
@@ -127,13 +133,13 @@ export class MovementAdapter {
     }
 
     /**
-     * Update entity movement using the decoupled system (generic)
-     * @param {ModelEntity} entity - Entity to move (PacmanState or GhostState)
-     * @param {number} deltaSeconds - Time delta
-     * @param {Object} inputDirection - Optional input direction for Pacman
-     * @returns {Array<Object>} - Movement events
-     * @deprecated Use updatePacman() or updateGhost() instead
-     */
+	 * Update entity movement using the decoupled system (generic)
+	 * @param {ModelEntity} entity - Entity to move (PacmanState or GhostState)
+	 * @param {number} deltaSeconds - Time delta
+	 * @param {Object} inputDirection - Optional input direction for Pacman
+	 * @returns {Array<Object>} - Movement events
+	 * @deprecated Use updatePacman() or updateGhost() instead
+	 */
     updateEntity(entity, deltaSeconds, inputDirection = null) {
         if (entity.type === 'pacman') {
             return this.updatePacman(entity, deltaSeconds, inputDirection);
@@ -167,10 +173,10 @@ export class MovementAdapter {
     }
 
     /**
-     * Apply movement result to entity state
-     * @param {ModelEntity} entity - Entity to update
-     * @param {MovementResult} result - Movement result from engine
-     */
+	 * Apply movement result to entity state
+	 * @param {ModelEntity} entity - Entity to update
+	 * @param {MovementResult} result - Movement result from engine
+	 */
     applyMovementResult(entity, result) {
         // Update position
         if (result.newPosition) {
@@ -194,11 +200,11 @@ export class MovementAdapter {
     }
 
     /**
-     * Convert movement system event to GameModel event format
-     * @param {Object} event - Movement system event
-     * @param {ModelEntity} entity - Source entity
-     * @returns {Object} - GameModel formatted event
-     */
+	 * Convert movement system event to GameModel event format
+	 * @param {Object} event - Movement system event
+	 * @param {ModelEntity} entity - Source entity
+	 * @returns {Object} - GameModel formatted event
+	 */
     convertMovementEvent(event, entity) {
         const baseEvent = {
             entityId: entity.id,
@@ -254,17 +260,17 @@ export class MovementAdapter {
     }
 
     /**
-     * Update maze data (called when level changes)
-     * @param {Array<Array<number>>} maze - New maze data
-     */
+	 * Update maze data (called when level changes)
+	 * @param {Array<Array<number>>} maze - New maze data
+	 */
     updateMaze(maze) {
         this.mazeQuery = new MazeQueryAdapter(maze);
     }
 
     /**
-     * Get adapter statistics
-     * @returns {Object}
-     */
+	 * Get adapter statistics
+	 * @returns {Object}
+	 */
     getStats() {
         return {
             ...this.stats,
@@ -273,8 +279,8 @@ export class MovementAdapter {
     }
 
     /**
-     * Reset adapter state
-     */
+	 * Reset adapter state
+	 */
     reset() {
         this.stats = {
             movesProcessed: 0,

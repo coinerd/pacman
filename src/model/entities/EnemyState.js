@@ -1,47 +1,62 @@
 /**
- * GhostState
- * Pure data representation of Ghost entity.
+ * EnemyState
+ * Pure data representation of Enemy entity.
  * NO Phaser dependencies.
  */
 
-import { ModelEntity } from '../ModelEntity.js';
 import {
-    gameConfig,
-    directions,
-    ghostModes,
-    levelConfig,
-    ghostSpeedMultipliers,
-    ghostColors,
-    ghostNames,
     animationConfig,
+    directions,
+    enemyColors,
+    enemyNames,
+    gameConfig,
+    getOpposite,
+    ghostModes,
+    ghostSpeedMultipliers,
+    levelConfig,
     scatterTargets
 } from '../../config/gameConfig.js';
+import {
+    getCenterPixel,
+    getDistance,
+    getValidDirections,
+    isWalkableTile
+} from '../../utils/MazeLayout.js';
 import { moveEntityOnGrid } from '../../utils/movement/GridMovement.js';
-import { getCenterPixel, getValidDirections, getDistance, isWalkableTile } from '../../utils/MazeLayout.js';
-import { getOpposite } from '../../config/gameConfig.js';
 import { isAtTileCenter } from '../../utils/TileMath.js';
+import { ModelEntity } from '../ModelEntity.js';
 
-export class GhostState extends ModelEntity {
+export class EnemyState extends ModelEntity {
     /**
-     * @param {number} gridX - Initial grid X position
-     * @param {number} gridY - Initial grid Y position
-     * @param {string} ghostType - Ghost type: 'blinky', 'pinky', 'inky', 'clyde'
-     * @param {number} level - Current game level
-     */
+	 * @param {number} gridX - Initial grid X position
+	 * @param {number} gridY - Initial grid Y position
+	 * @param {string} ghostType - Enemy type: 'alpha', 'beta', 'gamma', 'delta'
+	 * @param {number} level - Current game level
+	 */
     constructor(gridX, gridY, ghostType, level = 1) {
-        const baseLevelSpeed = levelConfig.baseSpeed + (level - 1) * levelConfig.speedIncreasePerLevel;
+        const baseLevelSpeed =
+			levelConfig.baseSpeed + (level - 1) * levelConfig.speedIncreasePerLevel;
         const speed = baseLevelSpeed * levelConfig.ghostSpeedMultiplier;
 
         super(gridX, gridY, {
-            type: 'ghost',
+            type: 'enemy',
             speed: speed
         });
 
         this.ghostType = ghostType;
-        this.name = ghostNames[ghostType.toUpperCase()] || ghostType;
 
-        // Ghost-specific properties
-        this.color = ghostColors[ghostType.toUpperCase()] || 0xFFFFFF;
+        const ghostTypeMapping = {
+            BLINKY: 'ALPHA',
+            PINKY: 'BETA',
+            INKY: 'GAMMA',
+            CLYDE: 'DELTA'
+        };
+
+        const mappedType =
+			ghostTypeMapping[ghostType.toUpperCase()] || ghostType.toUpperCase();
+
+        this.name = ghostType;
+        this.color = enemyColors[mappedType] || 0xffffff;
         this.startGridX = gridX;
         this.startGridY = gridY;
 
@@ -62,14 +77,14 @@ export class GhostState extends ModelEntity {
         this.isBlinking = false;
         this.blinkTimer = 0;
 
-        // Ghost house
+        // Virus core (ghost house)
         this.inGhostHouse = false;
         this.houseTimer = 0;
     }
 
     /**
-     * Get current speed (including all modifiers)
-     */
+	 * Get current speed (including all modifiers)
+	 */
     get speed() {
         return this.baseSpeed * this.speedMultiplier * this.speedModifier;
     }
@@ -79,25 +94,25 @@ export class GhostState extends ModelEntity {
     }
 
     /**
-     * Update ghost state
-     * @param {number} deltaSeconds - Time since last frame
-     * @param {Array<Array<number>>} maze - Maze grid
-     * @param {Object} pacmanState - Pacman state for AI targeting
-     * @param {boolean} useDecoupledSystems - Whether using decoupled movement
-     * @returns {Array<Object>} - Events generated
-     */
+	 * Update enemy state
+	 * @param {number} deltaSeconds - Time since last frame
+	 * @param {Array<Array<number>>} maze - Maze grid
+	 * @param {Object} pacmanState - Player state for AI targeting
+	 * @param {boolean} useDecoupledSystems - Whether using decoupled movement
+	 * @returns {Array<Object>} - Events generated
+	 */
     update(deltaSeconds, maze, pacmanState = null, useDecoupledSystems = false) {
         const events = [];
 
         if (useDecoupledSystems) {
             // In decoupled mode:
-            // - GhostAIAdapter handles AI and direction setting
+            // - EnemyAIAdapter handles AI and direction setting
             // - MovementAdapter handles movement
-            // - GhostState only handles state updates (timers, flags)
+            // - EnemyState only handles state updates (timers, flags)
 
             if (this.isEaten) {
-                // Eaten state still needs special handling for returning to house
-                // This is handled by GhostAIAdapter.updateEatenGhost()
+                // Eaten state still needs special handling for returning to virus core
+                // This is handled by EnemyAIAdapter.updateEatenEnemy()
                 // Just update timers here
                 if (this.inGhostHouse) {
                     this.houseTimer -= deltaSeconds;
@@ -132,12 +147,12 @@ export class GhostState extends ModelEntity {
     }
 
     /**
-     * Move ghost
-     * @param {number} deltaSeconds - Time since last frame
-     * @param {Array<Array<number>>} maze - Maze grid
-     * @param {Object} pacmanState - Pacman state for targeting
-     * @returns {Array<Object>} - Events generated
-     */
+	 * Move enemy
+	 * @param {number} deltaSeconds - Time since last frame
+	 * @param {Array<Array<number>>} maze - Maze grid
+	 * @param {Object} pacmanState - Player state for targeting
+	 * @returns {Array<Object>} - Events generated
+	 */
     moveGhost(deltaSeconds, maze, pacmanState) {
         const events = [];
 
@@ -162,7 +177,7 @@ export class GhostState extends ModelEntity {
                 events.push({
                     ...event,
                     entityId: this.id,
-                    entityType: 'ghost',
+                    entityType: 'enemy',
                     ghostType: this.ghostType
                 });
             }
@@ -176,7 +191,7 @@ export class GhostState extends ModelEntity {
             events.push({
                 type: 'tunnel_wrap',
                 entityId: this.id,
-                entityType: 'ghost',
+                entityType: 'enemy',
                 ghostType: this.ghostType
             });
         }
@@ -185,11 +200,11 @@ export class GhostState extends ModelEntity {
     }
 
     /**
-     * Update eaten state (returning to ghost house)
-     * @param {number} deltaSeconds - Time since last frame
-     * @param {Array<Array<number>>} maze - Maze grid
-     * @returns {Array<Object>} - Events generated
-     */
+	 * Update eaten state (returning to virus core)
+	 * @param {number} deltaSeconds - Time since last frame
+	 * @param {Array<Array<number>>} maze - Maze grid
+	 * @returns {Array<Object>} - Events generated
+	 */
     updateEaten(deltaSeconds, maze) {
         const events = [];
 
@@ -214,10 +229,10 @@ export class GhostState extends ModelEntity {
         const oldModifier = this.speedModifier;
         this.speedModifier *= ghostSpeedMultipliers.eaten;
 
-        // Check if reached ghost house
+        // Check if reached virus core
         if (this.gridX === targetX && this.gridY === targetY) {
             this.inGhostHouse = true;
-            this.houseTimer = 2; // 2 seconds in house
+            this.houseTimer = 2; // 2 seconds in virus core
             this.direction = directions.NONE;
             this.speedModifier = oldModifier;
             events.push({
@@ -228,7 +243,7 @@ export class GhostState extends ModelEntity {
             return events;
         }
 
-        // Move toward ghost house
+        // Move toward virus core
         this.chooseDirectionToTarget(maze, targetX, targetY);
 
         const moveResult = moveEntityOnGrid(this, maze, deltaSeconds);
@@ -236,7 +251,7 @@ export class GhostState extends ModelEntity {
             events.push({
                 ...event,
                 entityId: this.id,
-                entityType: 'ghost',
+                entityType: 'enemy',
                 ghostType: this.ghostType
             });
         }
@@ -246,9 +261,9 @@ export class GhostState extends ModelEntity {
     }
 
     /**
-     * Update frightened state
-     * @param {number} deltaSeconds - Time since last frame
-     */
+	 * Update frightened state
+	 * @param {number} deltaSeconds - Time since last frame
+	 */
     updateFrightened(deltaSeconds) {
         if (!this.isFrightened) {
             return;
@@ -274,25 +289,25 @@ export class GhostState extends ModelEntity {
     }
 
     /**
-     * Update AI - choose target and direction
-     * @param {Array<Array<number>>} maze - Maze grid
-     * @param {Object} pacmanState - Pacman state for targeting
-     */
-    updateAI(maze, pacmanState) {
-        // Update target based on mode and ghost type
-        this.updateTarget(pacmanState);
+	 * Update AI - choose target and direction
+	 * @param {Array<Array<number>>} maze - Maze grid
+	 * @param {Object} playerState - Player state for targeting
+	 */
+    updateAI(maze, playerState) {
+        // Update target based on mode and enemy type
+        this.updateTarget(playerState);
 
         // Choose direction toward target
         this.chooseDirectionToTarget(maze, this.targetX, this.targetY);
     }
 
     /**
-     * Update target based on ghost type and mode
-     * @param {Object} pacmanState - Pacman state for targeting
-     */
-    updateTarget(pacmanState) {
+	 * Update target based on enemy type and mode
+	 * @param {Object} playerState - Player state for targeting
+	 */
+    updateTarget(playerState) {
         if (this.isEaten) {
-            this.targetX = 13; // Ghost house entrance
+            this.targetX = 13; // Virus core entrance
             this.targetY = 14;
             return;
         }
@@ -303,97 +318,102 @@ export class GhostState extends ModelEntity {
         }
 
         switch (this.ghostType) {
-        case 'blinky':
-            this.updateBlinkyTarget(pacmanState);
+        case 'alpha':
+            this.updateAlphaTarget(playerState);
             break;
-        case 'pinky':
-            this.updatePinkyTarget(pacmanState);
+        case 'beta':
+            this.updateBetaTarget(playerState);
             break;
-        case 'inky':
-            this.updateInkyTarget(pacmanState);
+        case 'gamma':
+            this.updateGammaTarget(playerState);
             break;
-        case 'clyde':
-            this.updateClydeTarget(pacmanState);
+        case 'delta':
+            this.updateDeltaTarget(playerState);
             break;
         }
     }
 
     /**
-     * Update Blinky's target
-     * @param {Object} pacmanState - Pacman state
-     */
-    updateBlinkyTarget(pacmanState) {
+	 * Update Alpha's target
+	 * @param {Object} playerState - Player state
+	 */
+    updateAlphaTarget(playerState) {
         if (this.mode === ghostModes.SCATTER) {
-            this.targetX = scatterTargets.blinky.x;
-            this.targetY = scatterTargets.blinky.y;
-        } else if (pacmanState) {
-            this.targetX = pacmanState.gridX;
-            this.targetY = pacmanState.gridY;
+            this.targetX = scatterTargets.alpha.x;
+            this.targetY = scatterTargets.alpha.y;
+        } else if (playerState) {
+            this.targetX = playerState.gridX;
+            this.targetY = playerState.gridY;
         }
     }
 
     /**
-     * Update Pinky's target (4 tiles ahead of Pacman)
-     * @param {Object} pacmanState - Pacman state
-     */
-    updatePinkyTarget(pacmanState) {
+	 * Update Beta's target (4 tiles ahead of Player)
+	 * @param {Object} playerState - Player state
+	 */
+    updateBetaTarget(playerState) {
         if (this.mode === ghostModes.SCATTER) {
-            this.targetX = scatterTargets.pinky.x;
-            this.targetY = scatterTargets.pinky.y;
-        } else if (pacmanState) {
-            // Pinky targets 4 tiles ahead of Pacman
-            this.targetX = pacmanState.gridX + (pacmanState.direction.x * 4);
-            this.targetY = pacmanState.gridY + (pacmanState.direction.y * 4);
+            this.targetX = scatterTargets.beta.x;
+            this.targetY = scatterTargets.beta.y;
+        } else if (playerState) {
+            // Beta targets 4 tiles ahead of Player
+            this.targetX = playerState.gridX + playerState.direction.x * 4;
+            this.targetY = playerState.gridY + playerState.direction.y * 4;
 
             // Replicate original arcade bug: Up also moves target left
-            if (pacmanState.direction.y === -1) {
+            if (playerState.direction.y === -1) {
                 this.targetX -= 4;
             }
         }
     }
 
     /**
-     * Update Inky's target (vector from Blinky through 2 tiles ahead of Pacman)
-     * @param {Object} pacmanState - Pacman state
-     */
-    updateInkyTarget(pacmanState) {
+	 * Update Gamma's target (vector from Alpha through 2 tiles ahead of Player)
+	 * @param {Object} playerState - Player state
+	 */
+    updateGammaTarget(playerState) {
         if (this.mode === ghostModes.SCATTER) {
-            this.targetX = scatterTargets.inky.x;
-            this.targetY = scatterTargets.inky.y;
-        } else if (pacmanState) {
-            // Simplified: target 2 tiles ahead of Pacman
-            this.targetX = pacmanState.gridX + (pacmanState.direction.x * 2);
-            this.targetY = pacmanState.gridY + (pacmanState.direction.y * 2);
+            this.targetX = scatterTargets.gamma.x;
+            this.targetY = scatterTargets.gamma.y;
+        } else if (playerState) {
+            // Simplified: target 2 tiles ahead of Player
+            this.targetX = playerState.gridX + playerState.direction.x * 2;
+            this.targetY = playerState.gridY + playerState.direction.y * 2;
         }
     }
 
     /**
-     * Update Clyde's target (chase unless too close, then scatter)
-     * @param {Object} pacmanState - Pacman state
-     */
-    updateClydeTarget(pacmanState) {
+	 * Update Delta's target (chase unless too close, then scatter)
+	 * @param {Object} playerState - Player state
+	 */
+    updateDeltaTarget(playerState) {
         if (this.mode === ghostModes.SCATTER) {
-            this.targetX = scatterTargets.clyde.x;
-            this.targetY = scatterTargets.clyde.y;
-        } else if (pacmanState) {
-            const dist = getDistance(this.gridX, this.gridY, pacmanState.gridX, pacmanState.gridY);
+            this.targetX = scatterTargets.delta.x;
+            this.targetY = scatterTargets.delta.y;
+        } else if (playerState) {
+            const dist = getDistance(
+                this.gridX,
+                this.gridY,
+                playerState.gridX,
+                playerState.gridY
+            );
             if (dist > 8) {
-                this.targetX = pacmanState.gridX;
-                this.targetY = pacmanState.gridY;
+                this.targetX = playerState.gridX;
+                this.targetY = playerState.gridY;
             } else {
                 // Return to scatter corner if too close
-                this.targetX = scatterTargets.clyde.x;
-                this.targetY = scatterTargets.clyde.y;
+                this.targetX = scatterTargets.delta.x;
+                this.targetY = scatterTargets.delta.y;
             }
         }
     }
 
     /**
-     * Choose direction to reach target
-     * @param {Array<Array<number>>} maze - Maze grid
-     * @param {number} targetX - Target grid X
-     * @param {number} targetY - Target grid Y
-     */
+	 * Choose direction to reach target
+	 * @param {Array<Array<number>>} maze - Maze grid
+	 * @param {number} targetX - Target grid X
+	 * @param {number} targetY - Target grid Y
+	 */
     chooseDirectionToTarget(maze, targetX, targetY) {
         const validDirs = getValidDirections(maze, this.gridX, this.gridY);
 
@@ -401,11 +421,13 @@ export class GhostState extends ModelEntity {
             return;
         }
 
-        // Filter out reverse direction (ghosts can't reverse)
+        // Filter out reverse direction (enemies can't reverse)
         let filteredDirs = validDirs;
         if (this.direction !== directions.NONE) {
             const opposite = getOpposite(this.direction);
-            filteredDirs = validDirs.filter(d => !(d.x === opposite.x && d.y === opposite.y));
+            filteredDirs = validDirs.filter(
+                (d) => !(d.x === opposite.x && d.y === opposite.y)
+            );
         }
 
         if (filteredDirs.length === 0) {
@@ -445,9 +467,9 @@ export class GhostState extends ModelEntity {
     }
 
     /**
-     * Set frightened state
-     * @param {number} duration - Duration in seconds
-     */
+	 * Set frightened state
+	 * @param {number} duration - Duration in seconds
+	 */
     setFrightened(duration) {
         this.isFrightened = true;
         this.frightenedTimer = duration;
@@ -462,8 +484,8 @@ export class GhostState extends ModelEntity {
     }
 
     /**
-     * Mark ghost as eaten
-     */
+	 * Mark enemy as eaten
+	 */
     eat() {
         this.isEaten = true;
         this.isFrightened = false;
@@ -471,8 +493,8 @@ export class GhostState extends ModelEntity {
     }
 
     /**
-     * Reset ghost to initial state
-     */
+	 * Reset enemy to initial state
+	 */
     reset() {
         this.gridX = this.startGridX;
         this.gridY = this.startGridY;
@@ -496,28 +518,31 @@ export class GhostState extends ModelEntity {
     }
 
     /**
-     * Set speed multiplier for level progression
-     * @param {number} multiplier - Speed multiplier
-     */
+	 * Set speed multiplier for level progression
+	 * @param {number} multiplier - Speed multiplier
+	 */
     setSpeedMultiplier(multiplier) {
         this.speedMultiplier = multiplier;
     }
 
     /**
-     * Get visual state for rendering
-     * @returns {Object}
-     */
+	 * Get visual state for rendering
+	 * @returns {Object}
+	 */
     getVisualState() {
         let color = this.color;
 
         if (this.isFrightened) {
-            if (this.isBlinking && Math.floor(this.blinkTimer / animationConfig.ghostBlinkSpeed) % 2 === 0) {
-                color = 0xFFFFFF; // White when blinking
+            if (
+                this.isBlinking &&
+				Math.floor(this.blinkTimer / animationConfig.ghostBlinkSpeed) % 2 === 0
+            ) {
+                color = 0xffffff; // White when blinking
             } else {
-                color = 0x0000FF; // Blue when frightened
+                color = 0x0000ff; // Blue when frightened
             }
         } else if (this.isEaten) {
-            color = 0xFFFFFF; // White when eaten
+            color = 0xffffff; // White when eaten
         }
 
         return {
@@ -531,9 +556,9 @@ export class GhostState extends ModelEntity {
     }
 
     /**
-     * Get state snapshot
-     * @returns {Object}
-     */
+	 * Get state snapshot
+	 * @returns {Object}
+	 */
     getSnapshot() {
         return {
             ...super.getSnapshot(),

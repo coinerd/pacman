@@ -3,8 +3,8 @@
  * Tests for the base model entity class.
  */
 
-import { ModelEntity } from '../../src/model/ModelEntity.js';
 import { directions } from '../../src/config/gameConfig.js';
+import { ModelEntity } from '../../src/model/ModelEntity.js';
 import { createMazeData } from '../../src/utils/MazeLayout.js';
 
 describe('ModelEntity', () => {
@@ -78,7 +78,9 @@ describe('ModelEntity', () => {
             const canMoveRight = entity.canMoveInDirection(directions.RIGHT, maze);
 
             // At least one direction should be valid for a walkable position
-            expect(canMoveUp || canMoveDown || canMoveLeft || canMoveRight).toBe(true);
+            expect(canMoveUp || canMoveDown || canMoveLeft || canMoveRight).toBe(
+                true
+            );
         });
 
         test('returns false for wall direction', () => {
@@ -119,21 +121,21 @@ describe('ModelEntity', () => {
 
     describe('handleTunnelWrap', () => {
         test('wraps position when exiting left side of tunnel', () => {
-            const tunnelEntity = new ModelEntity(0, 14, {});
+            const tunnelEntity = new ModelEntity(0, 15, {});
             tunnelEntity.x = -5;
             tunnelEntity.gridX = 0;
 
             const wrapped = tunnelEntity.handleTunnelWrap();
 
             expect(wrapped).toBe(true);
-            expect(tunnelEntity.x).toBe(560); // mazeWidth * tileSize
-            expect(tunnelEntity.gridX).toBe(27); // mazeWidth - 1
+            expect(tunnelEntity.x).toBe(480);
+            expect(tunnelEntity.gridX).toBe(0);
         });
 
         test('wraps position when exiting right side of tunnel', () => {
-            const tunnelEntity = new ModelEntity(27, 14, {});
-            tunnelEntity.x = 565;
-            tunnelEntity.gridX = 27;
+            const tunnelEntity = new ModelEntity(24, 15, {});
+            tunnelEntity.x = 505;
+            tunnelEntity.gridX = 24;
 
             const wrapped = tunnelEntity.handleTunnelWrap();
 

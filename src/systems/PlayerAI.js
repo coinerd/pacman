@@ -1,0 +1,192 @@
+import { directions } from '../config/gameConfig.js';
+import {
+    getDistance,
+    getValidDirections,
+    isPelletAt
+} from '../utils/MazeLayout.js';
+
+export class PlayerAI {
+    constructor() {
+        this.enabled = false;
+        this.lastDecisionGridX = -1;
+        this.lastDecisionGridY = -1;
+        this.lastDirection = null;
+        this.dangerDistanceThreshold = 100;
+    }
+
+    enable() {
+        this.enabled = true;
+    }
+
+    disable() {
+        this.enabled = false;
+    }
+
+    update(pacman, maze, pelletGrid, ghosts) {
+        if (!this.enabled) {
+            return;
+        }
+
+        const direction = this.getDirection(pacman, maze, pelletGrid, ghosts);
+        if (direction && direction !== directions.NONE) {
+            pacman.setDirection(direction);
+        }
+    }
+
+    /**
+	 * Get the best direction for Player (model-driven approach)
+	 * @param {Object} pacman - Player model entity
+	 * @param {Array} maze - Maze layout
+	 * @param {Array} pelletGrid - Pellet grid
+	 * @param {Array} ghosts - Enemy entities
+	 * @returns {Object} - Direction to move
+	 */
+    getDirection(pacman, maze, pelletGrid, ghosts) {
+        const pacmanGridX = pacman.gridX;
+        const pacmanGridY = pacman.gridY;
+
+        // Only make new decision at new grid position
+        if (
+            pacmanGridX === this.lastDecisionGridX &&
+			pacmanGridY === this.lastDecisionGridY
+        ) {
+            return this.lastDirection;
+        }
+
+        const direction = this.decideDirection(pacman, maze, pelletGrid, ghosts);
+        if (direction !== directions.NONE) {
+            this.lastDecisionGridX = pacmanGridX;
+            this.lastDecisionGridY = pacmanGridY;
+            this.lastDirection = direction;
+        }
+
+        return direction;
+    }
+
+    decideDirection(pacman, maze, pelletGrid, ghosts) {
+        const validDirs = getValidDirections(maze, pacman.gridX, pacman.gridY);
+        if (validDirs.length === 0) {
+            return directions.NONE;
+        }
+
+        const currentDir = pacman.direction;
+        const ghostDanger = this.calculateGhostDanger(pacman, ghosts);
+
+        let bestDir = validDirs[0];
+        let bestScore = -Infinity;
+
+        for (const dir of validDirs) {
+            let score = 0;
+
+            if (ghostDanger > 0) {
+                const nextGridX = pacman.gridX + dir.x;
+                const nextGridY = pacman.gridY + dir.y;
+                const ghostRisk = this.evaluateGhostRisk(nextGridX, nextGridY, ghosts);
+
+                if (ghostRisk > 0) {
+                    score -= ghostRisk * 10;
+                }
+            }
+
+            const nextGridX = pacman.gridX + dir.x;
+            const nextGridY = pacman.gridY + dir.y;
+
+            if (isPelletAt(pelletGrid, nextGridX, nextGridY)) {
+                score += 5;
+            }
+
+            const distanceFromCurrent = getDistance(
+                pacman.gridX + currentDir.x,
+                pacman.gridY + currentDir.y,
+                nextGridX,
+                nextGridY
+            );
+            if (distanceFromCurrent > 1) {
+                score -= 2;
+            }
+
+            const reverseDir = this.getReverseDirection(currentDir);
+            if (dir === reverseDir) {
+                score -= 20;
+            }
+
+            const forwardDir = this.getSameDirection(dir, currentDir);
+            if (forwardDir) {
+                score += 3;
+            }
+
+            if (score >= bestScore) {
+                bestScore = score;
+                bestDir = dir;
+            }
+        }
+
+        return bestDir;
+    }
+
+    calculateGhostDanger(pacman, ghosts) {
+        let totalDanger = 0;
+
+        for (const ghost of ghosts) {
+            if (ghost.isFrightened || ghost.isEaten) {
+                continue;
+            }
+
+            const dist = getDistance(pacman.x, pacman.y, ghost.x, ghost.y);
+            if (dist < this.dangerDistanceThreshold) {
+                const danger =
+					(this.dangerDistanceThreshold - dist) / this.dangerDistanceThreshold;
+                totalDanger += danger;
+            }
+        }
+
+        return totalDanger;
+    }
+
+    evaluateGhostRisk(gridX, gridY, ghosts) {
+        let maxRisk = 0;
+
+        for (const ghost of ghosts) {
+            if (ghost.isFrightened || ghost.isEaten) {
+                continue;
+            }
+
+            const ghostGridX = ghost.gridX;
+            const ghostGridY = ghost.gridY;
+
+            const dist = getDistance(gridX, gridY, ghostGridX, ghostGridY);
+
+            if (dist < 3) {
+                const risk = (3 - dist) / 3;
+                maxRisk = Math.max(maxRisk, risk);
+            }
+        }
+
+        return maxRisk;
+    }
+
+    getReverseDirection(direction) {
+        if (direction === directions.RIGHT) {
+            return directions.LEFT;
+        }
+        if (direction === directions.LEFT) {
+            return directions.RIGHT;
+        }
+        if (direction === directions.UP) {
+            return directions.DOWN;
+        }
+        if (direction === directions.DOWN) {
+            return directions.UP;
+        }
+        return directions.NONE;
+    }
+
+    getSameDirection(dir1, dir2) {
+        return dir1.x === dir2.x && dir1.y === dir2.y;
+    }
+
+    reset() {
+        this.lastDecisionGridX = -1;
+        this.lastDecisionGridY = -1;
+    }
+}

@@ -1,6 +1,15 @@
+import {
+    animationConfig,
+    colors,
+    directions,
+    gameConfig,
+    levelConfig
+} from '../config/gameConfig.js';
+import {
+    isAtTileCenter,
+    performGridMovementStep
+} from '../utils/TileMovement.js';
 import { BaseEntity } from './BaseEntity.js';
-import { gameConfig, colors, directions, animationConfig, levelConfig } from '../config/gameConfig.js';
-import { performGridMovementStep, isAtTileCenter } from '../utils/TileMovement.js';
 
 export default class Pacman extends BaseEntity {
     constructor(scene, gridX, gridY) {
@@ -8,7 +17,8 @@ export default class Pacman extends BaseEntity {
         super(scene, gridX, gridY, radius, colors.pacman);
 
         const level = scene.gameModel?.getLevel?.() ?? scene.gameState?.level ?? 1;
-        const baseLevelSpeed = levelConfig.baseSpeed + (level - 1) * levelConfig.speedIncreasePerLevel;
+        const baseLevelSpeed =
+			levelConfig.baseSpeed + (level - 1) * levelConfig.speedIncreasePerLevel;
         this.speed = baseLevelSpeed * levelConfig.pacmanSpeedMultiplier;
         this.baseSpeed = this.speed;
 
@@ -66,7 +76,8 @@ export default class Pacman extends BaseEntity {
     }
 
     updateMouthAnimation(deltaSeconds) {
-        this.mouthAngle += this.mouthDirection * this.mouthSpeed * (deltaSeconds / 2);
+        this.mouthAngle +=
+			this.mouthDirection * this.mouthSpeed * (deltaSeconds / 2);
 
         if (this.mouthAngle >= this.maxMouthAngle) {
             this.mouthAngle = this.maxMouthAngle;

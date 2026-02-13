@@ -12,8 +12,8 @@ import { isWarping } from '../../utils/WarpTunnel.js';
 
 export class CollisionAdapter {
     /**
-     * @param {GameModel} gameModel - The game model to adapt for
-     */
+	 * @param {GameModel} gameModel - The game model to adapt for
+	 */
     constructor(gameModel) {
         this.gameModel = gameModel;
 
@@ -35,9 +35,9 @@ export class CollisionAdapter {
     }
 
     /**
-     * Check all collisions for current frame
-     * @returns {Array<Object>} - Collision events in GameModel format
-     */
+	 * Check all collisions for current frame
+	 * @returns {Array<Object>} - Collision events in GameModel format
+	 */
     checkAllCollisions() {
         const events = [];
 
@@ -60,9 +60,9 @@ export class CollisionAdapter {
     }
 
     /**
-     * Check pellet collision at Pacman's position
-     * @returns {Array<Object>} - Array of collision events (0, 1, or 2 events)
-     */
+	 * Check pellet collision at Pacman's position
+	 * @returns {Array<Object>} - Array of collision events (0, 1, or 2 events)
+	 */
     checkPelletCollision() {
         const pacman = this.gameModel.pacman;
 
@@ -135,16 +135,16 @@ export class CollisionAdapter {
     }
 
     /**
-     * Check collisions between Pacman and all ghosts
-     * @returns {Object|null}
-     */
+	 * Check collisions between Pacman and all ghosts
+	 * @returns {Object|null}
+	 */
     checkGhostCollisions() {
         const pacman = this.gameModel.pacman;
 
         // Build entity list for collision detection
         const ghostEntities = this.gameModel.ghosts
-            .filter(g => !g.isEaten)
-            .map(g => ({
+            .filter((g) => !g.isEaten)
+            .map((g) => ({
                 id: g.id,
                 x: g.x,
                 y: g.y,
@@ -167,7 +167,9 @@ export class CollisionAdapter {
 
         // Use decoupled collision engine with adjusted positions for tunnel warping
         const adjustedPacman = this.adjustEntityForTunnel(pacman);
-        const adjustedGhosts = ghostEntities.map(g => this.adjustEntityForTunnel(g));
+        const adjustedGhosts = ghostEntities.map((g) =>
+            this.adjustEntityForTunnel(g)
+        );
 
         const collisions = this.collisionEngine.getAllEntityCollisions(
             adjustedPacman,
@@ -190,10 +192,10 @@ export class CollisionAdapter {
     }
 
     /**
-     * Handle ghost collision result
-     * @param {GhostState} ghost - Ghost that collided
-     * @returns {Object}
-     */
+	 * Handle ghost collision result
+	 * @param {GhostState} ghost - Ghost that collided
+	 * @returns {Object}
+	 */
     handleGhostCollision(ghost) {
         if (ghost.isFrightened) {
             // Increment combo counter
@@ -223,9 +225,9 @@ export class CollisionAdapter {
     }
 
     /**
-     * Check fruit collision
-     * @returns {Object|null}
-     */
+	 * Check fruit collision
+	 * @returns {Object|null}
+	 */
     checkFruitCollision() {
         const fruit = this.gameModel.fruit;
 
@@ -261,12 +263,12 @@ export class CollisionAdapter {
     }
 
     /**
-     * Check for collisions in warp tunnel
-     * Handles edge case where entities are on opposite sides due to tunnel wrap
-     * @param {Object} pacman - Pacman entity
-     * @param {Array<Object>} ghostEntities - List of ghost entities
-     * @returns {Object|null} - Ghost that collided or null
-     */
+	 * Check for collisions in warp tunnel
+	 * Handles edge case where entities are on opposite sides due to tunnel wrap
+	 * @param {Object} pacman - Pacman entity
+	 * @param {Array<Object>} ghostEntities - List of ghost entities
+	 * @returns {Object|null} - Ghost that collided or null
+	 */
     checkTunnelCollisions(pacman, ghostEntities) {
         // Only check if pacman is in tunnel area
         const pacmanInTunnel = isWarping(pacman.x, pacman.y);
@@ -276,11 +278,11 @@ export class CollisionAdapter {
 
         const tileSize = gameConfig.tileSize;
         const collisionDist = tileSize * 0.6; // Collision radius
-        const mazeWidthPx = 28 * tileSize; // 28 tiles wide
+        const mazeWidthPx = gameConfig.mazeWidth * tileSize;
 
         for (const ghost of ghostEntities) {
             // Skip eaten ghosts
-            if (ghost.ghost && ghost.ghost.isEaten) {
+            if (ghost.ghost?.isEaten) {
                 continue;
             }
 
@@ -292,7 +294,7 @@ export class CollisionAdapter {
             // Calculate tunnel-aware distance
             // If entities are on opposite sides, they might be close through the wrap
             let dx = Math.abs(pacman.x - ghost.x);
-            let dy = Math.abs(pacman.y - ghost.y);
+            const dy = Math.abs(pacman.y - ghost.y);
 
             // Handle wrap-around: if distance is large, check if they're on opposite edges
             if (dx > mazeWidthPx / 2) {
@@ -310,13 +312,13 @@ export class CollisionAdapter {
     }
 
     /**
-     * Adjust entity position for tunnel warping in collision detection
-     * This prevents false positives when entities wrap around
-     * @param {Object} entity - Entity with x, y, prevX, prevY
-     * @returns {Object} - Adjusted entity for collision detection
-     */
+	 * Adjust entity position for tunnel warping in collision detection
+	 * This prevents false positives when entities wrap around
+	 * @param {Object} entity - Entity with x, y, prevX, prevY
+	 * @returns {Object} - Adjusted entity for collision detection
+	 */
     adjustEntityForTunnel(entity) {
-        const mazeWidthPx = 28 * gameConfig.tileSize;
+        const mazeWidthPx = gameConfig.mazeWidth * gameConfig.tileSize;
         const result = {
             id: entity.id,
             x: entity.x,
@@ -341,8 +343,8 @@ export class CollisionAdapter {
     }
 
     /**
-     * Reset collision system state
-     */
+	 * Reset collision system state
+	 */
     reset() {
         this.lastPelletGrid = { x: null, y: null };
         this.collisionEngine.clear();
@@ -353,9 +355,9 @@ export class CollisionAdapter {
     }
 
     /**
-     * Get collision statistics for debugging
-     * @returns {Object}
-     */
+	 * Get collision statistics for debugging
+	 * @returns {Object}
+	 */
     getStats() {
         return {
             ...this.stats,

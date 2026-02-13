@@ -2,13 +2,16 @@
  * Tests for AIInputAdapter and ScriptedAIAdapter
  */
 
-import { AIInputAdapter, ScriptedAIAdapter } from '../../src/input/adapters/AIInputAdapter.js';
-import { INPUT_TYPES } from '../../src/input/InputAdapter.js';
 import { directions } from '../../src/config/gameConfig.js';
+import {
+    AIInputAdapter,
+    ScriptedAIAdapter
+} from '../../src/input/adapters/AIInputAdapter.js';
+import { INPUT_TYPES } from '../../src/input/InputAdapter.js';
 
-// Mock PacmanAI
-jest.mock('../../src/systems/PacmanAI.js', () => ({
-    PacmanAI: jest.fn().mockImplementation(() => ({
+// Mock PlayerAI
+jest.mock('../../src/systems/PlayerAI.js', () => ({
+    PlayerAI: jest.fn().mockImplementation(() => ({
         enable: jest.fn(),
         disable: jest.fn(),
         getDirection: jest.fn(),
@@ -166,10 +169,12 @@ describe('AIInputAdapter', () => {
 
             adapter.update(16);
 
-            expect(callback).toHaveBeenCalledWith(expect.objectContaining({
-                type: INPUT_TYPES.DIRECTION,
-                value: directions.RIGHT
-            }));
+            expect(callback).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    type: INPUT_TYPES.DIRECTION,
+                    value: directions.RIGHT
+                })
+            );
         });
 
         it('should respect decision interval when not in continuous mode', () => {
@@ -379,10 +384,12 @@ describe('ScriptedAIAdapter', () => {
 
             adapter.update(0);
 
-            expect(callback).toHaveBeenCalledWith(expect.objectContaining({
-                type: INPUT_TYPES.DIRECTION,
-                value: directions.RIGHT
-            }));
+            expect(callback).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    type: INPUT_TYPES.DIRECTION,
+                    value: directions.RIGHT
+                })
+            );
         });
 
         it('should loop when configured', () => {

@@ -1,60 +1,60 @@
-import { gameEvents, GAME_EVENTS } from '../core/EventBus.js';
+import { GAME_EVENTS, gameEvents } from '../core/EventBus.js';
 
 export const ACHIEVEMENTS = {
-    first_pellet: {
-        id: 'first_pellet',
-        name: 'First Bite',
-        description: 'Eat your first pellet',
-        icon: '🍒',
+    first_data_bit: {
+        id: 'first_data_bit',
+        name: 'First Data Bit',
+        description: 'Collect your first data bit',
+        icon: '◉',
         condition: (state) => state.pelletsEaten >= 1
     },
     score_hunter: {
         id: 'score_hunter',
         name: 'Score Hunter',
         description: 'Score 10,000 points',
-        icon: '🎯',
+        icon: '⌖',
         condition: (state) => state.score >= 10000
     },
-    ghost_buster: {
-        id: 'ghost_buster',
-        name: 'Ghost Buster',
-        description: 'Eat 100 ghosts',
-        icon: '👻',
+    virus_eliminator: {
+        id: 'virus_eliminator',
+        name: 'Virus Eliminator',
+        description: 'Eliminate 100 viruses',
+        icon: '⚠',
         condition: (state) => state.ghostsEaten >= 100
     },
-    perfect_level: {
-        id: 'perfect_level',
-        name: 'Perfect Level',
-        description: 'Complete a level without dying',
-        icon: '⭐',
+    clean_sweep: {
+        id: 'clean_sweep',
+        name: 'Clean Sweep',
+        description: 'Complete a level without system crash',
+        icon: '★',
         condition: (state) => state.levelComplete && state.levelDeaths === 0
     },
-    power_hunter: {
-        id: 'power_hunter',
-        name: 'Power Hunter',
-        description: 'Eat all 4 ghosts in one power pellet',
+    firewall_breaker: {
+        id: 'firewall_breaker',
+        name: 'Firewall Breaker',
+        description: 'Eliminate all 4 viruses in one power packet',
         icon: '⚡',
         condition: (state) => state.maxComboGhosts >= 4
     },
-    combo_master: {
-        id: 'combo_master',
-        name: 'Combo Master',
-        description: 'Get a 3x ghost combo',
-        icon: '🔥',
+    virus_hunter: {
+        id: 'virus_hunter',
+        name: 'Virus Hunter',
+        description: 'Get a 3x virus combo',
+        icon: '⧫',
         condition: (state) => state.maxComboGhosts >= 3
     },
-    survivalist: {
-        id: 'survivalist',
-        name: 'Survivalist',
-        description: 'Complete level 5',
-        icon: '🏆',
+    data_master: {
+        id: 'data_master',
+        name: 'Data Master',
+        description: 'Complete system level 5',
+        icon: '◈',
         condition: (state) => state.level >= 5
     },
-    fruit_collector: {
-        id: 'fruit_collector',
-        name: 'Fruit Collector',
-        description: 'Collect 10 fruits',
-        icon: '🍎',
+    fragment_collector: {
+        id: 'fragment_collector',
+        name: 'Fragment Collector',
+        description: 'Collect 10 data fragments',
+        icon: '⬢',
         condition: (state) => state.fruitsCollected >= 10
     }
 };
@@ -71,11 +71,13 @@ export class AchievementSystem {
 
     init() {
         if (this.storage) {
-            const saved = this.storage.getItem('pacman_achievements');
+            const saved = this.storage.getItem('adawoman_achievements');
             if (saved) {
                 try {
                     const unlockedIds = JSON.parse(saved);
-                    unlockedIds.forEach(id => this.unlocked.add(id));
+                    unlockedIds.forEach((id) => {
+                        this.unlocked.add(id);
+                    });
                 } catch (e) {
                     console.warn('Error loading achievements:', e);
                 }
@@ -85,7 +87,9 @@ export class AchievementSystem {
 
     check(state) {
         for (const [id, achievement] of Object.entries(ACHIEVEMENTS)) {
-            if (this.unlocked.has(id)) {continue;}
+            if (this.unlocked.has(id)) {
+                continue;
+            }
 
             try {
                 const isUnlocked = achievement.condition(state);
@@ -100,7 +104,9 @@ export class AchievementSystem {
     }
 
     unlock(id) {
-        if (this.unlocked.has(id)) {return;}
+        if (this.unlocked.has(id)) {
+            return;
+        }
 
         this.unlocked.add(id);
         this.save();
@@ -120,7 +126,9 @@ export class AchievementSystem {
     }
 
     showNextNotification() {
-        if (this.notificationQueue.length === 0) {return;}
+        if (this.notificationQueue.length === 0) {
+            return;
+        }
 
         const achievement = this.notificationQueue.shift();
 
@@ -136,7 +144,10 @@ export class AchievementSystem {
     save() {
         if (this.storage) {
             try {
-                this.storage.setItem('pacman_achievements', JSON.stringify([...this.unlocked]));
+                this.storage.setItem(
+                    'adawoman_achievements',
+                    JSON.stringify([...this.unlocked])
+                );
             } catch (e) {
                 console.warn('Error saving achievements:', e);
             }
@@ -144,7 +155,7 @@ export class AchievementSystem {
     }
 
     getUnlocked() {
-        return [...this.unlocked].map(id => ACHIEVEMENTS[id]).filter(Boolean);
+        return [...this.unlocked].map((id) => ACHIEVEMENTS[id]).filter(Boolean);
     }
 
     getProgress() {

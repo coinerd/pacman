@@ -109,9 +109,9 @@ describe('PacmanState', () => {
         test('generates tunnel_wrap event when wrapping', () => {
             // Position at left tunnel edge
             pacman.gridX = 0;
-            pacman.gridY = 14;
+            pacman.gridY = 15;
             pacman.x = 0; // At left edge
-            pacman.y = 14 * 20 + 10;
+            pacman.y = 15 * 20 + 10;
             pacman.direction = directions.LEFT;
             pacman.isMoving = true;
 

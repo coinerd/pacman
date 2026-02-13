@@ -3,10 +3,10 @@
  * Tests the game simulation controller
  */
 
-import { GameStateController } from '../../src/model/GameStateController.js';
-import GameModel from '../../src/core/GameModel.js';
 import { directions } from '../../src/config/gameConfig.js';
-import { gameEvents, GAME_EVENTS } from '../../src/core/EventBus.js';
+import { GAME_EVENTS, gameEvents } from '../../src/core/EventBus.js';
+import GameModel from '../../src/core/GameModel.js';
+import { GameStateController } from '../../src/model/GameStateController.js';
 
 // Mock performance.now for consistent testing
 global.performance = {
@@ -74,9 +74,7 @@ describe('GameStateController', () => {
             controller.setInputDirection(directions.RIGHT);
             controller.update(1 / 60);
 
-            // Direction should be consumed (null or same as applied)
-            expect(controller.inputDirection === null ||
-                controller.inputDirection === controller.state.pacman.direction).toBe(true);
+            expect([null, directions.NONE]).toContainEqual(controller.inputDirection);
         });
 
         it('should return movement events', () => {
@@ -101,11 +99,13 @@ describe('GameStateController', () => {
         });
 
         it('should emit PELLET_EATEN event', () => {
-            controller.emitEvents([{
-                type: 'pellet_eaten',
-                score: 10,
-                pelletsRemaining: 5
-            }]);
+            controller.emitEvents([
+                {
+                    type: 'pellet_eaten',
+                    score: 10,
+                    pelletsRemaining: 5
+                }
+            ]);
 
             expect(gameEvents.emit).toHaveBeenCalledWith(
                 GAME_EVENTS.PELLET_EATEN,
@@ -117,12 +117,14 @@ describe('GameStateController', () => {
         });
 
         it('should emit POWER_PELLET_EATEN event', () => {
-            controller.emitEvents([{
-                type: 'power_pellet_eaten',
-                score: 50,
-                pelletsRemaining: 4,
-                frightenedDuration: 8
-            }]);
+            controller.emitEvents([
+                {
+                    type: 'power_pellet_eaten',
+                    score: 50,
+                    pelletsRemaining: 4,
+                    frightenedDuration: 8
+                }
+            ]);
 
             expect(gameEvents.emit).toHaveBeenCalledWith(
                 GAME_EVENTS.POWER_PELLET_EATEN,
@@ -134,12 +136,14 @@ describe('GameStateController', () => {
         });
 
         it('should emit GHOST_EATEN event', () => {
-            controller.emitEvents([{
-                type: 'ghost_eaten',
-                ghostType: 'blinky',
-                score: 200,
-                combo: 1
-            }]);
+            controller.emitEvents([
+                {
+                    type: 'ghost_eaten',
+                    ghostType: 'blinky',
+                    score: 200,
+                    combo: 1
+                }
+            ]);
 
             expect(gameEvents.emit).toHaveBeenCalledWith(
                 GAME_EVENTS.GHOST_EATEN,
@@ -151,10 +155,12 @@ describe('GameStateController', () => {
         });
 
         it('should emit FRUIT_EATEN event', () => {
-            controller.emitEvents([{
-                type: 'fruit_eaten',
-                score: 100
-            }]);
+            controller.emitEvents([
+                {
+                    type: 'fruit_eaten',
+                    score: 100
+                }
+            ]);
 
             expect(gameEvents.emit).toHaveBeenCalledWith(
                 GAME_EVENTS.FRUIT_EATEN,
@@ -165,10 +171,12 @@ describe('GameStateController', () => {
         });
 
         it('should emit LIVES_LOST event for pacman death', () => {
-            controller.emitEvents([{
-                type: 'pacman_died',
-                livesRemaining: 2
-            }]);
+            controller.emitEvents([
+                {
+                    type: 'pacman_died',
+                    livesRemaining: 2
+                }
+            ]);
 
             expect(gameEvents.emit).toHaveBeenCalledWith(
                 GAME_EVENTS.LIVES_LOST,
@@ -179,9 +187,11 @@ describe('GameStateController', () => {
         });
 
         it('should emit LEVEL_COMPLETE event', () => {
-            controller.emitEvents([{
-                type: 'level_complete'
-            }]);
+            controller.emitEvents([
+                {
+                    type: 'level_complete'
+                }
+            ]);
 
             expect(gameEvents.emit).toHaveBeenCalledWith(
                 GAME_EVENTS.LEVEL_COMPLETE,
@@ -190,9 +200,11 @@ describe('GameStateController', () => {
         });
 
         it('should emit GAME_OVER event', () => {
-            controller.emitEvents([{
-                type: 'game_over'
-            }]);
+            controller.emitEvents([
+                {
+                    type: 'game_over'
+                }
+            ]);
 
             expect(gameEvents.emit).toHaveBeenCalledWith(
                 GAME_EVENTS.GAME_OVER,
@@ -201,9 +213,11 @@ describe('GameStateController', () => {
         });
 
         it('should not emit tile_center_reached events', () => {
-            controller.emitEvents([{
-                type: 'tile_center_reached'
-            }]);
+            controller.emitEvents([
+                {
+                    type: 'tile_center_reached'
+                }
+            ]);
 
             expect(gameEvents.emit).not.toHaveBeenCalled();
         });
@@ -307,14 +321,16 @@ describe('GameStateController', () => {
 
             // Update during death
             const events1 = controller.update(1);
-            expect(events1.some(e => e.type === 'death_tick')).toBe(true);
+            expect(events1.some((e) => e.type === 'death_tick')).toBe(true);
 
             // Continue until death complete
             let gameOverEvent = null;
             for (let i = 0; i < 10; i++) {
                 const events = controller.update(1);
-                const go = events.find(e => e.type === 'game_over');
-                if (go) {gameOverEvent = go;}
+                const go = events.find((e) => e.type === 'game_over');
+                if (go) {
+                    gameOverEvent = go;
+                }
             }
 
             // After enough time, should get game_over or respawn

@@ -1,11 +1,11 @@
-import { tileCenter, worldToTile } from './TileMovement.js';
 import { gameConfig } from '../config/gameConfig.js';
+import { tileCenter, worldToTile } from './TileMovement.js';
 
-const TUNNEL_ROW = 14;
+const TUNNEL_ROW = 15;
 
 const PORTAL_TILES = {
     leftPortal: { tileX: 0, tileY: TUNNEL_ROW },
-    rightPortal: { tileX: 27, tileY: TUNNEL_ROW },
+    rightPortal: { tileX: 24, tileY: TUNNEL_ROW },
     tunnelRow: TUNNEL_ROW
 };
 
@@ -17,7 +17,7 @@ export { PORTAL_TILES };
  * @returns {boolean} True if tile is a portal
  */
 export function isPortalTile(tileX, tileY) {
-    return tileY === TUNNEL_ROW && (tileX === 0 || tileX === 27);
+    return tileY === TUNNEL_ROW && (tileX === 0 || tileX === 24);
 }
 
 /**
@@ -37,18 +37,21 @@ export function isWarping(entityX, entityY) {
 export function handlePortalTraversal(entity, _tileSize) {
     const tile = worldToTile(entity.x, entity.y);
 
-    if (!isPortalTile(tile.x, tile.y) && !isPortalTile(entity.gridX, entity.gridY)) {
+    if (
+        !isPortalTile(tile.x, tile.y) &&
+		!isPortalTile(entity.gridX, entity.gridY)
+    ) {
         return;
     }
 
-    const targetTile = entity.x < 0 ? PORTAL_TILES.rightPortal : PORTAL_TILES.leftPortal;
+    const targetTile =
+		entity.x < 0 ? PORTAL_TILES.rightPortal : PORTAL_TILES.leftPortal;
 
     entity.prevGridX = entity.gridX;
     entity.prevGridY = entity.gridY;
     entity.gridX = targetTile.tileX;
     entity.gridY = targetTile.tileY;
     const center = tileCenter(targetTile.tileX, targetTile.tileY);
-    entity.x = center.x; entity.y = center.y;
+    entity.x = center.x;
+    entity.y = center.y;
 }
-
-

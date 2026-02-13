@@ -4,32 +4,35 @@
  * Allows the model collision system to work with existing Phaser entities.
  */
 
-import { GameState } from './GameState.js';
 import { directions } from '../config/gameConfig.js';
+import { GameState } from './GameState.js';
 
 export class ModelStateAdapter {
     /**
-     * @param {GameState} modelState - The model game state
-     */
+	 * @param {GameState} modelState - The model game state
+	 */
     constructor(modelState) {
         this.modelState = modelState;
         this.visualEntities = {
             pacman: null,
-            ghosts: [],
+            enemies: [],
             fruit: null
         };
     }
 
     /**
-     * Register visual entities for syncing
-     * @param {Object} entities - Visual entities from PhaserGameView
-     */
+	 * Register visual entities for syncing
+	 * @param {Object} entities - Visual entities from PhaserGameView
+	 */
     registerVisualEntities(entities) {
         if (entities.pacman) {
             this.visualEntities.pacman = entities.pacman;
         }
         if (entities.ghosts) {
-            this.visualEntities.ghosts = entities.ghosts;
+            this.visualEntities.enemies = entities.ghosts;
+        }
+        if (entities.enemies) {
+            this.visualEntities.enemies = entities.enemies;
         }
         if (entities.fruit) {
             this.visualEntities.fruit = entities.fruit;
@@ -37,9 +40,9 @@ export class ModelStateAdapter {
     }
 
     /**
-     * Sync positions from visual entities to model entities
-     * Call this BEFORE collision detection
-     */
+	 * Sync positions from visual entities to model entities
+	 * Call this BEFORE collision detection
+	 */
     syncToModel() {
         this.syncPacmanToModel();
         this.syncGhostsToModel();
@@ -47,9 +50,9 @@ export class ModelStateAdapter {
     }
 
     /**
-     * Sync model entity state to visual entities
-     * Call this AFTER model update (optional - for headless-driven visuals)
-     */
+	 * Sync model entity state to visual entities
+	 * Call this AFTER model update (optional - for headless-driven visuals)
+	 */
     syncFromModel() {
         // When using model-driven movement, this syncs model -> visual
         // Currently we sync visual -> model for collision
@@ -57,13 +60,15 @@ export class ModelStateAdapter {
     }
 
     /**
-     * Sync Pacman from visual to model
-     */
+	 * Sync Pacman from visual to model
+	 */
     syncPacmanToModel() {
         const visual = this.visualEntities.pacman;
         const model = this.modelState.pacman;
 
-        if (!visual || !model) {return;}
+        if (!visual || !model) {
+            return;
+        }
 
         // Store previous positions for swept collision
         model.prevX = model.x;
@@ -92,16 +97,23 @@ export class ModelStateAdapter {
     }
 
     /**
-     * Sync Ghosts from visual to model
-     */
+	 * Sync Ghosts from visual to model
+	 */
     syncGhostsToModel() {
-        const visualGhosts = this.visualEntities.ghosts;
+        const visualGhosts =
+			this.visualEntities.ghosts || this.visualEntities.enemies || [];
 
-        for (let i = 0; i < visualGhosts.length && i < this.modelState.ghosts.length; i++) {
+        for (
+            let i = 0;
+            i < visualGhosts.length && i < this.modelState.ghosts.length;
+            i++
+        ) {
             const visual = visualGhosts[i];
             const model = this.modelState.ghosts[i];
 
-            if (!visual || !model) {continue;}
+            if (!visual || !model) {
+                continue;
+            }
 
             // Store previous positions
             model.prevX = model.x;
@@ -142,13 +154,15 @@ export class ModelStateAdapter {
     }
 
     /**
-     * Sync Fruit from visual to model
-     */
+	 * Sync Fruit from visual to model
+	 */
     syncFruitToModel() {
         const visual = this.visualEntities.fruit;
         const model = this.modelState.fruit;
 
-        if (!visual || !model) {return;}
+        if (!visual || !model) {
+            return;
+        }
 
         // Sync position
         model.x = visual.x;
@@ -166,9 +180,9 @@ export class ModelStateAdapter {
     }
 
     /**
-     * Apply model collision results to visual entities
-     * @param {Array<Object>} events - Collision events from model
-     */
+	 * Apply model collision results to visual entities
+	 * @param {Array<Object>} events - Collision events from model
+	 */
     applyCollisionResults(events) {
         for (const event of events) {
             switch (event.type) {
@@ -181,19 +195,21 @@ export class ModelStateAdapter {
             case 'fruit_eaten':
                 this.handleFruitEaten(event);
                 break;
-                    // Pellet events handled by pellet pool
+				// Pellet events handled by pellet pool
             }
         }
     }
 
     /**
-     * Handle ghost eaten event
-     * @param {Object} event - Ghost eaten event
-     */
+	 * Handle ghost eaten event
+	 * @param {Object} event - Ghost eaten event
+	 */
     handleGhostEaten(event) {
-        // Find the ghost by type and mark as eaten
-        const visualGhost = this.visualEntities.ghosts.find(
-            g => g.ghostType === event.ghostType
+        const visualGhosts =
+			this.visualEntities.ghosts || this.visualEntities.enemies || [];
+
+        const visualGhost = visualGhosts.find(
+            (g) => g.ghostType === event.ghostType
         );
 
         if (visualGhost && visualGhost.eat) {
@@ -202,9 +218,9 @@ export class ModelStateAdapter {
     }
 
     /**
-     * Handle pacman died event
-     * @param {Object} event - Pacman died event
-     */
+	 * Handle pacman died event
+	 * @param {Object} event - Pacman died event
+	 */
     handlePacmanDied(event) {
         const visualPacman = this.visualEntities.pacman;
 
@@ -214,9 +230,9 @@ export class ModelStateAdapter {
     }
 
     /**
-     * Handle fruit eaten event
-     * @param {Object} event - Fruit eaten event
-     */
+	 * Handle fruit eaten event
+	 * @param {Object} event - Fruit eaten event
+	 */
     handleFruitEaten(event) {
         const visualFruit = this.visualEntities.fruit;
 
@@ -226,9 +242,9 @@ export class ModelStateAdapter {
     }
 
     /**
-     * Update model state directly (for AI/replay input)
-     * @param {Object} update - Update to apply
-     */
+	 * Update model state directly (for AI/replay input)
+	 * @param {Object} update - Update to apply
+	 */
     applyDirectUpdate(update) {
         if (update.pacman) {
             Object.assign(this.modelState.pacman, update.pacman);
@@ -245,9 +261,9 @@ export class ModelStateAdapter {
     }
 
     /**
-     * Get model state for external systems
-     * @returns {GameState}
-     */
+	 * Get model state for external systems
+	 * @returns {GameState}
+	 */
     getModelState() {
         return this.modelState;
     }

@@ -7,9 +7,9 @@
  * This legacy file will be removed in a future release.
  */
 
-import { gameConfig, directions } from '../../config/gameConfig.js';
-import { tileCenter, EPS } from '../TileMath.js';
+import { directions, gameConfig } from '../../config/gameConfig.js';
 import { isWalkableTile } from '../MazeLayout.js';
+import { EPS, tileCenter } from '../TileMath.js';
 import { PORTAL_TILES } from '../WarpTunnel.js';
 
 const MAX_TILES_PER_FRAME = 3;
@@ -18,14 +18,17 @@ const MAX_TILES_PER_FRAME = 3;
 let deprecationWarningShown = false;
 function showDeprecationWarning() {
     if (!deprecationWarningShown && typeof console !== 'undefined') {
-        console.warn('[DEPRECATED] GridMovement.js is deprecated. Use MovementEngine with GridMovementStrategy instead.');
+        console.warn(
+            '[DEPRECATED] GridMovement.js is deprecated. Use MovementEngine with GridMovementStrategy instead.'
+        );
         deprecationWarningShown = true;
     }
 }
 
 export function isInBounds(tileX, tileY, maze) {
-    return tileY >= 0 && tileY < maze.length &&
-        tileX >= 0 && tileX < maze[0].length;
+    return (
+        tileY >= 0 && tileY < maze.length && tileX >= 0 && tileX < maze[0].length
+    );
 }
 
 export function canMove(maze, tileX, tileY, direction) {
@@ -80,7 +83,10 @@ export function moveEntityOnGrid(entity, maze, deltaSeconds) {
 
     const rawMoveDist = entity.speed * deltaSeconds;
     const cappedMoveDist = Math.min(rawMoveDist, gameConfig.tileSize * 2 - 1);
-    let remainingDist = Math.max(0, cappedMoveDist - (cappedMoveDist <= EPS ? 0.01 : 0));
+    let remainingDist = Math.max(
+        0,
+        cappedMoveDist - (cappedMoveDist <= EPS ? 0.01 : 0)
+    );
 
     let steps = 0;
     let movedAwayFromCenter = false;
@@ -88,28 +94,39 @@ export function moveEntityOnGrid(entity, maze, deltaSeconds) {
     while (remainingDist > 0 && steps < MAX_TILES_PER_FRAME) {
         const center = tileCenter(entity.gridX, entity.gridY);
         const distToCenter = Math.hypot(center.x - entity.x, center.y - entity.y);
+        const exactlyAtCenter = distToCenter < 0.001;
         const atCenter = distToCenter <= EPS;
 
         // Determine if we're moving toward or away from center
-        const movingTowardCenter = entity.direction.x !== 0
-            ? Math.sign(center.x - entity.x) === entity.direction.x
-            : Math.sign(center.y - entity.y) === entity.direction.y;
+        const movingTowardCenter =
+			entity.direction.x !== 0
+			    ? Math.sign(center.x - entity.x) === entity.direction.x
+			    : Math.sign(center.y - entity.y) === entity.direction.y;
 
         // Check if we have a buffered turn to apply
-        const hasBufferedTurn = entity.directionBuffer?.queue?.length > 0 ||
-                                (entity.nextDirection && (entity.nextDirection.x !== 0 || entity.nextDirection.y !== 0));
+        const hasBufferedTurn =
+			entity.directionBuffer?.queue?.length > 0 ||
+			(entity.nextDirection &&
+				(entity.nextDirection.x !== 0 || entity.nextDirection.y !== 0));
 
         // At center, we need to:
-        // 1. Snap to center and apply buffered turns if moving toward center OR have buffered turn
-        // 2. If moving away from center with no buffered turn, just continue straight
-        const shouldProcessCenter = atCenter && (movingTowardCenter || hasBufferedTurn);
-        const shouldContinueStraight = atCenter && !movingTowardCenter && !hasBufferedTurn &&
-                                       (entity.direction.x !== 0 || entity.direction.y !== 0);
+        //1. Snap to center and apply buffered turns if moving toward center OR have buffered turn OR exactly at center
+        //2. If moving away from center with no buffered turn and not exactly at center, just continue straight
+        const shouldProcessCenter =
+			atCenter && (movingTowardCenter || hasBufferedTurn || exactlyAtCenter);
+        const shouldContinueStraight =
+			atCenter &&
+			!movingTowardCenter &&
+			!hasBufferedTurn &&
+			!exactlyAtCenter &&
+			(entity.direction.x !== 0 || entity.direction.y !== 0);
 
         if (shouldProcessCenter) {
             entity.x = center.x;
             entity.y = center.y;
-            const applied = applyBufferedTurn((dir) => canMove(maze, entity.gridX, entity.gridY, dir));
+            const applied = applyBufferedTurn((dir) =>
+                canMove(maze, entity.gridX, entity.gridY, dir)
+            );
             if (applied) {
                 entity.isMoving = true;
             }
@@ -131,12 +148,68 @@ export function moveEntityOnGrid(entity, maze, deltaSeconds) {
                 // so we must handle it here.
                 // Move using remainingDist (don't require > EPS, any positive amount is valid)
                 if (remainingDist > 0) {
-                    entity.x += entity.direction.x * remainingDist;
-                    entity.y += entity.direction.y * remainingDist;
-                    movedAwayFromCenter = true;  // CRITICAL: Prevent snap-back at end of function
-                    remainingDist = 0;
+                    const distToNextCenter = gameConfig.tileSize;
+                    if (remainingDist >= distToNextCenter) {
+                        // Cross to next tile
+                        const nextGridX = entity.gridX + entity.direction.x;
+                        const nextGridY = entity.gridY + entity.direction.y;
+                        const warpTarget = getWarpTarget(
+                            entity.gridX,
+                            entity.gridY,
+                            entity.direction
+                        );
+                        if (warpTarget) {
+                            updatePrevGrid(entity);
+                            entity.gridX = warpTarget.tileX;
+                            entity.gridY = warpTarget.tileY;
+                            const warpCenter = tileCenter(warpTarget.tileX, warpTarget.tileY);
+                            entity.x = warpCenter.x;
+                            entity.y = warpCenter.y;
+                            remainingDist -= distToNextCenter;
+                            events.push({
+                                type: 'warp',
+                                tileX: entity.gridX,
+                                tileY: entity.gridY
+                            });
+                            events.push({
+                                type: 'tile_enter',
+                                tileX: entity.gridX,
+                                tileY: entity.gridY
+                            });
+                            steps += 1;
+                        } else if (canMove(maze, nextGridX, nextGridY, entity.direction)) {
+                            updatePrevGrid(entity);
+                            entity.gridX = nextGridX;
+                            entity.gridY = nextGridY;
+                            const nextCenter = tileCenter(nextGridX, nextGridY);
+                            entity.x = nextCenter.x;
+                            entity.y = nextCenter.y;
+                            remainingDist -= distToNextCenter;
+                            events.push({
+                                type: 'tile_enter',
+                                tileX: nextGridX,
+                                tileY: nextGridY
+                            });
+                            steps += 1;
+                        } else {
+                            // Can't move to next tile, just move forward
+                            entity.x += entity.direction.x * remainingDist;
+                            entity.y += entity.direction.y * remainingDist;
+                            movedAwayFromCenter = true;
+                            remainingDist = 0;
+                            break;
+                        }
+                    } else {
+                        // Stay in current tile
+                        entity.x += entity.direction.x * remainingDist;
+                        entity.y += entity.direction.y * remainingDist;
+                        movedAwayFromCenter = true;
+                        remainingDist = 0;
+                    }
                 }
-                break;
+                if (remainingDist <= 0) {
+                    break;
+                }
             }
         } else if (shouldContinueStraight) {
             // We're at center but moving away from it with no buffered turn
@@ -163,20 +236,27 @@ export function moveEntityOnGrid(entity, maze, deltaSeconds) {
         entity.isMoving = true;
 
         if (!atCenter) {
-            const movingTowardCenter = entity.direction.x !== 0
-                ? Math.sign(center.x - entity.x) === entity.direction.x
-                : Math.sign(center.y - entity.y) === entity.direction.y;
+            const movingTowardCenter =
+				entity.direction.x !== 0
+				    ? Math.sign(center.x - entity.x) === entity.direction.x
+				    : Math.sign(center.y - entity.y) === entity.direction.y;
 
             if (!movingTowardCenter) {
-                const blockedAhead = !canMove(maze, entity.gridX, entity.gridY, entity.direction);
+                const blockedAhead = !canMove(
+                    maze,
+                    entity.gridX,
+                    entity.gridY,
+                    entity.direction
+                );
                 if (blockedAhead) {
                     const boundary = {
                         x: center.x + entity.direction.x * (gameConfig.tileSize / 2),
                         y: center.y + entity.direction.y * (gameConfig.tileSize / 2)
                     };
-                    const distToBoundary = entity.direction.x !== 0
-                        ? Math.abs(boundary.x - entity.x)
-                        : Math.abs(boundary.y - entity.y);
+                    const distToBoundary =
+						entity.direction.x !== 0
+						    ? Math.abs(boundary.x - entity.x)
+						    : Math.abs(boundary.y - entity.y);
                     const travel = Math.min(distToBoundary, remainingDist);
                     entity.x += entity.direction.x * travel;
                     entity.y += entity.direction.y * travel;
@@ -195,9 +275,10 @@ export function moveEntityOnGrid(entity, maze, deltaSeconds) {
                 break;
             }
 
-            const distAxis = entity.direction.x !== 0
-                ? Math.abs(center.x - entity.x)
-                : Math.abs(center.y - entity.y);
+            const distAxis =
+				entity.direction.x !== 0
+				    ? Math.abs(center.x - entity.x)
+				    : Math.abs(center.y - entity.y);
             const travel = Math.min(distAxis, remainingDist);
             entity.x += entity.direction.x * travel;
             entity.y += entity.direction.y * travel;
@@ -217,7 +298,11 @@ export function moveEntityOnGrid(entity, maze, deltaSeconds) {
         if (!canMove(maze, entity.gridX, entity.gridY, entity.direction)) {
             entity.direction = directions.NONE;
             entity.isMoving = false;
-            events.push({ type: 'hit_wall', tileX: entity.gridX, tileY: entity.gridY });
+            events.push({
+                type: 'hit_wall',
+                tileX: entity.gridX,
+                tileY: entity.gridY
+            });
             break;
         }
 
@@ -229,7 +314,11 @@ export function moveEntityOnGrid(entity, maze, deltaSeconds) {
             break;
         }
 
-        const warpTarget = getWarpTarget(entity.gridX, entity.gridY, entity.direction);
+        const warpTarget = getWarpTarget(
+            entity.gridX,
+            entity.gridY,
+            entity.direction
+        );
         if (warpTarget) {
             updatePrevGrid(entity);
             entity.gridX = warpTarget.tileX;
@@ -239,7 +328,11 @@ export function moveEntityOnGrid(entity, maze, deltaSeconds) {
             entity.y = warpCenter.y;
             remainingDist -= gameConfig.tileSize;
             events.push({ type: 'warp', tileX: entity.gridX, tileY: entity.gridY });
-            events.push({ type: 'tile_enter', tileX: entity.gridX, tileY: entity.gridY });
+            events.push({
+                type: 'tile_enter',
+                tileX: entity.gridX,
+                tileY: entity.gridY
+            });
             steps += 1;
             continue;
         }
@@ -258,7 +351,10 @@ export function moveEntityOnGrid(entity, maze, deltaSeconds) {
     }
 
     const finalCenter = tileCenter(entity.gridX, entity.gridY);
-    const finalDist = Math.hypot(finalCenter.x - entity.x, finalCenter.y - entity.y);
+    const finalDist = Math.hypot(
+        finalCenter.x - entity.x,
+        finalCenter.y - entity.y
+    );
     if (!movedAwayFromCenter && finalDist <= EPS) {
         entity.x = finalCenter.x;
         entity.y = finalCenter.y;
@@ -268,7 +364,10 @@ export function moveEntityOnGrid(entity, maze, deltaSeconds) {
 }
 
 function updatePrevGrid(entity) {
-    if (typeof entity.prevGridX === 'undefined' || typeof entity.prevGridY === 'undefined') {
+    if (
+        typeof entity.prevGridX === 'undefined' ||
+		typeof entity.prevGridY === 'undefined'
+    ) {
         return;
     }
 

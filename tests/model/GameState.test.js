@@ -3,11 +3,11 @@
  * Tests for the game state aggregator.
  */
 
-import { GameState } from '../../src/model/GameState.js';
-import { PacmanState } from '../../src/model/entities/PacmanState.js';
-import { GhostState } from '../../src/model/entities/GhostState.js';
-import { FruitState } from '../../src/model/entities/FruitState.js';
 import { directions } from '../../src/config/gameConfig.js';
+import { EnemyState } from '../../src/model/entities/EnemyState.js';
+import { FruitState } from '../../src/model/entities/FruitState.js';
+import { PlayerState } from '../../src/model/entities/PlayerState.js';
+import { GameState } from '../../src/model/GameState.js';
 
 describe('GameState', () => {
     let gameState;
@@ -33,13 +33,13 @@ describe('GameState', () => {
         });
 
         test('creates Pacman', () => {
-            expect(gameState.pacman).toBeInstanceOf(PacmanState);
+            expect(gameState.pacman).toBeInstanceOf(PlayerState);
         });
 
         test('creates all ghosts', () => {
             expect(gameState.ghosts).toHaveLength(4);
-            gameState.ghosts.forEach(ghost => {
-                expect(ghost).toBeInstanceOf(GhostState);
+            gameState.ghosts.forEach((ghost) => {
+                expect(ghost).toBeInstanceOf(EnemyState);
             });
         });
 
@@ -64,17 +64,17 @@ describe('GameState', () => {
     describe('createPacman', () => {
         test('creates at start position', () => {
             expect(gameState.pacman.gridX).toBe(13);
-            expect(gameState.pacman.gridY).toBe(22);
+            expect(gameState.pacman.gridY).toBe(27);
         });
     });
 
     describe('createGhosts', () => {
         test('creates all 4 ghost types', () => {
-            const types = gameState.ghosts.map(g => g.ghostType);
-            expect(types).toContain('blinky');
-            expect(types).toContain('pinky');
-            expect(types).toContain('inky');
-            expect(types).toContain('clyde');
+            const types = gameState.ghosts.map((g) => g.ghostType);
+            expect(types).toContain('alpha');
+            expect(types).toContain('beta');
+            expect(types).toContain('gamma');
+            expect(types).toContain('delta');
         });
     });
 
@@ -101,8 +101,9 @@ describe('GameState', () => {
             gameState.desiredDirection = null;
             gameState.update(0.1, { direction: directions.RIGHT });
             // Direction is stored (may be in buffer or applied depending on position)
-            const hasDirection = gameState.pacman.nextDirection.x === directions.RIGHT.x ||
-                               gameState.pacman.direction.x === directions.RIGHT.x;
+            const hasDirection =
+				gameState.pacman.nextDirection.x === directions.RIGHT.x ||
+				gameState.pacman.direction.x === directions.RIGHT.x;
             expect(hasDirection).toBe(true);
         });
 
@@ -128,9 +129,11 @@ describe('GameState', () => {
             gameState.onPacmanDeath();
             const events = gameState.updateDeathSequence(0.1);
 
-            expect(events).toContainEqual(expect.objectContaining({
-                type: 'death_tick'
-            }));
+            expect(events).toContainEqual(
+                expect.objectContaining({
+                    type: 'death_tick'
+                })
+            );
         });
 
         test('decrements lives after duration', () => {
@@ -144,21 +147,29 @@ describe('GameState', () => {
 
         test('returns respawn event', () => {
             gameState.onPacmanDeath();
-            const events = gameState.updateDeathSequence(gameState.deathPauseDuration + 0.1);
+            const events = gameState.updateDeathSequence(
+                gameState.deathPauseDuration + 0.1
+            );
 
-            expect(events).toContainEqual(expect.objectContaining({
-                type: 'respawn'
-            }));
+            expect(events).toContainEqual(
+                expect.objectContaining({
+                    type: 'respawn'
+                })
+            );
         });
 
         test('returns game_over when no lives', () => {
             gameState.lives = 0;
             gameState.onPacmanDeath();
-            const events = gameState.updateDeathSequence(gameState.deathPauseDuration + 0.1);
+            const events = gameState.updateDeathSequence(
+                gameState.deathPauseDuration + 0.1
+            );
 
-            expect(events).toContainEqual(expect.objectContaining({
-                type: 'game_over'
-            }));
+            expect(events).toContainEqual(
+                expect.objectContaining({
+                    type: 'game_over'
+                })
+            );
             expect(gameState.isGameOver).toBe(true);
         });
     });
@@ -178,16 +189,20 @@ describe('GameState', () => {
     describe('eatPelletAt', () => {
         test('removes pellet from grid', () => {
             // Find a position with a pellet
-            let pelletX = -1, pelletY = -1;
+            let pelletX = -1,
+                pelletY = -1;
             for (let y = 0; y < gameState.pelletGrid.length; y++) {
                 for (let x = 0; x < gameState.pelletGrid[y].length; x++) {
-                    if (gameState.pelletGrid[y][x] === 1) { // PELLET
+                    if (gameState.pelletGrid[y][x] === 1) {
+                        // PELLET
                         pelletX = x;
                         pelletY = y;
                         break;
                     }
                 }
-                if (pelletX !== -1) {break;}
+                if (pelletX !== -1) {
+                    break;
+                }
             }
 
             if (pelletX !== -1) {
@@ -213,16 +228,20 @@ describe('GameState', () => {
 
         test('returns null for empty position', () => {
             // Find an empty position
-            let emptyX = -1, emptyY = -1;
+            let emptyX = -1,
+                emptyY = -1;
             for (let y = 0; y < gameState.pelletGrid.length; y++) {
                 for (let x = 0; x < gameState.pelletGrid[y].length; x++) {
-                    if (gameState.pelletGrid[y][x] === 0) { // NONE
+                    if (gameState.pelletGrid[y][x] === 0) {
+                        // NONE
                         emptyX = x;
                         emptyY = y;
                         break;
                     }
                 }
-                if (emptyX !== -1) {break;}
+                if (emptyX !== -1) {
+                    break;
+                }
             }
 
             if (emptyX !== -1) {
@@ -276,7 +295,7 @@ describe('GameState', () => {
         test('sets all ghosts to frightened', () => {
             gameState.setGhostsFrightened(5);
 
-            gameState.ghosts.forEach(ghost => {
+            gameState.ghosts.forEach((ghost) => {
                 expect(ghost.isFrightened).toBe(true);
             });
         });
@@ -341,9 +360,9 @@ describe('GameState', () => {
 
     describe('getGhostByType', () => {
         test('returns ghost by type', () => {
-            const blinky = gameState.getGhostByType('blinky');
-            expect(blinky).toBeDefined();
-            expect(blinky.ghostType).toBe('blinky');
+            const alpha = gameState.getGhostByType('alpha');
+            expect(alpha).toBeDefined();
+            expect(alpha.ghostType).toBe('alpha');
         });
 
         test('returns null for unknown type', () => {
@@ -364,7 +383,9 @@ describe('GameState', () => {
                     if (gameState.pelletGrid[y][x] === 1) {
                         gameState.eatPelletAt(x, y);
                         const percentage = (1 / gameState.totalPellets) * 100;
-                        expect(gameState.getPelletsEatenPercentage()).toBeCloseTo(percentage);
+                        expect(gameState.getPelletsEatenPercentage()).toBeCloseTo(
+                            percentage
+                        );
                         return;
                     }
                 }
@@ -377,7 +398,9 @@ describe('GameState', () => {
             const level1 = new GameState({ level: 1 });
             const level5 = new GameState({ level: 5 });
 
-            expect(level5.getFrightenedDuration()).toBeLessThan(level1.getFrightenedDuration());
+            expect(level5.getFrightenedDuration()).toBeLessThan(
+                level1.getFrightenedDuration()
+            );
         });
 
         test('has minimum of 2 seconds', () => {
@@ -391,7 +414,9 @@ describe('GameState', () => {
             const level1 = new GameState({ level: 1 });
             const level5 = new GameState({ level: 5 });
 
-            expect(level5.getSpeedMultiplier()).toBeGreaterThan(level1.getSpeedMultiplier());
+            expect(level5.getSpeedMultiplier()).toBeGreaterThan(
+                level1.getSpeedMultiplier()
+            );
         });
     });
 
@@ -414,7 +439,7 @@ describe('GameState', () => {
 
             expect(snapshot.pacman).toHaveProperty('id');
             expect(snapshot.ghosts).toHaveLength(4);
-            snapshot.ghosts.forEach(ghost => {
+            snapshot.ghosts.forEach((ghost) => {
                 expect(ghost).toHaveProperty('id');
             });
         });

@@ -7,34 +7,36 @@
  */
 
 import { collisionConfig, scoreValues } from '../config/gameConfig.js';
-import {
-    pixelToGrid,
-    countPellets,
-    getPelletType,
-    consumePelletAt,
-    PELLET_TYPES
-} from '../utils/MazeLayout.js';
 import { capsuleCollision } from '../utils/CollisionUtils.js';
 import { DebugLogger } from '../utils/DebugLogger.js';
+import {
+    consumePelletAt,
+    countPellets,
+    getPelletType,
+    PELLET_TYPES,
+    pixelToGrid
+} from '../utils/MazeLayout.js';
 
 // Deprecation warning (only shown once)
 let deprecationWarningShown = false;
 function showDeprecationWarning() {
     if (!deprecationWarningShown && typeof console !== 'undefined') {
-        console.warn('[DEPRECATED] CollisionSystem is deprecated. Use CollisionEngine with CollisionAdapter instead.');
+        console.warn(
+            '[DEPRECATED] CollisionSystem is deprecated. Use CollisionEngine with CollisionAdapter instead.'
+        );
         deprecationWarningShown = true;
     }
 }
 
 export class CollisionSystem {
     /**
-     * Collision System
-     * Manages collision detection between Pacman, ghosts, and pellets
-     */
+	 * Collision System
+	 * Manages collision detection between Pacman, ghosts, and pellets
+	 */
     /**
-     * Creates a new CollisionSystem instance
-     * @param {Phaser.Scene} scene - The scene this collision system belongs to
-     */
+	 * Creates a new CollisionSystem instance
+	 * @param {Phaser.Scene} scene - The scene this collision system belongs to
+	 */
     constructor(scene) {
         showDeprecationWarning();
         this.scene = scene;
@@ -46,7 +48,7 @@ export class CollisionSystem {
         this.powerPelletSprites = [];
         this.pelletPool = null;
         this.powerPelletPool = null;
-        this.ghostsEatenCount = 0;
+        this.enemiesEatenCount = 0;
         this.debugLogger = DebugLogger.getInstance();
         this.totalPellets = null;
         this.pelletsRemaining = null;
@@ -63,25 +65,25 @@ export class CollisionSystem {
     }
 
     /**
-     * Sets the Pacman entity for collision detection
-     * @param {Pacman} pacman - The Pacman entity
-     */
+	 * Sets the Pacman entity for collision detection
+	 * @param {Pacman} pacman - The Pacman entity
+	 */
     setPacman(pacman) {
         this.pacman = pacman;
     }
 
     /**
-     * Sets the ghost entities for collision detection
-     * @param {Ghost[]} ghosts - Array of ghost entities
-     */
+	 * Sets the ghost entities for collision detection
+	 * @param {Ghost[]} ghosts - Array of ghost entities
+	 */
     setGhosts(ghosts) {
         this.ghosts = ghosts;
     }
 
     /**
-     * Sets the maze layout for collision detection
-     * @param {Array<Array<number>>} maze - The maze grid
-     */
+	 * Sets the maze layout for collision detection
+	 * @param {Array<Array<number>>} maze - The maze grid
+	 */
     setMaze(maze) {
         this.maze = maze;
     }
@@ -101,36 +103,36 @@ export class CollisionSystem {
     }
 
     /**
-     * Sets the pellet and power pellet sprites for collision detection
-     * @param {Array} pelletSprites - Array of pellet sprites
-     * @param {Array} powerPelletSprites - Array of power pellet sprites
-     */
+	 * Sets the pellet and power pellet sprites for collision detection
+	 * @param {Array} pelletSprites - Array of pellet sprites
+	 * @param {Array} powerPelletSprites - Array of power pellet sprites
+	 */
     setPelletSprites(pelletSprites, powerPelletSprites) {
         this.pelletSprites = pelletSprites;
         this.powerPelletSprites = powerPelletSprites;
     }
 
     /**
-     * Sets the pellet pool for sprite management
-     * @param {Object} pelletPool - The pellet pool object
-     */
+	 * Sets the pellet pool for sprite management
+	 * @param {Object} pelletPool - The pellet pool object
+	 */
     setPelletPool(pelletPool) {
         this.pelletPool = pelletPool;
     }
 
     /**
-     * Sets the power pellet pool for sprite management
-     * @param {Object} powerPelletPool - The power pellet pool object
-     */
+	 * Sets the power pellet pool for sprite management
+	 * @param {Object} powerPelletPool - The power pellet pool object
+	 */
     setPowerPelletPool(powerPelletPool) {
         this.powerPelletPool = powerPelletPool;
     }
 
     /**
-     * Checks and handles collision between Pacman and regular pellets
-     * @param {Object} snapshot - Collision snapshot
-     * @returns {number} Score value if collision occurred, 0 otherwise
-     */
+	 * Checks and handles collision between Pacman and regular pellets
+	 * @param {Object} snapshot - Collision snapshot
+	 * @returns {number} Score value if collision occurred, 0 otherwise
+	 */
     checkPelletCollision(snapshot) {
         const result = this.checkPelletTileCollision(snapshot, {
             allowPellet: true,
@@ -142,10 +144,10 @@ export class CollisionSystem {
     }
 
     /**
-     * Checks and handles collision between Pacman and power pellets
-     * @param {Object} snapshot - Collision snapshot
-     * @returns {number} Score value if collision occurred, 0 otherwise
-     */
+	 * Checks and handles collision between Pacman and power pellets
+	 * @param {Object} snapshot - Collision snapshot
+	 * @returns {number} Score value if collision occurred, 0 otherwise
+	 */
     checkPowerPelletCollision(snapshot) {
         const result = this.checkPelletTileCollision(snapshot, {
             allowPellet: false,
@@ -157,9 +159,9 @@ export class CollisionSystem {
     }
 
     /**
-     * Checks and handles collision between Pacman and ghosts
-     * @returns {{type: string, score: number}|null} Collision result object or null if no collision
-     */
+	 * Checks and handles collision between Pacman and ghosts
+	 * @returns {{type: string, score: number}|null} Collision result object or null if no collision
+	 */
     checkGhostCollision(snapshot) {
         const resolvedSnapshot = snapshot ?? this.createCollisionSnapshot();
         if (!resolvedSnapshot?.pacman) {
@@ -168,14 +170,21 @@ export class CollisionSystem {
 
         for (const ghostSnapshot of resolvedSnapshot.ghosts) {
             const ghost = ghostSnapshot.ghost;
-            if (ghost.isEaten) {continue;}
+            if (ghost.isEaten) {
+                continue;
+            }
 
             if (!ghost || ghost.x === undefined || ghost.y === undefined) {
                 continue;
             }
 
             if (this.checkCapsuleCollision(resolvedSnapshot.pacman, ghostSnapshot)) {
-                return this.handleGhostCollisionWithLogging(ghost, 'capsule', resolvedSnapshot.pacman, ghostSnapshot);
+                return this.handleGhostCollisionWithLogging(
+                    ghost,
+                    'capsule',
+                    resolvedSnapshot.pacman,
+                    ghostSnapshot
+                );
             }
         }
 
@@ -183,9 +192,9 @@ export class CollisionSystem {
     }
 
     /**
-     * Checks all collisions (pellets, power pellets, ghosts)
-     * @returns {{pelletScore: number, powerPelletScore: number, ghostCollision: object|null}} Results object containing all collision results
-     */
+	 * Checks all collisions (pellets, power pellets, ghosts)
+	 * @returns {{pelletScore: number, powerPelletScore: number, ghostCollision: object|null}} Results object containing all collision results
+	 */
     checkAllCollisions() {
         const snapshot = this.createCollisionSnapshot();
         const startTime = getCollisionNow();
@@ -204,9 +213,11 @@ export class CollisionSystem {
         this.lastCollisionMs = elapsedMs;
         this.lastPelletCollisionMs = pelletMs;
         this.lastGhostCollisionMs = ghostMs;
-        this.collisionAvgMs = this.collisionAvgMs === 0
-            ? elapsedMs
-            : (this.collisionAvgMs * (1 - this.budgetEmaAlpha)) + (elapsedMs * this.budgetEmaAlpha);
+        this.collisionAvgMs =
+			this.collisionAvgMs === 0
+			    ? elapsedMs
+			    : this.collisionAvgMs * (1 - this.budgetEmaAlpha) +
+					elapsedMs * this.budgetEmaAlpha;
         this.lastCollisionChecks = {
             pellets: snapshot?.pacman ? 1 : 0,
             ghosts: snapshot?.ghosts?.length || 0
@@ -233,15 +244,18 @@ export class CollisionSystem {
     }
 
     /**
-     * Handles ghost collision
-     * @param {Ghost} ghost - The ghost entity
-     * @returns {{type: string, score: number}|null} Collision result object or null if no collision
-     */
+	 * Handles ghost collision
+	 * @param {Ghost} ghost - The ghost entity
+	 * @returns {{type: string, score: number}|null} Collision result object or null if no collision
+	 */
     handleGhostCollision(ghost) {
         if (ghost.isFrightened) {
             ghost.eat();
-            this.ghostsEatenCount++;
-            const scoreIndex = Math.min(this.ghostsEatenCount - 1, scoreValues.ghost.length - 1);
+            this.enemiesEatenCount++;
+            const scoreIndex = Math.min(
+                this.enemiesEatenCount - 1,
+                scoreValues.ghost.length - 1
+            );
             return {
                 type: 'ghost_eaten',
                 score: scoreValues.ghost[scoreIndex]
@@ -255,11 +269,11 @@ export class CollisionSystem {
     }
 
     /**
-     * Checks collision using a swept capsule test
-     * @param {Pacman} pacman - The Pacman entity
-     * @param {Ghost} ghost - The ghost entity
-     * @returns {boolean} True if collision detected, false otherwise
-     */
+	 * Checks collision using a swept capsule test
+	 * @param {Pacman} pacman - The Pacman entity
+	 * @param {Ghost} ghost - The ghost entity
+	 * @returns {boolean} True if collision detected, false otherwise
+	 */
     checkCapsuleCollision(pacmanSnapshot, ghostSnapshot) {
         const pacmanPrevX = pacmanSnapshot.prevX ?? pacmanSnapshot.x;
         const pacmanPrevY = pacmanSnapshot.prevY ?? pacmanSnapshot.y;
@@ -267,19 +281,30 @@ export class CollisionSystem {
         const ghostPrevY = ghostSnapshot.prevY ?? ghostSnapshot.y;
 
         return capsuleCollision(
-            pacmanPrevX, pacmanPrevY, pacmanSnapshot.x, pacmanSnapshot.y,
-            ghostPrevX, ghostPrevY, ghostSnapshot.x, ghostSnapshot.y,
+            pacmanPrevX,
+            pacmanPrevY,
+            pacmanSnapshot.x,
+            pacmanSnapshot.y,
+            ghostPrevX,
+            ghostPrevY,
+            ghostSnapshot.x,
+            ghostSnapshot.y,
             collisionConfig.radius
         );
     }
 
     /**
-     * Handles ghost collision with debug logging
-     * @param {Ghost} ghost - The ghost entity
-     * @param {string} method - The collision method used
-     * @returns {{type: string, score: number}|null} Collision result object
-     */
-    handleGhostCollisionWithLogging(ghost, method, pacmanSnapshot, ghostSnapshot) {
+	 * Handles ghost collision with debug logging
+	 * @param {Ghost} ghost - The ghost entity
+	 * @param {string} method - The collision method used
+	 * @returns {{type: string, score: number}|null} Collision result object
+	 */
+    handleGhostCollisionWithLogging(
+        ghost,
+        method,
+        pacmanSnapshot,
+        ghostSnapshot
+    ) {
         const result = this.handleGhostCollision(ghost);
 
         const logData = {
@@ -289,14 +314,26 @@ export class CollisionSystem {
             pacman: {
                 x: Math.round(pacmanSnapshot.x),
                 y: Math.round(pacmanSnapshot.y),
-                prevX: pacmanSnapshot.prevX !== undefined ? Math.round(pacmanSnapshot.prevX) : undefined,
-                prevY: pacmanSnapshot.prevY !== undefined ? Math.round(pacmanSnapshot.prevY) : undefined
+                prevX:
+					pacmanSnapshot.prevX !== undefined
+					    ? Math.round(pacmanSnapshot.prevX)
+					    : undefined,
+                prevY:
+					pacmanSnapshot.prevY !== undefined
+					    ? Math.round(pacmanSnapshot.prevY)
+					    : undefined
             },
             ghost: {
                 x: Math.round(ghostSnapshot.x),
                 y: Math.round(ghostSnapshot.y),
-                prevX: ghostSnapshot.prevX !== undefined ? Math.round(ghostSnapshot.prevX) : undefined,
-                prevY: ghostSnapshot.prevY !== undefined ? Math.round(ghostSnapshot.prevY) : undefined,
+                prevX:
+					ghostSnapshot.prevX !== undefined
+					    ? Math.round(ghostSnapshot.prevX)
+					    : undefined,
+                prevY:
+					ghostSnapshot.prevY !== undefined
+					    ? Math.round(ghostSnapshot.prevY)
+					    : undefined,
                 name: ghost.name || 'Unknown',
                 isFrightened: ghost.isFrightened
             },
@@ -312,9 +349,9 @@ export class CollisionSystem {
     }
 
     /**
-     * Checks if the win condition is met (all pellets eaten)
-     * @returns {boolean} True if all pellets are eaten, false otherwise
-     */
+	 * Checks if the win condition is met (all pellets eaten)
+	 * @returns {boolean} True if all pellets are eaten, false otherwise
+	 */
     checkWinCondition() {
         if (typeof this.pelletsRemaining === 'number') {
             return this.pelletsRemaining === 0;
@@ -327,10 +364,10 @@ export class CollisionSystem {
     }
 
     /**
-     * Resets the collision system state
-     */
+	 * Resets collision system state
+	 */
     reset() {
-        this.ghostsEatenCount = 0;
+        this.enemiesEatenCount = 0;
     }
 
     decrementPelletsRemaining(amount) {
@@ -353,7 +390,11 @@ export class CollisionSystem {
     }
 
     createCollisionSnapshot() {
-        if (!this.pacman || this.pacman.x === undefined || this.pacman.y === undefined) {
+        if (
+            !this.pacman ||
+			this.pacman.x === undefined ||
+			this.pacman.y === undefined
+        ) {
             return null;
         }
 
@@ -395,21 +436,34 @@ export class CollisionSystem {
 
         const pacmanGrid = resolvedSnapshot.pacman.grid;
 
-        if (!pacmanGrid || isNaN(pacmanGrid.x) || isNaN(pacmanGrid.y) ||
-            pacmanGrid.x < 0 || pacmanGrid.y < 0 ||
-            pacmanGrid.y >= this.maze.length || pacmanGrid.x >= this.maze[0].length) {
+        if (
+            !pacmanGrid ||
+			isNaN(pacmanGrid.x) ||
+			isNaN(pacmanGrid.y) ||
+			pacmanGrid.x < 0 ||
+			pacmanGrid.y < 0 ||
+			pacmanGrid.y >= this.maze.length ||
+			pacmanGrid.x >= this.maze[0].length
+        ) {
             return emptyResult;
         }
 
         if (!options.bypassRepeatCheck) {
-            if (pacmanGrid.x === this.lastPelletGrid.x && pacmanGrid.y === this.lastPelletGrid.y) {
+            if (
+                pacmanGrid.x === this.lastPelletGrid.x &&
+				pacmanGrid.y === this.lastPelletGrid.y
+            ) {
                 return emptyResult;
             }
 
             this.lastPelletGrid = { x: pacmanGrid.x, y: pacmanGrid.y };
         }
 
-        const pelletType = getPelletType(this.pelletGrid, pacmanGrid.x, pacmanGrid.y);
+        const pelletType = getPelletType(
+            this.pelletGrid,
+            pacmanGrid.x,
+            pacmanGrid.y
+        );
 
         const logData = {
             timestamp: new Date().toISOString(),
@@ -421,7 +475,9 @@ export class CollisionSystem {
                 gridY: pacmanGrid.y
             },
             pelletType: pelletType,
-            collision: pelletType === PELLET_TYPES.PELLET || pelletType === PELLET_TYPES.POWER_PELLET
+            collision:
+				pelletType === PELLET_TYPES.PELLET ||
+				pelletType === PELLET_TYPES.POWER_PELLET
         };
 
         if (this.debugLogger.enabled) {
@@ -447,12 +503,15 @@ export class CollisionSystem {
         if (pelletType === PELLET_TYPES.POWER_PELLET && options.allowPowerPellet) {
             consumePelletAt(this.pelletGrid, pacmanGrid.x, pacmanGrid.y);
 
-            const powerPellet = this.powerPelletPool?.getByGrid(pacmanGrid.x, pacmanGrid.y);
+            const powerPellet = this.powerPelletPool?.getByGrid(
+                pacmanGrid.x,
+                pacmanGrid.y
+            );
             if (powerPellet) {
                 this.powerPelletPool.release(powerPellet);
             }
 
-            this.ghostsEatenCount = 0;
+            this.enemiesEatenCount = 0;
             this.decrementPelletsRemaining(1);
             return {
                 pelletScore: 0,

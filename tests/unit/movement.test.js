@@ -12,11 +12,21 @@
  * - No ghost collision in tests (pure movement)
  */
 
+import {
+    directions,
+    enemyColors,
+    enemyNames,
+    gameConfig
+} from '../../src/config/gameConfig.js';
+import Enemy from '../../src/entities/Enemy.js';
 import Pacman from '../../src/entities/Pacman.js';
-import Ghost from '../../src/entities/Ghost.js';
-import { gameConfig, directions, ghostColors, ghostNames } from '../../src/config/gameConfig.js';
 import { TILE_TYPES } from '../../src/utils/MazeLayout.js';
-import { tileCenter, distanceToTileCenter, isAtTileCenter, EPS } from '../../src/utils/TileMovement.js';
+import {
+    distanceToTileCenter,
+    EPS,
+    isAtTileCenter,
+    tileCenter
+} from '../../src/utils/TileMovement.js';
 import { msToSeconds } from '../../src/utils/Time.js';
 import { createMockScene, createSimpleMaze } from '../utils/testHelpers.js';
 
@@ -31,7 +41,7 @@ describe('Movement - Wall Collision', () => {
         mockScene.gameState = { level: 1 };
         maze = createSimpleMaze(10, 10);
         pacman = new Pacman(mockScene, 5, 5);
-        ghost = new Ghost(mockScene, 5, 5, ghostNames.BLINKY, ghostColors.BLINKY);
+        ghost = new Enemy(mockScene, 5, 5, enemyNames.alpha, enemyColors.alpha);
     });
 
     describe('Pacman stops at walls (no overflow)', () => {
@@ -138,7 +148,7 @@ describe('Movement - Wall Collision', () => {
 
             const startDistances = [5, 10, 15, 19];
 
-            startDistances.forEach(dist => {
+            startDistances.forEach((dist) => {
                 pacman.gridX = 5;
                 pacman.gridY = 5;
                 const center = tileCenter(5, 5);
@@ -219,7 +229,7 @@ describe('Movement - Snap-to-Center', () => {
         mockScene.gameState = { level: 1 };
         maze = createSimpleMaze(10, 10);
         pacman = new Pacman(mockScene, 5, 5);
-        ghost = new Ghost(mockScene, 5, 5, ghostNames.BLINKY, ghostColors.BLINKY);
+        ghost = new Enemy(mockScene, 5, 5, enemyNames.alpha, enemyColors.alpha);
     });
 
     describe('Pacman snaps to tile center within EPS', () => {
@@ -230,9 +240,17 @@ describe('Movement - Snap-to-Center', () => {
             pacman.direction = directions.RIGHT;
             pacman.speed = 120;
 
-            const gridPos = { x: Math.floor(pacman.x / gameConfig.tileSize), y: Math.floor(pacman.y / gameConfig.tileSize) };
-            const centerPixel = { x: gridPos.x * gameConfig.tileSize + gameConfig.tileSize / 2, y: gridPos.y * gameConfig.tileSize + gameConfig.tileSize / 2 };
-            const distToCenter = Math.sqrt(Math.pow(pacman.x - centerPixel.x, 2) + Math.pow(pacman.y - centerPixel.y, 2));
+            const gridPos = {
+                x: Math.floor(pacman.x / gameConfig.tileSize),
+                y: Math.floor(pacman.y / gameConfig.tileSize)
+            };
+            const centerPixel = {
+                x: gridPos.x * gameConfig.tileSize + gameConfig.tileSize / 2,
+                y: gridPos.y * gameConfig.tileSize + gameConfig.tileSize / 2
+            };
+            const distToCenter = Math.sqrt(
+                (pacman.x - centerPixel.x) ** 2 + (pacman.y - centerPixel.y) ** 2
+            );
             const moveStep = pacman.speed * msToSeconds(20);
 
             expect(distToCenter).toBeLessThan(moveStep);
@@ -367,7 +385,7 @@ describe('Movement - Corner Turns', () => {
         };
         maze = createSimpleMaze(10, 10);
         pacman = new Pacman(mockScene, 5, 5);
-        ghost = new Ghost(mockScene, 5, 5, ghostNames.BLINKY, ghostColors.BLINKY);
+        ghost = new Enemy(mockScene, 5, 5, enemyNames.alpha, enemyColors.alpha);
     });
 
     describe('Pacman corner turns at tile center', () => {
@@ -627,7 +645,7 @@ describe('Movement - Pure Movement (No Collision Side Effects)', () => {
         };
         maze = createSimpleMaze(10, 10);
         pacman = new Pacman(mockScene, 5, 5);
-        ghost = new Ghost(mockScene, 5, 5, ghostNames.BLINKY, ghostColors.BLINKY);
+        ghost = new Enemy(mockScene, 5, 5, enemyNames.alpha, enemyColors.alpha);
     });
 
     describe('Independent entity movement', () => {
@@ -662,7 +680,13 @@ describe('Movement - Pure Movement (No Collision Side Effects)', () => {
         });
 
         test('multiple entities can exist without interfering', () => {
-            const ghost2 = new Ghost(mockScene, 3, 3, ghostNames.PINKY, ghostColors.PINKY);
+            const ghost2 = new Enemy(
+                mockScene,
+                3,
+                3,
+                enemyNames.beta,
+                enemyColors.beta
+            );
 
             pacman.gridX = 5;
             pacman.gridY = 5;
@@ -743,14 +767,14 @@ describe('Movement - Edge Cases and Integration', () => {
         };
         maze = createSimpleMaze(10, 10);
         pacman = new Pacman(mockScene, 5, 5);
-        ghost = new Ghost(mockScene, 5, 5, ghostNames.BLINKY, ghostColors.BLINKY);
+        ghost = new Enemy(mockScene, 5, 5, enemyNames.alpha, enemyColors.alpha);
     });
 
     describe('Speed variations', () => {
         test('movement works correctly at different speeds', () => {
             const speeds = [50, 100, 150, 200];
 
-            speeds.forEach(speed => {
+            speeds.forEach((speed) => {
                 pacman.speed = speed;
                 pacman.x = tileCenter(5, 5).x;
                 pacman.y = tileCenter(5, 5).y;

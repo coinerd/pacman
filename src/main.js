@@ -54,7 +54,7 @@ window.game.isDemo = isDemo;
 window.game.isE2E = isE2E;
 
 if (isE2E) {
-    window.addEventListener('pacman:e2e-command', (event) => {
+    window.addEventListener('adawoman:e2e-command', (event) => {
         const action = event?.detail?.action;
         if (!action) {
             return;

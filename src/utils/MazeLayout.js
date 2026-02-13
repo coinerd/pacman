@@ -3,8 +3,8 @@ import { gameConfig } from '../config/gameConfig.js';
 export const TILE_TYPES = {
     WALL: 1,
     PATH: 0,
-    GHOST_HOUSE: 4,
-    GHOST_HOUSE_DOOR: 5
+    VIRUS_CORE: 4,
+    VIRUS_CORE_DOOR: 5
 };
 
 export const PELLET_TYPES = {
@@ -18,33 +18,39 @@ const LAYOUT_TILE_TYPES = {
 };
 
 export const mazeLayout = [
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-    [1,2,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,2,1],
-    [1,0,1,1,1,1,0,1,1,1,1,1,0,1,1,0,1,1,1,1,1,0,1,1,1,1,0,1],
-    [1,0,1,1,1,1,0,1,1,1,1,1,0,1,1,0,1,1,1,1,1,0,1,1,1,1,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,1,1,1,1,0,1,1,0,1,1,1,1,1,1,1,1,0,1,1,0,1,1,1,1,0,1],
-    [1,0,1,1,1,1,0,1,1,0,1,1,1,1,1,1,1,1,0,1,1,0,1,1,1,1,0,1],
-    [1,0,0,0,0,0,0,1,1,0,0,0,0,1,1,0,0,0,0,1,1,0,0,0,0,0,0,1],
-    [1,1,1,1,1,1,0,1,1,1,1,1,0,1,1,0,1,1,1,1,1,0,1,1,1,1,1,1],
-    [1,1,1,1,1,1,0,1,1,1,1,1,0,1,1,0,1,1,1,1,1,0,1,1,1,1,1,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,1,1,1,1,0,1,1,1,1,1,0,1,1,0,1,1,1,1,1,0,1,1,1,1,0,1],
-    [1,0,1,1,1,1,0,1,1,1,1,1,0,1,1,0,1,1,1,1,1,0,1,1,1,1,0,1],
-    [1,0,0,0,0,0,0,1,1,0,0,0,0,1,1,0,0,0,0,1,1,0,0,0,0,0,0,1],
-    [1,1,1,1,1,1,0,1,1,0,1,1,1,1,1,1,1,1,0,1,1,0,1,1,1,1,1,1],
-    [1,1,1,1,1,1,0,1,1,0,1,1,1,1,1,1,1,1,0,1,1,0,1,1,1,1,1,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,1,1,1,1,0,1,1,1,1,1,0,1,1,0,1,1,1,1,1,0,1,1,1,1,0,1],
-    [1,0,1,1,1,1,0,1,1,1,1,1,0,1,1,0,1,1,1,1,1,0,1,1,1,1,0,1],
-    [1,0,0,0,0,0,0,1,1,0,0,0,0,1,1,0,0,0,0,1,1,0,0,0,0,0,0,1],
-    [1,0,1,1,1,1,0,1,1,0,1,1,1,1,1,1,1,1,0,1,1,0,1,1,1,1,0,1],
-    [1,0,1,1,1,1,0,1,1,0,1,1,1,1,1,1,1,1,0,1,1,0,1,1,1,1,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,1,1,1,1,1,1,1,1,1,1,0,1,1,0,1,1,1,1,1,1,1,1,1,1,0,1],
-    [1,0,1,1,1,1,1,1,1,1,1,1,0,1,1,0,1,1,1,1,1,1,1,1,1,1,0,1],
-    [1,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,1],
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1],
+    [1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1],
+    [1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1],
+    [1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1],
+    [1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1],
+    [1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1],
+    [1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1],
+    [1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1],
+    [1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1],
+    [1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1],
+    [1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1],
+    [1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1],
+    [1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1],
+    [1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1],
+    [1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1],
+    [1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1],
+    [1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1],
+    [1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1],
+    [1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1],
+    [1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1],
+    [1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1],
+    [1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 ];
 
 export function createMazeData() {
@@ -63,7 +69,10 @@ export function createMazeData() {
                 continue;
             }
 
-            if (tile === TILE_TYPES.GHOST_HOUSE || tile === TILE_TYPES.GHOST_HOUSE_DOOR) {
+            if (
+                tile === TILE_TYPES.VIRUS_CORE ||
+                tile === TILE_TYPES.VIRUS_CORE_DOOR
+            ) {
                 row.push(tile);
                 pelletRow.push(PELLET_TYPES.NONE);
                 continue;
@@ -86,7 +95,12 @@ export function createMazeData() {
 }
 
 export function getTileType(maze, gridX, gridY) {
-    if (gridY < 0 || gridY >= maze.length || gridX < 0 || gridX >= maze[0].length) {
+    if (
+        gridY < 0 ||
+        gridY >= maze.length ||
+        gridX < 0 ||
+        gridX >= maze[0].length
+    ) {
         return TILE_TYPES.WALL;
     }
     return maze[gridY][gridX];
@@ -98,17 +112,19 @@ export function isWall(maze, gridX, gridY) {
 
 export function isWalkableTile(maze, gridX, gridY) {
     const tile = getTileType(maze, gridX, gridY);
-    return tile === TILE_TYPES.PATH ||
-        tile === TILE_TYPES.GHOST_HOUSE ||
-        tile === TILE_TYPES.GHOST_HOUSE_DOOR;
+    return (
+        tile === TILE_TYPES.PATH ||
+        tile === TILE_TYPES.VIRUS_CORE ||
+        tile === TILE_TYPES.VIRUS_CORE_DOOR
+    );
 }
 
-export function isGhostHouse(maze, gridX, gridY) {
-    return getTileType(maze, gridX, gridY) === TILE_TYPES.GHOST_HOUSE;
+export function isVirusCore(maze, gridX, gridY) {
+    return getTileType(maze, gridX, gridY) === TILE_TYPES.VIRUS_CORE;
 }
 
-export function isGhostHouseDoor(maze, gridX, gridY) {
-    return getTileType(maze, gridX, gridY) === TILE_TYPES.GHOST_HOUSE_DOOR;
+export function isVirusCoreDoor(maze, gridX, gridY) {
+    return getTileType(maze, gridX, gridY) === TILE_TYPES.VIRUS_CORE_DOOR;
 }
 
 export function gridToPixel(gridX, gridY) {
@@ -135,7 +151,12 @@ export function getCenterPixel(gridX, gridY) {
 
 export function getValidDirections(maze, gridX, gridY, allowReverse = true) {
     const validDirs = [];
-    const { UP, DOWN, LEFT, RIGHT } = { UP: { x: 0, y: -1 }, DOWN: { x: 0, y: 1 }, LEFT: { x: -1, y: 0 }, RIGHT: { x: 1, y: 0 } };
+    const { UP, DOWN, LEFT, RIGHT } = {
+        UP: { x: 0, y: -1 },
+        DOWN: { x: 0, y: 1 },
+        LEFT: { x: -1, y: 0 },
+        RIGHT: { x: 1, y: 0 }
+    };
 
     const directions = [UP, DOWN, LEFT, RIGHT];
 
@@ -163,7 +184,10 @@ export function countPellets(pelletGrid) {
     let count = 0;
     for (let y = 0; y < pelletGrid.length; y++) {
         for (let x = 0; x < pelletGrid[y].length; x++) {
-            if (pelletGrid[y][x] === PELLET_TYPES.PELLET || pelletGrid[y][x] === PELLET_TYPES.POWER_PELLET) {
+            if (
+                pelletGrid[y][x] === PELLET_TYPES.PELLET ||
+                pelletGrid[y][x] === PELLET_TYPES.POWER_PELLET
+            ) {
                 count++;
             }
         }
@@ -172,7 +196,13 @@ export function countPellets(pelletGrid) {
 }
 
 export function getPelletType(pelletGrid, gridX, gridY) {
-    if (!pelletGrid || gridY < 0 || gridY >= pelletGrid.length || gridX < 0 || gridX >= pelletGrid[0].length) {
+    if (
+        !pelletGrid ||
+        gridY < 0 ||
+        gridY >= pelletGrid.length ||
+        gridX < 0 ||
+        gridX >= pelletGrid[0].length
+    ) {
         return PELLET_TYPES.NONE;
     }
     return pelletGrid[gridY][gridX];
@@ -180,7 +210,10 @@ export function getPelletType(pelletGrid, gridX, gridY) {
 
 export function isPelletAt(pelletGrid, gridX, gridY) {
     const pelletType = getPelletType(pelletGrid, gridX, gridY);
-    return pelletType === PELLET_TYPES.PELLET || pelletType === PELLET_TYPES.POWER_PELLET;
+    return (
+        pelletType === PELLET_TYPES.PELLET ||
+        pelletType === PELLET_TYPES.POWER_PELLET
+    );
 }
 
 export function consumePelletAt(pelletGrid, gridX, gridY) {
@@ -192,13 +225,18 @@ export function consumePelletAt(pelletGrid, gridX, gridY) {
 }
 
 export function setTileType(maze, gridX, gridY, tileType) {
-    if (gridY >= 0 && gridY < maze.length && gridX >= 0 && gridX < maze[0].length) {
+    if (
+        gridY >= 0 &&
+        gridY < maze.length &&
+        gridX >= 0 &&
+        gridX < maze[0].length
+    ) {
         maze[gridY][gridX] = tileType;
     }
 }
 
 export function getDistance(gridX1, gridY1, gridX2, gridY2) {
-    return Math.sqrt(Math.pow(gridX2 - gridX1, 2) + Math.pow(gridY2 - gridY1, 2));
+    return Math.sqrt((gridX2 - gridX1) ** 2 + (gridY2 - gridY1) ** 2);
 }
 
 export function getManhattanDistance(gridX1, gridY1, gridX2, gridY2) {

@@ -4,8 +4,12 @@
  * NO Phaser dependencies - can run in headless mode.
  */
 
-import { gameConfig, directions } from '../config/gameConfig.js';
-import { getCenterPixel, gridToPixel, isWalkableTile } from '../utils/MazeLayout.js';
+import { directions, gameConfig } from '../config/gameConfig.js';
+import {
+    getCenterPixel,
+    gridToPixel,
+    isWalkableTile
+} from '../utils/MazeLayout.js';
 import { DirectionBuffer } from '../utils/movement/DirectionBuffer.js';
 
 let entityIdCounter = 0;
@@ -16,12 +20,12 @@ export function generateEntityId() {
 
 export class ModelEntity {
     /**
-     * @param {number} gridX - Initial grid X position
-     * @param {number} gridY - Initial grid Y position
-     * @param {Object} config - Entity configuration
-     * @param {number} config.speed - Movement speed in pixels per second
-     * @param {string} config.type - Entity type identifier
-     */
+	 * @param {number} gridX - Initial grid X position
+	 * @param {number} gridY - Initial grid Y position
+	 * @param {Object} config - Entity configuration
+	 * @param {number} config.speed - Movement speed in pixels per second
+	 * @param {string} config.type - Entity type identifier
+	 */
     constructor(gridX, gridY, config = {}) {
         this.id = generateEntityId();
         this.type = config.type || 'generic';
@@ -54,8 +58,8 @@ export class ModelEntity {
     }
 
     /**
-     * Get current direction from buffer
-     */
+	 * Get current direction from buffer
+	 */
     get direction() {
         return this.directionBuffer.getCurrent();
     }
@@ -65,8 +69,8 @@ export class ModelEntity {
     }
 
     /**
-     * Get next/buffered direction
-     */
+	 * Get next/buffered direction
+	 */
     get nextDirection() {
         return this.directionBuffer.getBuffered();
     }
@@ -76,19 +80,19 @@ export class ModelEntity {
     }
 
     /**
-     * Queue a direction change
-     * @param {Object} direction - Direction to queue
-     */
+	 * Queue a direction change
+	 * @param {Object} direction - Direction to queue
+	 */
     setDirection(direction) {
         this.directionBuffer.queue(direction);
     }
 
     /**
-     * Check if entity can move in a direction
-     * @param {Object} direction - Direction to check
-     * @param {Array<Array<number>>} maze - Maze grid
-     * @returns {boolean}
-     */
+	 * Check if entity can move in a direction
+	 * @param {Object} direction - Direction to check
+	 * @param {Array<Array<number>>} maze - Maze grid
+	 * @returns {boolean}
+	 */
     canMoveInDirection(direction, maze) {
         if (!direction || direction === directions.NONE) {
             return false;
@@ -101,12 +105,12 @@ export class ModelEntity {
     }
 
     /**
-     * Check if a grid position is valid (walkable)
-     * @param {number} gridX - Grid X position
-     * @param {number} gridY - Grid Y position
-     * @param {Array<Array<number>>} maze - Maze grid
-     * @returns {boolean}
-     */
+	 * Check if a grid position is valid (walkable)
+	 * @param {number} gridX - Grid X position
+	 * @param {number} gridY - Grid Y position
+	 * @param {Array<Array<number>>} maze - Maze grid
+	 * @returns {boolean}
+	 */
     isValidPosition(gridX, gridY, maze) {
         if (!maze || gridY < 0 || gridY >= maze.length) {
             return false;
@@ -121,9 +125,9 @@ export class ModelEntity {
     }
 
     /**
-     * Handle tunnel wrapping
-     * @returns {boolean} - True if wrapped
-     */
+	 * Handle tunnel wrapping
+	 * @returns {boolean} - True if wrapped
+	 */
     handleTunnelWrap() {
         const mazeWidth = gameConfig.mazeWidth * gameConfig.tileSize;
 
@@ -133,10 +137,10 @@ export class ModelEntity {
 
         let wrapped = false;
         if (this.x < 0) {
-            this.x = mazeWidth;
-            this.gridX = gameConfig.mazeWidth - 1;
+            this.x = (gameConfig.mazeWidth - 1) * gameConfig.tileSize;
+            this.gridX = 0;
             wrapped = true;
-        } else if (this.x > mazeWidth) {
+        } else if (this.x >= mazeWidth) {
             this.x = 0;
             this.gridX = 0;
             wrapped = true;
@@ -146,8 +150,8 @@ export class ModelEntity {
     }
 
     /**
-     * Update previous position tracking (call before movement)
-     */
+	 * Update previous position tracking (call before movement)
+	 */
     updatePreviousPosition() {
         this.prevX = this.x;
         this.prevY = this.y;
@@ -156,10 +160,10 @@ export class ModelEntity {
     }
 
     /**
-     * Reset entity to a position
-     * @param {number} gridX - New grid X
-     * @param {number} gridY - New grid Y
-     */
+	 * Reset entity to a position
+	 * @param {number} gridX - New grid X
+	 * @param {number} gridY - New grid Y
+	 */
     resetPosition(gridX, gridY) {
         this.gridX = gridX;
         this.gridY = gridY;
@@ -177,25 +181,25 @@ export class ModelEntity {
     }
 
     /**
-     * Get grid position
-     * @returns {{x: number, y: number}}
-     */
+	 * Get grid position
+	 * @returns {{x: number, y: number}}
+	 */
     getGridPosition() {
         return { x: this.gridX, y: this.gridY };
     }
 
     /**
-     * Get pixel position
-     * @returns {{x: number, y: number}}
-     */
+	 * Get pixel position
+	 * @returns {{x: number, y: number}}
+	 */
     getPixelPosition() {
         return { x: this.x, y: this.y };
     }
 
     /**
-     * Get state snapshot for serialization
-     * @returns {Object}
-     */
+	 * Get state snapshot for serialization
+	 * @returns {Object}
+	 */
     getSnapshot() {
         return {
             id: this.id,
@@ -212,11 +216,11 @@ export class ModelEntity {
     }
 
     /**
-     * Update entity (to be overridden by subclasses)
-     * @param {number} deltaSeconds - Time since last frame
-     * @param {Array<Array<number>>} maze - Maze grid
-     * @returns {Array<Object>} - Events generated during update
-     */
+	 * Update entity (to be overridden by subclasses)
+	 * @param {number} deltaSeconds - Time since last frame
+	 * @param {Array<Array<number>>} maze - Maze grid
+	 * @returns {Array<Object>} - Events generated during update
+	 */
     update(deltaSeconds, maze) {
         // Base implementation - subclasses override
         return [];

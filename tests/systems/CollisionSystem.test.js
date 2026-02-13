@@ -1,12 +1,16 @@
+import {
+    collisionConfig,
+    gameConfig,
+    scoreValues
+} from '../../src/config/gameConfig.js';
 import { CollisionSystem } from '../../src/systems/CollisionSystem.js';
-import { collisionConfig, gameConfig, scoreValues } from '../../src/config/gameConfig.js';
-import { PELLET_TYPES } from '../../src/utils/MazeLayout.js';
 import { capsuleCollision } from '../../src/utils/CollisionUtils.js';
+import { PELLET_TYPES } from '../../src/utils/MazeLayout.js';
 
 describe('CollisionSystem', () => {
     let collisionSystem;
     let mockScene;
-    let mockPacman;
+    let mockPlayer;
     let mockGhosts;
     let mockMaze;
     let mockPelletGrid;
@@ -20,7 +24,7 @@ describe('CollisionSystem', () => {
             }
         };
 
-        mockPacman = {
+        mockPlayer = {
             x: 2 * 16,
             y: 2 * 16,
             prevX: 2 * 16,
@@ -70,7 +74,13 @@ describe('CollisionSystem', () => {
         mockPelletGrid = [
             [0, 0, 0, 0, 0],
             [0, PELLET_TYPES.PELLET, PELLET_TYPES.PELLET, PELLET_TYPES.PELLET, 0],
-            [0, PELLET_TYPES.PELLET, PELLET_TYPES.POWER_PELLET, PELLET_TYPES.PELLET, 0],
+            [
+                0,
+                PELLET_TYPES.PELLET,
+                PELLET_TYPES.POWER_PELLET,
+                PELLET_TYPES.PELLET,
+                0
+            ],
             [0, PELLET_TYPES.PELLET, PELLET_TYPES.PELLET, PELLET_TYPES.PELLET, 0],
             [0, 0, 0, 0, 0]
         ];
@@ -82,28 +92,32 @@ describe('CollisionSystem', () => {
             ],
             release: jest.fn(),
             getByGrid: jest.fn((gridX, gridY) => {
-                return mockPelletPool.active.find(pellet => {
-                    const spriteGrid = { x: Math.floor(pellet.x / 16), y: Math.floor(pellet.y / 16) };
+                return mockPelletPool.active.find((pellet) => {
+                    const spriteGrid = {
+                        x: Math.floor(pellet.x / 16),
+                        y: Math.floor(pellet.y / 16)
+                    };
                     return spriteGrid.x === gridX && spriteGrid.y === gridY;
                 });
             })
         };
 
         mockPowerPelletPool = {
-            active: [
-                { x: 2 * 16 + 8, y: 2 * 16 + 8 }
-            ],
+            active: [{ x: 2 * 16 + 8, y: 2 * 16 + 8 }],
             release: jest.fn(),
             getByGrid: jest.fn((gridX, gridY) => {
-                return mockPowerPelletPool.active.find(powerPellet => {
-                    const spriteGrid = { x: Math.floor(powerPellet.x / 16), y: Math.floor(powerPellet.y / 16) };
+                return mockPowerPelletPool.active.find((powerPellet) => {
+                    const spriteGrid = {
+                        x: Math.floor(powerPellet.x / 16),
+                        y: Math.floor(powerPellet.y / 16)
+                    };
                     return spriteGrid.x === gridX && spriteGrid.y === gridY;
                 });
             })
         };
 
         collisionSystem = new CollisionSystem(mockScene);
-        collisionSystem.setPacman(mockPacman);
+        collisionSystem.setPacman(mockPlayer);
         collisionSystem.setGhosts(mockGhosts);
         collisionSystem.setMaze(mockMaze);
         collisionSystem.setPelletGrid(mockPelletGrid);
@@ -132,16 +146,16 @@ describe('CollisionSystem', () => {
             expect(system.maze).toBeNull();
         });
 
-        test('initializes ghostsEatenCount to 0', () => {
-            expect(collisionSystem.ghostsEatenCount).toBe(0);
+        test('initializes enemiesEatenCount to 0', () => {
+            expect(collisionSystem.enemiesEatenCount).toBe(0);
         });
     });
 
     describe('setPacman()', () => {
         test('sets pacman reference', () => {
             const system = new CollisionSystem(mockScene);
-            system.setPacman(mockPacman);
-            expect(system.pacman).toBe(mockPacman);
+            system.setPacman(mockPlayer);
+            expect(system.pacman).toBe(mockPlayer);
         });
     });
 
@@ -190,8 +204,8 @@ describe('CollisionSystem', () => {
 
     describe('checkPelletCollision()', () => {
         test('returns 0 when no pellet collision', () => {
-            mockPacman.x = 0;
-            mockPacman.y = 0;
+            mockPlayer.x = 0;
+            mockPlayer.y = 0;
 
             const score = collisionSystem.checkPelletCollision();
 
@@ -199,8 +213,8 @@ describe('CollisionSystem', () => {
         });
 
         test('returns pellet score when colliding with pellet', () => {
-            mockPacman.x = 1 * 16 + 8;
-            mockPacman.y = 1 * 16 + 8;
+            mockPlayer.x = 1 * 16 + 8;
+            mockPlayer.y = 1 * 16 + 8;
 
             const score = collisionSystem.checkPelletCollision();
 
@@ -208,8 +222,8 @@ describe('CollisionSystem', () => {
         });
 
         test('removes pellet from pellet grid when eaten', () => {
-            mockPacman.x = 1 * 16 + 8;
-            mockPacman.y = 1 * 16 + 8;
+            mockPlayer.x = 1 * 16 + 8;
+            mockPlayer.y = 1 * 16 + 8;
 
             collisionSystem.checkPelletCollision();
 
@@ -217,8 +231,8 @@ describe('CollisionSystem', () => {
         });
 
         test('releases pellet from pool when eaten', () => {
-            mockPacman.x = 1 * 16 + 8;
-            mockPacman.y = 1 * 16 + 8;
+            mockPlayer.x = 1 * 16 + 8;
+            mockPlayer.y = 1 * 16 + 8;
 
             collisionSystem.checkPelletCollision();
 
@@ -226,8 +240,8 @@ describe('CollisionSystem', () => {
         });
 
         test('only removes the specific pellet that was collided with', () => {
-            mockPacman.x = 1 * 16 + 8;
-            mockPacman.y = 1 * 16 + 8;
+            mockPlayer.x = 1 * 16 + 8;
+            mockPlayer.y = 1 * 16 + 8;
 
             collisionSystem.checkPelletCollision();
 
@@ -237,8 +251,8 @@ describe('CollisionSystem', () => {
 
     describe('checkPowerPelletCollision()', () => {
         test('returns 0 when no power pellet collision', () => {
-            mockPacman.x = 0;
-            mockPacman.y = 0;
+            mockPlayer.x = 0;
+            mockPlayer.y = 0;
 
             const score = collisionSystem.checkPowerPelletCollision();
 
@@ -246,8 +260,8 @@ describe('CollisionSystem', () => {
         });
 
         test('returns power pellet score when colliding with power pellet', () => {
-            mockPacman.x = 2 * 16 + 8;
-            mockPacman.y = 2 * 16 + 8;
+            mockPlayer.x = 2 * 16 + 8;
+            mockPlayer.y = 2 * 16 + 8;
 
             const score = collisionSystem.checkPowerPelletCollision();
 
@@ -255,8 +269,8 @@ describe('CollisionSystem', () => {
         });
 
         test('removes power pellet from pellet grid when eaten', () => {
-            mockPacman.x = 2 * 16 + 8;
-            mockPacman.y = 2 * 16 + 8;
+            mockPlayer.x = 2 * 16 + 8;
+            mockPlayer.y = 2 * 16 + 8;
 
             collisionSystem.checkPowerPelletCollision();
 
@@ -264,22 +278,22 @@ describe('CollisionSystem', () => {
         });
 
         test('releases power pellet from pool when eaten', () => {
-            mockPacman.x = 2 * 16 + 8;
-            mockPacman.y = 2 * 16 + 8;
+            mockPlayer.x = 2 * 16 + 8;
+            mockPlayer.y = 2 * 16 + 8;
 
             collisionSystem.checkPowerPelletCollision();
 
             expect(mockPowerPelletPool.release).toHaveBeenCalled();
         });
 
-        test('resets ghostsEatenCount to 0', () => {
-            collisionSystem.ghostsEatenCount = 5;
-            mockPacman.x = 2 * 16 + 8;
-            mockPacman.y = 2 * 16 + 8;
+        test('resets enemiesEatenCount to 0', () => {
+            collisionSystem.enemiesEatenCount = 5;
+            mockPlayer.x = 2 * 16 + 8;
+            mockPlayer.y = 2 * 16 + 8;
 
             collisionSystem.checkPowerPelletCollision();
 
-            expect(collisionSystem.ghostsEatenCount).toBe(0);
+            expect(collisionSystem.enemiesEatenCount).toBe(0);
         });
     });
 
@@ -330,38 +344,38 @@ describe('CollisionSystem', () => {
             expect(mockGhosts[1].eat).toHaveBeenCalled();
         });
 
-        test('increments ghostsEatenCount when eating frightened ghost', () => {
+        test('increments enemiesEatenCount when eating frightened ghost', () => {
             mockGhosts[1].x = 2 * 16 + 5;
             mockGhosts[1].y = 2 * 16 + 5;
 
             collisionSystem.checkGhostCollision();
 
-            expect(collisionSystem.ghostsEatenCount).toBe(1);
+            expect(collisionSystem.enemiesEatenCount).toBe(1);
         });
 
         test('increases score for each consecutive ghost eaten', () => {
-            collisionSystem.ghostsEatenCount = 0;
+            collisionSystem.enemiesEatenCount = 0;
             mockGhosts[1].x = 2 * 16 + 5;
             mockGhosts[1].y = 2 * 16 + 5;
 
             const result1 = collisionSystem.checkGhostCollision();
             expect(result1.score).toBe(scoreValues.ghost[0]);
 
-            collisionSystem.ghostsEatenCount = 1;
+            collisionSystem.enemiesEatenCount = 1;
             const result2 = collisionSystem.checkGhostCollision();
             expect(result2.score).toBe(scoreValues.ghost[1]);
 
-            collisionSystem.ghostsEatenCount = 2;
+            collisionSystem.enemiesEatenCount = 2;
             const result3 = collisionSystem.checkGhostCollision();
             expect(result3.score).toBe(scoreValues.ghost[2]);
 
-            collisionSystem.ghostsEatenCount = 3;
+            collisionSystem.enemiesEatenCount = 3;
             const result4 = collisionSystem.checkGhostCollision();
             expect(result4.score).toBe(scoreValues.ghost[3]);
         });
 
         test('caps score at maximum when eating more than 4 ghosts', () => {
-            collisionSystem.ghostsEatenCount = 10;
+            collisionSystem.enemiesEatenCount = 10;
             mockGhosts[1].x = 2 * 16 + 5;
             mockGhosts[1].y = 2 * 16 + 5;
 
@@ -382,8 +396,8 @@ describe('CollisionSystem', () => {
 
         test('uses collision threshold from collisionConfig', () => {
             const threshold = collisionConfig.radius;
-            mockGhosts[0].x = mockPacman.x + threshold - 1;
-            mockGhosts[0].y = mockPacman.y;
+            mockGhosts[0].x = mockPlayer.x + threshold - 1;
+            mockGhosts[0].y = mockPlayer.y;
 
             const result = collisionSystem.checkGhostCollision();
 
@@ -401,8 +415,8 @@ describe('CollisionSystem', () => {
         });
 
         test('calls checkPelletCollision and includes result', () => {
-            mockPacman.x = 1 * 16 + 8;
-            mockPacman.y = 1 * 16 + 8;
+            mockPlayer.x = 1 * 16 + 8;
+            mockPlayer.y = 1 * 16 + 8;
 
             const results = collisionSystem.checkAllCollisions();
 
@@ -410,8 +424,8 @@ describe('CollisionSystem', () => {
         });
 
         test('calls checkPowerPelletCollision and includes result', () => {
-            mockPacman.x = 2 * 16 + 8;
-            mockPacman.y = 2 * 16 + 8;
+            mockPlayer.x = 2 * 16 + 8;
+            mockPlayer.y = 2 * 16 + 8;
 
             const results = collisionSystem.checkAllCollisions();
 
@@ -431,8 +445,8 @@ describe('CollisionSystem', () => {
         });
 
         test('combines all collision results', () => {
-            mockPacman.x = 1 * 16 + 8;
-            mockPacman.y = 1 * 16 + 8;
+            mockPlayer.x = 1 * 16 + 8;
+            mockPlayer.y = 1 * 16 + 8;
             mockGhosts[1].x = 1 * 16 + 8;
             mockGhosts[1].y = 1 * 16 + 8;
 
@@ -471,36 +485,36 @@ describe('CollisionSystem', () => {
     });
 
     describe('reset()', () => {
-        test('resets ghostsEatenCount to 0', () => {
-            collisionSystem.ghostsEatenCount = 5;
+        test('resets enemiesEatenCount to 0', () => {
+            collisionSystem.enemiesEatenCount = 5;
 
             collisionSystem.reset();
 
-            expect(collisionSystem.ghostsEatenCount).toBe(0);
+            expect(collisionSystem.enemiesEatenCount).toBe(0);
         });
     });
 
     describe('Integration: Complete collision scenario', () => {
         test('handles eating all pellets and winning', () => {
-            mockPacman.x = 1 * 16 + 8;
-            mockPacman.y = 1 * 16 + 8;
+            mockPlayer.x = 1 * 16 + 8;
+            mockPlayer.y = 1 * 16 + 8;
 
             let totalScore = 0;
             totalScore += collisionSystem.checkPelletCollision();
 
-            mockPacman.x = 2 * 16 + 8;
-            mockPacman.y = 1 * 16 + 8;
+            mockPlayer.x = 2 * 16 + 8;
+            mockPlayer.y = 1 * 16 + 8;
             totalScore += collisionSystem.checkPelletCollision();
 
             expect(totalScore).toBeGreaterThan(0);
         });
 
         test('handles power pellet activation and ghost eating sequence', () => {
-            mockPacman.x = 2 * 16 + 8;
-            mockPacman.y = 2 * 16 + 8;
+            mockPlayer.x = 2 * 16 + 8;
+            mockPlayer.y = 2 * 16 + 8;
 
             collisionSystem.checkPowerPelletCollision();
-            expect(collisionSystem.ghostsEatenCount).toBe(0);
+            expect(collisionSystem.enemiesEatenCount).toBe(0);
 
             mockGhosts[1].x = 2 * 16 + 5;
             mockGhosts[1].y = 2 * 16 + 5;
@@ -514,7 +528,7 @@ describe('CollisionSystem', () => {
 
             const result1 = collisionSystem.checkGhostCollision();
             expect(result1.type).toBe('ghost_eaten');
-            expect(collisionSystem.ghostsEatenCount).toBe(1);
+            expect(collisionSystem.enemiesEatenCount).toBe(1);
             expect(mockGhosts[1].eat).toHaveBeenCalled();
             mockGhosts[1].isEaten = true;
 
@@ -526,7 +540,7 @@ describe('CollisionSystem', () => {
 
             const result2 = collisionSystem.checkGhostCollision();
             expect(result2.type).toBe('ghost_eaten');
-            expect(collisionSystem.ghostsEatenCount).toBe(2);
+            expect(collisionSystem.enemiesEatenCount).toBe(2);
         });
 
         test('handles pacman death collision', () => {
@@ -551,8 +565,14 @@ describe('CollisionSystem', () => {
             const radius = 10;
 
             const result = capsuleCollision(
-                ghostPrevX, ghostPrevY, ghostCurrX, ghostCurrY,
-                pacmanX, pacmanY, pacmanX, pacmanY,
+                ghostPrevX,
+                ghostPrevY,
+                ghostCurrX,
+                ghostCurrY,
+                pacmanX,
+                pacmanY,
+                pacmanX,
+                pacmanY,
                 radius
             );
 
@@ -569,8 +589,14 @@ describe('CollisionSystem', () => {
             const radius = 10;
 
             const result = capsuleCollision(
-                ghostPrevX, ghostPrevY, ghostCurrX, ghostCurrY,
-                pacmanX, pacmanY, pacmanX, pacmanY,
+                ghostPrevX,
+                ghostPrevY,
+                ghostCurrX,
+                ghostCurrY,
+                pacmanX,
+                pacmanY,
+                pacmanX,
+                pacmanY,
                 radius
             );
 
@@ -587,8 +613,14 @@ describe('CollisionSystem', () => {
             const radius = 10;
 
             const result = capsuleCollision(
-                ghostPrevX, ghostPrevY, ghostCurrX, ghostCurrY,
-                pacmanX, pacmanY, pacmanX, pacmanY,
+                ghostPrevX,
+                ghostPrevY,
+                ghostCurrX,
+                ghostCurrY,
+                pacmanX,
+                pacmanY,
+                pacmanX,
+                pacmanY,
                 radius
             );
 
@@ -605,8 +637,14 @@ describe('CollisionSystem', () => {
             const radius = 10;
 
             const result = capsuleCollision(
-                ghostPrevX, ghostPrevY, ghostCurrX, ghostCurrY,
-                pacmanX, pacmanY, pacmanX, pacmanY,
+                ghostPrevX,
+                ghostPrevY,
+                ghostCurrX,
+                ghostCurrY,
+                pacmanX,
+                pacmanY,
+                pacmanX,
+                pacmanY,
                 radius
             );
 
@@ -623,8 +661,14 @@ describe('CollisionSystem', () => {
             const radius = 10;
 
             const result = capsuleCollision(
-                ghostPrevX, ghostPrevY, ghostCurrX, ghostCurrY,
-                pacmanX, pacmanY, pacmanX, pacmanY,
+                ghostPrevX,
+                ghostPrevY,
+                ghostCurrX,
+                ghostCurrY,
+                pacmanX,
+                pacmanY,
+                pacmanX,
+                pacmanY,
                 radius
             );
 
@@ -638,7 +682,17 @@ describe('CollisionSystem', () => {
             const y2 = 100;
             const threshold = 10;
 
-            const result = capsuleCollision(x1, y1, x1, y1, x2, y2, x2, y2, threshold);
+            const result = capsuleCollision(
+                x1,
+                y1,
+                x1,
+                y1,
+                x2,
+                y2,
+                x2,
+                y2,
+                threshold
+            );
 
             expect(result).toBe(true);
         });
@@ -650,7 +704,17 @@ describe('CollisionSystem', () => {
             const y2 = 120;
             const threshold = 10;
 
-            const result = capsuleCollision(x1, y1, x1, y1, x2, y2, x2, y2, threshold);
+            const result = capsuleCollision(
+                x1,
+                y1,
+                x1,
+                y1,
+                x2,
+                y2,
+                x2,
+                y2,
+                threshold
+            );
 
             expect(result).toBe(false);
         });

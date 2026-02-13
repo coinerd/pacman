@@ -1,35 +1,40 @@
 /**
- * GhostState Tests
- * Tests for the Ghost model entity.
+ * EnemyState Tests
+ * Tests for the Enemy model entity.
  */
 
-import { GhostState } from '../../src/model/entities/GhostState.js';
-import { directions, ghostModes, levelConfig, ghostSpeedMultipliers } from '../../src/config/gameConfig.js';
+import {
+    directions,
+    ghostModes,
+    ghostSpeedMultipliers,
+    levelConfig
+} from '../../src/config/gameConfig.js';
+import { EnemyState } from '../../src/model/entities/EnemyState.js';
 import { createMazeData } from '../../src/utils/MazeLayout.js';
 
-describe('GhostState', () => {
+describe('EnemyState', () => {
     let ghost;
     let maze;
 
     beforeEach(() => {
         const mazeData = createMazeData();
         maze = mazeData.maze;
-        ghost = new GhostState(13, 11, 'blinky', 1);
+        ghost = new EnemyState(13, 11, 'blinky', 1);
     });
 
     describe('constructor', () => {
         test('creates with correct type and ghostType', () => {
-            expect(ghost.type).toBe('ghost');
+            expect(ghost.type).toBe('enemy');
             expect(ghost.ghostType).toBe('blinky');
             expect(ghost.name).toBe('blinky');
         });
 
         test('assigns color based on ghost type', () => {
-            const blinky = new GhostState(0, 0, 'blinky', 1);
-            const pinky = new GhostState(0, 0, 'pinky', 1);
+            const blinky = new EnemyState(0, 0, 'blinky', 1);
+            const pinky = new EnemyState(0, 0, 'pinky', 1);
 
-            expect(blinky.color).toBe(0xFF0000);
-            expect(pinky.color).toBe(0xFFB8FF);
+            expect(blinky.color).toBe(0x9b59b6); // ALPHA purple
+            expect(pinky.color).toBe(0x7fff00); // BETA green
         });
 
         test('stores start position', () => {
@@ -38,8 +43,8 @@ describe('GhostState', () => {
         });
 
         test('calculates speed based on level', () => {
-            const level1 = new GhostState(13, 11, 'blinky', 1);
-            const level5 = new GhostState(13, 11, 'blinky', 5);
+            const level1 = new EnemyState(13, 11, 'blinky', 1);
+            const level5 = new EnemyState(13, 11, 'blinky', 5);
 
             expect(level5.speed).toBeGreaterThan(level1.speed);
         });
@@ -188,7 +193,7 @@ describe('GhostState', () => {
 
             const events = ghost.updateEaten(0.6, maze);
 
-            const reviveEvent = events.find(e => e.type === 'ghost_revived');
+            const reviveEvent = events.find((e) => e.type === 'ghost_revived');
             expect(reviveEvent).toBeDefined();
             expect(ghost.isEaten).toBe(false);
         });
@@ -205,9 +210,10 @@ describe('GhostState', () => {
 
             // Direction should be set (either in buffer or applied)
             // The chosen direction should minimize distance to target
-            const direction = ghost.nextDirection.x !== 0 || ghost.nextDirection.y !== 0
-                ? ghost.nextDirection
-                : ghost.direction;
+            const direction =
+				ghost.nextDirection.x !== 0 || ghost.nextDirection.y !== 0
+				    ? ghost.nextDirection
+				    : ghost.direction;
 
             // Direction should be one of the valid directions
             expect(direction.x !== 0 || direction.y !== 0).toBe(true);
@@ -263,7 +269,7 @@ describe('GhostState', () => {
         test('returns blue color when frightened', () => {
             ghost.setFrightened(5);
             const visual = ghost.getVisualState();
-            expect(visual.color).toBe(0x0000FF);
+            expect(visual.color).toBe(0x0000ff);
         });
 
         test('returns white when blinking', () => {
@@ -271,7 +277,7 @@ describe('GhostState', () => {
             ghost.isBlinking = true;
             ghost.blinkTimer = 0;
             const visual = ghost.getVisualState();
-            expect(visual.color).toBe(0xFFFFFF);
+            expect(visual.color).toBe(0xffffff);
         });
 
         test('returns reduced opacity when eaten', () => {

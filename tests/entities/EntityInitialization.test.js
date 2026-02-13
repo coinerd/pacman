@@ -1,8 +1,8 @@
-import { BaseEntity } from '../../src/entities/BaseEntity.js';
-import Pacman from '../../src/entities/Pacman.js';
-import Ghost from '../../src/entities/Ghost.js';
-import { createMockScene } from '../utils/testHelpers.js';
 import { colors, directions, ghostModes } from '../../src/config/gameConfig.js';
+import { BaseEntity } from '../../src/entities/BaseEntity.js';
+import Enemy from '../../src/entities/Enemy.js';
+import Pacman from '../../src/entities/Pacman.js';
+import { createMockScene } from '../utils/testHelpers.js';
 
 describe('Entity Initialization', () => {
     let mockScene;
@@ -16,7 +16,7 @@ describe('Entity Initialization', () => {
         test('should initialize prevGridX and prevGridY to starting position', () => {
             const gridX = 5;
             const gridY = 7;
-            const entity = new BaseEntity(mockScene, gridX, gridY, 10, 0xFFFFFF);
+            const entity = new BaseEntity(mockScene, gridX, gridY, 10, 0xffffff);
 
             expect(entity.gridX).toBe(gridX);
             expect(entity.gridY).toBe(gridY);
@@ -32,34 +32,34 @@ describe('Entity Initialization', () => {
                 { x: 13, y: 14 }
             ];
 
-            testPositions.forEach(pos => {
-                const entity = new BaseEntity(mockScene, pos.x, pos.y, 10, 0xFFFFFF);
+            testPositions.forEach((pos) => {
+                const entity = new BaseEntity(mockScene, pos.x, pos.y, 10, 0xffffff);
                 expect(entity.prevGridX).toBe(pos.x);
                 expect(entity.prevGridY).toBe(pos.y);
             });
         });
 
         test('should set pixel position to tile center', () => {
-            const entity = new BaseEntity(mockScene, 2, 3, 10, 0xFFFFFF);
+            const entity = new BaseEntity(mockScene, 2, 3, 10, 0xffffff);
 
             expect(entity.x).toBe(50);
             expect(entity.y).toBe(70);
         });
 
         test('should initialize with default direction NONE', () => {
-            const entity = new BaseEntity(mockScene, 2, 3, 10, 0xFFFFFF);
+            const entity = new BaseEntity(mockScene, 2, 3, 10, 0xffffff);
 
             expect(entity.direction).toEqual(directions.NONE);
         });
 
         test('should initialize isMoving to false', () => {
-            const entity = new BaseEntity(mockScene, 2, 3, 10, 0xFFFFFF);
+            const entity = new BaseEntity(mockScene, 2, 3, 10, 0xffffff);
 
             expect(entity.isMoving).toBe(false);
         });
 
         test('should initialize with default speed of 100', () => {
-            const entity = new BaseEntity(mockScene, 2, 3, 10, 0xFFFFFF);
+            const entity = new BaseEntity(mockScene, 2, 3, 10, 0xffffff);
 
             expect(entity.speed).toBe(100);
         });
@@ -144,8 +144,8 @@ describe('Entity Initialization', () => {
             const gridY = 7;
             const pacman = new Pacman(mockScene, gridX, gridY);
 
-            const expectedX = (gridX * 20) + 10;
-            const expectedY = (gridY * 20) + 10;
+            const expectedX = gridX * 20 + 10;
+            const expectedY = gridY * 20 + 10;
 
             expect(pacman.prevX).toBe(expectedX);
             expect(pacman.prevY).toBe(expectedY);
@@ -163,16 +163,16 @@ describe('Entity Initialization', () => {
             expect(pacman.prevGridX).toBe(gridX);
             expect(pacman.prevGridY).toBe(gridY);
 
-            expect(pacman.x).toBe((gridX * 20) + 10);
-            expect(pacman.y).toBe((gridY * 20) + 10);
-            expect(pacman.prevX).toBe((gridX * 20) + 10);
-            expect(pacman.prevY).toBe((gridY * 20) + 10);
+            expect(pacman.x).toBe(gridX * 20 + 10);
+            expect(pacman.y).toBe(gridY * 20 + 10);
+            expect(pacman.prevX).toBe(gridX * 20 + 10);
+            expect(pacman.prevY).toBe(gridY * 20 + 10);
         });
     });
 
-    describe('Ghost initialization', () => {
-        test('should initialize all Ghost-specific properties', () => {
-            const ghost = new Ghost(mockScene, 10, 15, 'blinky', colors.blinky);
+    describe('Enemy initialization', () => {
+        test('should initialize all Enemy-specific properties', () => {
+            const ghost = new Enemy(mockScene, 10, 15, 'blinky', colors.blinky);
 
             expect(ghost.gridX).toBe(10);
             expect(ghost.gridY).toBe(15);
@@ -183,7 +183,7 @@ describe('Entity Initialization', () => {
         test('should initialize prevX and prevY to initial position', () => {
             const gridX = 10;
             const gridY = 15;
-            const ghost = new Ghost(mockScene, gridX, gridY, 'pinky', colors.pinky);
+            const ghost = new Enemy(mockScene, gridX, gridY, 'pinky', colors.pinky);
 
             expect(ghost.prevX).toBe(210);
             expect(ghost.prevY).toBe(310);
@@ -194,7 +194,7 @@ describe('Entity Initialization', () => {
         test('should initialize prevGridX and prevGridY to starting position', () => {
             const gridX = 10;
             const gridY = 15;
-            const ghost = new Ghost(mockScene, gridX, gridY, 'inky', colors.inky);
+            const ghost = new Enemy(mockScene, gridX, gridY, 'inky', colors.inky);
 
             expect(ghost.prevGridX).toBe(gridX);
             expect(ghost.prevGridY).toBe(gridY);
@@ -205,7 +205,7 @@ describe('Entity Initialization', () => {
         test('should initialize startGridX and startGridY', () => {
             const gridX = 13;
             const gridY = 14;
-            const ghost = new Ghost(mockScene, gridX, gridY, 'clyde', colors.clyde);
+            const ghost = new Enemy(mockScene, gridX, gridY, 'clyde', colors.clyde);
 
             expect(ghost.startGridX).toBe(gridX);
             expect(ghost.startGridY).toBe(gridY);
@@ -213,75 +213,75 @@ describe('Entity Initialization', () => {
 
         test('should initialize with speed based on level', () => {
             mockScene.gameState.level = 1;
-            const ghost = new Ghost(mockScene, 10, 15, 'blinky', colors.blinky);
+            const ghost = new Enemy(mockScene, 10, 15, 'blinky', colors.blinky);
 
             expect(ghost.speed).toBeGreaterThan(100);
             expect(ghost.baseSpeed).toBe(ghost.speed);
         });
 
         test('should initialize mode to SCATTER', () => {
-            const ghost = new Ghost(mockScene, 10, 15, 'blinky', colors.blinky);
+            const ghost = new Enemy(mockScene, 10, 15, 'blinky', colors.blinky);
 
             expect(ghost.mode).toBe(ghostModes.SCATTER);
         });
 
         test('should initialize targetX and targetY to 0', () => {
-            const ghost = new Ghost(mockScene, 10, 15, 'blinky', colors.blinky);
+            const ghost = new Enemy(mockScene, 10, 15, 'blinky', colors.blinky);
 
             expect(ghost.targetX).toBe(0);
             expect(ghost.targetY).toBe(0);
         });
 
         test('should initialize isEaten to false', () => {
-            const ghost = new Ghost(mockScene, 10, 15, 'blinky', colors.blinky);
+            const ghost = new Enemy(mockScene, 10, 15, 'blinky', colors.blinky);
 
             expect(ghost.isEaten).toBe(false);
         });
 
         test('should initialize isFrightened to false', () => {
-            const ghost = new Ghost(mockScene, 10, 15, 'blinky', colors.blinky);
+            const ghost = new Enemy(mockScene, 10, 15, 'blinky', colors.blinky);
 
             expect(ghost.isFrightened).toBe(false);
         });
 
         test('should initialize frightenedTimer to 0', () => {
-            const ghost = new Ghost(mockScene, 10, 15, 'blinky', colors.blinky);
+            const ghost = new Enemy(mockScene, 10, 15, 'blinky', colors.blinky);
 
             expect(ghost.frightenedTimer).toBe(0);
         });
 
         test('should initialize isBlinking to false', () => {
-            const ghost = new Ghost(mockScene, 10, 15, 'blinky', colors.blinky);
+            const ghost = new Enemy(mockScene, 10, 15, 'blinky', colors.blinky);
 
             expect(ghost.isBlinking).toBe(false);
         });
 
         test('should initialize blinkTimer to 0', () => {
-            const ghost = new Ghost(mockScene, 10, 15, 'blinky', colors.blinky);
+            const ghost = new Enemy(mockScene, 10, 15, 'blinky', colors.blinky);
 
             expect(ghost.blinkTimer).toBe(0);
         });
 
         test('should initialize houseTimer to 0', () => {
-            const ghost = new Ghost(mockScene, 10, 15, 'blinky', colors.blinky);
+            const ghost = new Enemy(mockScene, 10, 15, 'blinky', colors.blinky);
 
             expect(ghost.houseTimer).toBe(0);
         });
 
         test('should initialize inGhostHouse to false', () => {
-            const ghost = new Ghost(mockScene, 10, 15, 'blinky', colors.blinky);
+            const ghost = new Enemy(mockScene, 10, 15, 'blinky', colors.blinky);
 
             expect(ghost.inGhostHouse).toBe(false);
         });
 
         test('should initialize with NONE direction', () => {
-            const ghost = new Ghost(mockScene, 10, 15, 'blinky', colors.blinky);
+            const ghost = new Enemy(mockScene, 10, 15, 'blinky', colors.blinky);
 
             expect(ghost.direction).toEqual(directions.NONE);
         });
 
         test('should initialize nextDirection to NONE', () => {
-            const ghost = new Ghost(mockScene, 10, 15, 'blinky', colors.blinky);
+            const ghost = new Enemy(mockScene, 10, 15, 'blinky', colors.blinky);
 
             expect(ghost.nextDirection).toEqual(directions.NONE);
         });
@@ -289,10 +289,10 @@ describe('Entity Initialization', () => {
         test('should initialize previous position correctly at tile center', () => {
             const gridX = 5;
             const gridY = 7;
-            const ghost = new Ghost(mockScene, gridX, gridY, 'blinky', colors.blinky);
+            const ghost = new Enemy(mockScene, gridX, gridY, 'blinky', colors.blinky);
 
-            const expectedX = (gridX * 20) + 10;
-            const expectedY = (gridY * 20) + 10;
+            const expectedX = gridX * 20 + 10;
+            const expectedY = gridY * 20 + 10;
 
             expect(ghost.prevX).toBe(expectedX);
             expect(ghost.prevY).toBe(expectedY);
@@ -303,21 +303,21 @@ describe('Entity Initialization', () => {
         test('should track all position properties consistently', () => {
             const gridX = 8;
             const gridY = 12;
-            const ghost = new Ghost(mockScene, gridX, gridY, 'blinky', colors.blinky);
+            const ghost = new Enemy(mockScene, gridX, gridY, 'blinky', colors.blinky);
 
             expect(ghost.gridX).toBe(gridX);
             expect(ghost.gridY).toBe(gridY);
             expect(ghost.prevGridX).toBe(gridX);
             expect(ghost.prevGridY).toBe(gridY);
 
-            expect(ghost.x).toBe((gridX * 20) + 10);
-            expect(ghost.y).toBe((gridY * 20) + 10);
-            expect(ghost.prevX).toBe((gridX * 20) + 10);
-            expect(ghost.prevY).toBe((gridY * 20) + 10);
+            expect(ghost.x).toBe(gridX * 20 + 10);
+            expect(ghost.y).toBe(gridY * 20 + 10);
+            expect(ghost.prevX).toBe(gridX * 20 + 10);
+            expect(ghost.prevY).toBe(gridY * 20 + 10);
         });
 
         test('should initialize all ghost state flags correctly', () => {
-            const ghost = new Ghost(mockScene, 10, 15, 'blinky', colors.blinky);
+            const ghost = new Enemy(mockScene, 10, 15, 'blinky', colors.blinky);
 
             expect(ghost.isEaten).toBe(false);
             expect(ghost.isFrightened).toBe(false);
@@ -337,7 +337,7 @@ describe('Entity Initialization', () => {
             ];
 
             ghostTypes.forEach(({ type, color }) => {
-                const ghost = new Ghost(mockScene, 10, 15, type, color);
+                const ghost = new Enemy(mockScene, 10, 15, type, color);
 
                 expect(ghost.type).toBe(type);
                 expect(ghost.color).toBe(color);
@@ -351,7 +351,7 @@ describe('Entity Initialization', () => {
 
     describe('Previous position tracking consistency', () => {
         test('BaseEntity should initialize prevGridX and prevGridY correctly', () => {
-            const entity = new BaseEntity(mockScene, 7, 9, 10, 0xFFFFFF);
+            const entity = new BaseEntity(mockScene, 7, 9, 10, 0xffffff);
 
             expect(entity.prevGridX).toBe(7);
             expect(entity.prevGridY).toBe(9);
@@ -362,19 +362,19 @@ describe('Entity Initialization', () => {
             const gridY = 11;
             const pacman = new Pacman(mockScene, gridX, gridY);
 
-            expect(pacman.prevX).toBe((gridX * 20) + 10);
-            expect(pacman.prevY).toBe((gridY * 20) + 10);
+            expect(pacman.prevX).toBe(gridX * 20 + 10);
+            expect(pacman.prevY).toBe(gridY * 20 + 10);
             expect(pacman.prevGridX).toBe(gridX);
             expect(pacman.prevGridY).toBe(gridY);
         });
 
-        test('Ghost should initialize all previous position properties', () => {
+        test('Enemy should initialize all previous position properties', () => {
             const gridX = 6;
             const gridY = 11;
-            const ghost = new Ghost(mockScene, gridX, gridY, 'blinky', colors.blinky);
+            const ghost = new Enemy(mockScene, gridX, gridY, 'blinky', colors.blinky);
 
-            expect(ghost.prevX).toBe((gridX * 20) + 10);
-            expect(ghost.prevY).toBe((gridY * 20) + 10);
+            expect(ghost.prevX).toBe(gridX * 20 + 10);
+            expect(ghost.prevY).toBe(gridY * 20 + 10);
             expect(ghost.prevGridX).toBe(gridX);
             expect(ghost.prevGridY).toBe(gridY);
         });
@@ -383,9 +383,9 @@ describe('Entity Initialization', () => {
             const gridX = 8;
             const gridY = 10;
 
-            const baseEntity = new BaseEntity(mockScene, gridX, gridY, 10, 0xFFFFFF);
+            const baseEntity = new BaseEntity(mockScene, gridX, gridY, 10, 0xffffff);
             const pacman = new Pacman(mockScene, gridX, gridY);
-            const ghost = new Ghost(mockScene, gridX, gridY, 'blinky', colors.blinky);
+            const ghost = new Enemy(mockScene, gridX, gridY, 'blinky', colors.blinky);
 
             expect(baseEntity.gridX).toBe(baseEntity.prevGridX);
             expect(baseEntity.gridY).toBe(baseEntity.prevGridY);

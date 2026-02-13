@@ -23,6 +23,7 @@ export const COLLISION_EVENTS = {
     POWER_PELLET_CONSUMED: 'power_pellet_consumed',
     GHOST_COLLISION: 'ghost_collision',
     GHOST_EATEN: 'ghost_eaten',
+    PLAYER_DIED: 'player_died',
     PACMAN_DIED: 'pacman_died'
 };
 
@@ -32,49 +33,57 @@ export const COLLISION_EVENTS = {
  */
 export class CollisionInterface {
     /**
-     * Check collision between two entities
-     * @param {Object} entityA - First entity state (must have x, y, and optionally prevX, prevY)
-     * @param {Object} entityB - Second entity state (must have x, y, and optionally prevX, prevY)
-     * @param {Object} config - Collision configuration (radius, etc.)
-     * @returns {Object|null} Collision result or null if no collision
-     */
+	 * Check collision between two entities
+	 * @param {Object} entityA - First entity state (must have x, y, and optionally prevX, prevY)
+	 * @param {Object} entityB - Second entity state (must have x, y, and optionally prevX, prevY)
+	 * @param {Object} config - Collision configuration (radius, etc.)
+	 * @returns {Object|null} Collision result or null if no collision
+	 */
     checkEntityCollision(entityA, entityB, _config = {}) {
-        throw new Error('CollisionInterface.checkEntityCollision() must be implemented by subclass');
+        throw new Error(
+            'CollisionInterface.checkEntityCollision() must be implemented by subclass'
+        );
     }
 
     /**
-     * Check collision between entity and tile
-     * @param {Object} entity - Entity state
-     * @param {number} tileX - Tile X coordinate
-     * @param {number} tileY - Tile Y coordinate
-     * @param {Object} config - Collision configuration
-     * @returns {Object|null} Collision result or null if no collision
-     */
+	 * Check collision between entity and tile
+	 * @param {Object} entity - Entity state
+	 * @param {number} tileX - Tile X coordinate
+	 * @param {number} tileY - Tile Y coordinate
+	 * @param {Object} config - Collision configuration
+	 * @returns {Object|null} Collision result or null if no collision
+	 */
     checkTileCollision(entity, tileX, tileY, _config = {}) {
-        throw new Error('CollisionInterface.checkTileCollision() must be implemented by subclass');
+        throw new Error(
+            'CollisionInterface.checkTileCollision() must be implemented by subclass'
+        );
     }
 
     /**
-     * Check collision between entity and point
-     * @param {Object} entity - Entity state
-     * @param {number} pointX - Point X coordinate
-     * @param {number} pointY - Point Y coordinate
-     * @param {Object} config - Collision configuration
-     * @returns {Object|null} Collision result or null if no collision
-     */
+	 * Check collision between entity and point
+	 * @param {Object} entity - Entity state
+	 * @param {number} pointX - Point X coordinate
+	 * @param {number} pointY - Point Y coordinate
+	 * @param {Object} config - Collision configuration
+	 * @returns {Object|null} Collision result or null if no collision
+	 */
     checkPointCollision(entity, pointX, pointY, _config = {}) {
-        throw new Error('CollisionInterface.checkPointCollision() must be implemented by subclass');
+        throw new Error(
+            'CollisionInterface.checkPointCollision() must be implemented by subclass'
+        );
     }
 
     /**
-     * Get all collisions for an entity against a list of other entities
-     * @param {Object} entity - Entity state
-     * @param {Array<Object>} others - Array of other entities
-     * @param {Object} config - Collision configuration
-     * @returns {Array<Object>} Array of collision results
-     */
+	 * Get all collisions for an entity against a list of other entities
+	 * @param {Object} entity - Entity state
+	 * @param {Array<Object>} others - Array of other entities
+	 * @param {Object} config - Collision configuration
+	 * @returns {Array<Object>} Array of collision results
+	 */
     getAllEntityCollisions(entity, others, _config = {}) {
-        throw new Error('CollisionInterface.getAllEntityCollisions() must be implemented by subclass');
+        throw new Error(
+            'CollisionInterface.getAllEntityCollisions() must be implemented by subclass'
+        );
     }
 }
 
@@ -83,13 +92,13 @@ export class CollisionInterface {
  */
 export class CollisionResult {
     /**
-     * @param {string} type - Collision type from COLLISION_TYPES
-     * @param {Object} entityA - First entity involved
-     * @param {Object} entityB - Second entity involved (null for tile/pellet collisions)
-     * @param {Object} position - Collision position {x, y}
-     * @param {Object} data - Additional collision data
-     * @param {Array<string>} events - Events to emit
-     */
+	 * @param {string} type - Collision type from COLLISION_TYPES
+	 * @param {Object} entityA - First entity involved
+	 * @param {Object} entityB - Second entity involved (null for tile/pellet collisions)
+	 * @param {Object} position - Collision position {x, y}
+	 * @param {Object} data - Additional collision data
+	 * @param {Array<string>} events - Events to emit
+	 */
     constructor(type, entityA, entityB, position, data = {}, events = []) {
         this.type = type;
         this.entityA = entityA;
@@ -101,8 +110,8 @@ export class CollisionResult {
     }
 
     /**
-     * Create a simple entity-entity collision result
-     */
+	 * Create a simple entity-entity collision result
+	 */
     static entityEntity(entityA, entityB, position, data = {}) {
         return new CollisionResult(
             COLLISION_TYPES.ENTITY_ENTITY,
@@ -115,8 +124,8 @@ export class CollisionResult {
     }
 
     /**
-     * Create a pellet collision result
-     */
+	 * Create a pellet collision result
+	 */
     static pellet(entity, position, scoreValue, data = {}) {
         return new CollisionResult(
             COLLISION_TYPES.ENTITY_PELLET,
@@ -129,8 +138,8 @@ export class CollisionResult {
     }
 
     /**
-     * Create a power pellet collision result
-     */
+	 * Create a power pellet collision result
+	 */
     static powerPellet(entity, position, scoreValue, data = {}) {
         return new CollisionResult(
             COLLISION_TYPES.ENTITY_POWER_PELLET,
@@ -143,8 +152,22 @@ export class CollisionResult {
     }
 
     /**
-     * Create a ghost collision result (Pacman dies)
-     */
+	 * Create a ghost collision result (Player dies)
+	 */
+    static playerDied(player, ghost, position) {
+        return new CollisionResult(
+            COLLISION_TYPES.ENTITY_ENTITY,
+            player,
+            ghost,
+            position,
+            { type: 'player_died', score: 0 },
+            [COLLISION_EVENTS.PLAYER_DIED]
+        );
+    }
+
+    /**
+	 * Create a ghost collision result (Pacman dies) - backward compatibility
+	 */
     static pacmanDied(pacman, ghost, position) {
         return new CollisionResult(
             COLLISION_TYPES.ENTITY_ENTITY,
@@ -157,12 +180,12 @@ export class CollisionResult {
     }
 
     /**
-     * Create a ghost eaten result (Pacman eats ghost)
-     */
-    static ghostEaten(pacman, ghost, position, scoreValue) {
+	 * Create a ghost eaten result (Player eats ghost)
+	 */
+    static ghostEaten(player, ghost, position, scoreValue) {
         return new CollisionResult(
             COLLISION_TYPES.ENTITY_ENTITY,
-            pacman,
+            player,
             ghost,
             position,
             { type: 'ghost_eaten', score: scoreValue },

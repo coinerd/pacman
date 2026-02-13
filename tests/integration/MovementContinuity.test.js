@@ -1,8 +1,8 @@
-import Pacman from '../../src/entities/Pacman.js';
-import Ghost from '../../src/entities/Ghost.js';
 import { directions, gameConfig } from '../../src/config/gameConfig.js';
+import Enemy from '../../src/entities/Enemy.js';
+import Pacman from '../../src/entities/Pacman.js';
 import { TILE_TYPES } from '../../src/utils/MazeLayout.js';
-import { createMockScene, createMockMaze } from '../utils/testHelpers.js';
+import { createMockMaze, createMockScene } from '../utils/testHelpers.js';
 
 describe('Movement continuity integration', () => {
     let mockScene;
@@ -16,7 +16,7 @@ describe('Movement continuity integration', () => {
 
     test('Pacman and ghosts move every fixed step', () => {
         const pacman = new Pacman(mockScene, 3, 3);
-        const ghost = new Ghost(mockScene, 4, 3, 'blinky', 0xFF0000);
+        const ghost = new Enemy(mockScene, 4, 3, 'blinky', 0xff0000);
 
         pacman.setSpeed(300);
         ghost.speed = 300;
@@ -28,7 +28,7 @@ describe('Movement continuity integration', () => {
         const initialPacmanX = pacman.x;
         const initialGhostX = ghost.x;
         const pacmanCheckpoints = [];
-        const ghostCheckpoints = [];
+        const enemyCheckpoints = [];
 
         for (let i = 0; i < 60; i += 1) {
             pacman.update(deltaSeconds, mockMaze);
@@ -36,19 +36,21 @@ describe('Movement continuity integration', () => {
 
             if ((i + 1) % 10 === 0) {
                 pacmanCheckpoints.push(pacman.x);
-                ghostCheckpoints.push(ghost.x);
+                enemyCheckpoints.push(ghost.x);
             }
         }
 
         for (let i = 1; i < pacmanCheckpoints.length; i += 1) {
             expect(pacmanCheckpoints[i]).toBeGreaterThan(pacmanCheckpoints[i - 1]);
-            expect(ghostCheckpoints[i]).toBeLessThan(ghostCheckpoints[i - 1]);
+            expect(enemyCheckpoints[i]).toBeLessThan(enemyCheckpoints[i - 1]);
         }
 
         expect(pacman.x).toBeGreaterThan(initialPacmanX);
         expect(ghost.x).toBeLessThan(initialGhostX);
         expect(pacman.x).toBeGreaterThan(0);
-        expect(ghost.x).toBeLessThan(ghost.startGridX * gameConfig.tileSize + gameConfig.tileSize / 2);
+        expect(ghost.x).toBeLessThan(
+            ghost.startGridX * gameConfig.tileSize + gameConfig.tileSize / 2
+        );
     });
 });
 

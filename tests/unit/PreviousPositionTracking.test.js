@@ -12,9 +12,14 @@
  * - Works with direction changes
  */
 
+import {
+    directions,
+    enemyColors,
+    enemyNames,
+    gameConfig
+} from '../../src/config/gameConfig.js';
+import Enemy from '../../src/entities/Enemy.js';
 import Pacman from '../../src/entities/Pacman.js';
-import Ghost from '../../src/entities/Ghost.js';
-import { gameConfig, directions, ghostColors, ghostNames } from '../../src/config/gameConfig.js';
 import { tileCenter } from '../../src/utils/TileMovement.js';
 import { msToSeconds } from '../../src/utils/Time.js';
 import { createMockScene, createSimpleMaze } from '../utils/testHelpers.js';
@@ -22,13 +27,13 @@ import { createMockScene, createSimpleMaze } from '../utils/testHelpers.js';
 describe('Previous Position Tracking - Initialization', () => {
     let mockScene;
     let pacman;
-    let ghost;
+    let enemy;
 
     beforeEach(() => {
         mockScene = createMockScene();
         mockScene.gameState = { level: 1 };
         pacman = new Pacman(mockScene, 5, 5);
-        ghost = new Ghost(mockScene, 5, 5, ghostNames.BLINKY, ghostColors.BLINKY);
+        enemy = new Enemy(mockScene, 5, 5, enemyNames.alpha, enemyColors.alpha);
     });
 
     test('Pacman initializes with prevX/prevY matching current position', () => {
@@ -45,11 +50,11 @@ describe('Previous Position Tracking - Initialization', () => {
         expect(pacman.prevGridY).toBe(pacman.gridY);
     });
 
-    test('Ghost initializes with prevGridX/prevGridY matching current grid position', () => {
-        expect(ghost.prevGridX).toBeDefined();
-        expect(ghost.prevGridY).toBeDefined();
-        expect(ghost.prevGridX).toBe(ghost.gridX);
-        expect(ghost.prevGridY).toBe(ghost.gridY);
+    test('Enemy initializes with prevGridX/prevGridY matching current grid position', () => {
+        expect(enemy.prevGridX).toBeDefined();
+        expect(enemy.prevGridY).toBeDefined();
+        expect(enemy.prevGridX).toBe(enemy.gridX);
+        expect(enemy.prevGridY).toBe(enemy.gridY);
     });
 
     test('prevX/prevY set to current pixel position at construction', () => {
@@ -447,7 +452,9 @@ describe('Previous Position Tracking - Edge Cases', () => {
 
             expect(pacman.prevX).toBe(currentX);
             expect(pacman.prevY).toBe(currentY);
-            expect(Math.abs(pacman.x - pacman.prevX)).toBeLessThan(pacman.speed * 0.1);
+            expect(Math.abs(pacman.x - pacman.prevX)).toBeLessThan(
+                pacman.speed * 0.1
+            );
         }
     });
 });

@@ -3,15 +3,15 @@
  * Tests the full integration of model-based collision detection
  */
 
-import { GameState } from '../../src/model/GameState.js';
-import { ModelCollisionSystem } from '../../src/model/systems/ModelCollisionSystem.js';
-import { ModelStateAdapter } from '../../src/model/ModelStateAdapter.js';
-import { GameStateController } from '../../src/model/GameStateController.js';
 import { directions, ghostModes } from '../../src/config/gameConfig.js';
+import { GameState } from '../../src/model/GameState.js';
+import { GameStateController } from '../../src/model/GameStateController.js';
+import { ModelStateAdapter } from '../../src/model/ModelStateAdapter.js';
+import { ModelCollisionSystem } from '../../src/model/systems/ModelCollisionSystem.js';
 import { PELLET_TYPES } from '../../src/utils/MazeLayout.js';
 
 describe('Model Collision Integration', () => {
-    describe('Ghost Collision Detection', () => {
+    describe('Enemy Collision Detection', () => {
         let gameState;
         let collisionSystem;
 
@@ -80,12 +80,12 @@ describe('Model Collision Integration', () => {
             // Entities moving past each other between frames
             gameState.pacman.x = 100;
             gameState.pacman.y = 100;
-            gameState.pacman.prevX = 0;  // Moving right
+            gameState.pacman.prevX = 0; // Moving right
             gameState.pacman.prevY = 50;
 
             gameState.ghosts[0].x = 0;
             gameState.ghosts[0].y = 50;
-            gameState.ghosts[0].prevX = 100;  // Moving left
+            gameState.ghosts[0].prevX = 100; // Moving left
             gameState.ghosts[0].prevY = 100;
 
             const collision = collisionSystem.checkGhostCollisions();
@@ -134,14 +134,14 @@ describe('Model Collision Integration', () => {
 
         it('should detect regular pellet collision', () => {
             // Place pacman on a pellet tile (tileSize is 20)
-            gameState.pacman.x = 40;  // Grid x = 2
-            gameState.pacman.y = 40;  // Grid y = 2
+            gameState.pacman.x = 40; // Grid x = 2
+            gameState.pacman.y = 40; // Grid y = 2
             gameState.pacman.gridX = 2;
             gameState.pacman.gridY = 2;
 
             // Ensure there's a pellet at that position (and no power pellet)
             // Reset pellet grid first
-            gameState.pelletGrid = gameState.pelletGrid.map(row =>
+            gameState.pelletGrid = gameState.pelletGrid.map((row) =>
                 row.map(() => PELLET_TYPES.NONE)
             );
             gameState.pelletGrid[2][2] = PELLET_TYPES.PELLET;
@@ -151,7 +151,7 @@ describe('Model Collision Integration', () => {
 
             expect(event).not.toBeNull();
             expect(event.type).toBe('pellet_eaten');
-            expect(event.score).toBe(10);
+            expect(event.score).toBe(15);
         });
 
         it('should detect power pellet collision', () => {
@@ -167,7 +167,7 @@ describe('Model Collision Integration', () => {
 
             expect(event).not.toBeNull();
             expect(event.type).toBe('power_pellet_eaten');
-            expect(event.score).toBe(50);
+            expect(event.score).toBe(75);
             expect(event.frightenedDuration).toBeDefined();
         });
 
@@ -203,7 +203,7 @@ describe('Model Collision Integration', () => {
 
         it('should detect level complete when all pellets eaten', () => {
             // Set only one pellet
-            gameState.pelletGrid = gameState.pelletGrid.map(row =>
+            gameState.pelletGrid = gameState.pelletGrid.map((row) =>
                 row.map(() => PELLET_TYPES.NONE)
             );
             gameState.pelletGrid[2][2] = PELLET_TYPES.PELLET;
@@ -269,7 +269,7 @@ describe('Model Collision Integration', () => {
             gameState.fruit.x = 0;
             gameState.fruit.y = 0;
 
-            gameState.pacman.x = 100;  // More than tileSize away
+            gameState.pacman.x = 100; // More than tileSize away
             gameState.pacman.y = 100;
 
             const event = collisionSystem.checkFruitCollision();
@@ -321,7 +321,9 @@ describe('Model Collision Integration', () => {
             const collisionEvents = controller.collisionSystem.checkAllCollisions();
 
             // Should have ghost_eaten event
-            const ghostEatenEvent = collisionEvents.find(e => e.type === 'ghost_eaten');
+            const ghostEatenEvent = collisionEvents.find(
+                (e) => e.type === 'ghost_eaten'
+            );
             expect(ghostEatenEvent).toBeDefined();
             expect(ghostEatenEvent.score).toBe(200);
         });
@@ -381,10 +383,12 @@ describe('Model Collision Integration', () => {
                 ghosts: [visualGhost]
             });
 
-            adapter.applyCollisionResults([{
-                type: 'ghost_eaten',
-                ghostType: 'blinky'
-            }]);
+            adapter.applyCollisionResults([
+                {
+                    type: 'ghost_eaten',
+                    ghostType: 'blinky'
+                }
+            ]);
 
             expect(visualGhost.eat).toHaveBeenCalled();
         });

@@ -3,6 +3,6 @@
  * Exports all visual wrapper classes.
  */
 
-export { VisualPacman } from './VisualPacman.js';
-export { VisualGhost } from './VisualGhost.js';
+export { VisualEnemy } from './VisualEnemy.js';
 export { VisualFruit } from './VisualFruit.js';
+export { VisualPlayer } from './VisualPlayer.js';

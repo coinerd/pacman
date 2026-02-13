@@ -67,7 +67,7 @@ describe('CollisionSystem - Bug Fixes', () => {
         collisionSystem.setPowerPelletPool(mockPowerPelletPool);
     });
 
-    describe('Bug Fix: Ghost collision with path crossing', () => {
+    describe('Bug Fix: Enemy collision with path crossing', () => {
         test('detects collision when ghost path crosses Pac-Man path', () => {
             mockPacman.x = 270;
             mockPacman.y = 270;
@@ -261,7 +261,7 @@ describe('CollisionSystem - Bug Fixes', () => {
         });
     });
 
-    describe('Integration: Ghost catching Pac-Man', () => {
+    describe('Integration: Enemy catching Pac-Man', () => {
         test('Pacman dies when ghost collides at speed', () => {
             mockPacman.x = 270;
             mockPacman.y = 270;

@@ -4,19 +4,25 @@
  * NO Phaser dependencies.
  */
 
-import { ModelEntity } from '../ModelEntity.js';
-import { gameConfig, directions, levelConfig, animationConfig } from '../../config/gameConfig.js';
+import {
+    animationConfig,
+    directions,
+    gameConfig,
+    levelConfig
+} from '../../config/gameConfig.js';
 import { moveEntityOnGrid } from '../../utils/movement/GridMovement.js';
 import { isAtTileCenter } from '../../utils/TileMath.js';
+import { ModelEntity } from '../ModelEntity.js';
 
 export class PacmanState extends ModelEntity {
     /**
-     * @param {number} gridX - Initial grid X position
-     * @param {number} gridY - Initial grid Y position
-     * @param {number} level - Current game level (affects speed)
-     */
+	 * @param {number} gridX - Initial grid X position
+	 * @param {number} gridY - Initial grid Y position
+	 * @param {number} level - Current game level (affects speed)
+	 */
     constructor(gridX, gridY, level = 1) {
-        const baseLevelSpeed = levelConfig.baseSpeed + (level - 1) * levelConfig.speedIncreasePerLevel;
+        const baseLevelSpeed =
+			levelConfig.baseSpeed + (level - 1) * levelConfig.speedIncreasePerLevel;
         const speed = baseLevelSpeed * levelConfig.pacmanSpeedMultiplier;
 
         super(gridX, gridY, {
@@ -37,14 +43,19 @@ export class PacmanState extends ModelEntity {
     }
 
     /**
-     * Update Pacman state
-     * @param {number} deltaSeconds - Time since last frame
-     * @param {Array<Array<number>>} maze - Maze grid
-     * @param {Object} inputDirection - Desired direction from input (optional)
-     * @param {boolean} useDecoupledSystems - Whether using decoupled movement
-     * @returns {Array<Object>} - Events generated
-     */
-    update(deltaSeconds, maze, inputDirection = null, useDecoupledSystems = false) {
+	 * Update Pacman state
+	 * @param {number} deltaSeconds - Time since last frame
+	 * @param {Array<Array<number>>} maze - Maze grid
+	 * @param {Object} inputDirection - Desired direction from input (optional)
+	 * @param {boolean} useDecoupledSystems - Whether using decoupled movement
+	 * @returns {Array<Object>} - Events generated
+	 */
+    update(
+        deltaSeconds,
+        maze,
+        inputDirection = null,
+        useDecoupledSystems = false
+    ) {
         const events = [];
 
         if (this.isDying) {
@@ -125,9 +136,9 @@ export class PacmanState extends ModelEntity {
     }
 
     /**
-     * Make decision at tile intersection
-     * @param {Array<Array<number>>} maze - Maze grid
-     */
+	 * Make decision at tile intersection
+	 * @param {Array<Array<number>>} maze - Maze grid
+	 */
     makeDecisionAtIntersection(maze) {
         // Try to apply buffered direction
         const applied = this.directionBuffer.applyIfCanMove((dir) => {
@@ -150,9 +161,9 @@ export class PacmanState extends ModelEntity {
     }
 
     /**
-     * Update mouth animation
-     * @param {number} deltaSeconds - Time since last frame
-     */
+	 * Update mouth animation
+	 * @param {number} deltaSeconds - Time since last frame
+	 */
     updateMouthAnimation(deltaSeconds) {
         const speed = animationConfig.pacmanMouthSpeed;
         this.mouthAngle += this.mouthDirection * speed * deltaSeconds;
@@ -167,9 +178,9 @@ export class PacmanState extends ModelEntity {
     }
 
     /**
-     * Update death animation
-     * @param {number} deltaSeconds - Time since last frame
-     */
+	 * Update death animation
+	 * @param {number} deltaSeconds - Time since last frame
+	 */
     updateDeathAnimation(deltaSeconds) {
         const speed = animationConfig.pacmanDeathSpeed;
         this.mouthAngle += speed * deltaSeconds;
@@ -181,8 +192,8 @@ export class PacmanState extends ModelEntity {
     }
 
     /**
-     * Start death sequence
-     */
+	 * Start death sequence
+	 */
     die() {
         this.isDying = true;
         this.isMoving = false;
@@ -192,10 +203,10 @@ export class PacmanState extends ModelEntity {
     }
 
     /**
-     * Reset Pacman to starting state
-     * @param {number} gridX - Reset X position
-     * @param {number} gridY - Reset Y position
-     */
+	 * Reset Pacman to starting state
+	 * @param {number} gridX - Reset X position
+	 * @param {number} gridY - Reset Y position
+	 */
     reset(gridX, gridY) {
         this.isDying = false;
         this.mouthAngle = 0;
@@ -205,17 +216,17 @@ export class PacmanState extends ModelEntity {
     }
 
     /**
-     * Set speed multiplier (for power pellets, etc.)
-     * @param {number} multiplier - Speed multiplier
-     */
+	 * Set speed multiplier (for power pellets, etc.)
+	 * @param {number} multiplier - Speed multiplier
+	 */
     setSpeedMultiplier(multiplier) {
         this.speed = this.baseSpeed * multiplier;
     }
 
     /**
-     * Get visual state for rendering
-     * @returns {Object}
-     */
+	 * Get visual state for rendering
+	 * @returns {Object}
+	 */
     getVisualState() {
         return {
             ...this.visualState,
@@ -226,9 +237,9 @@ export class PacmanState extends ModelEntity {
     }
 
     /**
-     * Get state snapshot
-     * @returns {Object}
-     */
+	 * Get state snapshot
+	 * @returns {Object}
+	 */
     getSnapshot() {
         return {
             ...super.getSnapshot(),

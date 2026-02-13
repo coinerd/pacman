@@ -1,9 +1,15 @@
-import Ghost from '../../src/entities/Ghost.js';
-import { gameConfig, directions, ghostModes, levelConfig, ghostSpeedMultipliers } from '../../src/config/gameConfig.js';
+import {
+    directions,
+    gameConfig,
+    ghostModes,
+    ghostSpeedMultipliers,
+    levelConfig
+} from '../../src/config/gameConfig.js';
+import Enemy from '../../src/entities/Enemy.js';
 import { msToSeconds } from '../../src/utils/Time.js';
 import { createMockScene, createSimpleMaze } from '../utils/testHelpers.js';
 
-describe('Ghost - Bug Fixes', () => {
+describe('Enemy - Bug Fixes', () => {
     let mockScene;
     let ghost;
     let maze;
@@ -15,7 +21,7 @@ describe('Ghost - Bug Fixes', () => {
             chooseDirection: jest.fn()
         };
         maze = createSimpleMaze(10, 10);
-        ghost = new Ghost(mockScene, 5, 5, 'blinky', 0xFF0000);
+        ghost = new Enemy(mockScene, 5, 5, 'blinky', 0xff0000);
     });
 
     describe('Bug Fix: Tunnel wrapping on correct row only', () => {
@@ -99,9 +105,17 @@ describe('Ghost - Bug Fixes', () => {
 
             ghost.update(deltaSeconds, maze, { x: 0, y: 0 });
 
-            const gridPos = { x: Math.floor(ghost.x / gameConfig.tileSize), y: Math.floor(ghost.y / gameConfig.tileSize) };
-            const centerPixel = { x: gridPos.x * gameConfig.tileSize + gameConfig.tileSize / 2, y: gridPos.y * gameConfig.tileSize + gameConfig.tileSize / 2 };
-            const distToCenter = Math.sqrt(Math.pow(ghost.x - centerPixel.x, 2) + Math.pow(ghost.y - centerPixel.y, 2));
+            const gridPos = {
+                x: Math.floor(ghost.x / gameConfig.tileSize),
+                y: Math.floor(ghost.y / gameConfig.tileSize)
+            };
+            const centerPixel = {
+                x: gridPos.x * gameConfig.tileSize + gameConfig.tileSize / 2,
+                y: gridPos.y * gameConfig.tileSize + gameConfig.tileSize / 2
+            };
+            const distToCenter = Math.sqrt(
+                (ghost.x - centerPixel.x) ** 2 + (ghost.y - centerPixel.y) ** 2
+            );
 
             expect(distToCenter).toBeGreaterThanOrEqual(moveStep);
         });
@@ -116,7 +130,10 @@ describe('Ghost - Bug Fixes', () => {
             ];
             ghost.gridX = 1;
             ghost.gridY = 1;
-            const center = { x: gameConfig.tileSize * 1.5, y: gameConfig.tileSize * 1.5 };
+            const center = {
+                x: gameConfig.tileSize * 1.5,
+                y: gameConfig.tileSize * 1.5
+            };
             ghost.x = center.x;
             ghost.y = center.y;
             ghost.direction = directions.RIGHT;
@@ -135,7 +152,10 @@ describe('Ghost - Bug Fixes', () => {
             ];
             ghost.gridX = 1;
             ghost.gridY = 1;
-            const center = { x: gameConfig.tileSize * 1.5, y: gameConfig.tileSize * 1.5 };
+            const center = {
+                x: gameConfig.tileSize * 1.5,
+                y: gameConfig.tileSize * 1.5
+            };
             ghost.x = center.x;
             ghost.y = center.y;
             ghost.direction = directions.LEFT;
@@ -154,7 +174,10 @@ describe('Ghost - Bug Fixes', () => {
             ];
             ghost.gridX = 1;
             ghost.gridY = 1;
-            const center = { x: gameConfig.tileSize * 1.5, y: gameConfig.tileSize * 1.5 };
+            const center = {
+                x: gameConfig.tileSize * 1.5,
+                y: gameConfig.tileSize * 1.5
+            };
             ghost.x = center.x;
             ghost.y = center.y;
             ghost.direction = directions.UP;
@@ -173,7 +196,10 @@ describe('Ghost - Bug Fixes', () => {
             ];
             ghost.gridX = 1;
             ghost.gridY = 1;
-            const center = { x: gameConfig.tileSize * 1.5, y: gameConfig.tileSize * 1.5 };
+            const center = {
+                x: gameConfig.tileSize * 1.5,
+                y: gameConfig.tileSize * 1.5
+            };
             ghost.x = center.x;
             ghost.y = center.y;
             ghost.direction = directions.DOWN;
@@ -193,9 +219,10 @@ describe('Ghost - Bug Fixes', () => {
             ghost.speed = 100;
             const deltaSeconds = msToSeconds(100);
 
-            const moveStep = ghost.speed * ghostSpeedMultipliers.tunnel * deltaSeconds;
+            const moveStep =
+				ghost.speed * ghostSpeedMultipliers.tunnel * deltaSeconds;
             ghost.direction = directions.RIGHT;
-            ghost.isMoving = true;  // resetPosition() sets isMoving=false, so we need to set it true
+            ghost.isMoving = true; // resetPosition() sets isMoving=false, so we need to set it true
             const initialX = ghost.x;
 
             ghost.update(deltaSeconds, maze, { x: 0, y: 0 });

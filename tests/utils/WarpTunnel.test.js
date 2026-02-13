@@ -1,26 +1,26 @@
+import { gameConfig } from '../../src/config/gameConfig.js';
+import { tileCenter, worldToTile } from '../../src/utils/TileMovement.js';
 import {
+    handlePortalTraversal,
     isPortalTile,
     isWarping,
-    handlePortalTraversal,
     PORTAL_TILES
 } from '../../src/utils/WarpTunnel.js';
-import { tileCenter, worldToTile } from '../../src/utils/TileMovement.js';
-import { gameConfig } from '../../src/config/gameConfig.js';
 
 describe('WarpTunnel - isPortalTile', () => {
     describe('Left portal detection', () => {
-        test('returns true for left portal (0, 14)', () => {
-            expect(isPortalTile(0, 14)).toBe(true);
+        test('returns true for left portal (0, 15)', () => {
+            expect(isPortalTile(0, 15)).toBe(true);
         });
 
-        test('returns true for left portal with all variations of tileX=0, tileY=14', () => {
-            expect(isPortalTile(0, 14)).toBe(true);
+        test('returns true for left portal with all variations of tileX=0, tileY=15', () => {
+            expect(isPortalTile(0, 15)).toBe(true);
         });
     });
 
     describe('Right portal detection', () => {
-        test('returns true for right portal (27, 14)', () => {
-            expect(isPortalTile(27, 14)).toBe(true);
+        test('returns true for right portal (24, 15)', () => {
+            expect(isPortalTile(24, 15)).toBe(true);
         });
     });
 
@@ -29,20 +29,20 @@ describe('WarpTunnel - isPortalTile', () => {
             expect(isPortalTile(0, 13)).toBe(false);
         });
 
-        test('returns false for (27, 15) near right portal', () => {
-            expect(isPortalTile(27, 15)).toBe(false);
+        test('returns false for (23, 15) near right portal', () => {
+            expect(isPortalTile(23, 15)).toBe(false);
         });
 
-        test('returns false for (1, 14) adjacent to left portal', () => {
-            expect(isPortalTile(1, 14)).toBe(false);
+        test('returns false for (1, 15) adjacent to left portal', () => {
+            expect(isPortalTile(1, 15)).toBe(false);
         });
 
-        test('returns false for (26, 14) adjacent to right portal', () => {
-            expect(isPortalTile(26, 14)).toBe(false);
+        test('returns false for (26, 15) adjacent to right portal', () => {
+            expect(isPortalTile(26, 15)).toBe(false);
         });
 
-        test('returns false for center tile (13, 14)', () => {
-            expect(isPortalTile(13, 14)).toBe(false);
+        test('returns false for center tile (13, 15)', () => {
+            expect(isPortalTile(13, 15)).toBe(false);
         });
 
         test('returns false for arbitrary tiles', () => {
@@ -61,38 +61,38 @@ describe('WarpTunnel - isPortalTile', () => {
             expect(isPortalTile(0, 30)).toBe(false);
         });
 
-        test('returns false for (27, 0) top-right corner', () => {
-            expect(isPortalTile(27, 0)).toBe(false);
+        test('returns false for (24, 0) top-right corner', () => {
+            expect(isPortalTile(24, 0)).toBe(false);
         });
 
-        test('returns false for (27, 30) bottom-right corner', () => {
-            expect(isPortalTile(27, 30)).toBe(false);
+        test('returns false for (24, 30) bottom-right corner', () => {
+            expect(isPortalTile(24, 30)).toBe(false);
         });
 
         test('returns false for (0, 1) near left edge', () => {
             expect(isPortalTile(0, 1)).toBe(false);
         });
 
-        test('returns false for (27, 1) near right edge', () => {
-            expect(isPortalTile(27, 1)).toBe(false);
+        test('returns false for (24, 1) near right edge', () => {
+            expect(isPortalTile(24, 1)).toBe(false);
         });
     });
 
     describe('Negative and out-of-bounds', () => {
         test('returns false for negative coordinates', () => {
-            expect(isPortalTile(-1, 14)).toBe(false);
+            expect(isPortalTile(-1, 15)).toBe(false);
             expect(isPortalTile(0, -1)).toBe(false);
             expect(isPortalTile(-1, -1)).toBe(false);
         });
 
         test('returns false for coordinates beyond maze width', () => {
-            expect(isPortalTile(28, 14)).toBe(false);
-            expect(isPortalTile(29, 14)).toBe(false);
+            expect(isPortalTile(28, 15)).toBe(false);
+            expect(isPortalTile(29, 15)).toBe(false);
         });
 
         test('returns false for coordinates beyond maze height', () => {
             expect(isPortalTile(0, 31)).toBe(false);
-            expect(isPortalTile(27, 32)).toBe(false);
+            expect(isPortalTile(24, 32)).toBe(false);
         });
     });
 });
@@ -100,15 +100,15 @@ describe('WarpTunnel - isPortalTile', () => {
 describe('WarpTunnel - isWarping', () => {
     describe('Entity on left portal', () => {
         test('returns true when entity is on left portal tile', () => {
-            const entityX = tileCenter(0, 14).x;
-            const entityY = tileCenter(0, 14).y;
+            const entityX = tileCenter(0, 15).x;
+            const entityY = tileCenter(0, 15).y;
 
             expect(isWarping(entityX, entityY)).toBe(true);
         });
 
         test('returns true when entity x < tileSize and y at tunnel row center', () => {
-            const entityX = tileCenter(0, 14).x - 10;
-            const entityY = tileCenter(0, 14).y;
+            const entityX = tileCenter(0, 15).x - 10;
+            const entityY = tileCenter(0, 15).y;
 
             expect(isWarping(entityX, entityY)).toBe(true);
         });
@@ -116,8 +116,8 @@ describe('WarpTunnel - isWarping', () => {
 
     describe('Entity on right portal', () => {
         test('returns true when entity is on right portal tile', () => {
-            const entityX = tileCenter(27, 14).x;
-            const entityY = tileCenter(27, 14).y;
+            const entityX = tileCenter(24, 15).x;
+            const entityY = tileCenter(24, 15).y;
 
             expect(isWarping(entityX, entityY)).toBe(true);
         });
@@ -125,14 +125,14 @@ describe('WarpTunnel - isWarping', () => {
 
     describe('Entity not on portal', () => {
         test('returns false when entity is not on portal', () => {
-            const entityX = tileCenter(13, 14).x;
-            const entityY = tileCenter(13, 14).y;
+            const entityX = tileCenter(13, 15).x;
+            const entityY = tileCenter(13, 15).y;
 
             expect(isWarping(entityX, entityY)).toBe(false);
         });
 
         test('returns false when entity is on different row', () => {
-            const entityX = tileCenter(0, 14).x;
+            const entityX = tileCenter(0, 15).x;
             const entityY = tileCenter(0, 13).y;
 
             expect(isWarping(entityX, entityY)).toBe(false);
@@ -148,7 +148,7 @@ describe('WarpTunnel - isWarping', () => {
 
     describe('Edge cases with worldToTile conversion', () => {
         test('handles portal detection via worldToTile', () => {
-            const worldPos = tileCenter(0, 14);
+            const worldPos = tileCenter(0, 15);
             const tile = worldToTile(worldPos.x, worldPos.y);
 
             expect(isWarping(worldPos.x, worldPos.y)).toBe(true);
@@ -156,7 +156,7 @@ describe('WarpTunnel - isWarping', () => {
         });
 
         test('handles right portal detection via worldToTile', () => {
-            const worldPos = tileCenter(27, 14);
+            const worldPos = tileCenter(24, 15);
             const tile = worldToTile(worldPos.x, worldPos.y);
 
             expect(isWarping(worldPos.x, worldPos.y)).toBe(true);
@@ -167,7 +167,7 @@ describe('WarpTunnel - isWarping', () => {
     describe('Offset positions', () => {
         test('returns true for entity near left portal edge', () => {
             const entityX = 5;
-            const entityY = tileCenter(0, 14).y;
+            const entityY = tileCenter(0, 15).y;
 
             const tile = worldToTile(entityX, entityY);
             expect(tile.x).toBe(0);
@@ -176,10 +176,10 @@ describe('WarpTunnel - isWarping', () => {
 
         test('returns true for entity near right portal edge', () => {
             const entityX = gameConfig.mazeWidth * gameConfig.tileSize - 5;
-            const entityY = tileCenter(27, 14).y;
+            const entityY = tileCenter(24, 15).y;
 
             const tile = worldToTile(entityX, entityY);
-            expect(tile.x).toBe(27);
+            expect(tile.x).toBe(24);
             expect(isWarping(entityX, entityY)).toBe(true);
         });
     });
@@ -192,67 +192,67 @@ describe('WarpTunnel - handlePortalTraversal', () => {
         test('teleports entity from left portal (x < 0) to right portal', () => {
             const entity = {
                 gridX: 0,
-                gridY: 14,
+                gridY: 15,
                 x: -10,
-                y: tileCenter(0, 14).y
+                y: tileCenter(0, 15).y
             };
 
             handlePortalTraversal(entity, tileSize);
 
-            expect(entity.gridX).toBe(27);
-            expect(entity.gridY).toBe(14);
-            expect(entity.x).toBe(tileCenter(27, 14).x);
-            expect(entity.y).toBe(tileCenter(27, 14).y);
+            expect(entity.gridX).toBe(24);
+            expect(entity.gridY).toBe(15);
+            expect(entity.x).toBe(tileCenter(24, 15).x);
+            expect(entity.y).toBe(tileCenter(24, 15).y);
         });
 
         test('updates prevGrid when traversing from left portal', () => {
             const entity = {
                 prevGridX: 0,
-                prevGridY: 14,
+                prevGridY: 15,
                 gridX: 0,
-                gridY: 14,
+                gridY: 15,
                 x: -10,
-                y: tileCenter(0, 14).y
+                y: tileCenter(0, 15).y
             };
 
             handlePortalTraversal(entity, tileSize);
 
             expect(entity.prevGridX).toBe(0);
-            expect(entity.prevGridY).toBe(14);
+            expect(entity.prevGridY).toBe(15);
         });
     });
 
     describe('Right portal traversal', () => {
         test('teleports entity from right portal (x > mazeWidth) to left portal', () => {
             const entity = {
-                gridX: 27,
-                gridY: 14,
+                gridX: 24,
+                gridY: 15,
                 x: gameConfig.mazeWidth * gameConfig.tileSize + 10,
-                y: tileCenter(27, 14).y
+                y: tileCenter(24, 15).y
             };
 
             handlePortalTraversal(entity, tileSize);
 
             expect(entity.gridX).toBe(0);
-            expect(entity.gridY).toBe(14);
-            expect(entity.x).toBe(tileCenter(0, 14).x);
-            expect(entity.y).toBe(tileCenter(0, 14).y);
+            expect(entity.gridY).toBe(15);
+            expect(entity.x).toBe(tileCenter(0, 15).x);
+            expect(entity.y).toBe(tileCenter(0, 15).y);
         });
 
         test('updates prevGrid when traversing from right portal', () => {
             const entity = {
-                prevGridX: 27,
-                prevGridY: 14,
-                gridX: 27,
-                gridY: 14,
+                prevGridX: 24,
+                prevGridY: 15,
+                gridX: 24,
+                gridY: 15,
                 x: gameConfig.mazeWidth * gameConfig.tileSize + 10,
-                y: tileCenter(27, 14).y
+                y: tileCenter(24, 15).y
             };
 
             handlePortalTraversal(entity, tileSize);
 
-            expect(entity.prevGridX).toBe(27);
-            expect(entity.prevGridY).toBe(14);
+            expect(entity.prevGridX).toBe(24);
+            expect(entity.prevGridY).toBe(15);
         });
     });
 
@@ -260,9 +260,9 @@ describe('WarpTunnel - handlePortalTraversal', () => {
         test('does not modify entity not on portal', () => {
             const entity = {
                 gridX: 13,
-                gridY: 14,
-                x: tileCenter(13, 14).x,
-                y: tileCenter(13, 14).y
+                gridY: 15,
+                x: tileCenter(13, 15).x,
+                y: tileCenter(13, 15).y
             };
 
             const initialX = entity.x;
@@ -283,14 +283,14 @@ describe('WarpTunnel - handlePortalTraversal', () => {
         test('sets entity position to center of target tile', () => {
             const entity = {
                 gridX: 0,
-                gridY: 14,
+                gridY: 15,
                 x: -10,
-                y: tileCenter(0, 14).y
+                y: tileCenter(0, 15).y
             };
 
             handlePortalTraversal(entity, tileSize);
 
-            const targetCenter = tileCenter(27, 14);
+            const targetCenter = tileCenter(24, 15);
             expect(entity.x).toBeCloseTo(targetCenter.x, 2);
             expect(entity.y).toBeCloseTo(targetCenter.y, 2);
         });
@@ -298,9 +298,9 @@ describe('WarpTunnel - handlePortalTraversal', () => {
         test('updates gridX and gridY to target portal', () => {
             const entity = {
                 gridX: 0,
-                gridY: 14,
+                gridY: 15,
                 x: -10,
-                y: tileCenter(0, 14).y
+                y: tileCenter(0, 15).y
             };
 
             handlePortalTraversal(entity, tileSize);
@@ -314,29 +314,29 @@ describe('WarpTunnel - handlePortalTraversal', () => {
         test('handles entity with negative x offset from left portal', () => {
             const entity = {
                 gridX: 0,
-                gridY: 14,
+                gridY: 15,
                 x: -5,
-                y: tileCenter(0, 14).y
+                y: tileCenter(0, 15).y
             };
 
             handlePortalTraversal(entity, tileSize);
 
-            expect(entity.gridX).toBe(27);
-            expect(entity.x).toBe(tileCenter(27, 14).x);
+            expect(entity.gridX).toBe(24);
+            expect(entity.x).toBe(tileCenter(24, 15).x);
         });
 
         test('handles entity with positive x offset beyond right portal', () => {
             const entity = {
-                gridX: 27,
-                gridY: 14,
+                gridX: 24,
+                gridY: 15,
                 x: 600,
-                y: tileCenter(27, 14).y
+                y: tileCenter(24, 15).y
             };
 
             handlePortalTraversal(entity, tileSize);
 
             expect(entity.gridX).toBe(0);
-            expect(entity.x).toBe(tileCenter(0, 14).x);
+            expect(entity.x).toBe(tileCenter(0, 15).x);
         });
     });
 
@@ -345,25 +345,24 @@ describe('WarpTunnel - handlePortalTraversal', () => {
             const customTileSize = 30;
             const entity = {
                 gridX: 0,
-                gridY: 14,
+                gridY: 15,
                 x: -15,
-                y: 14 * customTileSize + customTileSize / 2
+                y: 15 * customTileSize + customTileSize / 2
             };
 
             handlePortalTraversal(entity, customTileSize);
 
-            expect(entity.gridX).toBe(27);
+            expect(entity.gridX).toBe(24);
         });
     });
 });
 
-
 describe('WarpTunnel - PORTAL_TILES constant', () => {
     test('exports PORTAL_TILES with correct values', () => {
         expect(PORTAL_TILES).toBeDefined();
-        expect(PORTAL_TILES.leftPortal).toEqual({ tileX: 0, tileY: 14 });
-        expect(PORTAL_TILES.rightPortal).toEqual({ tileX: 27, tileY: 14 });
-        expect(PORTAL_TILES.tunnelRow).toBe(14);
+        expect(PORTAL_TILES.leftPortal).toEqual({ tileX: 0, tileY: 15 });
+        expect(PORTAL_TILES.rightPortal).toEqual({ tileX: 24, tileY: 15 });
+        expect(PORTAL_TILES.tunnelRow).toBe(15);
     });
 
     test('PORTAL_TILES aligns with maze dimensions', () => {

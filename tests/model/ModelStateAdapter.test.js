@@ -3,12 +3,12 @@
  * Tests syncing between visual entities and model entities
  */
 
-import { ModelStateAdapter } from '../../src/model/ModelStateAdapter.js';
-import { GameState } from '../../src/model/GameState.js';
 import { directions } from '../../src/config/gameConfig.js';
+import { GameState } from '../../src/model/GameState.js';
+import { ModelStateAdapter } from '../../src/model/ModelStateAdapter.js';
 
 // Mock visual entities
-function createMockPacman(overrides = {}) {
+function createMockPlayer(overrides = {}) {
     return {
         x: overrides.x ?? 100,
         y: overrides.y ?? 100,
@@ -55,20 +55,17 @@ describe('ModelStateAdapter', () => {
 
     describe('registerVisualEntities', () => {
         it('should register pacman visual entity', () => {
-            const pacman = createMockPacman();
+            const pacman = createMockPlayer();
             adapter.registerVisualEntities({ pacman });
 
             expect(adapter.visualEntities.pacman).toBe(pacman);
         });
 
         it('should register ghost visual entities', () => {
-            const ghosts = [
-                createMockGhost('blinky'),
-                createMockGhost('pinky')
-            ];
+            const ghosts = [createMockGhost('blinky'), createMockGhost('pinky')];
             adapter.registerVisualEntities({ ghosts });
 
-            expect(adapter.visualEntities.ghosts).toHaveLength(2);
+            expect(adapter.visualEntities.enemies).toHaveLength(2);
         });
 
         it('should register fruit visual entity', () => {
@@ -81,7 +78,11 @@ describe('ModelStateAdapter', () => {
 
     describe('syncPacmanToModel', () => {
         beforeEach(() => {
-            const pacman = createMockPacman({ x: 50, y: 60, direction: directions.UP });
+            const pacman = createMockPlayer({
+                x: 50,
+                y: 60,
+                direction: directions.UP
+            });
             adapter.registerVisualEntities({ pacman });
         });
 
@@ -199,28 +200,29 @@ describe('ModelStateAdapter', () => {
 
     describe('applyCollisionResults', () => {
         it('should call eat() on ghost when ghost_eaten event received', () => {
-            const ghosts = [
-                createMockGhost('blinky'),
-                createMockGhost('pinky')
-            ];
+            const ghosts = [createMockGhost('blinky'), createMockGhost('pinky')];
             adapter.registerVisualEntities({ ghosts });
 
-            adapter.applyCollisionResults([{
-                type: 'ghost_eaten',
-                ghostType: 'blinky'
-            }]);
+            adapter.applyCollisionResults([
+                {
+                    type: 'ghost_eaten',
+                    ghostType: 'blinky'
+                }
+            ]);
 
             expect(ghosts[0].eat).toHaveBeenCalled();
             expect(ghosts[1].eat).not.toHaveBeenCalled();
         });
 
         it('should call die() on pacman when pacman_died event received', () => {
-            const pacman = createMockPacman();
+            const pacman = createMockPlayer();
             adapter.registerVisualEntities({ pacman });
 
-            adapter.applyCollisionResults([{
-                type: 'pacman_died'
-            }]);
+            adapter.applyCollisionResults([
+                {
+                    type: 'pacman_died'
+                }
+            ]);
 
             expect(pacman.die).toHaveBeenCalled();
         });
@@ -229,9 +231,11 @@ describe('ModelStateAdapter', () => {
             const fruit = createMockFruit();
             adapter.registerVisualEntities({ fruit });
 
-            adapter.applyCollisionResults([{
-                type: 'fruit_eaten'
-            }]);
+            adapter.applyCollisionResults([
+                {
+                    type: 'fruit_eaten'
+                }
+            ]);
 
             expect(fruit.deactivate).toHaveBeenCalled();
         });
@@ -249,11 +253,13 @@ describe('ModelStateAdapter', () => {
 
         it('should update ghost model by type', () => {
             adapter.applyDirectUpdate({
-                ghosts: [{
-                    ghostType: 'blinky',
-                    x: 100,
-                    y: 100
-                }]
+                ghosts: [
+                    {
+                        ghostType: 'blinky',
+                        x: 100,
+                        y: 100
+                    }
+                ]
             });
 
             expect(gameState.ghosts[0].x).toBe(100);

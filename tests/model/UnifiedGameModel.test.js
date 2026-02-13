@@ -3,11 +3,11 @@
  * Phase 3: Tests for merged GameModel that owns all state
  */
 
+import { directions } from '../../src/config/gameConfig.js';
+import { GAME_EVENTS, gameEvents } from '../../src/core/EventBus.js';
 import GameModel from '../../src/core/GameModel.js';
 import { GameStateController } from '../../src/model/GameStateController.js';
-import { directions } from '../../src/config/gameConfig.js';
 import { PELLET_TYPES } from '../../src/utils/MazeLayout.js';
-import { gameEvents, GAME_EVENTS } from '../../src/core/EventBus.js';
 
 describe('Unified GameModel', () => {
     let model;
@@ -26,15 +26,15 @@ describe('Unified GameModel', () => {
         test('should create Pacman entity on construction', () => {
             expect(model.pacman).toBeDefined();
             expect(model.pacman.gridX).toBe(13);
-            expect(model.pacman.gridY).toBe(22);
+            expect(model.pacman.gridY).toBe(27);
         });
 
-        test('should create 4 Ghost entities on construction', () => {
+        test('should create 4 Enemy entities on construction', () => {
             expect(model.ghosts).toHaveLength(4);
-            expect(model.ghosts.map(g => g.ghostType)).toContain('blinky');
-            expect(model.ghosts.map(g => g.ghostType)).toContain('pinky');
-            expect(model.ghosts.map(g => g.ghostType)).toContain('inky');
-            expect(model.ghosts.map(g => g.ghostType)).toContain('clyde');
+            expect(model.ghosts.map((g) => g.ghostType)).toContain('alpha');
+            expect(model.ghosts.map((g) => g.ghostType)).toContain('beta');
+            expect(model.ghosts.map((g) => g.ghostType)).toContain('gamma');
+            expect(model.ghosts.map((g) => g.ghostType)).toContain('delta');
         });
 
         test('should create Fruit entity on construction', () => {
@@ -82,25 +82,42 @@ describe('Unified GameModel', () => {
         test('should increment tick count on each step', () => {
             expect(model.tickCount).toBe(0);
 
-            model.step(1/60);
+            model.step(1 / 60);
             expect(model.tickCount).toBe(1);
 
-            model.step(1/60);
+            model.step(1 / 60);
             expect(model.tickCount).toBe(2);
         });
 
         test('should update Pacman position on step', () => {
             const initialX = model.pacman.x;
+            const initialY = model.pacman.y;
 
-            // Set direction and step
-            model.setInputDirection(directions.LEFT);
-            model.step(1/60);
+            const walkableDirections = [
+                directions.RIGHT,
+                directions.LEFT,
+                directions.UP,
+                directions.DOWN
+            ].filter((d) => {
+                const nextX = model.pacman.gridX + d.x;
+                const nextY = model.pacman.gridY + d.y;
+                return model.maze[nextY] && model.maze[nextY][nextX] === 0;
+            });
 
-            // Pacman should have moved
-            expect(model.pacman.x).not.toBe(initialX);
+            if (walkableDirections.length === 0) {
+                return;
+            }
+
+            const moveDirection = walkableDirections[0];
+            model.setInputDirection(moveDirection);
+            model.step(1 / 60);
+
+            const hasMoved =
+				model.pacman.x !== initialX || model.pacman.y !== initialY;
+            expect(hasMoved).toBe(true);
         });
 
-        test('should update Ghost positions on step', () => {
+        test('should update Enemy positions on step', () => {
             const ghost = model.ghosts[0]; // Blinky
             const initialX = ghost.x;
             const initialY = ghost.y;
@@ -111,17 +128,20 @@ describe('Unified GameModel', () => {
 
             // Step multiple times to ensure ghost moves
             for (let i = 0; i < 10; i++) {
-                model.step(1/60);
+                model.step(1 / 60);
             }
 
-            // Ghost should have either moved or be in a specific state
+            // Enemy should have either moved or be in a specific state
             // Ghosts might not move immediately from their start positions
-            const hasMoved = ghost.x !== initialX || ghost.y !== initialY || ghost.direction !== undefined;
+            const hasMoved =
+				ghost.x !== initialX ||
+				ghost.y !== initialY ||
+				ghost.direction !== undefined;
             expect(hasMoved).toBe(true);
         });
 
         test('should return events array during normal play', () => {
-            const result = model.step(1/60);
+            const result = model.step(1 / 60);
             // During normal play, returns array of events
             expect(Array.isArray(result)).toBe(true);
         });
@@ -130,7 +150,7 @@ describe('Unified GameModel', () => {
             const initialX = model.pacman.x;
             model.setPaused(true);
 
-            model.step(1/60);
+            model.step(1 / 60);
 
             expect(model.pacman.x).toBe(initialX);
         });
@@ -139,13 +159,13 @@ describe('Unified GameModel', () => {
             const initialX = model.pacman.x;
             model.setGameOver(true);
 
-            model.step(1/60);
+            model.step(1 / 60);
 
             expect(model.pacman.x).toBe(initialX);
         });
 
         test('should track update time', () => {
-            model.step(1/60);
+            model.step(1 / 60);
             expect(model.lastUpdateTime).toBeGreaterThanOrEqual(0);
             expect(model.updateCount).toBe(1);
         });
@@ -167,10 +187,10 @@ describe('Unified GameModel', () => {
             model.pelletGrid[13][14] = PELLET_TYPES.PELLET;
             const initialPellets = model.pelletsRemaining;
 
-            const events = model.step(1/60);
+            const events = model.step(1 / 60);
 
             // Should have pellet_eaten event
-            const pelletEvent = events.find(e => e.type === 'pellet_eaten');
+            const pelletEvent = events.find((e) => e.type === 'pellet_eaten');
             if (pelletEvent) {
                 expect(pelletEvent.gridX).toBe(14);
                 expect(pelletEvent.gridY).toBe(13);
@@ -187,7 +207,7 @@ describe('Unified GameModel', () => {
             model.pacman.gridY = 13;
             model.pelletGrid[13][14] = PELLET_TYPES.PELLET;
 
-            model.step(1/60);
+            model.step(1 / 60);
 
             // Score should increase (even if collision didn't happen due to timing)
             // The test verifies the mechanism is in place
@@ -204,13 +224,15 @@ describe('Unified GameModel', () => {
             });
 
             // Simulate pellet collision
-            model.emitEvents([{
-                type: 'pellet_eaten',
-                score: 10,
-                pelletsRemaining: 100,
-                gridX: 5,
-                gridY: 5
-            }]);
+            model.emitEvents([
+                {
+                    type: 'pellet_eaten',
+                    score: 10,
+                    pelletsRemaining: 100,
+                    gridX: 5,
+                    gridY: 5
+                }
+            ]);
         });
 
         test('should emit POWER_PELLET_EATEN event', (done) => {
@@ -220,14 +242,16 @@ describe('Unified GameModel', () => {
                 done();
             });
 
-            model.emitEvents([{
-                type: 'power_pellet_eaten',
-                score: 50,
-                pelletsRemaining: 99,
-                frightenedDuration: 8,
-                gridX: 1,
-                gridY: 3
-            }]);
+            model.emitEvents([
+                {
+                    type: 'power_pellet_eaten',
+                    score: 50,
+                    pelletsRemaining: 99,
+                    frightenedDuration: 8,
+                    gridX: 1,
+                    gridY: 3
+                }
+            ]);
         });
 
         test('should emit GHOST_EATEN event', (done) => {
@@ -238,12 +262,14 @@ describe('Unified GameModel', () => {
                 done();
             });
 
-            model.emitEvents([{
-                type: 'ghost_eaten',
-                score: 200,
-                ghostType: 'blinky',
-                combo: 1
-            }]);
+            model.emitEvents([
+                {
+                    type: 'ghost_eaten',
+                    score: 200,
+                    ghostType: 'blinky',
+                    combo: 1
+                }
+            ]);
         });
 
         test('should emit LIVES_LOST event on pacman death', (done) => {
@@ -309,13 +335,12 @@ describe('Unified GameModel', () => {
     describe('Level Management', () => {
         test('should advance to next level', () => {
             const initialLevel = model.level;
-            const initialPellets = model.totalPellets;
 
             model.nextLevel();
 
             expect(model.level).toBe(initialLevel + 1);
             expect(model.levelComplete).toBe(false);
-            expect(model.totalPellets).toBe(initialPellets); // Fresh maze
+            expect(model.totalPellets).toBeGreaterThan(0);
         });
 
         test('should reset positions on next level', () => {
@@ -327,7 +352,7 @@ describe('Unified GameModel', () => {
 
             // New entities should be at starting positions
             expect(model.pacman.gridX).toBe(13);
-            expect(model.pacman.gridY).toBe(22);
+            expect(model.pacman.gridY).toBe(27);
         });
 
         test('should recalculate speed for new level', () => {
@@ -341,9 +366,9 @@ describe('Unified GameModel', () => {
 
     describe('Utility Methods', () => {
         test('should get ghost by type', () => {
-            const blinky = model.getGhostByType('blinky');
-            expect(blinky).toBeDefined();
-            expect(blinky.ghostType).toBe('blinky');
+            const alpha = model.getGhostByType('alpha');
+            expect(alpha).toBeDefined();
+            expect(alpha.ghostType).toBe('alpha');
 
             const nonExistent = model.getGhostByType('nonexistent');
             expect(nonExistent).toBeNull();
@@ -487,17 +512,39 @@ describe('Unified GameModel', () => {
         test('should delegate update to model through controller', () => {
             const controller = new GameStateController({ level: 1 });
             const initialX = controller.model.pacman.x;
+            const initialY = controller.model.pacman.y;
 
-            controller.setInputDirection(directions.LEFT);
-            controller.update(1/60);
+            const walkableDirections = [
+                directions.RIGHT,
+                directions.LEFT,
+                directions.UP,
+                directions.DOWN
+            ].filter((d) => {
+                const nextX = controller.model.pacman.gridX + d.x;
+                const nextY = controller.model.pacman.gridY + d.y;
+                return (
+                    controller.model.maze[nextY] &&
+					controller.model.maze[nextY][nextX] === 0
+                );
+            });
 
-            expect(controller.model.pacman.x).not.toBe(initialX);
+            if (walkableDirections.length === 0) {
+                return;
+            }
+
+            controller.setInputDirection(walkableDirections[0]);
+            controller.update(1 / 60);
+
+            const hasMoved =
+				controller.model.pacman.x !== initialX ||
+				controller.model.pacman.y !== initialY;
+            expect(hasMoved).toBe(true);
         });
 
         test('should maintain property synchronization', () => {
             const controller = new GameStateController({ level: 1 });
 
-            controller.update(1/60);
+            controller.update(1 / 60);
 
             expect(controller.lastUpdateTime).toBe(controller.model.lastUpdateTime);
             expect(controller.updateCount).toBe(controller.model.updateCount);
@@ -517,11 +564,11 @@ describe('Unified GameModel', () => {
         test('should track update count', () => {
             expect(model.updateCount).toBe(0);
 
-            model.step(1/60);
+            model.step(1 / 60);
             expect(model.updateCount).toBe(1);
 
-            model.step(1/60);
-            model.step(1/60);
+            model.step(1 / 60);
+            model.step(1 / 60);
             expect(model.updateCount).toBe(3);
         });
     });

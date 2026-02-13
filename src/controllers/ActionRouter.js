@@ -10,8 +10,8 @@
  * This class has NO Phaser dependencies and NO scene references.
  */
 
-import { gameEvents, GAME_EVENTS } from '../core/EventBus.js';
-import { INPUT_TYPES, INPUT_ACTIONS } from '../input/InputAdapter.js';
+import { GAME_EVENTS, gameEvents } from '../core/EventBus.js';
+import { INPUT_ACTIONS, INPUT_TYPES } from '../input/InputAdapter.js';
 
 /**
  * ActionContext
@@ -25,25 +25,27 @@ export class ActionContext {
     }
 
     /**
-     * Check if the game is in a state where actions are allowed
-     * @returns {boolean}
-     */
+	 * Check if the game is in a state where actions are allowed
+	 * @returns {boolean}
+	 */
     canAcceptInput() {
         return !this.state.isGameOver && !this.state.isDying;
     }
 
     /**
-     * Check if the game can be paused
-     * @returns {boolean}
-     */
+	 * Check if the game can be paused
+	 * @returns {boolean}
+	 */
     canPause() {
-        return !this.state.isGameOver && !this.state.isDying && !this.state.isPaused;
+        return (
+            !this.state.isGameOver && !this.state.isDying && !this.state.isPaused
+        );
     }
 
     /**
-     * Check if the game can be resumed
-     * @returns {boolean}
-     */
+	 * Check if the game can be resumed
+	 * @returns {boolean}
+	 */
     canResume() {
         return this.state.isPaused;
     }
@@ -55,10 +57,10 @@ export class ActionContext {
  */
 export class ActionRouter {
     /**
-     * Create ActionRouter
-     * @param {Object} gameModel - The game model
-     * @param {Object} replaySystem - Optional replay system
-     */
+	 * Create ActionRouter
+	 * @param {Object} gameModel - The game model
+	 * @param {Object} replaySystem - Optional replay system
+	 */
     constructor(gameModel, replaySystem = null) {
         this.gameModel = gameModel;
         this.replaySystem = replaySystem;
@@ -68,15 +70,17 @@ export class ActionRouter {
     }
 
     /**
-     * Register default action handlers
-     * @private
-     */
+	 * Register default action handlers
+	 * @private
+	 */
     registerDefaultHandlers() {
-        // Direction input - directly control Pacman
+        // Direction input - directly control Player
         this.registerHandler(INPUT_TYPES.DIRECTION, (input, context) => {
             if (context.canAcceptInput() && input.value) {
                 this.gameModel.setDesiredDirection(input.value);
-                gameEvents.emit(GAME_EVENTS.DIRECTION_CHANGED, { direction: input.value });
+                gameEvents.emit(GAME_EVENTS.DIRECTION_CHANGED, {
+                    direction: input.value
+                });
             }
         });
 
@@ -131,11 +135,11 @@ export class ActionRouter {
     }
 
     /**
-     * Register a handler for a specific action
-     * @param {string} action - Action name or input type
-     * @param {Function} handler - Handler function(input, context)
-     * @returns {ActionRouter} This router for chaining
-     */
+	 * Register a handler for a specific action
+	 * @param {string} action - Action name or input type
+	 * @param {Function} handler - Handler function(input, context)
+	 * @returns {ActionRouter} This router for chaining
+	 */
     registerHandler(action, handler) {
         if (typeof handler !== 'function') {
             throw new Error('Handler must be a function');
@@ -150,11 +154,11 @@ export class ActionRouter {
     }
 
     /**
-     * Remove a handler for a specific action
-     * @param {string} action - Action name
-     * @param {Function} handler - Handler to remove
-     * @returns {ActionRouter} This router for chaining
-     */
+	 * Remove a handler for a specific action
+	 * @param {string} action - Action name
+	 * @param {Function} handler - Handler to remove
+	 * @returns {ActionRouter} This router for chaining
+	 */
     unregisterHandler(action, handler) {
         if (this.actionHandlers.has(action)) {
             const handlers = this.actionHandlers.get(action);
@@ -167,12 +171,12 @@ export class ActionRouter {
     }
 
     /**
-     * Route input to appropriate handlers
-     * @param {Object} input - Normalized input from InputAdapter
-     * @param {string} input.type - Input type (direction, action, etc.)
-     * @param {*} input.value - Input value
-     * @returns {boolean} True if input was handled
-     */
+	 * Route input to appropriate handlers
+	 * @param {Object} input - Normalized input from InputAdapter
+	 * @param {string} input.type - Input type (direction, action, etc.)
+	 * @param {*} input.value - Input value
+	 * @returns {boolean} True if input was handled
+	 */
     route(input) {
         if (!input) {
             return false;
@@ -187,7 +191,7 @@ export class ActionRouter {
         // Execute handlers for this action
         if (this.actionHandlers.has(actionKey)) {
             const handlers = this.actionHandlers.get(actionKey);
-            handlers.forEach(handler => {
+            handlers.forEach((handler) => {
                 try {
                     handler(input, context);
                     handled = true;
@@ -201,11 +205,11 @@ export class ActionRouter {
     }
 
     /**
-     * Get the action key from input
-     * @private
-     * @param {Object} input - Input object
-     * @returns {string} Action key
-     */
+	 * Get the action key from input
+	 * @private
+	 * @param {Object} input - Input object
+	 * @returns {string} Action key
+	 */
     getActionKey(input) {
         // For direction inputs, use the type directly
         if (input.type === INPUT_TYPES.DIRECTION) {
@@ -222,17 +226,17 @@ export class ActionRouter {
     }
 
     /**
-     * Handle multiple inputs in sequence
-     * @param {Array} inputs - Array of input objects
-     * @returns {number} Number of inputs handled
-     */
+	 * Handle multiple inputs in sequence
+	 * @param {Array} inputs - Array of input objects
+	 * @returns {number} Number of inputs handled
+	 */
     routeBatch(inputs) {
         if (!Array.isArray(inputs)) {
             return 0;
         }
 
         let handledCount = 0;
-        inputs.forEach(input => {
+        inputs.forEach((input) => {
             if (this.route(input)) {
                 handledCount++;
             }
@@ -242,32 +246,35 @@ export class ActionRouter {
     }
 
     /**
-     * Get all registered action names
-     * @returns {Array<string>} Action names
-     */
+	 * Get all registered action names
+	 * @returns {Array<string>} Action names
+	 */
     getRegisteredActions() {
         return Array.from(this.actionHandlers.keys());
     }
 
     /**
-     * Check if an action has registered handlers
-     * @param {string} action - Action name
-     * @returns {boolean}
-     */
+	 * Check if an action has registered handlers
+	 * @param {string} action - Action name
+	 * @returns {boolean}
+	 */
     hasHandler(action) {
-        return this.actionHandlers.has(action) && this.actionHandlers.get(action).length > 0;
+        return (
+            this.actionHandlers.has(action) &&
+			this.actionHandlers.get(action).length > 0
+        );
     }
 
     /**
-     * Clear all handlers
-     */
+	 * Clear all handlers
+	 */
     clearHandlers() {
         this.actionHandlers.clear();
     }
 
     /**
-     * Reset to default handlers
-     */
+	 * Reset to default handlers
+	 */
     resetHandlers() {
         this.clearHandlers();
         this.registerDefaultHandlers();
@@ -281,12 +288,12 @@ export class ActionRouter {
  */
 export class GameController {
     /**
-     * Create GameController
-     * @param {Object} options
-     * @param {Object} options.gameModel - The game model
-     * @param {Object} options.replaySystem - Optional replay system
-     * @param {InputManager} options.inputManager - Optional input manager
-     */
+	 * Create GameController
+	 * @param {Object} options
+	 * @param {Object} options.gameModel - The game model
+	 * @param {Object} options.replaySystem - Optional replay system
+	 * @param {InputManager} options.inputManager - Optional input manager
+	 */
     constructor({ gameModel, replaySystem = null, inputManager = null } = {}) {
         this.gameModel = gameModel;
         this.replaySystem = replaySystem;
@@ -303,9 +310,9 @@ export class GameController {
     }
 
     /**
-     * Set the input manager
-     * @param {InputManager} inputManager - Input manager instance
-     */
+	 * Set the input manager
+	 * @param {InputManager} inputManager - Input manager instance
+	 */
     setInputManager(inputManager) {
         // Unsubscribe from previous input manager
         if (this.unsubscribeInput) {
@@ -324,9 +331,9 @@ export class GameController {
     }
 
     /**
-     * Handle input from any source
-     * @param {Object} input - Normalized input
-     */
+	 * Handle input from any source
+	 * @param {Object} input - Normalized input
+	 */
     handleInput(input) {
         if (!this.isActive || !input) {
             return;
@@ -336,30 +343,30 @@ export class GameController {
     }
 
     /**
-     * Activate the controller
-     */
+	 * Activate the controller
+	 */
     activate() {
         this.isActive = true;
     }
 
     /**
-     * Deactivate the controller
-     */
+	 * Deactivate the controller
+	 */
     deactivate() {
         this.isActive = false;
     }
 
     /**
-     * Check if controller is active
-     * @returns {boolean}
-     */
+	 * Check if controller is active
+	 * @returns {boolean}
+	 */
     getIsActive() {
         return this.isActive;
     }
 
     /**
-     * Clean up resources
-     */
+	 * Clean up resources
+	 */
     destroy() {
         this.deactivate();
 

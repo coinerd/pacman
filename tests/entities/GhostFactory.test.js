@@ -1,11 +1,15 @@
-import { GhostFactory } from '../../src/entities/GhostFactory.js';
-import Ghost from '../../src/entities/Ghost.js';
-import { ghostNames, ghostColors, ghostStartPositions } from '../../src/config/gameConfig.js';
+import {
+    enemyColors,
+    enemyNames,
+    enemyStartPositions
+} from '../../src/config/gameConfig.js';
+import Enemy from '../../src/entities/Enemy.js';
+import { EnemyFactory } from '../../src/entities/EnemyFactory.js';
 import { msToSeconds } from '../../src/utils/Time.js';
 
-jest.mock('../../src/entities/Ghost.js');
+jest.mock('../../src/entities/Enemy.js');
 
-describe('GhostFactory', () => {
+describe('EnemyFactory', () => {
     let mockScene;
 
     beforeEach(() => {
@@ -15,11 +19,13 @@ describe('GhostFactory', () => {
                 graphics: jest.fn()
             },
             children: [],
-            maze: Array(31).fill(null).map(() => Array(28).fill(0))
+            maze: Array(31)
+                .fill(null)
+                .map(() => Array(28).fill(0))
         };
 
-        Ghost.mockClear();
-        Ghost.mockImplementation((scene, startX, startY, type, color) => {
+        Enemy.mockClear();
+        Enemy.mockImplementation((scene, startX, startY, type, color) => {
             return {
                 scene,
                 x: startX * 16 + 8,
@@ -46,299 +52,303 @@ describe('GhostFactory', () => {
         });
     });
 
-    describe('createGhosts()', () => {
-        test('creates array of 4 ghosts', () => {
-            const ghosts = GhostFactory.createGhosts(mockScene);
+    describe('createEnemies()', () => {
+        test('creates array of 4 enemies', () => {
+            const enemies = EnemyFactory.createEnemies(mockScene);
 
-            expect(Array.isArray(ghosts)).toBe(true);
-            expect(ghosts.length).toBe(4);
+            expect(Array.isArray(enemies)).toBe(true);
+            expect(enemies.length).toBe(4);
         });
 
-        test('creates Ghost instances for each ghost', () => {
-            const ghosts = GhostFactory.createGhosts(mockScene);
+        test('creates Enemy instances for each enemy', () => {
+            const enemies = EnemyFactory.createEnemies(mockScene);
 
-            expect(Ghost).toHaveBeenCalledTimes(4);
+            expect(Enemy).toHaveBeenCalledTimes(4);
         });
 
-        test('creates Blinky with correct properties', () => {
-            const ghosts = GhostFactory.createGhosts(mockScene);
-            const blinky = ghosts.find(g => g.type === ghostNames.BLINKY);
+        test('creates Alpha with correct properties', () => {
+            const enemies = EnemyFactory.createEnemies(mockScene);
+            const alpha = enemies.find((g) => g.type === enemyNames.ALPHA);
 
-            expect(blinky).toBeDefined();
-            expect(blinky.gridX).toBe(ghostStartPositions.blinky.x);
-            expect(blinky.gridY).toBe(ghostStartPositions.blinky.y);
-            expect(blinky.color).toBe(ghostColors.BLINKY);
-            expect(blinky.scene).toBe(mockScene);
+            expect(alpha).toBeDefined();
+            expect(alpha.gridX).toBe(enemyStartPositions.alpha.x);
+            expect(alpha.gridY).toBe(enemyStartPositions.alpha.y);
+            expect(alpha.color).toBe(enemyColors.ALPHA);
+            expect(alpha.scene).toBe(mockScene);
         });
 
-        test('creates Pinky with correct properties', () => {
-            const ghosts = GhostFactory.createGhosts(mockScene);
-            const pinky = ghosts.find(g => g.type === ghostNames.PINKY);
+        test('creates Beta with correct properties', () => {
+            const enemies = EnemyFactory.createEnemies(mockScene);
+            const beta = enemies.find((g) => g.type === enemyNames.BETA);
 
-            expect(pinky).toBeDefined();
-            expect(pinky.gridX).toBe(ghostStartPositions.pinky.x);
-            expect(pinky.gridY).toBe(ghostStartPositions.pinky.y);
-            expect(pinky.color).toBe(ghostColors.PINKY);
-            expect(pinky.scene).toBe(mockScene);
+            expect(beta).toBeDefined();
+            expect(beta.gridX).toBe(enemyStartPositions.beta.x);
+            expect(beta.gridY).toBe(enemyStartPositions.beta.y);
+            expect(beta.color).toBe(enemyColors.BETA);
+            expect(beta.scene).toBe(mockScene);
         });
 
-        test('creates Inky with correct properties', () => {
-            const ghosts = GhostFactory.createGhosts(mockScene);
-            const inky = ghosts.find(g => g.type === ghostNames.INKY);
+        test('creates Gamma with correct properties', () => {
+            const enemies = EnemyFactory.createEnemies(mockScene);
+            const gamma = enemies.find((g) => g.type === enemyNames.GAMMA);
 
-            expect(inky).toBeDefined();
-            expect(inky.gridX).toBe(ghostStartPositions.inky.x);
-            expect(inky.gridY).toBe(ghostStartPositions.inky.y);
-            expect(inky.color).toBe(ghostColors.INKY);
-            expect(inky.scene).toBe(mockScene);
+            expect(gamma).toBeDefined();
+            expect(gamma.gridX).toBe(enemyStartPositions.gamma.x);
+            expect(gamma.gridY).toBe(enemyStartPositions.gamma.y);
+            expect(gamma.color).toBe(enemyColors.GAMMA);
+            expect(gamma.scene).toBe(mockScene);
         });
 
-        test('creates Clyde with correct properties', () => {
-            const ghosts = GhostFactory.createGhosts(mockScene);
-            const clyde = ghosts.find(g => g.type === ghostNames.CLYDE);
+        test('creates Delta with correct properties', () => {
+            const enemies = EnemyFactory.createEnemies(mockScene);
+            const delta = enemies.find((g) => g.type === enemyNames.DELTA);
 
-            expect(clyde).toBeDefined();
-            expect(clyde.gridX).toBe(ghostStartPositions.clyde.x);
-            expect(clyde.gridY).toBe(ghostStartPositions.clyde.y);
-            expect(clyde.color).toBe(ghostColors.CLYDE);
-            expect(clyde.scene).toBe(mockScene);
+            expect(delta).toBeDefined();
+            expect(delta.gridX).toBe(enemyStartPositions.delta.x);
+            expect(delta.gridY).toBe(enemyStartPositions.delta.y);
+            expect(delta.color).toBe(enemyColors.DELTA);
+            expect(delta.scene).toBe(mockScene);
         });
 
-        test('creates ghosts in order: Blinky, Pinky, Inky, Clyde', () => {
-            const ghosts = GhostFactory.createGhosts(mockScene);
+        test('creates enemies in order: Alpha, Beta, Gamma, Delta', () => {
+            const enemies = EnemyFactory.createEnemies(mockScene);
 
-            expect(ghosts[0].type).toBe(ghostNames.BLINKY);
-            expect(ghosts[1].type).toBe(ghostNames.PINKY);
-            expect(ghosts[2].type).toBe(ghostNames.INKY);
-            expect(ghosts[3].type).toBe(ghostNames.CLYDE);
+            expect(enemies[0].type).toBe(enemyNames.ALPHA);
+            expect(enemies[1].type).toBe(enemyNames.BETA);
+            expect(enemies[2].type).toBe(enemyNames.GAMMA);
+            expect(enemies[3].type).toBe(enemyNames.DELTA);
         });
 
-        test('all ghosts have unique types', () => {
-            const ghosts = GhostFactory.createGhosts(mockScene);
-            const types = ghosts.map(g => g.type);
+        test('all enemies have unique types', () => {
+            const enemies = EnemyFactory.createEnemies(mockScene);
+            const types = enemies.map((g) => g.type);
 
             expect(new Set(types).size).toBe(4);
         });
 
-        test('all ghosts have correct start positions', () => {
-            const ghosts = GhostFactory.createGhosts(mockScene);
+        test('all enemies have correct start positions', () => {
+            const enemies = EnemyFactory.createEnemies(mockScene);
 
-            ghosts.forEach(ghost => {
-                const expectedPos = ghostStartPositions[ghost.type.toLowerCase()];
-                expect(ghost.gridX).toBe(expectedPos.x);
-                expect(ghost.gridY).toBe(expectedPos.y);
+            enemies.forEach((enemy) => {
+                const expectedPos = enemyStartPositions[enemy.type];
+                expect(enemy.gridX).toBe(expectedPos.x);
+                expect(enemy.gridY).toBe(expectedPos.y);
             });
         });
 
-        test('all ghosts have correct colors', () => {
-            const ghosts = GhostFactory.createGhosts(mockScene);
+        test('all enemies have correct colors', () => {
+            const enemies = EnemyFactory.createEnemies(mockScene);
 
-            ghosts.forEach(ghost => {
-                const expectedColor = ghostColors[ghost.type.toUpperCase()];
-                expect(ghost.color).toBe(expectedColor);
+            enemies.forEach((enemy) => {
+                const expectedColor = enemyColors[enemy.type.toUpperCase()];
+                expect(enemy.color).toBe(expectedColor);
             });
         });
     });
 
-    describe('resetGhosts()', () => {
-        test('calls reset() on all ghosts', () => {
-            const ghosts = GhostFactory.createGhosts(mockScene);
+    describe('resetEnemies()', () => {
+        test('calls reset() on all enemies', () => {
+            const enemies = EnemyFactory.createEnemies(mockScene);
 
-            GhostFactory.resetGhosts(ghosts);
+            EnemyFactory.resetEnemies(enemies);
 
-            ghosts.forEach(ghost => {
-                expect(ghost.reset).toHaveBeenCalledTimes(1);
+            enemies.forEach((enemy) => {
+                expect(enemy.reset).toHaveBeenCalledTimes(1);
             });
         });
 
-        test('does not modify ghost array', () => {
-            const ghosts = GhostFactory.createGhosts(mockScene);
-            const originalLength = ghosts.length;
+        test('does not modify enemy array', () => {
+            const enemies = EnemyFactory.createEnemies(mockScene);
+            const originalLength = enemies.length;
 
-            GhostFactory.resetGhosts(ghosts);
+            EnemyFactory.resetEnemies(enemies);
 
-            expect(ghosts.length).toBe(originalLength);
+            expect(enemies.length).toBe(originalLength);
         });
     });
 
-    describe('setGhostsFrightened()', () => {
-        test('calls setFrightened() on all non-eaten ghosts', () => {
-            const ghosts = GhostFactory.createGhosts(mockScene);
-            ghosts[0].isEaten = false;
-            ghosts[1].isEaten = false;
-            ghosts[2].isEaten = true;
-            ghosts[3].isEaten = false;
+    describe('setEnemiesDecrypted()', () => {
+        test('calls setFrightened() on all non-eaten enemies', () => {
+            const enemies = EnemyFactory.createEnemies(mockScene);
+            enemies[0].isEaten = false;
+            enemies[1].isEaten = false;
+            enemies[2].isEaten = true;
+            enemies[3].isEaten = false;
 
-            GhostFactory.setGhostsFrightened(ghosts, msToSeconds(5000));
+            EnemyFactory.setEnemiesDecrypted(enemies, msToSeconds(5000));
 
-            expect(ghosts[0].setFrightened).toHaveBeenCalledWith(msToSeconds(5000));
-            expect(ghosts[1].setFrightened).toHaveBeenCalledWith(msToSeconds(5000));
-            expect(ghosts[2].setFrightened).not.toHaveBeenCalled();
-            expect(ghosts[3].setFrightened).toHaveBeenCalledWith(msToSeconds(5000));
+            expect(enemies[0].setFrightened).toHaveBeenCalledWith(msToSeconds(5000));
+            expect(enemies[1].setFrightened).toHaveBeenCalledWith(msToSeconds(5000));
+            expect(enemies[2].setFrightened).not.toHaveBeenCalled();
+            expect(enemies[3].setFrightened).toHaveBeenCalledWith(msToSeconds(5000));
         });
 
-        test('does not call setFrightened() on eaten ghosts', () => {
-            const ghosts = GhostFactory.createGhosts(mockScene);
-            ghosts.forEach(ghost => {
-                ghost.isEaten = true;
+        test('does not call setFrightened() on eaten enemies', () => {
+            const enemies = EnemyFactory.createEnemies(mockScene);
+            enemies.forEach((enemy) => {
+                enemy.isEaten = true;
             });
 
-            GhostFactory.setGhostsFrightened(ghosts, msToSeconds(5000));
+            EnemyFactory.setEnemiesDecrypted(enemies, msToSeconds(5000));
 
-            ghosts.forEach(ghost => {
-                expect(ghost.setFrightened).not.toHaveBeenCalled();
+            enemies.forEach((enemy) => {
+                expect(enemy.setFrightened).not.toHaveBeenCalled();
             });
         });
 
         test('calls setFrightened() with correct duration', () => {
-            const ghosts = GhostFactory.createGhosts(mockScene);
+            const enemies = EnemyFactory.createEnemies(mockScene);
             const duration = msToSeconds(8000);
 
-            GhostFactory.setGhostsFrightened(ghosts, duration);
+            EnemyFactory.setEnemiesDecrypted(enemies, duration);
 
-            ghosts.forEach(ghost => {
-                if (!ghost.isEaten) {
-                    expect(ghost.setFrightened).toHaveBeenCalledWith(duration);
+            enemies.forEach((enemy) => {
+                if (!enemy.isEaten) {
+                    expect(enemy.setFrightened).toHaveBeenCalledWith(duration);
                 }
             });
         });
 
-        test('handles mixed ghost states correctly', () => {
-            const ghosts = GhostFactory.createGhosts(mockScene);
-            ghosts[0].isEaten = false;
-            ghosts[1].isEaten = true;
-            ghosts[2].isEaten = false;
-            ghosts[3].isEaten = false;
+        test('handles mixed enemy states correctly', () => {
+            const enemies = EnemyFactory.createEnemies(mockScene);
+            enemies[0].isEaten = false;
+            enemies[1].isEaten = true;
+            enemies[2].isEaten = false;
+            enemies[3].isEaten = false;
 
-            GhostFactory.setGhostsFrightened(ghosts, msToSeconds(6000));
+            EnemyFactory.setEnemiesDecrypted(enemies, msToSeconds(6000));
 
-            expect(ghosts[0].setFrightened).toHaveBeenCalledTimes(1);
-            expect(ghosts[1].setFrightened).not.toHaveBeenCalled();
-            expect(ghosts[2].setFrightened).toHaveBeenCalledTimes(1);
-            expect(ghosts[3].setFrightened).toHaveBeenCalledTimes(1);
+            expect(enemies[0].setFrightened).toHaveBeenCalledTimes(1);
+            expect(enemies[1].setFrightened).not.toHaveBeenCalled();
+            expect(enemies[2].setFrightened).toHaveBeenCalledTimes(1);
+            expect(enemies[3].setFrightened).toHaveBeenCalledTimes(1);
         });
     });
 
-    describe('getGhostsByType()', () => {
-        test('returns empty array when no ghosts match type', () => {
-            const ghosts = GhostFactory.createGhosts(mockScene);
+    describe('getEnemiesByType()', () => {
+        test('returns empty array when no enemies match type', () => {
+            const enemies = EnemyFactory.createEnemies(mockScene);
 
-            const result = GhostFactory.getGhostsByType(ghosts, 'unknown');
+            const result = EnemyFactory.getEnemiesByType(enemies, 'unknown');
 
             expect(result).toEqual([]);
         });
 
-        test('returns single ghost when one ghost matches type', () => {
-            const ghosts = GhostFactory.createGhosts(mockScene);
+        test('returns single enemy when one enemy matches type', () => {
+            const enemies = EnemyFactory.createEnemies(mockScene);
 
-            const blinkyGhosts = GhostFactory.getGhostsByType(ghosts, ghostNames.BLINKY);
+            const alphaEnemies = EnemyFactory.getEnemiesByType(
+                enemies,
+                enemyNames.ALPHA
+            );
 
-            expect(blinkyGhosts.length).toBe(1);
-            expect(blinkyGhosts[0].type).toBe(ghostNames.BLINKY);
+            expect(alphaEnemies.length).toBe(1);
+            expect(alphaEnemies[0].type).toBe(enemyNames.ALPHA);
         });
 
-        test('returns all ghosts of specified type', () => {
-            const ghosts = GhostFactory.createGhosts(mockScene);
+        test('returns all enemies of specified type', () => {
+            const enemies = EnemyFactory.createEnemies(mockScene);
 
-            const result = GhostFactory.getGhostsByType(ghosts, ghostNames.BLINKY);
+            const result = EnemyFactory.getEnemiesByType(enemies, enemyNames.ALPHA);
 
             expect(Array.isArray(result)).toBe(true);
-            result.forEach(ghost => {
-                expect(ghost.type).toBe(ghostNames.BLINKY);
+            result.forEach((enemy) => {
+                expect(enemy.type).toBe(enemyNames.ALPHA);
             });
         });
 
-        test('returns ghost array in same order as input', () => {
-            const ghosts = GhostFactory.createGhosts(mockScene);
+        test('returns enemy array in same order as input', () => {
+            const enemies = EnemyFactory.createEnemies(mockScene);
 
-            const result = GhostFactory.getGhostsByType(ghosts, ghostNames.PINKY);
+            const result = EnemyFactory.getEnemiesByType(enemies, enemyNames.BETA);
 
-            expect(result[0]).toBe(ghosts[1]);
+            expect(result.length).toBeGreaterThan(0);
+            expect(result[0]).toBe(enemies[1]);
         });
 
         test('handles case sensitivity of type parameter', () => {
-            const ghosts = GhostFactory.createGhosts(mockScene);
+            const enemies = EnemyFactory.createEnemies(mockScene);
 
-            const result1 = GhostFactory.getGhostsByType(ghosts, 'BLINKY');
-            const result2 = GhostFactory.getGhostsByType(ghosts, 'blinky');
+            const result1 = EnemyFactory.getEnemiesByType(enemies, 'ALPHA');
+            const result2 = EnemyFactory.getEnemiesByType(enemies, enemyNames.ALPHA);
 
             expect(result1.length).toBe(0);
             expect(result2.length).toBe(1);
         });
 
-        test('does not modify original ghost array', () => {
-            const ghosts = GhostFactory.createGhosts(mockScene);
-            const originalLength = ghosts.length;
+        test('does not modify original enemy array', () => {
+            const enemies = EnemyFactory.createEnemies(mockScene);
+            const originalLength = enemies.length;
 
-            GhostFactory.getGhostsByType(ghosts, ghostNames.BLINKY);
+            EnemyFactory.getEnemiesByType(enemies, enemyNames.ALPHA);
 
-            expect(ghosts.length).toBe(originalLength);
+            expect(enemies.length).toBe(originalLength);
         });
     });
 
-    describe('Integration: Complete ghost lifecycle', () => {
-        test('creates ghosts, resets, and applies frightened state', () => {
-            const ghosts = GhostFactory.createGhosts(mockScene);
+    describe('Integration: Complete enemy lifecycle', () => {
+        test('creates enemies, resets, and applies decrypted state', () => {
+            const enemies = EnemyFactory.createEnemies(mockScene);
 
-            expect(ghosts.length).toBe(4);
+            expect(enemies.length).toBe(4);
 
-            GhostFactory.resetGhosts(ghosts);
+            EnemyFactory.resetEnemies(enemies);
 
-            ghosts.forEach(ghost => {
-                expect(ghost.reset).toHaveBeenCalled();
+            enemies.forEach((enemy) => {
+                expect(enemy.reset).toHaveBeenCalled();
             });
 
-            GhostFactory.setGhostsFrightened(ghosts, msToSeconds(5000));
+            EnemyFactory.setEnemiesDecrypted(enemies, msToSeconds(5000));
 
-            ghosts.forEach(ghost => {
-                if (!ghost.isEaten) {
-                    expect(ghost.setFrightened).toHaveBeenCalledWith(msToSeconds(5000));
+            enemies.forEach((enemy) => {
+                if (!enemy.isEaten) {
+                    expect(enemy.setFrightened).toHaveBeenCalledWith(msToSeconds(5000));
                 }
             });
         });
 
-        test('can filter and manipulate specific ghost types', () => {
-            const ghosts = GhostFactory.createGhosts(mockScene);
+        test('can filter and manipulate specific enemy types', () => {
+            const enemies = EnemyFactory.createEnemies(mockScene);
 
-            const blinky = GhostFactory.getGhostsByType(ghosts, ghostNames.BLINKY);
-            const pinky = GhostFactory.getGhostsByType(ghosts, ghostNames.PINKY);
+            const alpha = EnemyFactory.getEnemiesByType(enemies, enemyNames.ALPHA);
+            const beta = EnemyFactory.getEnemiesByType(enemies, enemyNames.BETA);
 
-            expect(blinky[0].type).toBe(ghostNames.BLINKY);
-            expect(pinky[0].type).toBe(ghostNames.PINKY);
-            expect(blinky[0]).toBe(ghosts[0]);
-            expect(pinky[0]).toBe(ghosts[1]);
+            expect(alpha[0].type).toBe(enemyNames.ALPHA);
+            expect(beta[0].type).toBe(enemyNames.BETA);
+            expect(alpha[0]).toBe(enemies[0]);
+            expect(beta[0]).toBe(enemies[1]);
         });
     });
 
     describe('Edge Cases', () => {
-        test('handles empty ghost array for resetGhosts', () => {
-            const ghosts = [];
+        test('handles empty enemy array for resetEnemies', () => {
+            const enemies = [];
 
             expect(() => {
-                GhostFactory.resetGhosts(ghosts);
+                EnemyFactory.resetEnemies(enemies);
             }).not.toThrow();
         });
 
-        test('handles empty ghost array for setGhostsFrightened', () => {
-            const ghosts = [];
+        test('handles empty enemy array for setEnemiesDecrypted', () => {
+            const enemies = [];
 
             expect(() => {
-                GhostFactory.setGhostsFrightened(ghosts, msToSeconds(5000));
+                EnemyFactory.setEnemiesDecrypted(enemies, msToSeconds(5000));
             }).not.toThrow();
         });
 
-        test('handles empty ghost array for getGhostsByType', () => {
-            const ghosts = [];
+        test('handles empty enemy array for getEnemiesByType', () => {
+            const enemies = [];
 
-            const result = GhostFactory.getGhostsByType(ghosts, ghostNames.BLINKY);
+            const result = EnemyFactory.getEnemiesByType(enemies, enemyNames.ALPHA);
 
             expect(result).toEqual([]);
         });
 
-        test('handles ghost array with no matching types', () => {
-            const ghosts = GhostFactory.createGhosts(mockScene);
+        test('handles enemy array with no matching types', () => {
+            const enemies = EnemyFactory.createEnemies(mockScene);
 
-            const result = GhostFactory.getGhostsByType(ghosts, 'nonexistent');
+            const result = EnemyFactory.getEnemiesByType(enemies, 'nonexistent');
 
             expect(result).toEqual([]);
         });

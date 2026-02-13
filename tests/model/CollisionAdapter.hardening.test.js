@@ -3,9 +3,9 @@
  * Tests for tunnel-aware collision and high-speed swept collision scenarios
  */
 
+import { gameConfig } from '../../src/config/gameConfig.js';
 import { CollisionAdapter } from '../../src/model/adapters/CollisionAdapter.js';
 import { PELLET_TYPES } from '../../src/utils/MazeLayout.js';
-import { gameConfig } from '../../src/config/gameConfig.js';
 
 // Mock GameModel with tunnel configuration
 function createMockGameModel() {
@@ -38,15 +38,19 @@ function createMockGameModel() {
             y: 0,
             eat: jest.fn()
         },
-        pelletGrid: Array(31).fill(null).map((_, y) =>
-            Array(28).fill(null).map((_, x) => {
-                // Create a simple maze with tunnel at row 14
-                if (y === 0 || y === 30 || x === 0 || x === 27) {
-                    return y === 14 ? 0 : 1; // Tunnel row at y=14
-                }
-                return 1; // Pellets everywhere else
-            })
-        ),
+        pelletGrid: Array(33)
+            .fill(null)
+            .map((_, y) =>
+                Array(25)
+                    .fill(null)
+                    .map((_, x) => {
+                        // Create a simple maze with tunnel at row 15
+                        if (y === 0 || y === 32 || x === 0 || x === 24) {
+                            return y === 15 ? 0 : 1; // Tunnel row at y=15
+                        }
+                        return 1; // Pellets everywhere else
+                    })
+            ),
         getPelletAt: jest.fn((x, y) => {
             if (y >= 0 && y < 31 && x >= 0 && x < 28) {
                 if (y === 14 && (x === 0 || x === 27)) {
@@ -72,7 +76,7 @@ describe('CollisionAdapter Hardening', () => {
     let adapter;
     let mockGameModel;
     const tileSize = gameConfig.tileSize;
-    const tunnelY = 14 * tileSize + tileSize / 2; // Center of tunnel row
+    const tunnelY = 15 * tileSize + tileSize / 2; // Center of tunnel row
 
     beforeEach(() => {
         mockGameModel = createMockGameModel();
@@ -106,15 +110,15 @@ describe('CollisionAdapter Hardening', () => {
             mockGameModel.pacman.prevX = tileSize;
             mockGameModel.pacman.prevY = tunnelY;
 
-            // Ghost wrapping from right side to left
-            mockGameModel.ghosts[0].x = 27 * tileSize + tileSize - 5; // Right edge
+            // Enemy wrapping from right side to left
+            mockGameModel.ghosts[0].x = 24 * tileSize + tileSize - 5; // Right edge
             mockGameModel.ghosts[0].y = tunnelY;
-            mockGameModel.ghosts[0].prevX = 28 * tileSize; // Was wrapping
+            mockGameModel.ghosts[0].prevX = 25 * tileSize; // Was wrapping
             mockGameModel.ghosts[0].prevY = tunnelY;
 
             const result = adapter.checkTunnelCollisions(
                 mockGameModel.pacman,
-                mockGameModel.ghosts.map(g => ({
+                mockGameModel.ghosts.map((g) => ({
                     id: g.id,
                     x: g.x,
                     y: g.y,
@@ -133,13 +137,13 @@ describe('CollisionAdapter Hardening', () => {
             mockGameModel.pacman.x = tileSize;
             mockGameModel.pacman.y = tunnelY;
 
-            // Ghost far away from tunnel
+            // Enemy far away from tunnel
             mockGameModel.ghosts[0].x = 14 * tileSize;
             mockGameModel.ghosts[0].y = 5 * tileSize;
 
             const result = adapter.checkTunnelCollisions(
                 mockGameModel.pacman,
-                mockGameModel.ghosts.map(g => ({
+                mockGameModel.ghosts.map((g) => ({
                     id: g.id,
                     x: g.x,
                     y: g.y,
@@ -164,7 +168,7 @@ describe('CollisionAdapter Hardening', () => {
 
             const result = adapter.checkTunnelCollisions(
                 mockGameModel.pacman,
-                mockGameModel.ghosts.map(g => ({
+                mockGameModel.ghosts.map((g) => ({
                     id: g.id,
                     x: g.x,
                     y: g.y,
@@ -182,7 +186,7 @@ describe('CollisionAdapter Hardening', () => {
                 id: 1,
                 x: tileSize / 2, // Left side
                 y: tunnelY,
-                prevX: 27 * tileSize + tileSize / 2, // Was on right side
+                prevX: 24 * tileSize + tileSize / 2, // Was on right side
                 prevY: tunnelY
             };
 
@@ -197,7 +201,7 @@ describe('CollisionAdapter Hardening', () => {
         test('adjusts position when entity wraps left to right', () => {
             const entity = {
                 id: 1,
-                x: 27 * tileSize + tileSize / 2, // Right side
+                x: 24 * tileSize + tileSize / 2, // Right side
                 y: tunnelY,
                 prevX: tileSize / 2, // Was on left side
                 prevY: tunnelY
@@ -255,7 +259,7 @@ describe('CollisionAdapter Hardening', () => {
             mockGameModel.pacman.prevX = mockGameModel.pacman.x;
             mockGameModel.pacman.prevY = mockGameModel.pacman.y;
 
-            // Ghost moving very fast through pacman position
+            // Enemy moving very fast through pacman position
             mockGameModel.ghosts[0].x = mockGameModel.pacman.x + threshold * 3;
             mockGameModel.ghosts[0].y = mockGameModel.pacman.y;
             mockGameModel.ghosts[0].prevX = mockGameModel.pacman.x - threshold * 3;
@@ -274,7 +278,7 @@ describe('CollisionAdapter Hardening', () => {
             mockGameModel.pacman.prevX = 13 * tileSize;
             mockGameModel.pacman.prevY = 10 * tileSize;
 
-            // Ghost moving vertically, crossing pacman's path
+            // Enemy moving vertically, crossing pacman's path
             mockGameModel.ghosts[0].x = 14 * tileSize;
             mockGameModel.ghosts[0].y = 11 * tileSize;
             mockGameModel.ghosts[0].prevX = 14 * tileSize;
@@ -295,7 +299,7 @@ describe('CollisionAdapter Hardening', () => {
             mockGameModel.pacman.prevX = mockGameModel.pacman.x;
             mockGameModel.pacman.prevY = mockGameModel.pacman.y;
 
-            // Ghost moving diagonally through pacman
+            // Enemy moving diagonally through pacman
             mockGameModel.ghosts[0].x = mockGameModel.pacman.x + threshold * 2;
             mockGameModel.ghosts[0].y = mockGameModel.pacman.y + threshold * 2;
             mockGameModel.ghosts[0].prevX = mockGameModel.pacman.x - threshold * 2;
@@ -307,7 +311,7 @@ describe('CollisionAdapter Hardening', () => {
         });
     });
 
-    describe('Frightened Ghost Collision Handling', () => {
+    describe('Frightened Enemy Collision Handling', () => {
         test('eats frightened ghost in tunnel', () => {
             // Pacman in tunnel
             mockGameModel.pacman.x = tileSize;
@@ -415,7 +419,7 @@ describe('CollisionAdapter Hardening', () => {
         });
 
         test('handles all ghosts eaten', () => {
-            mockGameModel.ghosts.forEach(g => g.isEaten = true);
+            mockGameModel.ghosts.forEach((g) => (g.isEaten = true));
 
             const result = adapter.checkGhostCollisions();
 
@@ -428,7 +432,7 @@ describe('CollisionAdapter Hardening', () => {
             mockGameModel.pacman.x = 14 * tileSize;
             mockGameModel.pacman.y = 10 * tileSize;
 
-            // Ghost exactly at collision threshold
+            // Enemy exactly at collision threshold
             mockGameModel.ghosts[0].x = mockGameModel.pacman.x + threshold - 0.1;
             mockGameModel.ghosts[0].y = mockGameModel.pacman.y;
             mockGameModel.ghosts[0].prevX = mockGameModel.ghosts[0].x;
@@ -444,7 +448,7 @@ describe('CollisionAdapter Hardening', () => {
             mockGameModel.pacman.x = tileSize;
             mockGameModel.pacman.y = tunnelY;
 
-            // Ghost also at same position
+            // Enemy also at same position
             mockGameModel.ghosts[0].x = tileSize;
             mockGameModel.ghosts[0].y = tunnelY;
             mockGameModel.ghosts[0].isFrightened = true;
@@ -455,8 +459,8 @@ describe('CollisionAdapter Hardening', () => {
             const events = adapter.checkAllCollisions();
 
             // Should have both events
-            const hasPellet = events.some(e => e.type === 'pellet_eaten');
-            const hasGhost = events.some(e => e.type === 'ghost_eaten');
+            const hasPellet = events.some((e) => e.type === 'pellet_eaten');
+            const hasGhost = events.some((e) => e.type === 'ghost_eaten');
 
             expect(hasPellet || hasGhost).toBe(true);
         });

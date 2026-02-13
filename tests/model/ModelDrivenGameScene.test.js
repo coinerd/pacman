@@ -3,30 +3,94 @@
  * Tests the pure observer View pattern where Model drives all state
  */
 
-import GameModel from '../../src/core/GameModel.js';
-import { GAME_EVENTS, gameEvents } from '../../src/core/EventBus.js';
 import { directions } from '../../src/config/gameConfig.js';
-import { VisualPacman } from '../../src/view/visuals/VisualPacman.js';
-import { VisualGhost } from '../../src/view/visuals/VisualGhost.js';
+import { GAME_EVENTS, gameEvents } from '../../src/core/EventBus.js';
+import GameModel from '../../src/core/GameModel.js';
+import { VisualEnemy } from '../../src/view/visuals/VisualEnemy.js';
 import { VisualFruit } from '../../src/view/visuals/VisualFruit.js';
+import { VisualPlayer } from '../../src/view/visuals/VisualPlayer.js';
 
 // Mock Phaser for visual tests
 jest.mock('phaser', () => ({
     GameObjects: {
+        Polygon: class MockPolygon {
+            constructor(scene, x, y, points, fillColor) {
+                this.x = x;
+                this.y = y;
+                this.points = points;
+                this.fillColor = fillColor;
+                this.visible = true;
+            }
+            setDepth() {
+                return this;
+            }
+            setFillStyle() {
+                return this;
+            }
+            setVisible(visible) {
+                this.visible = visible;
+                return this;
+            }
+            setAlpha(alpha) {
+                this.alpha = alpha;
+                return this;
+            }
+            setPosition(x, y) {
+                this.x = x;
+                this.y = y;
+                return this;
+            }
+            setRotation(angle) {
+                this.angle = angle;
+                return this;
+            }
+            setScale(scale) {
+                this.scale = scale;
+                return this;
+            }
+            setInteractive() {
+                return this;
+            }
+            destroy() {}
+        },
         Arc: class MockArc {
-            constructor(scene, x, y, radius, startAngle, endAngle, anticlockwise, color, alpha) {
+            constructor(
+                scene,
+                x,
+                y,
+                radius,
+                startAngle,
+                endAngle,
+                anticlockwise,
+                color,
+                alpha
+            ) {
                 this.x = x;
                 this.y = y;
                 this.radius = radius;
                 this.visible = true;
                 this.alpha = alpha;
             }
-            setDepth() { return this; }
-            setFillStyle() { return this; }
-            setVisible(visible) { this.visible = visible; return this; }
-            setAlpha(alpha) { this.alpha = alpha; return this; }
-            setStartAngle() { return this; }
-            setEndAngle() { return this; }
+            setDepth() {
+                return this;
+            }
+            setFillStyle() {
+                return this;
+            }
+            setVisible(visible) {
+                this.visible = visible;
+                return this;
+            }
+            setAlpha(alpha) {
+                this.alpha = alpha;
+                return this;
+            }
+            setStartAngle() {
+                return this;
+            }
+            setEndAngle() {
+                return this;
+            }
             destroy() {}
         },
         Text: class MockText {
@@ -36,10 +100,20 @@ jest.mock('phaser', () => ({
                 this.visible = true;
                 this.text = '';
             }
-            setOrigin() { return this; }
-            setDepth() { return this; }
-            setVisible(visible) { this.visible = visible; return this; }
-            setText(text) { this.text = text; return this; }
+            setOrigin() {
+                return this;
+            }
+            setDepth() {
+                return this;
+            }
+            setVisible(visible) {
+                this.visible = visible;
+                return this;
+            }
+            setText(text) {
+                this.text = text;
+                return this;
+            }
             destroy() {}
         }
     }
@@ -121,7 +195,7 @@ describe('ModelDriven Architecture - Pure Observer Pattern', () => {
     });
 
     describe('Visual Wrappers - Sync to Model', () => {
-        test('VisualPacman should sync to PacmanState', () => {
+        test('VisualPlayer should sync to PacmanState', () => {
             const model = new GameModel({});
             const mockScene = {
                 add: {
@@ -129,7 +203,7 @@ describe('ModelDriven Architecture - Pure Observer Pattern', () => {
                 }
             };
 
-            const visualPacman = new VisualPacman(mockScene, model.pacman);
+            const visualPacman = new VisualPlayer(mockScene, model.pacman);
 
             // Initial position should match
             expect(visualPacman.sprite.x).toBe(model.pacman.x);
@@ -147,7 +221,7 @@ describe('ModelDriven Architecture - Pure Observer Pattern', () => {
             expect(visualPacman.sprite.y).toBe(200);
         });
 
-        test('VisualGhost should sync to GhostState', () => {
+        test('VisualEnemy should sync to GhostState', () => {
             const model = new GameModel({});
             const mockGraphics = {
                 clear: jest.fn().mockReturnThis(),
@@ -176,7 +250,7 @@ describe('ModelDriven Architecture - Pure Observer Pattern', () => {
             };
 
             const ghost = model.ghosts[0];
-            const visualGhost = new VisualGhost(mockScene, ghost);
+            const visualGhost = new VisualEnemy(mockScene, ghost);
 
             // Initial position should match
             expect(visualGhost.sprite.x).toBe(ghost.x);
@@ -245,9 +319,11 @@ describe('ModelDriven Architecture - Pure Observer Pattern', () => {
                 pelletsRemaining: model.pelletsRemaining - 1
             });
 
-            expect(eventHandler).toHaveBeenCalledWith(expect.objectContaining({
-                score: 10
-            }));
+            expect(eventHandler).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    score: 10
+                })
+            );
         });
 
         test('Model should emit GHOST_EATEN event', () => {
@@ -259,10 +335,12 @@ describe('ModelDriven Architecture - Pure Observer Pattern', () => {
                 ghostType: 'blinky'
             });
 
-            expect(eventHandler).toHaveBeenCalledWith(expect.objectContaining({
-                score: 200,
-                ghostType: 'blinky'
-            }));
+            expect(eventHandler).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    score: 200,
+                    ghostType: 'blinky'
+                })
+            );
         });
 
         test('Model should emit LIVES_LOST event on death', () => {
@@ -286,9 +364,11 @@ describe('ModelDriven Architecture - Pure Observer Pattern', () => {
                 score: 1000
             });
 
-            expect(eventHandler).toHaveBeenCalledWith(expect.objectContaining({
-                level: 1
-            }));
+            expect(eventHandler).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    level: 1
+                })
+            );
         });
 
         test('Model should emit GAME_OVER event', () => {
@@ -300,9 +380,11 @@ describe('ModelDriven Architecture - Pure Observer Pattern', () => {
                 highScore: 10000
             });
 
-            expect(eventHandler).toHaveBeenCalledWith(expect.objectContaining({
-                score: 5000
-            }));
+            expect(eventHandler).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    score: 5000
+                })
+            );
         });
     });
 
@@ -321,9 +403,11 @@ describe('ModelDriven Architecture - Pure Observer Pattern', () => {
 
             expect(model.isDying).toBe(false);
             expect(model.lives).toBe(1);
-            expect(events).toContainEqual(expect.objectContaining({
-                type: 'respawn'
-            }));
+            expect(events).toContainEqual(
+                expect.objectContaining({
+                    type: 'respawn'
+                })
+            );
         });
 
         test('Model should trigger game over when no lives remain', () => {
@@ -333,9 +417,11 @@ describe('ModelDriven Architecture - Pure Observer Pattern', () => {
             const events = model.updateDeathSequence(model.deathPauseDuration);
 
             expect(model.isGameOver).toBe(true);
-            expect(events).toContainEqual(expect.objectContaining({
-                type: 'game_over'
-            }));
+            expect(events).toContainEqual(
+                expect.objectContaining({
+                    type: 'game_over'
+                })
+            );
         });
     });
 
@@ -393,7 +479,7 @@ describe('ModelDriven Architecture - Pure Observer Pattern', () => {
                 }
             };
 
-            const visualPacman = new VisualPacman(mockScene, model.pacman);
+            const visualPacman = new VisualPlayer(mockScene, model.pacman);
 
             // Record initial state
             const initialX = model.pacman.x;

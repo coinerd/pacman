@@ -21,6 +21,11 @@ export const GAME_EVENTS = {
     DIRECTION_CHANGED: 'direction:changed',
     RESPAWN: 'game:respawn',
 
+    BOSS_SPAWNED: 'boss:spawned',
+    BOSS_PHASE_CHANGED: 'boss:phase-changed',
+    BOSS_DEFEATED: 'boss:defeated',
+    BOSS_DAMAGED: 'boss:damaged',
+
     // Controller Action Events (Phase 6)
     PAUSE_REQUESTED: 'controller:pause-requested',
     RESUME_REQUESTED: 'controller:resume-requested',
@@ -33,7 +38,13 @@ export const GAME_EVENTS = {
     REPLAY_TOGGLE_REQUESTED: 'controller:replay-toggle-requested',
     LOAD_REPLAY_REQUESTED: 'controller:load-replay-requested',
     REPLAY_INPUT: 'replay:input',
-    REPLAY_FINISHED: 'replay:finished'
+    REPLAY_FINISHED: 'replay:finished',
+    POWER_UP_SPAWNED: 'power-up:spawned',
+    POWER_UP_COLLECTED: 'power-up:collected',
+    POWER_UP_EXPIRED: 'power-up:expired',
+    POWER_UP_ACTIVATED: 'power-up:activated',
+    CHAPTER_STARTED: 'chapter:started',
+    CHAPTER_COMPLETED: 'chapter:completed'
 };
 
 export class EventBus {
@@ -42,12 +53,12 @@ export class EventBus {
     }
 
     /**
-   * Subscribe to an event
-   * @param {string} event - Event name
-   * @param {Function} callback - Callback function
-   * @param {*} context - Optional context to bind to callback
-   * @returns {Function} Unsubscribe function
-   */
+	 * Subscribe to an event
+	 * @param {string} event - Event name
+	 * @param {Function} callback - Callback function
+	 * @param {*} context - Optional context to bind to callback
+	 * @returns {Function} Unsubscribe function
+	 */
     on(event, callback, context = null) {
         if (typeof callback !== 'function') {
             throw new Error('Callback must be a function');
@@ -65,18 +76,18 @@ export class EventBus {
     }
 
     /**
-   * Unsubscribe a specific callback from an event
-   * @param {string} event - Event name
-   * @param {Function} callback - Callback to remove
-   * @returns {Function} Unsubscribe function (for chaining)
-   */
+	 * Unsubscribe a specific callback from an event
+	 * @param {string} event - Event name
+	 * @param {Function} callback - Callback to remove
+	 * @returns {Function} Unsubscribe function (for chaining)
+	 */
     off(event, callback) {
         if (!this.listeners.has(event)) {
             return () => {};
         }
 
         const listeners = this.listeners.get(event);
-        const index = listeners.findIndex(l => l.callback === callback);
+        const index = listeners.findIndex((l) => l.callback === callback);
 
         if (index !== -1) {
             listeners.splice(index, 1);
@@ -91,12 +102,12 @@ export class EventBus {
     }
 
     /**
-   * Subscribe to an event that only fires once
-   * @param {string} event - Event name
-   * @param {Function} callback - Callback function
-   * @param {*} context - Optional context to bind to callback
-   * @returns {Function} Unsubscribe function
-   */
+	 * Subscribe to an event that only fires once
+	 * @param {string} event - Event name
+	 * @param {Function} callback - Callback function
+	 * @param {*} context - Optional context to bind to callback
+	 * @returns {Function} Unsubscribe function
+	 */
     once(event, callback, context = null) {
         const wrappedCallback = (...args) => {
             this.off(event, wrappedCallback);
@@ -107,10 +118,10 @@ export class EventBus {
     }
 
     /**
-   * Emit an event with optional data
-   * @param {string} event - Event name
-   * @param {*} data - Data to pass to subscribers
-   */
+	 * Emit an event with optional data
+	 * @param {string} event - Event name
+	 * @param {*} data - Data to pass to subscribers
+	 */
     emit(event, data = null) {
         if (!this.listeners.has(event)) {
             this.emitTelemetry(event, data);
@@ -137,34 +148,36 @@ export class EventBus {
             return;
         }
 
-        target.dispatchEvent(new CustomEvent('pacman:telemetry', {
-            detail: {
-                event,
-                payload: data
-            }
-        }));
+        target.dispatchEvent(
+            new CustomEvent('adawoman:telemetry', {
+                detail: {
+                    event,
+                    payload: data
+                }
+            })
+        );
     }
 
     /**
-   * Remove all event listeners
-   */
+	 * Remove all event listeners
+	 */
     clear() {
         this.listeners.clear();
     }
 
     /**
-   * Get the number of listeners for an event
-   * @param {string} event - Event name
-   * @returns {number} Number of listeners
-   */
+	 * Get the number of listeners for an event
+	 * @param {string} event - Event name
+	 * @returns {number} Number of listeners
+	 */
     listenerCount(event) {
         return this.listeners.has(event) ? this.listeners.get(event).length : 0;
     }
 
     /**
-   * Get all event names that have listeners
-   * @returns {string[]} Array of event names
-   */
+	 * Get all event names that have listeners
+	 * @returns {string[]} Array of event names
+	 */
     eventNames() {
         return Array.from(this.listeners.keys());
     }

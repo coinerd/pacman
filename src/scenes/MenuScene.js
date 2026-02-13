@@ -4,9 +4,10 @@
  */
 
 import Phaser from 'phaser';
-import { colors, uiConfig, animationConfig } from '../config/gameConfig.js';
-import { StorageManager } from '../managers/StorageManager.js';
+import { themeConfig, themeUtils } from '../config/themeConfig.js';
 import { SoundManager } from '../managers/SoundManager.js';
+import { StorageManager } from '../managers/StorageManager.js';
+import { LogoCreator } from '../utils/LogoCreator.js';
 
 export default class MenuScene extends Phaser.Scene {
     constructor() {
@@ -17,6 +18,8 @@ export default class MenuScene extends Phaser.Scene {
         this.storageManager = new StorageManager();
         this.highScore = this.storageManager.getHighScore();
         this.soundManager = new SoundManager(this);
+        this.theme = themeConfig;
+        this.utils = themeUtils;
 
         this.createBackground();
         this.createTitle();
@@ -52,9 +55,11 @@ export default class MenuScene extends Phaser.Scene {
     }
 
     /**
-     * Create background with animated pattern
-     */
+	 * Create background with animated pattern
+	 */
     createBackground() {
+        const colors = this.theme.colors;
+
         // Main background
         this.add.rectangle(
             this.scale.width / 2,
@@ -64,164 +69,188 @@ export default class MenuScene extends Phaser.Scene {
             colors.background
         );
 
-        // Add subtle animated dots
+        // Add circuit grid pattern
         const graphics = this.add.graphics();
-        graphics.fillStyle(0x111122, 0.5);
+        const gridSize = 40;
+        const gridAlpha = 0.1;
 
-        for (let i = 0; i < 50; i++) {
-            const x = Math.random() * this.scale.width;
-            const y = Math.random() * this.scale.height;
-            const size = Math.random() * 3 + 1;
-            graphics.fillCircle(x, y, size);
+        // Draw grid lines
+        graphics.lineStyle(1, colors.circuit.traceDim, gridAlpha);
+        for (let x = 0; x <= this.scale.width; x += gridSize) {
+            graphics.lineBetween(x, 0, x, this.scale.height);
+        }
+        for (let y = 0; y <= this.scale.height; y += gridSize) {
+            graphics.lineBetween(0, y, this.scale.width, y);
+        }
+
+        // Add circuit nodes
+        const nodeSpacing = 120;
+        for (let x = nodeSpacing; x < this.scale.width; x += nodeSpacing) {
+            for (let y = nodeSpacing; y < this.scale.height; y += nodeSpacing) {
+                graphics.fillStyle(colors.circuit.node, 0.15);
+                graphics.fillCircle(x, y, 2);
+
+                if ((x + y) % (nodeSpacing * 3) === 0) {
+                    graphics.fillStyle(colors.circuit.nodeGlow, 0.3);
+                    graphics.fillCircle(x, y, 4);
+                }
+            }
         }
     }
 
     /**
-     * Create animated title
-     */
+	 * Create animated title with tech styling
+	 */
     createTitle() {
-        const titleText = this.add.text(
-            this.scale.width / 2,
-            this.scale.height * 0.15,
-            'PAC-MAN',
-            {
-                fontSize: uiConfig.fonts.title.size,
-                color: colors.pacman,
-                fontFamily: uiConfig.fonts.title.family,
-                fontStyle: uiConfig.fonts.title.style,
-                stroke: '#000000',
-                strokeThickness: 4
-            }
-        );
-        titleText.setOrigin(0.5);
-
-        // Add glow effect
-        const glowText = this.add.text(
-            this.scale.width / 2,
-            this.scale.height * 0.15,
-            'PAC-MAN',
-            {
-                fontSize: uiConfig.fonts.title.size,
-                color: colors.pacman,
-                fontFamily: uiConfig.fonts.title.family,
-                fontStyle: uiConfig.fonts.title.style,
-                blur: 10
-            }
-        );
-        glowText.setOrigin(0.5);
-        glowText.setAlpha(0.3);
-
-        // Pulse animation
-        this.tweens.add({
-            targets: [titleText, glowText],
-            scale: { from: 1, to: 1.05 },
-            duration: 1000,
-            yoyo: true,
-            repeat: -1,
-            ease: 'Sine.easeInOut'
+        this.logoContainer = LogoCreator.createADAWomanLogo(this, {
+            x: this.scale.width / 2,
+            y: this.scale.height * 0.15,
+            scale: 1.2,
+            animated: true
         });
     }
 
     /**
-     * Create high score display
-     */
+	 * Create high score display
+	 */
     createHighScore() {
+        const hudFont = this.theme.fonts.hud.score;
+        const colors = this.theme.colors;
+
         const highScoreText = this.add.text(
             this.scale.width / 2,
             this.scale.height * 0.25,
             `HIGH SCORE: ${this.highScore}`,
             {
-                fontSize: uiConfig.fonts.text.size,
-                color: uiConfig.colors.accent,
-                fontFamily: uiConfig.fonts.text.family,
-                fontStyle: 'bold'
+                fontFamily: hudFont.family,
+                fontSize: hudFont.size,
+                fontStyle: hudFont.style,
+                fontWeight: hudFont.weight,
+                letterSpacing: hudFont.letterSpacing,
+                color: `#${colors.accent.toString(16).padStart(6, '0')}`,
+                shadowColor: `#${colors.effect.glow.toString(16).padStart(6, '0')}`,
+                shadowBlur: hudFont.shadowBlur
             }
         );
         highScoreText.setOrigin(0.5);
     }
 
     /**
-     * Create basic instructions
-     */
+	 * Create basic instructions
+	 */
     createInstructions() {
-        const instructions = [
-            'Press SPACE to Start',
-            'Press H for How to Play'
-        ];
+        const menuFont = this.theme.fonts.menu.item;
+        const colors = this.theme.colors;
+
+        const instructions = ['Press SPACE to Start', 'Press H for How to Play'];
 
         let y = this.scale.height * 0.35;
         for (const instruction of instructions) {
-            this.add.text(
-                this.scale.width / 2,
-                y,
-                instruction,
-                {
-                    fontSize: uiConfig.fonts.small.size,
-                    color: uiConfig.colors.primary,
-                    fontFamily: uiConfig.fonts.small.family
-                }
-            ).setOrigin(0.5);
+            this.add
+                .text(this.scale.width / 2, y, instruction, {
+                    fontFamily: menuFont.family,
+                    fontSize: menuFont.size,
+                    fontStyle: menuFont.style,
+                    fontWeight: menuFont.weight,
+                    letterSpacing: menuFont.letterSpacing,
+                    color: `#${colors.text.primary.toString(16).padStart(6, '0')}`
+                })
+                .setOrigin(0.5);
             y += 30;
         }
     }
 
     /**
-     * Create how to play section
-     */
+	 * Create how to play section
+	 */
     createHowToPlay() {
         this.howToPlayContainer = this.add.container();
         this.howToPlayContainer.setVisible(false);
 
-        const panel = this.add.rectangle(
-            this.scale.width / 2,
-            this.scale.height / 2,
-            this.scale.width * 0.8,
-            this.scale.height * 0.6,
-            0x000033,
-            0.95
-        );
-        panel.setStrokeStyle(2, uiConfig.colors.accent);
+        const panelWidth = this.scale.width * 0.8;
+        const panelHeight = this.scale.height * 0.6;
+        const colors = this.theme.colors;
+        const panel = this.add.graphics();
 
+        // Panel background
+        panel.fillStyle(colors.panel.background, 0.95);
+        panel.fillRoundedRect(
+            this.scale.width / 2 - panelWidth / 2,
+            this.scale.height / 2 - panelHeight / 2,
+            panelWidth,
+            panelHeight,
+            this.theme.circuit.panel.cornerRadius
+        );
+
+        // Panel border with circuit style
+        panel.lineStyle(2, colors.panel.border, 1);
+        panel.strokeRoundedRect(
+            this.scale.width / 2 - panelWidth / 2,
+            this.scale.height / 2 - panelHeight / 2,
+            panelWidth,
+            panelHeight,
+            this.theme.circuit.panel.cornerRadius
+        );
+
+        // Circuit trace decorations
+        const traceOffset = 15;
+        panel.lineStyle(1, colors.circuit.trace, 0.6);
+        panel.strokePoints([
+            {
+                x: this.scale.width / 2 - panelWidth / 2 + traceOffset,
+                y: this.scale.height / 2 - panelHeight / 2 + traceOffset
+            },
+            {
+                x: this.scale.width / 2 + panelWidth / 2 - traceOffset,
+                y: this.scale.height / 2 - panelHeight / 2 + traceOffset
+            }
+        ]);
+
+        const techSubtitle = this.theme.fonts.tech.subtitle;
         const title = this.add.text(
             this.scale.width / 2,
             this.scale.height * 0.25,
             'HOW TO PLAY',
             {
-                fontSize: uiConfig.fonts.subtitle.size,
-                color: uiConfig.colors.primary,
-                fontFamily: uiConfig.fonts.subtitle.family,
-                fontStyle: uiConfig.fonts.subtitle.style
+                fontFamily: techSubtitle.family,
+                fontSize: techSubtitle.size,
+                fontStyle: techSubtitle.style,
+                fontWeight: techSubtitle.weight,
+                letterSpacing: techSubtitle.letterSpacing,
+                textTransform: techSubtitle.textTransform,
+                color: `#${colors.primary.toString(16).padStart(6, '0')}`
             }
         );
         title.setOrigin(0.5);
 
+        const techBody = this.theme.fonts.tech.body;
         const instructions = [
-            '• Navigate the maze and eat all pellets to complete each level',
-            '• Avoid the ghosts! They will chase you through the maze',
-            '• Eat power pellets (large dots) to turn ghosts blue',
-            '• When ghosts are blue, you can eat them for bonus points',
-            '• Fruits appear periodically for extra points',
+            '• Navigate maze and collect data bits to complete each level',
+            '• Avoid viruses! They will chase you through the maze',
+            '• Grab power packets to decrypt viruses temporarily',
+            '• When viruses are decrypted, you can eliminate them',
+            '• Data fragments appear for extra points',
             '• Each level gets faster and more challenging',
             '',
             'SCORING:',
-            '• Pellet: 10 points',
-            '• Power Pellet: 50 points',
-            '• Ghost: 200, 400, 800, 1600 points (combo)',
-            '• Fruit: 100-5000 points (varies by type)'
+            '• Data Bit: 10 points',
+            '• Power Packet: 50 points',
+            '• Virus: 200, 400, 800, 1600 points (combo)',
+            '• Data Fragment: 100-5000 points (varies by type)'
         ];
 
         let y = this.scale.height * 0.35;
         for (const instruction of instructions) {
-            this.add.text(
-                this.scale.width / 2,
-                y,
-                instruction,
-                {
-                    fontSize: uiConfig.fonts.small.size,
-                    color: uiConfig.colors.primary,
-                    fontFamily: uiConfig.fonts.small.family
-                }
-            ).setOrigin(0.5);
+            this.add
+                .text(this.scale.width / 2, y, instruction, {
+                    fontFamily: techBody.family,
+                    fontSize: techBody.size,
+                    fontStyle: techBody.style,
+                    fontWeight: techBody.weight,
+                    lineHeight: techBody.lineHeight,
+                    color: `#${colors.text.primary.toString(16).padStart(6, '0')}`
+                })
+                .setOrigin(0.5);
             y += 22;
         }
 
@@ -230,9 +259,11 @@ export default class MenuScene extends Phaser.Scene {
             this.scale.height * 0.75,
             'Press H or ESC to Close',
             {
-                fontSize: uiConfig.fonts.small.size,
-                color: uiConfig.colors.info,
-                fontFamily: uiConfig.fonts.small.family
+                fontFamily: techBody.family,
+                fontSize: techBody.size,
+                fontStyle: techBody.style,
+                fontWeight: techBody.weight,
+                color: `#${colors.text.info.toString(16).padStart(6, '0')}`
             }
         );
         closeText.setOrigin(0.5);
@@ -241,9 +272,13 @@ export default class MenuScene extends Phaser.Scene {
     }
 
     /**
-     * Create controls display
-     */
+	 * Create controls display
+	 */
     createControls() {
+        const techHeader = this.theme.fonts.tech.header;
+        const techBody = this.theme.fonts.tech.body;
+        const colors = this.theme.colors;
+
         const controlsContainer = this.add.container();
 
         const title = this.add.text(
@@ -251,10 +286,12 @@ export default class MenuScene extends Phaser.Scene {
             this.scale.height * 0.55,
             'CONTROLS',
             {
-                fontSize: uiConfig.fonts.text.size,
-                color: uiConfig.colors.info,
-                fontFamily: uiConfig.fonts.text.family,
-                fontStyle: 'bold'
+                fontFamily: techHeader.family,
+                fontSize: techHeader.size,
+                fontStyle: techHeader.style,
+                fontWeight: techHeader.weight,
+                letterSpacing: techHeader.letterSpacing,
+                color: `#${colors.text.info.toString(16).padStart(6, '0')}`
             }
         );
         title.setOrigin(0.5);
@@ -266,18 +303,17 @@ export default class MenuScene extends Phaser.Scene {
             'S - Settings'
         ];
 
-        let y = this.scale.height * 0.60;
+        let y = this.scale.height * 0.6;
         for (const control of controls) {
-            this.add.text(
-                this.scale.width / 2,
-                y,
-                control,
-                {
-                    fontSize: uiConfig.fonts.small.size,
-                    color: uiConfig.colors.primary,
-                    fontFamily: uiConfig.fonts.small.family
-                }
-            ).setOrigin(0.5);
+            this.add
+                .text(this.scale.width / 2, y, control, {
+                    fontFamily: techBody.family,
+                    fontSize: techBody.size,
+                    fontStyle: techBody.style,
+                    fontWeight: techBody.weight,
+                    color: `#${colors.text.primary.toString(16).padStart(6, '0')}`
+                })
+                .setOrigin(0.5);
             y += 25;
         }
 
@@ -285,18 +321,24 @@ export default class MenuScene extends Phaser.Scene {
     }
 
     /**
-     * Create start prompt with animation
-     */
+	 * Create start prompt with animation
+	 */
     createStartPrompt() {
+        const menuFont = this.theme.fonts.menu.item;
+        const colors = this.theme.colors;
+        const animConfig = this.theme.animations;
+
         const startText = this.add.text(
             this.scale.width / 2,
             this.scale.height * 0.85,
             'Press SPACE to Start',
             {
-                fontSize: uiConfig.fonts.text.size,
-                color: uiConfig.colors.success,
-                fontFamily: uiConfig.fonts.text.family,
-                fontStyle: 'bold'
+                fontFamily: menuFont.family,
+                fontSize: menuFont.size,
+                fontStyle: menuFont.style,
+                fontWeight: menuFont.weight,
+                letterSpacing: menuFont.letterSpacing,
+                color: `#${colors.status.success.toString(16).padStart(6, '0')}`
             }
         );
         startText.setOrigin(0.5);
@@ -304,7 +346,7 @@ export default class MenuScene extends Phaser.Scene {
         this.tweens.add({
             targets: startText,
             alpha: { from: 1, to: 0.3 },
-            duration: animationConfig.textFadeSpeed,
+            duration: animConfig.text.fade.in,
             yoyo: true,
             repeat: -1,
             ease: 'Sine.easeInOut'
@@ -312,8 +354,8 @@ export default class MenuScene extends Phaser.Scene {
     }
 
     /**
-     * Toggle how to play visibility
-     */
+	 * Toggle how to play visibility
+	 */
     toggleHowToPlay() {
         const isVisible = !this.howToPlayContainer.visible;
         this.howToPlayContainer.setVisible(isVisible);

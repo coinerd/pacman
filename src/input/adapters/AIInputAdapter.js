@@ -1,24 +1,24 @@
 /**
  * AIInputAdapter
  * Provides AI-controlled input for bot gameplay, demos, and automated testing.
- * Wraps the existing PacmanAI system to provide input through the adapter interface.
+ * Wraps the existing PlayerAI system to provide input through adapter interface.
  */
 
-import { InputAdapter, INPUT_TYPES } from '../InputAdapter.js';
-import { PacmanAI } from '../../systems/PacmanAI.js';
+import { PlayerAI } from '../../systems/PlayerAI.js';
+import { INPUT_TYPES, InputAdapter } from '../InputAdapter.js';
 
 export class AIInputAdapter extends InputAdapter {
     /**
-     * Create AIInputAdapter
-     * @param {Object} options - Configuration options
-     * @param {Object} options.aiInstance - Optional existing PacmanAI instance
-     * @param {number} options.decisionInterval - Ms between decisions (default: 100)
-     * @param {boolean} options.continuousMode - Emit direction every frame (default: true)
-     */
+	 * Create AIInputAdapter
+	 * @param {Object} options - Configuration options
+	 * @param {Object} options.aiInstance - Optional existing PlayerAI instance
+	 * @param {number} options.decisionInterval - Ms between decisions (default: 100)
+	 * @param {boolean} options.continuousMode - Emit direction every frame (default: true)
+	 */
     constructor(options = {}) {
         super();
         this.name = 'ai';
-        this.ai = options.aiInstance || new PacmanAI();
+        this.ai = options.aiInstance || new PlayerAI();
         this.options = {
             decisionInterval: 100,
             continuousMode: true,
@@ -32,9 +32,9 @@ export class AIInputAdapter extends InputAdapter {
     }
 
     /**
-     * Connect the AI to a game model
-     * @param {Object} gameModel - The game model to control
-     */
+	 * Connect the AI to a game model
+	 * @param {Object} gameModel - The game model to control
+	 */
     setGameModel(gameModel) {
         this.gameModel = gameModel;
         if (this.ai) {
@@ -43,8 +43,8 @@ export class AIInputAdapter extends InputAdapter {
     }
 
     /**
-     * Disconnect from game model
-     */
+	 * Disconnect from game model
+	 */
     disconnect() {
         this.gameModel = null;
         if (this.ai) {
@@ -53,8 +53,8 @@ export class AIInputAdapter extends InputAdapter {
     }
 
     /**
-     * Enable AI control
-     */
+	 * Enable AI control
+	 */
     enable() {
         super.enable();
         if (this.ai) {
@@ -63,8 +63,8 @@ export class AIInputAdapter extends InputAdapter {
     }
 
     /**
-     * Disable AI control
-     */
+	 * Disable AI control
+	 */
     disable() {
         super.disable();
         if (this.ai) {
@@ -73,9 +73,9 @@ export class AIInputAdapter extends InputAdapter {
     }
 
     /**
-     * Get current input from AI
-     * @returns {Object|null} Direction input or null
-     */
+	 * Get current input from AI
+	 * @returns {Object|null} Direction input or null
+	 */
     getCurrentInput() {
         if (!this.isEnabled || !this.gameModel || !this.ai) {
             return null;
@@ -101,11 +101,13 @@ export class AIInputAdapter extends InputAdapter {
     }
 
     /**
-     * Update AI decision making
-     * @param {number} deltaTime - Time since last frame in ms
-     */
+	 * Update AI decision making
+	 * @param {number} deltaTime - Time since last frame in ms
+	 */
     update(deltaTime) {
-        if (!this.isEnabled || !this.gameModel) {return;}
+        if (!this.isEnabled || !this.gameModel) {
+            return;
+        }
 
         this.lastDecisionTime += deltaTime;
 
@@ -137,9 +139,9 @@ export class AIInputAdapter extends InputAdapter {
     }
 
     /**
-     * Force an immediate AI decision
-     * @returns {Object|null} Direction input or null
-     */
+	 * Force an immediate AI decision
+	 * @returns {Object|null} Direction input or null
+	 */
     forceDecision() {
         if (!this.isEnabled || !this.gameModel || !this.ai) {
             return null;
@@ -168,9 +170,9 @@ export class AIInputAdapter extends InputAdapter {
     }
 
     /**
-     * Get AI statistics
-     * @returns {Object} Statistics about AI performance
-     */
+	 * Get AI statistics
+	 * @returns {Object} Statistics about AI performance
+	 */
     getStats() {
         return {
             decisionCount: this.decisionCount,
@@ -181,8 +183,8 @@ export class AIInputAdapter extends InputAdapter {
     }
 
     /**
-     * Reset AI state
-     */
+	 * Reset AI state
+	 */
     reset() {
         this.lastDecisionTime = 0;
         this.lastDirection = null;
@@ -196,8 +198,8 @@ export class AIInputAdapter extends InputAdapter {
     }
 
     /**
-     * Clean up resources
-     */
+	 * Clean up resources
+	 */
     destroy() {
         this.disconnect();
         this.ai = null;
@@ -211,10 +213,10 @@ export class AIInputAdapter extends InputAdapter {
  */
 export class ScriptedAIAdapter extends InputAdapter {
     /**
-     * Create ScriptedAIAdapter
-     * @param {Array} script - Array of {time, action} objects
-     * @param {Object} options - Configuration options
-     */
+	 * Create ScriptedAIAdapter
+	 * @param {Array} script - Array of {time, action} objects
+	 * @param {Object} options - Configuration options
+	 */
     constructor(script = [], options = {}) {
         super();
         this.name = 'scripted_ai';
@@ -230,8 +232,8 @@ export class ScriptedAIAdapter extends InputAdapter {
     }
 
     /**
-     * Start the script
-     */
+	 * Start the script
+	 */
     start() {
         this.isPlaying = true;
         this.elapsedTime = 0;
@@ -239,18 +241,20 @@ export class ScriptedAIAdapter extends InputAdapter {
     }
 
     /**
-     * Stop the script
-     */
+	 * Stop the script
+	 */
     stop() {
         this.isPlaying = false;
     }
 
     /**
-     * Update script playback
-     * @param {number} deltaTime - Time since last frame in ms
-     */
+	 * Update script playback
+	 * @param {number} deltaTime - Time since last frame in ms
+	 */
     update(deltaTime) {
-        if (!this.isPlaying || !this.isEnabled) {return;}
+        if (!this.isPlaying || !this.isEnabled) {
+            return;
+        }
 
         this.elapsedTime += deltaTime;
 
@@ -280,8 +284,8 @@ export class ScriptedAIAdapter extends InputAdapter {
     }
 
     /**
-     * Clean up resources
-     */
+	 * Clean up resources
+	 */
     destroy() {
         this.stop();
         this.script = [];

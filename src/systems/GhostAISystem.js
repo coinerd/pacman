@@ -1,4 +1,9 @@
-import { ghostModes, directions, scatterTargets, getOpposite } from '../config/gameConfig.js';
+import {
+    directions,
+    getOpposite,
+    ghostModes,
+    scatterTargets
+} from '../config/gameConfig.js';
 import { getDistance, getValidDirections } from '../utils/MazeLayout.js';
 
 /**
@@ -7,15 +12,15 @@ import { getDistance, getValidDirections } from '../utils/MazeLayout.js';
  */
 export class GhostAISystem {
     /**
-     * Creates a new GhostAISystem instance
-     */
+	 * Creates a new GhostAISystem instance
+	 */
     constructor() {
         this.ghosts = [];
         this.globalModeTimer = 0;
         this.globalMode = ghostModes.SCATTER;
         this.cycleIndex = 0;
 
-        // Classic Pac-Man Scatter/Chase cycle durations (in seconds)
+        // Scatter/Chase cycle durations (in seconds)
         this.cycles = [
             { mode: ghostModes.SCATTER, duration: 7 },
             { mode: ghostModes.CHASE, duration: 20 },
@@ -29,19 +34,19 @@ export class GhostAISystem {
     }
 
     /**
-     * Sets the ghosts to be managed by this AI system
-     * @param {Ghost[]} ghosts - Array of ghost entities
-     */
+	 * Sets the ghosts to be managed by this AI system
+	 * @param {Ghost[]} ghosts - Array of ghost entities
+	 */
     setGhosts(ghosts) {
         this.ghosts = ghosts;
     }
 
     /**
-     * Updates all ghosts AI based on current game state
-     * @param {number} deltaSeconds - Time elapsed since last update in seconds
-     * @param {MazeLayout} maze - Current maze layout for collision detection
-     * @param {Pacman} pacman - Pacman entity for targeting
-     */
+	 * Updates all ghosts AI based on current game state
+	 * @param {number} deltaSeconds - Time elapsed since last update in seconds
+	 * @param {MazeLayout} maze - Current maze layout for collision detection
+	 * @param {Pacman} pacman - Pacman entity for targeting
+	 */
     update(deltaSeconds, maze, pacman) {
         this.updateGlobalMode(deltaSeconds);
 
@@ -61,9 +66,9 @@ export class GhostAISystem {
     }
 
     /**
-     * Updates the global ghost mode based on cycle timers
-     * @param {number} deltaSeconds - Time elapsed since last update in seconds
-     */
+	 * Updates the global ghost mode based on cycle timers
+	 * @param {number} deltaSeconds - Time elapsed since last update in seconds
+	 */
     updateGlobalMode(deltaSeconds) {
         const currentCycle = this.cycles[this.cycleIndex];
         if (currentCycle.duration === -1) {
@@ -80,10 +85,10 @@ export class GhostAISystem {
     }
 
     /**
-     * Updates the target position for a ghost based on its type and current mode
-     * @param {Ghost} ghost - The ghost entity to update
-     * @param {Pacman} pacman - Pacman entity for targeting
-     */
+	 * Updates the target position for a ghost based on its type and current mode
+	 * @param {Ghost} ghost - The ghost entity to update
+	 * @param {Pacman} pacman - Pacman entity for targeting
+	 */
     updateGhostTarget(ghost, pacman) {
         if (ghost.isEaten) {
             ghost.targetX = 13; // Ghost house entrance
@@ -97,30 +102,30 @@ export class GhostAISystem {
         }
 
         switch (ghost.type) {
-        case 'blinky':
-            this.updateBlinkyTarget(ghost, pacman);
+        case 'alpha':
+            this.updateAlphaTarget(ghost, pacman);
             break;
-        case 'pinky':
-            this.updatePinkyTarget(ghost, pacman);
+        case 'beta':
+            this.updateBetaTarget(ghost, pacman);
             break;
-        case 'inky':
-            this.updateInkyTarget(ghost, pacman);
+        case 'gamma':
+            this.updateGammaTarget(ghost, pacman);
             break;
-        case 'clyde':
-            this.updateClydeTarget(ghost, pacman);
+        case 'delta':
+            this.updateDeltaTarget(ghost, pacman);
             break;
         }
     }
 
     /**
-     * Updates Blinky's target position based on mode
-     * @param {Ghost} ghost - Blinky ghost entity
-     * @param {Pacman} pacman - Pacman entity for targeting
-     */
-    updateBlinkyTarget(ghost, pacman) {
+	 * Updates Alpha's target position based on mode
+	 * @param {Ghost} ghost - Alpha ghost entity
+	 * @param {Pacman} pacman - Pacman entity for targeting
+	 */
+    updateAlphaTarget(ghost, pacman) {
         if (ghost.mode === ghostModes.SCATTER) {
-            ghost.targetX = scatterTargets.blinky.x;
-            ghost.targetY = scatterTargets.blinky.y;
+            ghost.targetX = scatterTargets.alpha.x;
+            ghost.targetY = scatterTargets.alpha.y;
         } else {
             ghost.targetX = pacman.gridX;
             ghost.targetY = pacman.gridY;
@@ -128,18 +133,18 @@ export class GhostAISystem {
     }
 
     /**
-     * Updates Pinky's target position (4 tiles ahead of Pacman in chase mode)
-     * @param {Ghost} ghost - Pinky ghost entity
-     * @param {Pacman} pacman - Pacman entity for targeting
-     */
-    updatePinkyTarget(ghost, pacman) {
+	 * Updates Beta's target position (4 tiles ahead of Pacman in chase mode)
+	 * @param {Ghost} ghost - Beta ghost entity
+	 * @param {Pacman} pacman - Pacman entity for targeting
+	 */
+    updateBetaTarget(ghost, pacman) {
         if (ghost.mode === ghostModes.SCATTER) {
-            ghost.targetX = scatterTargets.pinky.x;
-            ghost.targetY = scatterTargets.pinky.y;
+            ghost.targetX = scatterTargets.beta.x;
+            ghost.targetY = scatterTargets.beta.y;
         } else {
-            // Pinky targets 4 tiles ahead of Pacman
-            ghost.targetX = pacman.gridX + (pacman.direction.x * 4);
-            ghost.targetY = pacman.gridY + (pacman.direction.y * 4);
+            // Beta targets 4 tiles ahead of Pacman
+            ghost.targetX = pacman.gridX + pacman.direction.x * 4;
+            ghost.targetY = pacman.gridY + pacman.direction.y * 4;
 
             // Replicate the original arcade bug where "Up" also moves target left
             if (pacman.direction.y === -1) {
@@ -149,10 +154,89 @@ export class GhostAISystem {
     }
 
     /**
-     * Updates Inky's target position (vector from Blinky through 2 tiles ahead of Pacman)
-     * @param {Ghost} ghost - Inky ghost entity
-     * @param {Pacman} pacman - Pacman entity for targeting
-     */
+	 * Updates Gamma's target position (vector from Alpha through 2 tiles ahead of Pacman)
+	 * @param {Ghost} ghost - Gamma ghost entity
+	 * @param {Pacman} pacman - Pacman entity for targeting
+	 */
+    updateGammaTarget(ghost, pacman) {
+        if (ghost.mode === ghostModes.SCATTER) {
+            ghost.targetX = scatterTargets.gamma.x;
+            ghost.targetY = scatterTargets.gamma.y;
+        } else {
+            const alpha = this.getGhostByType('alpha');
+            if (alpha) {
+                // Gamma's target is a vector from Alpha through 2 tiles ahead of Pacman
+                const pivotX = pacman.gridX + pacman.direction.x * 2;
+                const pivotY = pacman.gridY + pacman.direction.y * 2;
+
+                // Also replicate the bug for Gamma's pivot tiling
+                if (pacman.direction.y === -1) {
+                    // Original bug: Up direction adds a left offset to the pivot
+                    // Not strictly necessary for "better" movement but characterful
+                }
+
+                ghost.targetX = pivotX + (pivotX - alpha.gridX);
+                ghost.targetY = pivotY + (pivotY - alpha.gridY);
+            } else {
+                ghost.targetX = pacman.gridX;
+                ghost.targetY = pacman.gridY;
+            }
+        }
+    }
+
+    /**
+	 * Updates Delta's target position (chases Pacman unless too close, then retreats)
+	 * @param {Ghost} ghost - Delta ghost entity
+	 * @param {Pacman} pacman - Pacman entity for targeting
+	 */
+    updateDeltaTarget(ghost, pacman) {
+        if (ghost.mode === ghostModes.SCATTER) {
+            ghost.targetX = scatterTargets.delta.x;
+            ghost.targetY = scatterTargets.delta.y;
+        } else {
+            const dist = getDistance(
+                ghost.gridX,
+                ghost.gridY,
+                pacman.gridX,
+                pacman.gridY
+            );
+            if (dist > 8) {
+                ghost.targetX = pacman.gridX;
+                ghost.targetY = pacman.gridY;
+            } else {
+                // Return to soul corner if too close
+                ghost.targetX = scatterTargets.delta.x;
+                ghost.targetY = scatterTargets.delta.y;
+            }
+        }
+    }
+
+    /**
+	 * Chooses next direction for a ghost based on its target and current state
+	 * @param {Ghost} ghost - The ghost entity to choose direction for
+	 * @param {MazeLayout} maze - Current maze layout for collision detection
+	 */
+    updatePinkyTarget(ghost, pacman) {
+        if (ghost.mode === ghostModes.SCATTER) {
+            ghost.targetX = scatterTargets.pinky.x;
+            ghost.targetY = scatterTargets.pinky.y;
+        } else {
+            // Pinky targets 4 tiles ahead of Pacman
+            ghost.targetX = pacman.gridX + pacman.direction.x * 4;
+            ghost.targetY = pacman.gridY + pacman.direction.y * 4;
+
+            // Replicate the original arcade bug where "Up" also moves target left
+            if (pacman.direction.y === -1) {
+                ghost.targetX -= 4;
+            }
+        }
+    }
+
+    /**
+	 * Updates Inky's target position (vector from Blinky through 2 tiles ahead of Pacman)
+	 * @param {Ghost} ghost - Inky ghost entity
+	 * @param {Pacman} pacman - Pacman entity for targeting
+	 */
     updateInkyTarget(ghost, pacman) {
         if (ghost.mode === ghostModes.SCATTER) {
             ghost.targetX = scatterTargets.inky.x;
@@ -161,8 +245,8 @@ export class GhostAISystem {
             const blinky = this.getGhostByType('blinky');
             if (blinky) {
                 // Inky's target is a vector from Blinky through 2 tiles ahead of Pacman
-                const pivotX = pacman.gridX + (pacman.direction.x * 2);
-                const pivotY = pacman.gridY + (pacman.direction.y * 2);
+                const pivotX = pacman.gridX + pacman.direction.x * 2;
+                const pivotY = pacman.gridY + pacman.direction.y * 2;
 
                 // Also replicate the bug for Inky's pivot tiling
                 if (pacman.direction.y === -1) {
@@ -180,16 +264,21 @@ export class GhostAISystem {
     }
 
     /**
-     * Updates Clyde's target position (chases Pacman unless too close, then retreats)
-     * @param {Ghost} ghost - Clyde ghost entity
-     * @param {Pacman} pacman - Pacman entity for targeting
-     */
+	 * Updates Clyde's target position (chases Pacman unless too close, then retreats)
+	 * @param {Ghost} ghost - Clyde ghost entity
+	 * @param {Pacman} pacman - Pacman entity for targeting
+	 */
     updateClydeTarget(ghost, pacman) {
         if (ghost.mode === ghostModes.SCATTER) {
             ghost.targetX = scatterTargets.clyde.x;
             ghost.targetY = scatterTargets.clyde.y;
         } else {
-            const dist = getDistance(ghost.gridX, ghost.gridY, pacman.gridX, pacman.gridY);
+            const dist = getDistance(
+                ghost.gridX,
+                ghost.gridY,
+                pacman.gridX,
+                pacman.gridY
+            );
             if (dist > 8) {
                 ghost.targetX = pacman.gridX;
                 ghost.targetY = pacman.gridY;
@@ -202,19 +291,19 @@ export class GhostAISystem {
     }
 
     /**
-     * Finds a ghost by its type
-     * @param {string} type - The ghost type ('blinky', 'pinky', 'inky', or 'clyde')
-     * @returns {Ghost|null} The ghost entity or null if not found
-     */
+	 * Finds a ghost by its type
+	 * @param {string} type - The ghost type ('alpha', 'beta', 'gamma', or 'delta')
+	 * @returns {Ghost|null} The ghost entity or null if not found
+	 */
     getGhostByType(type) {
-        return this.ghosts.find(ghost => ghost.type === type);
+        return this.ghosts.find((ghost) => ghost.type === type);
     }
 
     /**
-     * Chooses the next direction for a ghost based on its target and current state
-     * @param {Ghost} ghost - The ghost entity to choose direction for
-     * @param {MazeLayout} maze - Current maze layout for collision detection
-     */
+	 * Chooses the next direction for a ghost based on its target and current state
+	 * @param {Ghost} ghost - The ghost entity to choose direction for
+	 * @param {MazeLayout} maze - Current maze layout for collision detection
+	 */
     chooseDirection(ghost, maze) {
         const validDirs = getValidDirections(maze, ghost.gridX, ghost.gridY);
 
@@ -232,8 +321,8 @@ export class GhostAISystem {
         // Standard AI: Ghosts cannot reverse direction unless forced (mode change)
         if (ghost.direction !== directions.NONE) {
             const reverseDir = this.getReverseDirection(ghost.direction);
-            filteredDirs = validDirs.filter(d =>
-                !(d.x === reverseDir.x && d.y === reverseDir.y)
+            filteredDirs = validDirs.filter(
+                (d) => !(d.x === reverseDir.x && d.y === reverseDir.y)
             );
         }
 
@@ -266,15 +355,23 @@ export class GhostAISystem {
     }
 
     /**
-     * Returns the reverse of the given direction
-     * @param {Object} direction - Direction object with x and y properties
-     * @returns {Object} The opposite direction
-     */
+	 * Returns the reverse of the given direction
+	 * @param {Object} direction - Direction object with x and y properties
+	 * @returns {Object} The opposite direction
+	 */
     getReverseDirection(direction) {
-        if (direction.x === 1) {return directions.LEFT;}
-        if (direction.x === -1) {return directions.RIGHT;}
-        if (direction.y === 1) {return directions.UP;}
-        if (direction.y === -1) {return directions.DOWN;}
+        if (direction.x === 1) {
+            return directions.LEFT;
+        }
+        if (direction.x === -1) {
+            return directions.RIGHT;
+        }
+        if (direction.y === 1) {
+            return directions.UP;
+        }
+        if (direction.y === -1) {
+            return directions.DOWN;
+        }
         return directions.NONE;
     }
 }

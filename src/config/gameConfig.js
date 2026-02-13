@@ -1,17 +1,17 @@
 /**
  * Game Configuration
- * Contains all constants and settings for the Pac-Man game
+ * Contains all constants and settings for ADA-Woman tech-themed maze game
  */
 
 export const gameConfig = {
-    width: 560,
-    height: 620,
+    width: 500,
+    height: 660,
     tileSize: 20,
     mazePadding: 0,
-    mazeWidth: 28,
-    mazeHeight: 31,
+    mazeWidth: 25,
+    mazeHeight: 33,
     targetFPS: 60,
-    tunnelRow: 14,
+    tunnelRow: 15,
     debug: false
 };
 
@@ -23,31 +23,29 @@ export const collisionConfig = {
 };
 
 export const colors = {
-    background: 0x000000,
-    wall: 0x2121DE,
-    wallShadow: 0x1919B8,
-    pacman: 0xFFFF00,
-    blinky: 0xFF0000,
-    pinky: 0xFFB8FF,
-    inky: 0x00FFFF,
-    clyde: 0xFFB852,
-    pellet: 0xFFFFFF,
-    powerPellet: 0xFFFFFF,
-    frightenedGhost: 0x0000FF,
-    frightenedGhostEnd: 0xFFFFFF,
-    text: 0xFFFFFF,
-    score: 0xFFD700,
-    level: 0x00FF00,
-    cherry: 0xFF0000,
-    strawberry: 0xFF69B4,
-    orange: 0xFFA500,
-    apple: 0x00FF00,
-    melon: 0x00CED1,
-    galaxian: 0xFF1493,
-    bell: 0xFFD700,
-    key: 0xFFFFFF
+    background: 0x0d1b0d,
+    wall: 0x2a3f5f,
+    wallShadow: 0x1a2e45,
+    player: 0x00ced1,
+    enemy: {
+        alpha: 0x9b59b6,
+        beta: 0x7fff00,
+        gamma: 0xff4444,
+        delta: 0xffa500
+    },
+    pellet: 0xffffff,
+    powerPellet: 0xffffff,
+    decryptedEnemy: 0x00ffaa,
+    decryptedEnemyEnd: 0xffffff,
+    text: 0xffffff,
+    score: 0x00ff7f,
+    level: 0x00ff00,
+    fruit: {
+        dataFragment: 0x00ced1,
+        powerCore: 0x9b59b6
+    },
+    key: 0xffffff
 };
-
 
 export const directions = {
     UP: { x: 0, y: -1, angle: 270 },
@@ -57,13 +55,18 @@ export const directions = {
     NONE: { x: 0, y: 0, angle: 0 }
 };
 
-directions.ALL = [directions.UP, directions.DOWN, directions.LEFT, directions.RIGHT];
+directions.ALL = [
+    directions.UP,
+    directions.DOWN,
+    directions.LEFT,
+    directions.RIGHT
+];
 
 export const getOpposite = (dir) => {
     if (!dir || dir === directions.NONE) {
         return directions.NONE;
     }
-    return directions.ALL.find(d => d.x === -dir.x && d.y === -dir.y);
+    return directions.ALL.find((d) => d.x === -dir.x && d.y === -dir.y);
 };
 
 export const ghostModes = {
@@ -73,26 +76,55 @@ export const ghostModes = {
     EATEN: 'EATEN'
 };
 
-export const ghostColors = {
-    BLINKY: 0xFF0000,
-    PINKY: 0xFFB8FF,
-    INKY: 0x00FFFF,
-    CLYDE: 0xFFB852
+// Phase 5: Virus modes (tech-themed naming)
+export const virusModes = {
+    PATROL: 'PATROL', // Viruses move to patrol targets (was SCATTER)
+    HUNT: 'HUNT', // Viruses actively pursue ADA-Woman (was CHASE)
+    DECRYPTED: 'DECRYPTED', // Viruses move randomly and can be eliminated (was FRIGHTENED)
+    ELIMINATED: 'ELIMINATED' // Virus returns to virus core (was EATEN)
 };
 
+// Backward compatibility: ghostModes aliased to virusModes values
+ghostModes.SCATTER = virusModes.PATROL;
+ghostModes.CHASE = virusModes.HUNT;
+ghostModes.FRIGHTENED = virusModes.DECRYPTED;
+ghostModes.EATEN = virusModes.ELIMINATED;
+
+// Virus color configuration (backward compatibility: ghostColors)
+export const ghostColors = {
+    alpha: 0x9b59b6,
+    beta: 0x7fff00,
+    gamma: 0xff4444,
+    delta: 0xffa500
+};
+
+export const enemyColors = {
+    ALPHA: 0x9b59b6,
+    BETA: 0x7fff00,
+    GAMMA: 0xff4444,
+    DELTA: 0xffa500
+};
 
 export const ghostNames = {
-    BLINKY: 'blinky',
-    PINKY: 'pinky',
-    INKY: 'inky',
-    CLYDE: 'clyde'
+    BLINKY: 'alpha',
+    PINKY: 'beta',
+    INKY: 'gamma',
+    CLYDE: 'delta'
+};
+
+export const enemyNames = {
+    ALPHA: 'alpha',
+    BETA: 'beta',
+    GAMMA: 'gamma',
+    DELTA: 'delta'
 };
 
 export const scoreValues = {
-    pellet: 10,
-    powerPellet: 50,
-    ghost: [200, 400, 800, 1600],
-    fruit: [100, 300, 500, 700, 1000, 2000, 3000, 5000]
+    pellet: 15, // Data bits (Phase 5: was 10)
+    powerPellet: 75, // Power packets - decrypt viruses temporarily (Phase 5: was 50)
+    ghost: [250, 500, 1000, 2000], // Virus elimination combo (Phase 5: was [200, 400, 800, 1600])
+    fruit: [100, 300, 500, 700, 1000, 2000, 3000, 5000],
+    bossDefeat: 5000 // Base bonus for defeating boss viruses (Phase 5)
 };
 
 export const ghostSpeedMultipliers = {
@@ -109,72 +141,76 @@ export const levelConfig = {
     frightenedDuration: 8,
     scatterDuration: 7,
     chaseDuration: 20,
-    speedIncreasePerLevel: 10,  // Increased from 5
+    speedIncreasePerLevel: 10, // Increased from 5
     frightenedDecreasePerLevel: 0.5
 };
 
-export const ghostStartPositions = {
-    blinky: { x: 2, y: 1 },
-    pinky: { x: 24, y: 1 },
-    inky: { x: 2, y: 25 },
-    clyde: { x: 24, y: 25 }
+export const enemyStartPositions = {
+    alpha: { x: 2, y: 1 },
+    beta: { x: 22, y: 1 },
+    gamma: { x: 2, y: 26 },
+    delta: { x: 21, y: 26 }
 };
 
-
-export const ghostHouse = {
-    entrance: { x: 13, y: 11 },
-    center: { x: 13, y: 14 }
+export const virusCore = {
+    entrance: { x: 12, y: 15 },
+    center: { x: 12, y: 13 }
 };
 
-export const pacmanStartPosition = { x: 13, y: 22 };
+// Backward compatibility: ghostHouse is the old name for virusCore
+export const ghostHouse = virusCore;
+
+export const playerStartPosition = { x: 13, y: 27 };
+export const pacmanStartPosition = { x: 13, y: 27 };
 
 export const powerPelletPositions = [
-    { x: 1, y: 14 },
-    { x: 26, y: 14 },
-    { x: 1, y: 39 },
-    { x: 26, y: 39 }
+    { x: 1, y: 1 },
+    { x: 23, y: 1 },
+    { x: 1, y: 26 },
+    { x: 23, y: 26 }
 ];
 
+// Phase 5: Power Packets (was Power Pellets) - decrypt viruses temporarily
+export const powerPacketPositions = powerPelletPositions;
+
 export const scatterTargets = {
-    blinky: { x: 26, y: 0 },
-    pinky: { x: 2, y: 0 },
-    inky: { x: 27, y: 30 },
-    clyde: { x: 0, y: 30 }
+    alpha: { x: 24, y: 0 },
+    beta: { x: 0, y: 0 },
+    gamma: { x: 24, y: 32 },
+    delta: { x: 0, y: 32 }
 };
 
 /**
- * Fruit configuration
- * Fruits appear at specific pellet counts and give bonus points
+ * Fruit configuration (Data Fragments)
+ * Data fragments appear at specific data bit collection counts and give bonus points
  */
 export const fruitConfig = {
-    positions: [
-        { x: 13, y: 22 }
-    ],
+    positions: [{ x: 13, y: 27 }],
     types: [
-        { name: 'cherry', score: 100, color: colors.cherry },
-        { name: 'strawberry', score: 300, color: colors.strawberry },
-        { name: 'orange', score: 500, color: colors.orange },
-        { name: 'apple', score: 700, color: colors.apple },
-        { name: 'melon', score: 1000, color: colors.melon },
-        { name: 'galaxian', score: 2000, color: colors.galaxian },
-        { name: 'bell', score: 3000, color: colors.bell },
-        { name: 'key', score: 5000, color: colors.key }
+        { name: 'dataFragment', score: 100, color: colors.fruit.dataFragment },
+        { name: 'powerCore', score: 300, color: colors.fruit.powerCore },
+        { name: 'algorithm', score: 500, color: 0x00ced1 },
+        { name: 'firewall', score: 700, color: 0xff4444 },
+        { name: 'encryption', score: 1000, color: 0x9b59b6 },
+        { name: 'network', score: 2000, color: 0x7fff00 },
+        { name: 'kernel', score: 3000, color: 0xffa500 },
+        { name: 'quantum', score: 5000, color: 0x00ffff }
     ],
-    duration: 10, // Time fruit stays on screen (seconds)
-    pelletThreshold: 70 // Percentage of pellets eaten to spawn fruit
+    duration: 10, // Time data fragment stays on screen (seconds)
+    pelletThreshold: 70 // Percentage of data bits eaten to spawn data fragment
 };
 
 /**
  * Animation timing configuration
  */
 export const animationConfig = {
-    pacmanMouthSpeed: 15,  // degrees per second
-    pacmanDeathSpeed: 30,  // degrees per second
-    powerPelletPulseSpeed: 500,  // milliseconds (Phaser tween duration)
-    ghostBlinkSpeed: 0.2,  // seconds
-    textFadeSpeed: 800,  // milliseconds (not currently used)
-    countdownDuration: 3000,  // milliseconds (Phaser delayedCall duration)
-    deathPauseDuration: 2  // seconds (accumulated with delta in seconds)
+    pacmanMouthSpeed: 15, // degrees per second
+    pacmanDeathSpeed: 30, // degrees per second
+    powerPelletPulseSpeed: 500, // milliseconds (Phaser tween duration) - power packet pulse
+    ghostBlinkSpeed: 0.2, // seconds - virus blink speed
+    textFadeSpeed: 800, // milliseconds (not currently used)
+    countdownDuration: 3000, // milliseconds (Phaser delayedCall duration)
+    deathPauseDuration: 2 // seconds (accumulated with delta in seconds)
 };
 
 /**
@@ -194,19 +230,19 @@ export const soundConfig = {
     enabled: true,
     volume: 0.5,
     wakaWaka: { frequency: 400, duration: 0.1 },
-    powerPellet: { frequency: 600, duration: 0.3 },
-    ghostEaten: { frequency: 800, duration: 0.2 },
+    powerPellet: { frequency: 600, duration: 0.3 }, // Power packet activation
+    ghostEaten: { frequency: 800, duration: 0.2 }, // Virus elimination
     death: { frequency: 200, duration: 0.5 },
     levelComplete: { frequency: 1000, duration: 0.4 },
-    fruitEat: { frequency: 500, duration: 0.15 }
+    fruitEat: { frequency: 500, duration: 0.15 } // Data fragment collection
 };
 
 /**
  * Local storage keys
  */
 export const storageKeys = {
-    highScore: 'pacman_high_score',
-    settings: 'pacman_settings'
+    highScore: 'pacman_high_score', // Keep for backward compatibility with old saves
+    settings: 'pacman_settings' // Keep for backward compatibility with old saves
 };
 
 /**
@@ -236,4 +272,170 @@ export const physicsConfig = {
     FIXED_DT: 1 / 60,
     MAX_DT: 0.1,
     EPS: 2
+};
+
+/**
+ * Boss battle configuration
+ * Defines boss spawning levels, types, and phase transitions
+ */
+export const bossConfig = {
+    spawnLevels: [5, 10, 15, 20],
+
+    bossTypes: {
+        alpha: {
+            health: 3,
+            scoreBonus: 5000,
+            name: 'Alpha Virus',
+            phases: 2,
+            phaseTransitionHealth: [0.5]
+        },
+        beta: {
+            health: 4,
+            scoreBonus: 10000,
+            name: 'Beta Virus',
+            phases: 3,
+            phaseTransitionHealth: [0.5, 0.25]
+        },
+        gamma: {
+            health: 2,
+            scoreBonus: 7500,
+            name: 'Gamma Virus',
+            phases: 2,
+            phaseTransitionHealth: [0.5]
+        },
+        delta: {
+            health: 5,
+            scoreBonus: 15000,
+            name: 'Delta Virus',
+            phases: 2,
+            phaseTransitionHealth: [0.5]
+        }
+    },
+
+    phaseTransitionHealth: [0.5, 0.25]
+};
+
+export const powerUpConfig = {
+    types: {
+        SHIELD: {
+            duration: 8,
+            spawnChance: 0.15,
+            color: 0x00ced1,
+            name: 'Shield',
+            icon: '⛨',
+            effect: 'Temporary immunity to viruses'
+        },
+        SPEED_BOOST: {
+            duration: 5,
+            spawnChance: 0.2,
+            color: 0xffd700,
+            name: 'Speed Boost',
+            icon: '⚡',
+            effect: 'Double movement speed'
+        },
+        DATA_MAGNET: {
+            duration: 10,
+            spawnChance: 0.1,
+            color: 0x00ff7f,
+            name: 'Data Magnet',
+            icon: '⧲',
+            effect: 'Attract nearby data bits'
+        }
+    },
+    despawnTime: 15,
+    maxOnScreen: 3,
+    spawnRadius: 3
+};
+
+/**
+ * Additional power-up configuration for Phase 5
+ * Extended power-ups with fragment-based spawning
+ */
+export const additionalPowerUpConfig = {
+    types: {
+        SHIELD: {
+            id: 'shield',
+            name: 'Shield',
+            description: 'Temporary immunity to viruses',
+            duration: 8,
+            spawnChance: 0.15,
+            color: 0x00ced1,
+            icon: '⛨',
+            spawnChancePerFragment: 0.15
+        },
+        SPEED_BOOST: {
+            id: 'speed_boost',
+            name: 'Speed Boost',
+            description: 'Double movement speed for 5 seconds',
+            duration: 5,
+            spawnChance: 0.2,
+            color: 0xffd700,
+            icon: '⚡',
+            spawnChancePerFragment: 0.2
+        },
+        DATA_MAGNET: {
+            id: 'data_magnet',
+            name: 'Data Magnet',
+            description: 'Attracts nearby data bits',
+            duration: 10,
+            spawnChance: 0.1,
+            color: 0x00ff7f,
+            icon: '⧲',
+            spawnChancePerFragment: 0.1
+        }
+    },
+    despawnTime: 15,
+    maxOnScreen: 3,
+    spawnRadius: 3
+};
+
+/**
+ * Story mode configuration for Phase 5
+ * Defines narrative chapters and boss battle progression
+ */
+export const storyConfig = {
+    enabled: true,
+    chapters: [
+        {
+            level: 1,
+            name: 'Network Entry',
+            description:
+				'ADA-Woman enters the corrupted network to begin data recovery.',
+            bossBattle: false
+        },
+        {
+            level: 5,
+            name: 'Alpha Breach',
+            description:
+				'The Alpha virus has established a stronghold. Eliminate it to continue.',
+            bossBattle: true,
+            bossType: 'alpha'
+        },
+        {
+            level: 10,
+            name: 'Beta Ambush',
+            description:
+				'The Beta virus has created ambush protocols. Counter its strategies.',
+            bossBattle: true,
+            bossType: 'beta'
+        },
+        {
+            level: 15,
+            name: 'Gamma Glitch',
+            description:
+				'The Gamma virus is causing network instability. Find and eliminate it.',
+            bossBattle: true,
+            bossType: 'gamma'
+        },
+        {
+            level: 20,
+            name: 'Delta Core',
+            description:
+				'The Delta virus protects the core corruption. Defeat it to complete the mission.',
+            bossBattle: true,
+            bossType: 'delta'
+        }
+    ],
+    storyModeLevels: [1, 5, 10, 15, 20], // Levels with narrative
+    chapterCompleteBonus: 5000 // Bonus points for completing story chapters
 };

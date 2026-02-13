@@ -1,9 +1,9 @@
 /**
- * Tests for GhostAIAdapter
+ * Tests for EnemyAIAdapter
  */
 
-import { GhostAIAdapter } from '../../src/model/adapters/GhostAIAdapter.js';
-import { ghostModes, directions } from '../../src/config/gameConfig.js';
+import { directions, ghostModes } from '../../src/config/gameConfig.js';
+import { EnemyAIAdapter } from '../../src/model/adapters/EnemyAIAdapter.js';
 
 // Mock GameModel
 // Maze encoding: 1 = WALL, 0 = PATH (walkable)
@@ -25,7 +25,7 @@ function createMockGameModel() {
     };
 }
 
-// Mock Ghost
+// Mock Enemy
 function createMockGhost(type, gridX, gridY) {
     return {
         ghostType: type,
@@ -40,20 +40,20 @@ function createMockGhost(type, gridX, gridY) {
         isEaten: false,
         inGhostHouse: false,
         houseTimer: 0,
-        setDirection: jest.fn(function(dir) {
+        setDirection: jest.fn(function (dir) {
             this.nextDirection = dir;
         }),
         updateFrightened: jest.fn()
     };
 }
 
-describe('GhostAIAdapter', () => {
+describe('EnemyAIAdapter', () => {
     let adapter;
     let mockGameModel;
 
     beforeEach(() => {
         mockGameModel = createMockGameModel();
-        adapter = new GhostAIAdapter(mockGameModel);
+        adapter = new EnemyAIAdapter(mockGameModel);
     });
 
     describe('constructor', () => {
@@ -95,7 +95,7 @@ describe('GhostAIAdapter', () => {
         });
 
         test('reverses ghost directions on mode change', () => {
-            const ghost = createMockGhost('blinky', 1, 1);
+            const ghost = createMockGhost('alpha', 1, 1);
             ghost.direction = directions.RIGHT;
             mockGameModel.ghosts = [ghost];
 
@@ -107,16 +107,16 @@ describe('GhostAIAdapter', () => {
 
     describe('chooseDirection', () => {
         test('chooses only available direction', () => {
-            const ghost = createMockGhost('blinky', 1, 1);
+            const ghost = createMockGhost('alpha', 1, 1);
             // At (1,1), valid directions are RIGHT and DOWN
-            // Ghost will choose based on target (scatter corner for Blinky)
+            // Enemy will choose based on target (scatter corner for Alpha)
             const direction = adapter.chooseDirection(ghost);
             // Direction should be one of the valid directions
             expect(direction.x !== 0 || direction.y !== 0).toBe(true);
         });
 
         test('cannot reverse direction when multiple options available', () => {
-            const ghost = createMockGhost('blinky', 3, 1);
+            const ghost = createMockGhost('alpha', 3, 1);
             ghost.direction = directions.RIGHT;
 
             const direction = adapter.chooseDirection(ghost);
@@ -126,7 +126,7 @@ describe('GhostAIAdapter', () => {
         });
 
         test('chooses random direction when frightened', () => {
-            const ghost = createMockGhost('blinky', 3, 1);
+            const ghost = createMockGhost('alpha', 3, 1);
             ghost.isFrightened = true;
             ghost.direction = directions.RIGHT;
 
@@ -142,89 +142,89 @@ describe('GhostAIAdapter', () => {
         });
     });
 
-    describe('getTargetForGhost', () => {
-        test('Blinky targets scatter corner in SCATTER mode', () => {
-            const ghost = createMockGhost('blinky', 1, 1);
+    describe('getTargetForEnemy', () => {
+        test('Alpha targets scatter corner in SCATTER mode', () => {
+            const ghost = createMockGhost('alpha', 1, 1);
             ghost.mode = ghostModes.SCATTER;
 
-            const target = adapter.getTargetForGhost(ghost);
+            const target = adapter.getTargetForEnemy(ghost);
 
-            expect(target.x).toBe(26); // scatterTargets.blinky.x
-            expect(target.y).toBe(0);  // scatterTargets.blinky.y
+            expect(target.x).toBe(24); // scatterTargets.alpha.x
+            expect(target.y).toBe(0); // scatterTargets.alpha.y
         });
 
-        test('Blinky targets Pacman in CHASE mode', () => {
-            const ghost = createMockGhost('blinky', 1, 1);
+        test('Alpha targets Pacman in CHASE mode', () => {
+            const ghost = createMockGhost('alpha', 1, 1);
             ghost.mode = ghostModes.CHASE;
 
-            const target = adapter.getTargetForGhost(ghost);
+            const target = adapter.getTargetForEnemy(ghost);
 
             expect(target.x).toBe(mockGameModel.pacman.gridX);
             expect(target.y).toBe(mockGameModel.pacman.gridY);
         });
 
-        test('Pinky targets 4 tiles ahead of Pacman in CHASE mode', () => {
-            const ghost = createMockGhost('pinky', 1, 1);
+        test('Beta targets 4 tiles ahead of Pacman in CHASE mode', () => {
+            const ghost = createMockGhost('beta', 1, 1);
             ghost.mode = ghostModes.CHASE;
 
-            const target = adapter.getTargetForGhost(ghost);
+            const target = adapter.getTargetForEnemy(ghost);
 
             // Pacman is at (3, 2) moving RIGHT, so target is (7, 2)
             expect(target.x).toBe(7);
             expect(target.y).toBe(2);
         });
 
-        test('Clyde targets scatter corner when close to Pacman', () => {
-            const ghost = createMockGhost('clyde', 3, 2); // Close to Pacman at (3, 2)
+        test('Delta targets scatter corner when close to Pacman', () => {
+            const ghost = createMockGhost('delta', 3, 2); // Close to Pacman at (3, 2)
             ghost.mode = ghostModes.CHASE;
 
-            const target = adapter.getTargetForGhost(ghost);
+            const target = adapter.getTargetForEnemy(ghost);
 
             // Should target scatter corner when distance <= 8
-            expect(target.x).toBe(0);  // scatterTargets.clyde.x
-            expect(target.y).toBe(30); // scatterTargets.clyde.y
+            expect(target.x).toBe(0); // scatterTargets.delta.x
+            expect(target.y).toBe(32); // scatterTargets.delta.y
         });
     });
 
-    describe('updateGhostAI', () => {
+    describe('updateEnemyAI', () => {
         test('handles eaten ghosts by moving toward ghost house', () => {
-            const ghost = createMockGhost('blinky', 3, 1);
+            const ghost = createMockGhost('alpha', 3, 1);
             ghost.isEaten = true;
             ghost.x = 3 * 20 + 10; // At center
             ghost.y = 1 * 20 + 10;
 
-            adapter.updateGhostAI(ghost, 0.1);
+            adapter.updateEnemyAI(ghost, 0.1);
 
             // Eaten ghosts should have direction set to move toward ghost house
             expect(ghost.setDirection).toHaveBeenCalled();
         });
 
         test('updates frightened timer when frightened', () => {
-            const ghost = createMockGhost('blinky', 1, 1);
+            const ghost = createMockGhost('alpha', 1, 1);
             ghost.isFrightened = true;
 
-            adapter.updateGhostAI(ghost, 0.1);
+            adapter.updateEnemyAI(ghost, 0.1);
 
             expect(ghost.updateFrightened).toHaveBeenCalledWith(0.1);
         });
 
         test('sets direction when at tile center', () => {
-            const ghost = createMockGhost('blinky', 3, 1);
+            const ghost = createMockGhost('alpha', 3, 1);
             ghost.x = 3 * 20 + 10; // Center of tile
             ghost.y = 1 * 20 + 10;
             ghost.direction = directions.NONE;
 
-            adapter.updateGhostAI(ghost, 0.1);
+            adapter.updateEnemyAI(ghost, 0.1);
 
             expect(ghost.setDirection).toHaveBeenCalled();
         });
 
         test('does not set direction when not at tile center', () => {
-            const ghost = createMockGhost('blinky', 3, 1);
+            const ghost = createMockGhost('alpha', 3, 1);
             ghost.x = 3 * 20 + 5; // Not at center
             ghost.y = 1 * 20 + 5;
 
-            adapter.updateGhostAI(ghost, 0.1);
+            adapter.updateEnemyAI(ghost, 0.1);
 
             expect(ghost.setDirection).not.toHaveBeenCalled();
         });
@@ -252,8 +252,8 @@ describe('GhostAIAdapter', () => {
 
     describe('Integration: update', () => {
         test('updates mode timer for all ghosts', () => {
-            const ghost1 = createMockGhost('blinky', 1, 1);
-            const ghost2 = createMockGhost('pinky', 3, 1);
+            const ghost1 = createMockGhost('alpha', 1, 1);
+            const ghost2 = createMockGhost('beta', 3, 1);
             mockGameModel.ghosts = [ghost1, ghost2];
 
             adapter.update(0.1);
@@ -262,8 +262,8 @@ describe('GhostAIAdapter', () => {
         });
 
         test('updates AI for all ghosts', () => {
-            const ghost1 = createMockGhost('blinky', 3, 1);
-            const ghost2 = createMockGhost('pinky', 3, 1);
+            const ghost1 = createMockGhost('alpha', 3, 1);
+            const ghost2 = createMockGhost('beta', 3, 1);
             mockGameModel.ghosts = [ghost1, ghost2];
 
             adapter.update(0.1);

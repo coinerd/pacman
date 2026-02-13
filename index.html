@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="description" content="A modern Pac-Man game built with Phaser.js">
-    <title>Pac-Man</title>
+    <meta name="description" content="ADA-Woman: A tech-themed maze game built with Phaser.js">
+    <title>ADA-Woman</title>
     <style>
         * {
             margin: 0;
@@ -13,9 +13,9 @@
         }
         
         body {
-            background-color: #000;
+            background-color: #0d1b0d;
             background-image: 
-                radial-gradient(circle at 50% 50%, #111 0%, #000 100%);
+                radial-gradient(circle at 50% 50%, #1a3030 0%, #0d1b0d 100%);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -33,9 +33,9 @@
         
         canvas {
             display: block;
-            border: 3px solid #2121DE;
+            border: 3px solid #00ced1;
             border-radius: 8px;
-            box-shadow: 0 0 20px rgba(33, 33, 222, 0.5);
+            box-shadow: 0 0 20px rgba(0, 206, 209, 0.5), 0 0 40px rgba(0, 255, 170, 0.2);
         }
         
         /* Mobile controls hint */
@@ -45,14 +45,16 @@
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
-            color: rgba(255, 255, 255, 0.5);
+            color: rgba(0, 206, 209, 0.7);
             font-size: 14px;
             pointer-events: none;
+            text-shadow: 0 0 10px rgba(0, 206, 209, 0.5);
         }
         
         @media (max-width: 768px) {
             canvas {
                 border-width: 2px;
+                border-color: #00ffaa;
             }
             
             .mobile-hint {

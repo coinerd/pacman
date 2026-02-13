@@ -20,8 +20,8 @@ export class ReplaySystem {
     }
 
     /**
-   * Start recording a new gameplay session
-   */
+	 * Start recording a new gameplay session
+	 */
     startRecording() {
         this.isRecording = true;
         this.isReplaying = false;
@@ -36,8 +36,8 @@ export class ReplaySystem {
     }
 
     /**
-   * Stop recording and save the session
-   */
+	 * Stop recording and save the session
+	 */
     stopRecording() {
         this.isRecording = false;
         this.saveRecording();
@@ -46,11 +46,13 @@ export class ReplaySystem {
     }
 
     /**
-   * Record an input event during gameplay
-   * @param {Object} input - Input to record with type and data
-   */
+	 * Record an input event during gameplay
+	 * @param {Object} input - Input to record with type and data
+	 */
     recordInput(input) {
-        if (!this.isRecording) {return;}
+        if (!this.isRecording) {
+            return;
+        }
 
         this.recording.inputs.push({
             timestamp: Date.now(),
@@ -60,38 +62,42 @@ export class ReplaySystem {
     }
 
     /**
-   * Record the current score
-   * @param {number} score - Current game score
-   */
+	 * Record the current score
+	 * @param {number} score - Current game score
+	 */
     recordScore(score) {
-        if (!this.isRecording) {return;}
+        if (!this.isRecording) {
+            return;
+        }
         this.recording.score = score;
     }
 
     /**
-   * Record the current level
-   * @param {number} level - Current game level
-   */
+	 * Record the current level
+	 * @param {number} level - Current game level
+	 */
     recordLevel(level) {
-        if (!this.isRecording) {return;}
+        if (!this.isRecording) {
+            return;
+        }
         this.recording.level = level;
     }
 
     /**
-   * Save recording to localStorage
-   */
+	 * Save recording to localStorage
+	 */
     saveRecording() {
         const recording = JSON.stringify(this.recording);
         const timestamp = this.recording.timestamp;
 
-        this.storage.setItem(`pacman_replay_${timestamp}`, recording);
+        this.storage.setItem(`player_replay_${timestamp}`, recording);
 
         const keys = this.storage.store
             ? Object.keys(this.storage.store)
             : Object.keys(this.storage);
 
         const replayKeys = keys
-            .filter(k => k.startsWith('pacman_replay_'))
+            .filter((k) => k.startsWith('player_replay_'))
             .sort();
 
         if (replayKeys.length > 10) {
@@ -101,9 +107,9 @@ export class ReplaySystem {
     }
 
     /**
-   * Load a recording for playback
-   * @param {Object} recording - Recording object to load
-   */
+	 * Load a recording for playback
+	 * @param {Object} recording - Recording object to load
+	 */
     loadRecording(recording) {
         this.playback = recording;
         this.currentIndex = 0;
@@ -112,18 +118,18 @@ export class ReplaySystem {
     }
 
     /**
-   * Get all saved recordings
-   * @returns {Array} Array of recording objects
-   */
+	 * Get all saved recordings
+	 * @returns {Array} Array of recording objects
+	 */
     getRecordings() {
         const keys = this.storage.store
             ? Object.keys(this.storage.store)
             : Object.keys(this.storage);
 
         return keys
-            .filter(k => k.startsWith('pacman_replay_'))
+            .filter((k) => k.startsWith('player_replay_'))
             .sort()
-            .map(k => {
+            .map((k) => {
                 try {
                     return JSON.parse(this.storage.getItem(k));
                 } catch (e) {
@@ -134,19 +140,21 @@ export class ReplaySystem {
     }
 
     /**
-   * Delete a specific recording
-   * @param {string} key - Storage key of the recording to delete
-   */
+	 * Delete a specific recording
+	 * @param {string} key - Storage key of the recording to delete
+	 */
     deleteRecording(key) {
         this.storage.removeItem(key);
     }
 
     /**
-   * Update playback state (called each frame during replay)
-   * @param {number} delta - Time since last update
-   */
+	 * Update playback state (called each frame during replay)
+	 * @param {number} delta - Time since last update
+	 */
     update(delta) {
-        if (!this.isReplaying || !this.playback) {return;}
+        if (!this.isReplaying || !this.playback) {
+            return;
+        }
 
         const now = Date.now();
         const elapsed = now - this.playback.timestamp;
@@ -170,8 +178,8 @@ export class ReplaySystem {
     }
 
     /**
-   * Clean up system state
-   */
+	 * Clean up system state
+	 */
     cleanup() {
         this.isRecording = false;
         this.isReplaying = false;

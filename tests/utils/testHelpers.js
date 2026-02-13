@@ -1,5 +1,6 @@
 // tests/utils/testHelpers.js
 
+import { PlayerState } from '../../src/model/entities/PlayerState.js';
 import { TILE_TYPES } from '../../src/utils/MazeLayout.js';
 import { createGameModel } from './modelTestUtils.js';
 
@@ -14,7 +15,7 @@ import { createGameModel } from './modelTestUtils.js';
  * @returns {Array} Maze data structure
  */
 export const createMockMaze = (layout) => {
-    return layout.map(row => [...row]);
+    return layout.map((row) => [...row]);
 };
 
 /**
@@ -55,7 +56,7 @@ export const createSimpleMaze = (width = 5, height = 5) => {
  * @param {Object} overrides - Properties to override
  * @returns {Object} Mock Pacman object
  */
-export const createMockPacman = (overrides = {}) => ({
+export const createMockPlayer = (overrides = {}) => ({
     gridX: 1,
     gridY: 1,
     direction: { x: 0, y: 0 },
@@ -69,6 +70,9 @@ export const createMockPacman = (overrides = {}) => ({
     ...overrides
 });
 
+// Backward compatibility: export createMockPacman as alias for createMockPlayer
+export const createMockPacman = createMockPlayer;
+
 /**
  * Create mock ghost entity for testing
  * @param {Object} overrides - Properties to override
@@ -77,7 +81,7 @@ export const createMockPacman = (overrides = {}) => ({
 export const createMockGhost = (overrides = {}) => ({
     gridX: 1,
     gridY: 1,
-    type: 'blinky',
+    type: 'alpha',
     mode: 'SCATTER',
     targetX: 0,
     targetY: 0,
@@ -98,16 +102,16 @@ export const createMockGhost = (overrides = {}) => ({
  */
 export const createMockCollisionSystem = () => ({
     setPacman: jest.fn(),
-    setGhosts: jest.fn(),
+    setEnemies: jest.fn(),
     setMaze: jest.fn(),
     setPelletSprites: jest.fn(),
     checkPelletCollision: jest.fn().mockReturnValue(0),
     checkPowerPelletCollision: jest.fn().mockReturnValue(0),
-    checkGhostCollision: jest.fn().mockReturnValue(null),
+    checkEnemyCollision: jest.fn().mockReturnValue(null),
     checkAllCollisions: jest.fn().mockReturnValue({
         pelletScore: 0,
         powerPelletScore: 0,
-        ghostCollision: null
+        enemyCollision: null
     }),
     checkWinCondition: jest.fn().mockReturnValue(false),
     reset: jest.fn()
@@ -118,10 +122,10 @@ export const createMockCollisionSystem = () => ({
  * @returns {Object} Mock AI system
  */
 export const createMockGhostAISystem = () => ({
-    setGhosts: jest.fn(),
+    setEnemies: jest.fn(),
     update: jest.fn(),
     chooseDirection: jest.fn().mockReturnValue({ x: 1, y: 0 }),
-    updateGhostTarget: jest.fn(),
+    updateEnemyTarget: jest.fn(),
     updateGlobalMode: jest.fn(),
     reset: jest.fn()
 });
@@ -145,8 +149,8 @@ export const createMockScene = () => {
     return {
         gameState,
         gameModel,
-        pacman: createMockPacman(),
-        ghosts: [],
+        player: createMockPlayer(),
+        enemies: [],
         fruit: { active: false, timer: 0 },
         soundManager: {
             playWakaWaka: jest.fn(),
@@ -186,9 +190,19 @@ export const createMockScene = () => {
                     active: false,
                     scale: 1,
                     setDepth: jest.fn().mockReturnThis(),
-                    setVisible: jest.fn(function(val) { this.visible = val; return this; }),
-                    setActive: jest.fn(function(val) { this.active = val; return this; }),
-                    setPosition: jest.fn(function(x, y) { this.x = x; this.y = y; return this; }),
+                    setVisible: jest.fn(function (val) {
+                        this.visible = val;
+                        return this;
+                    }),
+                    setActive: jest.fn(function (val) {
+                        this.active = val;
+                        return this;
+                    }),
+                    setPosition: jest.fn(function (x, y) {
+                        this.x = x;
+                        this.y = y;
+                        return this;
+                    }),
                     destroy: jest.fn()
                 };
                 return mockCircle;
@@ -203,11 +217,27 @@ export const createMockScene = () => {
                     active: false,
                     scale: 1,
                     setDepth: jest.fn().mockReturnThis(),
-                    setVisible: jest.fn(function(val) { this.visible = val; return this; }),
-                    setFrame: jest.fn(function(val) { this.frame.name = val; return this; }),
-                    setScale: jest.fn(function(val) { this.scale = val; return this; }),
-                    setActive: jest.fn(function(val) { this.active = val; return this; }),
-                    setPosition: jest.fn(function(x, y) { this.x = x; this.y = y; return this; })
+                    setVisible: jest.fn(function (val) {
+                        this.visible = val;
+                        return this;
+                    }),
+                    setFrame: jest.fn(function (val) {
+                        this.frame.name = val;
+                        return this;
+                    }),
+                    setScale: jest.fn(function (val) {
+                        this.scale = val;
+                        return this;
+                    }),
+                    setActive: jest.fn(function (val) {
+                        this.active = val;
+                        return this;
+                    }),
+                    setPosition: jest.fn(function (x, y) {
+                        this.x = x;
+                        this.y = y;
+                        return this;
+                    })
                 };
                 return mockSprite;
             })
@@ -220,13 +250,14 @@ export const createMockScene = () => {
  * @param {number} ms - Milliseconds to wait
  * @returns {Promise} Promise that resolves after delay
  */
-export const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+export const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
  * Flush all pending promises
  * @returns {Promise} Promise that resolves when microtasks complete
  */
-export const flushPromises = () => new Promise(resolve => setImmediate(resolve));
+export const flushPromises = () =>
+    new Promise((resolve) => setImmediate(resolve));
 
 /**
  * Measure function execution time

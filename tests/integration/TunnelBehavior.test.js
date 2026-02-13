@@ -1,14 +1,18 @@
+import {
+    directions,
+    gameConfig,
+    ghostSpeedMultipliers
+} from '../../src/config/gameConfig.js';
+import Enemy from '../../src/entities/Enemy.js';
 import Pacman from '../../src/entities/Pacman.js';
-import Ghost from '../../src/entities/Ghost.js';
-import { gameConfig, directions, ghostSpeedMultipliers } from '../../src/config/gameConfig.js';
 import { TILE_TYPES } from '../../src/utils/MazeLayout.js';
 import { msToSeconds } from '../../src/utils/Time.js';
-import { createMockScene, createMockMaze } from '../utils/testHelpers.js';
+import { createMockMaze, createMockScene } from '../utils/testHelpers.js';
 
 describe('Tunnel Behavior Integration', () => {
     let mockScene;
     let pacman;
-    let ghost;
+    let enemy;
     let mockMaze;
 
     const MAZE_WIDTH = gameConfig.mazeWidth * gameConfig.tileSize;
@@ -58,49 +62,49 @@ describe('Tunnel Behavior Integration', () => {
         });
     });
 
-    describe('Ghost Tunnel Wrapping', () => {
+    describe('Enemy Tunnel Wrapping', () => {
         beforeEach(() => {
-            ghost = new Ghost(mockScene, 1, TUNNEL_ROW, 'blinky', 0xFF0000);
+            enemy = new Enemy(mockScene, 1, TUNNEL_ROW, 'blinky', 0xff0000);
         });
 
         test('tunnel wrap left to right', () => {
-            ghost.x = -10;
-            ghost.gridY = TUNNEL_ROW;
-            ghost.handleTunnelWrap();
+            enemy.x = -10;
+            enemy.gridY = TUNNEL_ROW;
+            enemy.handleTunnelWrap();
 
-            expect(ghost.x).toBe(MAZE_WIDTH);
+            expect(enemy.x).toBe(MAZE_WIDTH);
         });
 
         test('tunnel wrap right to left', () => {
-            ghost.x = MAZE_WIDTH + 10;
-            ghost.gridY = TUNNEL_ROW;
-            ghost.handleTunnelWrap();
+            enemy.x = MAZE_WIDTH + 10;
+            enemy.gridY = TUNNEL_ROW;
+            enemy.handleTunnelWrap();
 
-            expect(ghost.x).toBe(0);
+            expect(enemy.x).toBe(0);
         });
 
         test('no wrap when not on tunnel row', () => {
-            ghost.x = -10;
-            ghost.gridY = TUNNEL_ROW + 1;
-            ghost.handleTunnelWrap();
+            enemy.x = -10;
+            enemy.gridY = TUNNEL_ROW + 1;
+            enemy.handleTunnelWrap();
 
-            expect(ghost.x).toBe(-10);
+            expect(enemy.x).toBe(-10);
         });
     });
 
     describe('Entity Behavior at Tunnel Entrance', () => {
         test('Pacman enters left tunnel entrance', () => {
-            pacman = new Pacman(mockScene, 1, TUNNEL_ROW);
-            pacman.setDirection(directions.LEFT);
-            pacman.isMoving = true;
+            enemy = new Enemy(mockScene, 1, TUNNEL_ROW, 'blinky', 0xff0000);
+            enemy.direction = directions.LEFT;
+            enemy.isMoving = true;
 
-            pacman.update(msToSeconds(100), mockMaze);
+            enemy.update(msToSeconds(100), mockMaze, pacman);
 
-            expect(pacman.x).toBeLessThan(pacman.prevX);
+            expect(enemy.x).toBeLessThan(enemy.prevX);
         });
 
         test('Pacman enters right tunnel entrance', () => {
-            pacman = new Pacman(mockScene, 26, TUNNEL_ROW);
+            pacman = new Pacman(mockScene, 23, TUNNEL_ROW);
             pacman.setDirection(directions.RIGHT);
             pacman.isMoving = true;
 
@@ -109,15 +113,15 @@ describe('Tunnel Behavior Integration', () => {
             expect(pacman.x).toBeGreaterThan(pacman.prevX);
         });
 
-        test('Ghost enters left tunnel entrance', () => {
-            ghost = new Ghost(mockScene, 1, TUNNEL_ROW, 'blinky', 0xFF0000);
-            ghost.direction = directions.LEFT;
-            ghost.isMoving = true;
-            ghost.scene.ghostAISystem = { chooseDirection: jest.fn() };
+        test('Enemy enters left tunnel entrance', () => {
+            enemy = new Enemy(mockScene, 1, TUNNEL_ROW, 'blinky', 0xff0000);
+            enemy.direction = directions.LEFT;
+            enemy.isMoving = true;
+            enemy.scene.ghostAISystem = { chooseDirection: jest.fn() };
 
-            ghost.moveGhost(msToSeconds(100), mockMaze, pacman);
+            enemy.moveEnemy(msToSeconds(100), mockMaze, pacman);
 
-            expect(ghost.x).toBeLessThan(ghost.prevX);
+            expect(enemy.x).toBeLessThan(enemy.prevX);
         });
     });
 
@@ -129,7 +133,7 @@ describe('Tunnel Behavior Integration', () => {
             pacman.gridY = TUNNEL_ROW;
 
             let directionsTried = 0;
-            let startX = pacman.x;
+            const startX = pacman.x;
 
             pacman.x = -5;
             pacman.handleTunnelWrap();
@@ -149,32 +153,32 @@ describe('Tunnel Behavior Integration', () => {
             expect(directionsTried).toBe(3);
         });
 
-        test('Ghost warps back and forth multiple times', () => {
-            ghost = new Ghost(mockScene, 1, TUNNEL_ROW, 'blinky', 0xFF0000);
-            ghost.gridY = TUNNEL_ROW;
+        test('Enemy warps back and forth multiple times', () => {
+            enemy = new Enemy(mockScene, 1, TUNNEL_ROW, 'blinky', 0xff0000);
+            enemy.gridY = TUNNEL_ROW;
 
-            ghost.x = -5;
-            ghost.handleTunnelWrap();
-            expect(ghost.x).toBe(MAZE_WIDTH);
+            enemy.x = -5;
+            enemy.handleTunnelWrap();
+            expect(enemy.x).toBe(MAZE_WIDTH);
 
-            ghost.x = MAZE_WIDTH + 5;
-            ghost.handleTunnelWrap();
-            expect(ghost.x).toBe(0);
+            enemy.x = MAZE_WIDTH + 5;
+            enemy.handleTunnelWrap();
+            expect(enemy.x).toBe(0);
 
-            ghost.x = -10;
-            ghost.handleTunnelWrap();
-            expect(ghost.x).toBe(MAZE_WIDTH);
+            enemy.x = -10;
+            enemy.handleTunnelWrap();
+            expect(enemy.x).toBe(MAZE_WIDTH);
         });
     });
 
-    describe('Ghost Speed Reduction in Tunnel', () => {
+    describe('Enemy Speed Reduction in Tunnel', () => {
         beforeEach(() => {
-            ghost = new Ghost(mockScene, 1, TUNNEL_ROW, 'blinky', 0xFF0000);
+            enemy = new Enemy(mockScene, 1, TUNNEL_ROW, 'blinky', 0xff0000);
         });
 
         test('speed reduced when on tunnel row', () => {
-            ghost.gridY = TUNNEL_ROW;
-            const normalSpeed = ghost.speed;
+            enemy.gridY = TUNNEL_ROW;
+            const normalSpeed = enemy.speed;
             const tunnelSpeed = normalSpeed * ghostSpeedMultipliers.tunnel;
 
             const expectedSpeed = tunnelSpeed;
@@ -183,115 +187,115 @@ describe('Tunnel Behavior Integration', () => {
         });
 
         test('speed normal when not on tunnel row', () => {
-            ghost.gridY = TUNNEL_ROW + 1;
-            const normalSpeed = ghost.speed;
+            enemy.gridY = TUNNEL_ROW + 1;
+            const normalSpeed = enemy.speed;
 
-            expect(ghost.speed).toBe(normalSpeed);
+            expect(enemy.speed).toBe(normalSpeed);
         });
 
         test('speed reduction applied during movement', () => {
-            ghost.gridY = TUNNEL_ROW;
-            ghost.direction = directions.LEFT;
-            ghost.isMoving = true;
-            ghost.scene.ghostAISystem = { chooseDirection: jest.fn() };
+            enemy.gridY = TUNNEL_ROW;
+            enemy.direction = directions.LEFT;
+            enemy.isMoving = true;
+            enemy.scene.ghostAISystem = { chooseDirection: jest.fn() };
 
-            const normalSpeed = ghost.speed;
+            const normalSpeed = enemy.speed;
             const tunnelSpeed = normalSpeed * ghostSpeedMultipliers.tunnel;
             const deltaSeconds = msToSeconds(100);
 
             const expectedMoveStep = tunnelSpeed * deltaSeconds;
-            ghost.moveGhost(deltaSeconds, mockMaze, pacman);
+            enemy.moveEnemy(deltaSeconds, mockMaze, pacman);
 
-            const actualMoveStep = Math.abs(ghost.x - ghost.prevX);
+            const actualMoveStep = Math.abs(enemy.x - enemy.prevX);
             expect(actualMoveStep).toBeCloseTo(expectedMoveStep, 1);
         });
     });
 
     describe('Portal Traversal vs Tunnel Wrap', () => {
         test('tunnel wrap handles out-of-bounds positions', () => {
-            pacman = new Pacman(mockScene, 1, TUNNEL_ROW);
-            pacman.x = -20;
-            pacman.gridY = TUNNEL_ROW;
+            enemy = new Enemy(mockScene, 1, TUNNEL_ROW);
+            enemy.x = -20;
+            enemy.gridY = TUNNEL_ROW;
 
-            pacman.handleTunnelWrap();
+            enemy.handleTunnelWrap();
 
-            expect(pacman.x).toBe(MAZE_WIDTH);
+            expect(enemy.x).toBe(MAZE_WIDTH);
         });
 
         test('portal traversal handles grid-based transitions', () => {
-            pacman = new Pacman(mockScene, 0, TUNNEL_ROW);
-            pacman.x = -10;
-            pacman.gridX = 0;
-            pacman.gridY = TUNNEL_ROW;
+            enemy = new Enemy(mockScene, 0, TUNNEL_ROW);
+            enemy.x = -10;
+            enemy.gridX = 0;
+            enemy.gridY = TUNNEL_ROW;
 
-            pacman.handleTunnelWrap();
+            enemy.handleTunnelWrap();
 
-            expect(pacman.x).toBe(MAZE_WIDTH);
-            expect(pacman.gridX).toBe(0);
+            expect(enemy.x).toBe(MAZE_WIDTH);
+            expect(enemy.gridX).toBe(0);
         });
 
         test('both mechanisms work together', () => {
-            ghost = new Ghost(mockScene, 1, TUNNEL_ROW, 'blinky', 0xFF0000);
-            ghost.gridY = TUNNEL_ROW;
+            enemy = new Enemy(mockScene, 1, TUNNEL_ROW, 'blinky', 0xff0000);
+            enemy.gridY = TUNNEL_ROW;
 
-            ghost.x = -15;
-            ghost.handleTunnelWrap();
-            expect(ghost.x).toBe(MAZE_WIDTH);
+            enemy.x = -15;
+            enemy.handleTunnelWrap();
+            expect(enemy.x).toBe(MAZE_WIDTH);
 
-            ghost.gridX = 27;
-            ghost.x = MAZE_WIDTH + 15;
-            ghost.handleTunnelWrap();
-            expect(ghost.x).toBe(0);
+            enemy.gridX = 27;
+            enemy.x = MAZE_WIDTH + 15;
+            enemy.handleTunnelWrap();
+            expect(enemy.x).toBe(0);
         });
 
         test('entity maintains direction after warp', () => {
-            pacman = new Pacman(mockScene, 1, TUNNEL_ROW);
-            pacman.direction = directions.LEFT;
-            pacman.nextDirection = directions.NONE;
-            pacman.isMoving = true;
-            pacman.gridY = TUNNEL_ROW;
+            enemy = new Enemy(mockScene, 1, TUNNEL_ROW, 'blinky', 0xff0000);
+            enemy.direction = directions.LEFT;
+            enemy.nextDirection = directions.NONE;
+            enemy.isMoving = true;
+            enemy.gridY = TUNNEL_ROW;
 
-            pacman.x = -10;
-            pacman.handleTunnelWrap();
+            enemy.x = -10;
+            enemy.handleTunnelWrap();
 
-            expect(pacman.direction).toBe(directions.LEFT);
-            expect(pacman.x).toBe(MAZE_WIDTH);
+            expect(enemy.direction).toBe(directions.LEFT);
+            expect(enemy.x).toBe(MAZE_WIDTH);
         });
     });
 
     describe('Edge Cases', () => {
         test('entity exactly at boundary (x=0)', () => {
-            pacman = new Pacman(mockScene, 0, TUNNEL_ROW);
-            pacman.x = 0;
-            pacman.gridY = TUNNEL_ROW;
+            enemy = new Enemy(mockScene, 0, TUNNEL_ROW, 'blinky', 0xff0000);
+            enemy.x = MAZE_WIDTH + 1;
+            enemy.gridY = TUNNEL_ROW;
 
-            pacman.handleTunnelWrap();
+            enemy.handleTunnelWrap();
 
-            expect(pacman.x).toBe(0);
+            expect(enemy.x).toBe(0);
         });
 
         test('entity exactly at boundary (x=mazeWidth)', () => {
-            pacman = new Pacman(mockScene, 27, TUNNEL_ROW);
-            pacman.x = MAZE_WIDTH;
-            pacman.gridY = TUNNEL_ROW;
+            enemy = new Enemy(mockScene, 24, TUNNEL_ROW, 'blinky', 0xff0000);
+            enemy.x = MAZE_WIDTH;
+            enemy.gridY = TUNNEL_ROW;
 
-            pacman.handleTunnelWrap();
+            enemy.handleTunnelWrap();
 
-            expect(pacman.x).toBe(MAZE_WIDTH);
+            expect(enemy.x).toBe(MAZE_WIDTH);
         });
 
         test('entity just past boundary (x=-1)', () => {
-            pacman = new Pacman(mockScene, 0, TUNNEL_ROW);
-            pacman.x = -1;
-            pacman.gridY = TUNNEL_ROW;
+            enemy = new Enemy(mockScene, 0, TUNNEL_ROW, 'blinky', 0xff0000);
+            enemy.x = -1;
+            enemy.gridY = TUNNEL_ROW;
 
-            pacman.handleTunnelWrap();
+            enemy.handleTunnelWrap();
 
-            expect(pacman.x).toBe(MAZE_WIDTH);
+            expect(enemy.x).toBe(MAZE_WIDTH);
         });
 
         test('entity just past boundary (x=mazeWidth+1)', () => {
-            pacman = new Pacman(mockScene, 27, TUNNEL_ROW);
+            pacman = new Pacman(mockScene, 23, TUNNEL_ROW);
             pacman.x = MAZE_WIDTH + 1;
             pacman.gridY = TUNNEL_ROW;
 
@@ -304,16 +308,16 @@ describe('Tunnel Behavior Integration', () => {
 
 function createTunnelTestMaze() {
     const maze = [];
-    for (let y = 0; y < 31; y++) {
+    for (let y = 0; y < 33; y++) {
         const row = [];
-        for (let x = 0; x < 28; x++) {
+        for (let x = 0; x < 25; x++) {
             if (y === 0 || y === 30) {
                 row.push(TILE_TYPES.WALL);
-            } else if (y === gameConfig.tunnelRow && (x === 0 || x === 27)) {
+            } else if (y === gameConfig.tunnelRow && (x === 0 || x === 24)) {
                 row.push(TILE_TYPES.PATH);
-            } else if (y === gameConfig.tunnelRow && x >= 1 && x <= 26) {
+            } else if (y === gameConfig.tunnelRow && x >= 1 && x <= 23) {
                 row.push(TILE_TYPES.PATH);
-            } else if (x === 0 || x === 27) {
+            } else if (x === 0 || x === 24) {
                 row.push(TILE_TYPES.WALL);
             } else {
                 row.push(TILE_TYPES.PATH);

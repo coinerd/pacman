@@ -5,30 +5,30 @@
 
 import Phaser from 'phaser';
 import {
-    gameConfig,
-    directions,
-    pacmanStartPosition,
-    fruitConfig,
     animationConfig,
+    directions,
+    fruitConfig,
+    gameConfig,
+    pacmanStartPosition,
     physicsConfig
 } from '../config/gameConfig.js';
-import { createMazeData } from '../utils/MazeLayout.js';
-import { GhostAISystem } from '../systems/GhostAISystem.js';
-import { CollisionSystem } from '../systems/CollisionSystem.js';
+import { GameController } from '../controllers/GameController.js';
+import { GAME_EVENTS, gameEvents } from '../core/EventBus.js';
+import GameModel from '../core/GameModel.js';
 import { StorageManager } from '../managers/StorageManager.js';
-import { UIController } from './systems/UIController.js';
+import { AchievementSystem } from '../systems/AchievementSystem.js';
+import { CollisionSystem } from '../systems/CollisionSystem.js';
+import { DebugOverlay } from '../systems/DebugOverlay.js';
+import { EnemyAISystem } from '../systems/EnemyAISystem.js';
+import { FixedTimeStepLoop } from '../systems/FixedTimeStepLoop.js';
+import { PlayerAI } from '../systems/PlayerAI.js';
+import { ReplaySystem } from '../systems/ReplaySystem.js';
+import { createMazeData } from '../utils/MazeLayout.js';
+import { normalizeDeltaSeconds } from '../utils/Time.js';
+import PhaserGameView from '../views/PhaserGameView.js';
 import { InputController } from './systems/InputController.js';
 import { LevelManager } from './systems/LevelManager.js';
-import { AchievementSystem } from '../systems/AchievementSystem.js';
-import { DebugOverlay } from '../systems/DebugOverlay.js';
-import { ReplaySystem } from '../systems/ReplaySystem.js';
-import { PacmanAI } from '../systems/PacmanAI.js';
-import { FixedTimeStepLoop } from '../systems/FixedTimeStepLoop.js';
-import { gameEvents, GAME_EVENTS } from '../core/EventBus.js';
-import { normalizeDeltaSeconds } from '../utils/Time.js';
-import GameModel from '../core/GameModel.js';
-import { GameController } from '../controllers/GameController.js';
-import PhaserGameView from '../views/PhaserGameView.js';
+import { UIController } from './systems/UIController.js';
 
 export default class GameScene extends Phaser.Scene {
     constructor() {
@@ -36,9 +36,9 @@ export default class GameScene extends Phaser.Scene {
     }
 
     /**
-     * Initialize scene with data
-     * @param {Object} data - Scene data
-     */
+	 * Initialize scene with data
+	 * @param {Object} data - Scene data
+	 */
     init(data) {
         this.gameModel = new GameModel({
             score: data.score || 0,
@@ -57,7 +57,6 @@ export default class GameScene extends Phaser.Scene {
 
         this.replaySystem = new ReplaySystem();
         this.settings = this.storageManager.getSettings();
-
     }
 
     create() {
@@ -108,10 +107,10 @@ export default class GameScene extends Phaser.Scene {
         this.collisionSystem.setPelletGrid(this.pelletGrid);
         this.collisionSystem.setPelletCounts(this.gameState.totalPellets);
 
-        this.ghostAISystem = new GhostAISystem();
-        this.ghostAISystem.setGhosts(this.ghosts);
+        this.ghostAISystem = new EnemyAISystem();
+        this.ghostAISystem.setEnemies(this.ghosts);
 
-        this.pacmanAI = new PacmanAI();
+        this.pacmanAI = new PlayerAI();
 
         this.debugOverlay = new DebugOverlay(this);
         if (this.settings.showFps) {
@@ -138,8 +137,8 @@ export default class GameScene extends Phaser.Scene {
     }
 
     /**
-     * Setup touch controls for mobile
-     */
+	 * Setup touch controls for mobile
+	 */
     setupTouchControls() {
         let startX = 0;
         let startY = 0;
@@ -175,10 +174,10 @@ export default class GameScene extends Phaser.Scene {
     }
 
     /**
-     * Update scene
-     * @param {number} time - Current time
-     * @param {number} delta - Time since last update in milliseconds
-     */
+	 * Update scene
+	 * @param {number} time - Current time
+	 * @param {number} delta - Time since last update in milliseconds
+	 */
     update(time, delta) {
         if (this.gameState.isPaused || this.gameState.isGameOver) {
             return;
@@ -191,7 +190,12 @@ export default class GameScene extends Phaser.Scene {
         }
 
         if (this.sys.game.isDemo) {
-            this.pacmanAI.update(this.pacman, this.maze, this.pelletGrid, this.ghosts);
+            this.pacmanAI.update(
+                this.pacman,
+                this.maze,
+                this.pelletGrid,
+                this.ghosts
+            );
         } else {
             this.inputController.handleInput();
         }
@@ -208,12 +212,20 @@ export default class GameScene extends Phaser.Scene {
             this.debugOverlay.updateDebugInfo({
                 'Frame dt': `${deltaInSeconds.toFixed(4)}s`,
                 'Fixed dt': `${physicsConfig.FIXED_DT.toFixed(4)}s`,
-                'Steps': this.fixedTimeStepLoop.getLastStepCount(),
-                'Accumulator': `${this.fixedTimeStepLoop.getAccumulator().toFixed(4)}s`,
-                'Collision ms': collisionStats ? `${collisionStats.collisionMs.toFixed(2)}ms` : 'n/a',
-                'Collision pellet ms': collisionStats ? `${collisionStats.pelletMs.toFixed(2)}ms` : 'n/a',
-                'Collision ghost ms': collisionStats ? `${collisionStats.ghostMs.toFixed(2)}ms` : 'n/a',
-                'Collision checks': collisionStats ? `${collisionStats.checks.ghosts} ghosts` : 'n/a',
+                Steps: this.fixedTimeStepLoop.getLastStepCount(),
+                Accumulator: `${this.fixedTimeStepLoop.getAccumulator().toFixed(4)}s`,
+                'Collision ms': collisionStats
+                    ? `${collisionStats.collisionMs.toFixed(2)}ms`
+                    : 'n/a',
+                'Collision pellet ms': collisionStats
+                    ? `${collisionStats.pelletMs.toFixed(2)}ms`
+                    : 'n/a',
+                'Collision ghost ms': collisionStats
+                    ? `${collisionStats.ghostMs.toFixed(2)}ms`
+                    : 'n/a',
+                'Collision checks': collisionStats
+                    ? `${collisionStats.checks.ghosts} ghosts`
+                    : 'n/a',
                 'Pellets remaining': collisionStats?.pelletsRemaining ?? 'n/a'
             });
         }
@@ -223,9 +235,9 @@ export default class GameScene extends Phaser.Scene {
     }
 
     /**
-     * Fixed timestep update callback (60 Hz)
-     * All physics and game logic updates happen here
-     */
+	 * Fixed timestep update callback (60 Hz)
+	 * All physics and game logic updates happen here
+	 */
     fixedUpdate() {
         const deltaSeconds = physicsConfig.FIXED_DT;
         this.pacman.update(deltaSeconds, this.maze);
@@ -241,8 +253,8 @@ export default class GameScene extends Phaser.Scene {
     }
 
     /**
-     * Check all collisions
-     */
+	 * Check all collisions
+	 */
     handleCollisions() {
         const results = this.collisionSystem.checkAllCollisions();
 
@@ -264,8 +276,8 @@ export default class GameScene extends Phaser.Scene {
 
         if (this.fruit.active) {
             const dist = Math.sqrt(
-                Math.pow(this.pacman.x - this.fruit.x, 2) +
-                Math.pow(this.pacman.y - this.fruit.y, 2)
+                (this.pacman.x - this.fruit.x) ** 2 +
+					(this.pacman.y - this.fruit.y) ** 2
             );
 
             if (dist < gameConfig.tileSize) {
@@ -276,10 +288,13 @@ export default class GameScene extends Phaser.Scene {
     }
 
     /**
-     * Check if fruit should spawn
-     */
+	 * Check if fruit should spawn
+	 */
     checkFruitSpawn() {
-        if (this.gameModel.shouldSpawnFruit(fruitConfig.pelletThreshold) && !this.fruit.active) {
+        if (
+            this.gameModel.shouldSpawnFruit(fruitConfig.pelletThreshold) &&
+			!this.fruit.active
+        ) {
             this.fruit.reset(this.gameState.level - 1);
             this.fruit.activate();
         }
@@ -333,16 +348,16 @@ export default class GameScene extends Phaser.Scene {
     }
 
     /**
-     * Resume from pause
-     */
+	 * Resume from pause
+	 */
     resume() {
         this.gameModel.setPaused(false);
         this.gameView.resumeAudio();
     }
 
     /**
-     * Cleanup resources
-     */
+	 * Cleanup resources
+	 */
     cleanup() {
         if (this.uiController) {
             this.uiController.cleanup();

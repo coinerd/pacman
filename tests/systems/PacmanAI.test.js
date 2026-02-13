@@ -1,11 +1,11 @@
+import { directions, gameConfig } from '../../src/config/gameConfig.js';
 import { PacmanAI } from '../../src/systems/PacmanAI.js';
-import { gameConfig, directions } from '../../src/config/gameConfig.js';
-import { createMockPacman } from '../utils/testHelpers.js';
 import { PELLET_TYPES } from '../../src/utils/MazeLayout.js';
+import { createMockPlayer } from '../utils/testHelpers.js';
 
 describe('PacmanAI', () => {
     let ai;
-    let mockPacman;
+    let mockPlayer;
     let mockMaze;
     let mockPelletGrid;
     let mockGhosts;
@@ -22,7 +22,13 @@ describe('PacmanAI', () => {
         mockPelletGrid = [
             [0, 0, 0, 0, 0],
             [0, PELLET_TYPES.PELLET, PELLET_TYPES.PELLET, PELLET_TYPES.PELLET, 0],
-            [0, PELLET_TYPES.PELLET, PELLET_TYPES.POWER_PELLET, PELLET_TYPES.PELLET, 0],
+            [
+                0,
+                PELLET_TYPES.PELLET,
+                PELLET_TYPES.POWER_PELLET,
+                PELLET_TYPES.PELLET,
+                0
+            ],
             [0, PELLET_TYPES.PELLET, PELLET_TYPES.PELLET, PELLET_TYPES.PELLET, 0],
             [0, 0, 0, 0, 0]
         ];
@@ -32,7 +38,7 @@ describe('PacmanAI', () => {
             { x: 20, y: 20, gridX: 1, gridY: 1 }
         ];
 
-        mockPacman = createMockPacman({
+        mockPlayer = createMockPlayer({
             x: 40,
             y: 40,
             gridX: 2,
@@ -70,7 +76,12 @@ describe('PacmanAI', () => {
     describe('decideDirection()', () => {
         test('returns a valid direction', () => {
             ai.enable();
-            const direction = ai.decideDirection(mockPacman, mockMaze, mockPelletGrid, mockGhosts);
+            const direction = ai.decideDirection(
+                mockPlayer,
+                mockMaze,
+                mockPelletGrid,
+                mockGhosts
+            );
 
             expect(direction).toBeDefined();
             expect(direction).not.toBe(directions.NONE);
@@ -78,15 +89,20 @@ describe('PacmanAI', () => {
 
         test('avoids ghosts when nearby', () => {
             ai.enable();
-            mockPacman.gridX = 2;
-            mockPacman.gridY = 2;
+            mockPlayer.gridX = 2;
+            mockPlayer.gridY = 2;
 
             mockGhosts = [
                 { x: 60, y: 40, gridX: 3, gridY: 2 },
                 { x: 20, y: 40, gridX: 1, gridY: 2 }
             ];
 
-            const direction = ai.decideDirection(mockPacman, mockMaze, mockPelletGrid, mockGhosts);
+            const direction = ai.decideDirection(
+                mockPlayer,
+                mockMaze,
+                mockPelletGrid,
+                mockGhosts
+            );
 
             expect(direction).not.toBe(directions.RIGHT);
             expect(direction).not.toBe(directions.LEFT);
@@ -94,46 +110,59 @@ describe('PacmanAI', () => {
 
         test('collects pellets when safe', () => {
             ai.enable();
-            mockPacman.gridX = 2;
-            mockPacman.gridY = 2;
+            mockPlayer.gridX = 2;
+            mockPlayer.gridY = 2;
 
             mockPelletGrid[2][2] = PELLET_TYPES.PELLET;
             mockPelletGrid[2][3] = PELLET_TYPES.POWER_PELLET;
 
-            const direction = ai.decideDirection(mockPacman, mockMaze, mockPelletGrid, mockGhosts);
+            const direction = ai.decideDirection(
+                mockPlayer,
+                mockMaze,
+                mockPelletGrid,
+                mockGhosts
+            );
 
             expect(direction).not.toBeNull();
         });
 
         test('chooses any direction when no ghosts nearby', () => {
             ai.enable();
-            mockPacman.gridX = 2;
-            mockPacman.gridY = 2;
+            mockPlayer.gridX = 2;
+            mockPlayer.gridY = 2;
 
-            mockGhosts = [
-                { x: 200, y: 200, gridX: 10, gridY: 10 }
-            ];
+            mockGhosts = [{ x: 200, y: 200, gridX: 10, gridY: 10 }];
 
-            const direction = ai.decideDirection(mockPacman, mockMaze, mockPelletGrid, mockGhosts);
+            const direction = ai.decideDirection(
+                mockPlayer,
+                mockMaze,
+                mockPelletGrid,
+                mockGhosts
+            );
 
             expect(direction).not.toBeNull();
         });
 
         test('does not reverse direction unless necessary', () => {
             ai.enable();
-            mockPacman.direction = directions.RIGHT;
-            mockPacman.gridX = 2;
-            mockPacman.gridY = 2;
+            mockPlayer.direction = directions.RIGHT;
+            mockPlayer.gridX = 2;
+            mockPlayer.gridY = 2;
 
-            const direction = ai.decideDirection(mockPacman, mockMaze, mockPelletGrid, mockGhosts);
+            const direction = ai.decideDirection(
+                mockPlayer,
+                mockMaze,
+                mockPelletGrid,
+                mockGhosts
+            );
 
             expect(direction).not.toBe(directions.LEFT);
         });
 
         test('avoids dead ends', () => {
             ai.enable();
-            mockPacman.gridX = 1;
-            mockPacman.gridY = 1;
+            mockPlayer.gridX = 1;
+            mockPlayer.gridY = 1;
 
             mockMaze = [
                 [1, 1, 1],
@@ -146,7 +175,12 @@ describe('PacmanAI', () => {
                 [0, 0, PELLET_TYPES.PELLET]
             ];
 
-            const direction = ai.decideDirection(mockPacman, mockMaze, mockPelletGrid, mockGhosts);
+            const direction = ai.decideDirection(
+                mockPlayer,
+                mockMaze,
+                mockPelletGrid,
+                mockGhosts
+            );
 
             expect(direction).not.toBeNull();
         });
@@ -155,33 +189,33 @@ describe('PacmanAI', () => {
     describe('update()', () => {
         test('does nothing when disabled', () => {
             ai.enabled = false;
-            mockPacman.setDirection = jest.fn();
+            mockPlayer.setDirection = jest.fn();
 
-            ai.update(mockPacman, mockMaze, mockPelletGrid, mockGhosts);
+            ai.update(mockPlayer, mockMaze, mockPelletGrid, mockGhosts);
 
-            expect(mockPacman.setDirection).not.toHaveBeenCalled();
+            expect(mockPlayer.setDirection).not.toHaveBeenCalled();
         });
 
         test('sets direction when enabled', () => {
             ai.enable();
-            mockPacman.setDirection = jest.fn();
+            mockPlayer.setDirection = jest.fn();
 
-            ai.update(mockPacman, mockMaze, mockPelletGrid, mockGhosts);
+            ai.update(mockPlayer, mockMaze, mockPelletGrid, mockGhosts);
 
-            expect(mockPacman.setDirection).toHaveBeenCalled();
+            expect(mockPlayer.setDirection).toHaveBeenCalled();
         });
 
         test('does not change direction at same tile center repeatedly', () => {
             ai.enable();
-            mockPacman.setDirection = jest.fn();
-            mockPacman.gridX = 2;
-            mockPacman.gridY = 2;
+            mockPlayer.setDirection = jest.fn();
+            mockPlayer.gridX = 2;
+            mockPlayer.gridY = 2;
 
-            ai.update(mockPacman, mockMaze, mockPelletGrid, mockGhosts);
-            const firstCall = mockPacman.setDirection.mock.calls[0];
+            ai.update(mockPlayer, mockMaze, mockPelletGrid, mockGhosts);
+            const firstCall = mockPlayer.setDirection.mock.calls[0];
 
-            ai.update(mockPacman, mockMaze, mockPelletGrid, mockGhosts);
-            const secondCall = mockPacman.setDirection.mock.calls[1];
+            ai.update(mockPlayer, mockMaze, mockPelletGrid, mockGhosts);
+            const secondCall = mockPlayer.setDirection.mock.calls[1];
 
             expect(firstCall).toEqual(secondCall);
         });
@@ -196,7 +230,7 @@ describe('PacmanAI', () => {
 
             mockGhosts = [closeGhost, farGhost];
 
-            const danger = ai.calculateGhostDanger(mockPacman, mockGhosts);
+            const danger = ai.calculateGhostDanger(mockPlayer, mockGhosts);
 
             expect(danger).toBeGreaterThan(0);
         });
@@ -206,7 +240,7 @@ describe('PacmanAI', () => {
 
             mockGhosts = [];
 
-            const danger = ai.calculateGhostDanger(mockPacman, mockGhosts);
+            const danger = ai.calculateGhostDanger(mockPlayer, mockGhosts);
 
             expect(danger).toBe(0);
         });
@@ -214,11 +248,9 @@ describe('PacmanAI', () => {
         test('ignores frightened ghosts', () => {
             ai.enable();
 
-            mockGhosts = [
-                { x: 50, y: 40, gridX: 2, gridY: 2, isFrightened: true }
-            ];
+            mockGhosts = [{ x: 50, y: 40, gridX: 2, gridY: 2, isFrightened: true }];
 
-            const danger = ai.calculateGhostDanger(mockPacman, mockGhosts);
+            const danger = ai.calculateGhostDanger(mockPlayer, mockGhosts);
 
             expect(danger).toBe(0);
         });
@@ -226,11 +258,9 @@ describe('PacmanAI', () => {
         test('ignores eaten ghosts', () => {
             ai.enable();
 
-            mockGhosts = [
-                { x: 50, y: 40, gridX: 2, gridY: 2, isEaten: true }
-            ];
+            mockGhosts = [{ x: 50, y: 40, gridX: 2, gridY: 2, isEaten: true }];
 
-            const danger = ai.calculateGhostDanger(mockPacman, mockGhosts);
+            const danger = ai.calculateGhostDanger(mockPlayer, mockGhosts);
 
             expect(danger).toBe(0);
         });
@@ -239,44 +269,42 @@ describe('PacmanAI', () => {
     describe('Integration: AI behavior in game', () => {
         test('survives for multiple updates', () => {
             ai.enable();
-            mockPacman.setDirection = jest.fn();
+            mockPlayer.setDirection = jest.fn();
 
             for (let i = 0; i < 10; i++) {
-                ai.update(mockPacman, mockMaze, mockPelletGrid, mockGhosts);
+                ai.update(mockPlayer, mockMaze, mockPelletGrid, mockGhosts);
             }
 
-            expect(mockPacman.setDirection).toHaveBeenCalledTimes(10);
+            expect(mockPlayer.setDirection).toHaveBeenCalledTimes(10);
         });
 
         test('avoids ghost when approaching', () => {
             ai.enable();
-            mockPacman.gridX = 2;
-            mockPacman.gridY = 2;
-            mockPacman.direction = directions.RIGHT;
-            mockPacman.setDirection = jest.fn();
+            mockPlayer.gridX = 2;
+            mockPlayer.gridY = 2;
+            mockPlayer.direction = directions.RIGHT;
+            mockPlayer.setDirection = jest.fn();
 
-            mockGhosts = [
-                { x: 70, y: 40, gridX: 3, gridY: 2 }
-            ];
+            mockGhosts = [{ x: 70, y: 40, gridX: 3, gridY: 2 }];
 
-            ai.update(mockPacman, mockMaze, mockPelletGrid, mockGhosts);
+            ai.update(mockPlayer, mockMaze, mockPelletGrid, mockGhosts);
 
-            const calledDirection = mockPacman.setDirection.mock.calls[0][0];
+            const calledDirection = mockPlayer.setDirection.mock.calls[0][0];
             expect(calledDirection).not.toBe(directions.RIGHT);
         });
 
         test('changes direction at intersection', () => {
             ai.enable();
-            mockPacman.x = 40;
-            mockPacman.y = 40;
-            mockPacman.gridX = 2;
-            mockPacman.gridY = 2;
-            mockPacman.direction = directions.RIGHT;
-            mockPacman.setDirection = jest.fn();
+            mockPlayer.x = 40;
+            mockPlayer.y = 40;
+            mockPlayer.gridX = 2;
+            mockPlayer.gridY = 2;
+            mockPlayer.direction = directions.RIGHT;
+            mockPlayer.setDirection = jest.fn();
 
-            ai.update(mockPacman, mockMaze, mockPelletGrid, mockGhosts);
+            ai.update(mockPlayer, mockMaze, mockPelletGrid, mockGhosts);
 
-            expect(mockPacman.setDirection).toHaveBeenCalled();
+            expect(mockPlayer.setDirection).toHaveBeenCalled();
         });
     });
 });

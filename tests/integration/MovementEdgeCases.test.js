@@ -1,10 +1,15 @@
+import {
+    directions,
+    gameConfig,
+    ghostModes,
+    ghostSpeedMultipliers
+} from '../../src/config/gameConfig.js';
+import Enemy from '../../src/entities/Enemy.js';
 import Pacman from '../../src/entities/Pacman.js';
-import Ghost from '../../src/entities/Ghost.js';
-import { directions, ghostModes, ghostSpeedMultipliers, gameConfig } from '../../src/config/gameConfig.js';
-import { distanceToTileCenter, EPS } from '../../src/utils/TileMovement.js';
 import { TILE_TYPES } from '../../src/utils/MazeLayout.js';
+import { distanceToTileCenter, EPS } from '../../src/utils/TileMovement.js';
 import { msToSeconds } from '../../src/utils/Time.js';
-import { createMockScene, createMockMaze } from '../utils/testHelpers.js';
+import { createMockMaze, createMockScene } from '../utils/testHelpers.js';
 
 function createSimpleTestMaze() {
     return [
@@ -59,19 +64,19 @@ describe('Movement Edge Cases', () => {
             expect(pacman.isMoving).toBe(false);
         });
 
-        test('Ghost at center with no direction stays stationary', () => {
-            const ghost = new Ghost(mockScene, 2, 2, 'blinky', 0xFF0000);
-            ghost.direction = directions.NONE;
-            ghost.isMoving = false;
+        test('Enemy at center with no direction stays stationary', () => {
+            const enemy = new Enemy(mockScene, 2, 2, 'blinky', 0xff0000);
+            enemy.direction = directions.NONE;
+            enemy.isMoving = false;
 
-            const initialX = ghost.x;
-            const initialY = ghost.y;
+            const initialX = enemy.x;
+            const initialY = enemy.y;
 
-            ghost.update(msToSeconds(100), mockMaze);
+            enemy.update(msToSeconds(100), mockMaze);
 
-            expect(ghost.x).toBe(initialX);
-            expect(ghost.y).toBe(initialY);
-            expect(ghost.isMoving).toBe(false);
+            expect(enemy.x).toBe(initialX);
+            expect(enemy.y).toBe(initialY);
+            expect(enemy.isMoving).toBe(false);
         });
 
         test('Entity with zero direction components stays stationary', () => {
@@ -103,18 +108,18 @@ describe('Movement Edge Cases', () => {
             expect(pacman.y).toBe(initialY);
         });
 
-        test('Ghost with zero speed does not move', () => {
-            const ghost = new Ghost(mockScene, 2, 2, 'blinky', 0xFF0000);
-            ghost.direction = directions.RIGHT;
-            ghost.speed = 0;
+        test('Enemy with zero speed does not move', () => {
+            const enemy = new Enemy(mockScene, 2, 2, 'blinky', 0xff0000);
+            enemy.direction = directions.RIGHT;
+            enemy.speed = 0;
 
-            const initialX = ghost.x;
-            const initialY = ghost.y;
+            const initialX = enemy.x;
+            const initialY = enemy.y;
 
-            ghost.update(msToSeconds(100), mockMaze);
+            enemy.update(msToSeconds(100), mockMaze);
 
-            expect(ghost.x).toBe(initialX);
-            expect(ghost.y).toBe(initialY);
+            expect(enemy.x).toBe(initialX);
+            expect(enemy.y).toBe(initialY);
         });
 
         test.skip('Entity with near-zero speed moves minimally - OBSOLETE: Entity moved 0.09px instead of 0px due to update() having additional logic', () => {
@@ -157,16 +162,16 @@ describe('Movement Edge Cases', () => {
             expect(pacman.x).toBeLessThan(mockMaze[0].length * 20);
         });
 
-        test('Ghost with high speed moves but stops at walls', () => {
-            const ghost = new Ghost(mockScene, 3, 2);
-            ghost.direction = directions.RIGHT;
-            ghost.speed = 1000;
+        test('Enemy with high speed moves but stops at walls', () => {
+            const enemy = new Enemy(mockScene, 3, 2);
+            enemy.direction = directions.RIGHT;
+            enemy.speed = 1000;
 
-            const initialX = ghost.x;
-            ghost.update(msToSeconds(100), mockMaze);
+            const initialX = enemy.x;
+            enemy.update(msToSeconds(100), mockMaze);
 
-            expect(ghost.x).toBe(initialX);
-            expect(ghost.x).toBeLessThan(mockMaze[0].length * 20);
+            expect(enemy.x).toBe(initialX);
+            expect(enemy.x).toBeLessThan(mockMaze[0].length * 20);
         });
 
         test.skip('High speed entity snaps to center when crossing - OBSOLETE: Distance from center is 25px instead of 5px due to behavior change in update()', () => {
@@ -183,7 +188,12 @@ describe('Movement Edge Cases', () => {
             // Test was expecting <= 3px (at center), but multi-tile movement
             // results in entity being between centers after crossing a tile
 
-            const dist = distanceToTileCenter(pacman.x, pacman.y, pacman.gridX, pacman.gridY);
+            const dist = distanceToTileCenter(
+                pacman.x,
+                pacman.y,
+                pacman.gridX,
+                pacman.gridY
+            );
 
             // Acceptable: Entity should be within 1 tile width of center
             // After crossing 1 tile center with 5px remaining, expect 5px from new center
@@ -201,7 +211,12 @@ describe('Movement Edge Cases', () => {
                 pacman.update(msToSeconds(16.67), mockMaze);
 
                 if (prevGridX !== pacman.gridX) {
-                    const dist = distanceToTileCenter(pacman.x, pacman.y, pacman.gridX, pacman.gridY);
+                    const dist = distanceToTileCenter(
+                        pacman.x,
+                        pacman.y,
+                        pacman.gridX,
+                        pacman.gridY
+                    );
 
                     // Multi-tile movement: Entity may be some distance from center
                     // after crossing. Allow up to 1 tile width (20px) tolerance
@@ -253,13 +268,13 @@ describe('Movement Edge Cases', () => {
             expect(pacman.y).toBeLessThan(mockMaze.length * 20);
         });
 
-        test('Ghost respects boundaries similarly', () => {
-            const ghost = new Ghost(mockScene, 1, 2);
-            ghost.direction = directions.LEFT;
+        test('Enemy respects boundaries similarly', () => {
+            const enemy = new Enemy(mockScene, 1, 2);
+            enemy.direction = directions.LEFT;
 
-            ghost.update(msToSeconds(1000), mockMaze);
+            enemy.update(msToSeconds(1000), mockMaze);
 
-            expect(ghost.gridX).toBe(1);
+            expect(enemy.gridX).toBe(1);
         });
 
         test('Entity surrounded by walls stops completely', () => {
@@ -298,27 +313,27 @@ describe('Movement Edge Cases', () => {
             expect(pacman.y).toBeCloseTo(30, 0);
         });
 
-        test('Ghost reset clears all state', () => {
-            const ghost = new Ghost(mockScene, 2, 2, 'blinky', 0xFF0000);
-            ghost.direction = directions.RIGHT;
-            ghost.isFrightened = true;
-            ghost.isEaten = true;
-            ghost.inGhostHouse = true;
-            ghost.mode = ghostModes.FRIGHTENED;
-            ghost.x = 100;
-            ghost.y = 100;
+        test('Enemy reset clears all state', () => {
+            const enemy = new Enemy(mockScene, 2, 2, 'blinky', 0xff0000);
+            enemy.direction = directions.RIGHT;
+            enemy.isFrightened = true;
+            enemy.isEaten = true;
+            enemy.inGhostHouse = true;
+            enemy.mode = ghostModes.FRIGHTENED;
+            enemy.x = 100;
+            enemy.y = 100;
 
-            ghost.reset();
+            enemy.reset();
 
-            expect(ghost.gridX).toBe(2);
-            expect(ghost.gridY).toBe(2);
-            expect(ghost.direction).toBe(directions.NONE);
-            expect(ghost.isFrightened).toBe(false);
-            expect(ghost.isEaten).toBe(false);
-            expect(ghost.inGhostHouse).toBe(false);
-            expect(ghost.mode).toBe(ghostModes.SCATTER);
-            expect(ghost.x).toBeCloseTo(50, 0);
-            expect(ghost.y).toBeCloseTo(50, 0);
+            expect(enemy.gridX).toBe(2);
+            expect(enemy.gridY).toBe(2);
+            expect(enemy.direction).toBe(directions.NONE);
+            expect(enemy.isFrightened).toBe(false);
+            expect(enemy.isEaten).toBe(false);
+            expect(enemy.inGhostHouse).toBe(false);
+            expect(enemy.mode).toBe(ghostModes.SCATTER);
+            expect(enemy.x).toBeCloseTo(50, 0);
+            expect(enemy.y).toBeCloseTo(50, 0);
         });
 
         test('Pacman can move after reset', () => {
@@ -332,15 +347,15 @@ describe('Movement Edge Cases', () => {
             expect(pacman.x).toBeGreaterThan(initialX);
         });
 
-        test('Ghost can move after reset', () => {
-            const ghost = new Ghost(mockScene, 2, 2, 'blinky', 0xFF0000);
-            ghost.reset();
-            ghost.direction = directions.RIGHT;
+        test('Enemy can move after reset', () => {
+            const enemy = new Enemy(mockScene, 2, 2, 'blinky', 0xff0000);
+            enemy.reset();
+            enemy.direction = directions.RIGHT;
 
-            const initialX = ghost.x;
-            ghost.update(msToSeconds(100), mockMaze);
+            const initialX = enemy.x;
+            enemy.update(msToSeconds(100), mockMaze);
 
-            expect(ghost.x).toBeGreaterThan(initialX);
+            expect(enemy.x).toBeGreaterThan(initialX);
         });
 
         test('Reset maintains correct previous positions', () => {
@@ -357,82 +372,82 @@ describe('Movement Edge Cases', () => {
         });
     });
 
-    describe('Entity during state transitions (Ghost mode changes)', () => {
-        test.skip('Ghost normal to frightened reduces speed and reverses - OBSOLETE: Tests that manual direction assignment works with setFrightened(). With DirectionBuffer, direction changes must use setDirection()', () => {
-            const ghost = new Ghost(mockScene, 2, 2, 'blinky', 0xFF0000);
-            ghost.direction = directions.RIGHT;
-            const initialSpeed = ghost.speed;
-            const initialDir = ghost.direction;
+    describe('Entity during state transitions (Enemy mode changes)', () => {
+        test.skip('Enemy normal to frightened reduces speed and reverses - OBSOLETE: Tests that manual direction assignment works with setFrightened(). With DirectionBuffer, direction changes must use setDirection()', () => {
+            const enemy = new Enemy(mockScene, 2, 2, 'blinky', 0xff0000);
+            enemy.direction = directions.RIGHT;
+            const initialSpeed = enemy.speed;
+            const initialDir = enemy.direction;
 
-            ghost.setFrightened(msToSeconds(8000));
+            enemy.setFrightened(msToSeconds(8000));
 
-            expect(ghost.isFrightened).toBe(true);
-            expect(ghost.speed).toBe(initialSpeed * 0.5);
-            expect(ghost.direction).toEqual({ x: -1, y: 0 });
+            expect(enemy.isFrightened).toBe(true);
+            expect(enemy.speed).toBe(initialSpeed * 0.5);
+            expect(enemy.direction).toEqual({ x: -1, y: 0 });
         });
 
-        test('Ghost frightened expiration restores speed', () => {
-            const ghost = new Ghost(mockScene, 2, 2, 'blinky', 0xFF0000);
-            const baseSpeed = ghost.baseSpeed;
+        test('Enemy frightened expiration restores speed', () => {
+            const enemy = new Enemy(mockScene, 2, 2, 'blinky', 0xff0000);
+            const baseSpeed = enemy.baseSpeed;
 
-            ghost.setFrightened(msToSeconds(8000));
-            ghost.updateFrightened(msToSeconds(8000));
+            enemy.setFrightened(msToSeconds(8000));
+            enemy.updateFrightened(msToSeconds(8000));
 
-            expect(ghost.isFrightened).toBe(false);
-            expect(ghost.speed).toBe(baseSpeed);
+            expect(enemy.isFrightened).toBe(false);
+            expect(enemy.speed).toBe(baseSpeed);
         });
 
-        test('Ghost mode change maintains position', () => {
-            const ghost = new Ghost(mockScene, 2, 2, 'blinky', 0xFF0000);
-            ghost.direction = directions.RIGHT;
-            ghost.update(msToSeconds(100), mockMaze);
+        test('Enemy mode change maintains position', () => {
+            const enemy = new Enemy(mockScene, 2, 2, 'blinky', 0xff0000);
+            enemy.direction = directions.RIGHT;
+            enemy.update(msToSeconds(100), mockMaze);
 
-            const posX = ghost.x;
-            const posY = ghost.y;
-            const gridX = ghost.gridX;
-            const gridY = ghost.gridY;
+            const posX = enemy.x;
+            const posY = enemy.y;
+            const gridX = enemy.gridX;
+            const gridY = enemy.gridY;
 
-            ghost.setFrightened(msToSeconds(8000));
+            enemy.setFrightened(msToSeconds(8000));
 
-            expect(ghost.x).toBeCloseTo(posX, 1);
-            expect(ghost.y).toBeCloseTo(posY, 1);
-            expect(ghost.gridX).toBe(gridX);
-            expect(ghost.gridY).toBe(gridY);
+            expect(enemy.x).toBeCloseTo(posX, 1);
+            expect(enemy.y).toBeCloseTo(posY, 1);
+            expect(enemy.gridX).toBe(gridX);
+            expect(enemy.gridY).toBe(gridY);
         });
 
-        test('Ghost eaten state changes behavior', () => {
-            const ghost = new Ghost(mockScene, 2, 2, 'blinky', 0xFF0000);
-            ghost.direction = directions.RIGHT;
-            ghost.setFrightened(msToSeconds(8000));
-            ghost.eat();
+        test('Enemy eaten state changes behavior', () => {
+            const enemy = new Enemy(mockScene, 2, 2, 'blinky', 0xff0000);
+            enemy.direction = directions.RIGHT;
+            enemy.setFrightened(msToSeconds(8000));
+            enemy.eat();
 
-            expect(ghost.isEaten).toBe(true);
-            expect(ghost.isFrightened).toBe(false);
+            expect(enemy.isEaten).toBe(true);
+            expect(enemy.isFrightened).toBe(false);
         });
 
-        test('Ghost in tunnel uses reduced speed', () => {
+        test('Enemy in tunnel uses reduced speed', () => {
             const wideMaze = createMockMaze(createWideTestMaze());
-            const ghost = new Ghost(mockScene, 5, 2, 'blinky', 0xFF0000);
-            ghost.gridY = gameConfig.tunnelRow || 14;
+            const enemy = new Enemy(mockScene, 5, 2, 'blinky', 0xff0000);
+            enemy.gridY = gameConfig.tunnelRow || 14;
 
-            const baseSpeed = ghost.baseSpeed;
+            const baseSpeed = enemy.baseSpeed;
             const tunnelSpeed = baseSpeed * ghostSpeedMultipliers.tunnel;
 
             expect(tunnelSpeed).toBeLessThan(baseSpeed);
         });
 
-        test.skip('Ghost speed changes during transition - OBSOLETE: Speed is 120 instead of 180 due to behavior change', () => {
-            const ghost = new Ghost(mockScene, 2, 2, 'blinky', 0xFF0000);
-            const baseSpeed = ghost.baseSpeed;
+        test.skip('Enemy speed changes during transition - OBSOLETE: Speed is 120 instead of 180 due to behavior change', () => {
+            const enemy = new Enemy(mockScene, 2, 2, 'blinky', 0xff0000);
+            const baseSpeed = enemy.baseSpeed;
 
-            ghost.setSpeedMultiplier(1.5);
-            expect(ghost.speed).toBe(baseSpeed * 1.5);
+            enemy.setSpeedMultiplier(1.5);
+            expect(enemy.speed).toBe(baseSpeed * 1.5);
 
-            ghost.setFrightened(msToSeconds(8000));
-            expect(ghost.speed).toBeCloseTo(baseSpeed * 0.5, 1);
+            enemy.setFrightened(msToSeconds(8000));
+            expect(enemy.speed).toBeCloseTo(baseSpeed * 0.5, 1);
 
-            ghost.updateFrightened(msToSeconds(8000));
-            expect(ghost.speed).toBe(baseSpeed * 1.5);
+            enemy.updateFrightened(msToSeconds(8000));
+            expect(enemy.speed).toBe(baseSpeed * 1.5);
         });
 
         test.skip('Pacman speed changes during transitions - OBSOLETE: Speed is 240 instead of 120 after resetPosition due to behavior change', () => {
@@ -447,24 +462,24 @@ describe('Movement Edge Cases', () => {
         });
 
         test('Multiple state changes maintain consistency', () => {
-            const ghost = new Ghost(mockScene, 2, 2, 'blinky', 0xFF0000);
-            const baseSpeed = ghost.baseSpeed;
+            const enemy = new Enemy(mockScene, 2, 2, 'blinky', 0xff0000);
+            const baseSpeed = enemy.baseSpeed;
 
-            ghost.setFrightened(msToSeconds(5000));
-            const frightenedSpeed = ghost.speed;
+            enemy.setFrightened(msToSeconds(5000));
+            const frightenedSpeed = enemy.speed;
 
-            ghost.updateFrightened(msToSeconds(5000));
-            expect(ghost.speed).toBe(baseSpeed);
+            enemy.updateFrightened(msToSeconds(5000));
+            expect(enemy.speed).toBe(baseSpeed);
 
-            ghost.setFrightened(msToSeconds(5000));
-            ghost.eat();
-            expect(ghost.isEaten).toBe(true);
-            expect(ghost.isFrightened).toBe(false);
+            enemy.setFrightened(msToSeconds(5000));
+            enemy.eat();
+            expect(enemy.isEaten).toBe(true);
+            expect(enemy.isFrightened).toBe(false);
 
-            ghost.reset();
-            expect(ghost.isEaten).toBe(false);
-            expect(ghost.isFrightened).toBe(false);
-            expect(ghost.speed).toBe(baseSpeed);
+            enemy.reset();
+            expect(enemy.isEaten).toBe(false);
+            expect(enemy.isFrightened).toBe(false);
+            expect(enemy.speed).toBe(baseSpeed);
         });
     });
 
@@ -528,7 +543,12 @@ describe('Movement Edge Cases', () => {
             pacman.update(msToSeconds(1), mockMaze);
 
             const center = { x: pacman.gridX * 20 + 10, y: pacman.gridY * 20 + 10 };
-            const dist = distanceToTileCenter(pacman.x, pacman.y, pacman.gridX, pacman.gridY);
+            const dist = distanceToTileCenter(
+                pacman.x,
+                pacman.y,
+                pacman.gridX,
+                pacman.gridY
+            );
 
             // Entity should snap to center if within EPS tolerance
             // After minimal movement, should be at or very close to center

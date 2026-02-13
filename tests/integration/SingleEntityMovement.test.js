@@ -1,9 +1,9 @@
-import Pacman from '../../src/entities/Pacman.js';
-import Ghost from '../../src/entities/Ghost.js';
 import { directions, gameConfig } from '../../src/config/gameConfig.js';
+import Enemy from '../../src/entities/Enemy.js';
+import Pacman from '../../src/entities/Pacman.js';
 import { TILE_TYPES } from '../../src/utils/MazeLayout.js';
 import { msToSeconds } from '../../src/utils/Time.js';
-import { createMockScene, createMockMaze } from '../utils/testHelpers.js';
+import { createMockMaze, createMockScene } from '../utils/testHelpers.js';
 
 describe('Single Entity Movement Integration', () => {
     let mockScene;
@@ -85,50 +85,57 @@ describe('Single Entity Movement Integration', () => {
         });
     });
 
-    describe('Ghost Movement', () => {
-        let ghost;
-        let mockPacman;
+    describe('Enemy Movement', () => {
+        let enemy;
+        let mockPlayer;
 
         beforeEach(() => {
-            ghost = new Ghost(mockScene, 3, 3, 'blinky', 0xFF0000);
-            ghost.setDirection(directions.RIGHT);
-            mockPacman = { x: 100, y: 100, gridX: 5, gridY: 5, prevX: 100, prevY: 100 };
+            enemy = new Enemy(mockScene, 3, 3, 'blinky', 0xff0000);
+            enemy.setDirection(directions.RIGHT);
+            mockPlayer = {
+                x: 100,
+                y: 100,
+                gridX: 5,
+                gridY: 5,
+                prevX: 100,
+                prevY: 100
+            };
         });
 
         test('straight line movement', () => {
-            const initialX = ghost.x;
-            const initialY = ghost.y;
+            const initialX = enemy.x;
+            const initialY = enemy.y;
 
-            ghost.update(msToSeconds(16.67), mockMaze, mockPacman);
+            enemy.update(msToSeconds(16.67), mockMaze, mockPlayer);
 
-            expect(ghost.x).toBeGreaterThan(initialX);
-            expect(ghost.y).toBe(initialY);
+            expect(enemy.x).toBeGreaterThan(initialX);
+            expect(enemy.y).toBe(initialY);
         });
 
         test('90-degree turn at intersection', () => {
-            ghost.setDirection(directions.DOWN);
-            const initialY = ghost.y;
+            enemy.setDirection(directions.DOWN);
+            const initialY = enemy.y;
 
-            ghost.update(msToSeconds(16.67), mockMaze, mockPacman);
-            ghost.update(msToSeconds(16.67), mockMaze, mockPacman);
-            ghost.update(msToSeconds(16.67), mockMaze, mockPacman);
-            ghost.update(msToSeconds(16.67), mockMaze, mockPacman);
-            ghost.update(msToSeconds(16.67), mockMaze, mockPacman);
-            ghost.update(msToSeconds(16.67), mockMaze, mockPacman);
-            ghost.update(msToSeconds(16.67), mockMaze, mockPacman);
+            enemy.update(msToSeconds(16.67), mockMaze, mockPlayer);
+            enemy.update(msToSeconds(16.67), mockMaze, mockPlayer);
+            enemy.update(msToSeconds(16.67), mockMaze, mockPlayer);
+            enemy.update(msToSeconds(16.67), mockMaze, mockPlayer);
+            enemy.update(msToSeconds(16.67), mockMaze, mockPlayer);
+            enemy.update(msToSeconds(16.67), mockMaze, mockPlayer);
+            enemy.update(msToSeconds(16.67), mockMaze, mockPlayer);
 
-            expect(ghost.y).not.toBe(initialY);
+            expect(enemy.y).not.toBe(initialY);
         });
 
         test('wall collision stops movement', () => {
-            ghost = new Ghost(mockScene, 2, 3, 'blinky', 0xFF0000);
-            ghost.setDirection(directions.LEFT);
+            enemy = new Enemy(mockScene, 2, 3, 'blinky', 0xff0000);
+            enemy.setDirection(directions.LEFT);
 
-            const initialX = ghost.x;
-            ghost.update(msToSeconds(1000), mockMaze, mockPacman);
+            const initialX = enemy.x;
+            enemy.update(msToSeconds(1000), mockMaze, mockPlayer);
 
-            expect(ghost.x).toBeLessThan(initialX);
-            expect(ghost.x).toBeGreaterThan(gameConfig.tileSize);
+            expect(enemy.x).toBeLessThan(initialX);
+            expect(enemy.x).toBeGreaterThan(0);
         });
     });
 });

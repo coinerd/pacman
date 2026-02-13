@@ -4,9 +4,18 @@
  * Runs AI decision-making to determine ghost directions.
  */
 
-import { directions, ghostModes, scatterTargets, ghostHouse } from '../../config/gameConfig.js';
-import { getValidDirections, getDistance, isWalkableTile } from '../../utils/MazeLayout.js';
-import { getOpposite } from '../../config/gameConfig.js';
+import {
+    directions,
+    getOpposite,
+    ghostHouse,
+    ghostModes,
+    scatterTargets
+} from '../../config/gameConfig.js';
+import {
+    getDistance,
+    getValidDirections,
+    isWalkableTile
+} from '../../utils/MazeLayout.js';
 
 export class GhostAIAdapter {
     constructor(gameModel) {
@@ -14,8 +23,8 @@ export class GhostAIAdapter {
         this.modeTimer = 0;
         this.currentMode = ghostModes.SCATTER;
         this.modeDurations = [
-            { mode: ghostModes.SCATTER, duration: 7 },   // 7 seconds
-            { mode: ghostModes.CHASE, duration: 20 },    // 20 seconds
+            { mode: ghostModes.SCATTER, duration: 7 }, // 7 seconds
+            { mode: ghostModes.CHASE, duration: 20 }, // 20 seconds
             { mode: ghostModes.SCATTER, duration: 7 },
             { mode: ghostModes.CHASE, duration: 20 },
             { mode: ghostModes.SCATTER, duration: 5 },
@@ -27,9 +36,9 @@ export class GhostAIAdapter {
     }
 
     /**
-     * Update all ghosts' AI
-     * @param {number} deltaSeconds - Time delta
-     */
+	 * Update all ghosts' AI
+	 * @param {number} deltaSeconds - Time delta
+	 */
     update(deltaSeconds) {
         this.updateModeTimer(deltaSeconds);
 
@@ -39,9 +48,9 @@ export class GhostAIAdapter {
     }
 
     /**
-     * Update mode timer and switch modes
-     * @param {number} deltaSeconds - Time delta
-     */
+	 * Update mode timer and switch modes
+	 * @param {number} deltaSeconds - Time delta
+	 */
     updateModeTimer(deltaSeconds) {
         if (this.modeIndex >= this.modeDurations.length) {
             return;
@@ -53,7 +62,8 @@ export class GhostAIAdapter {
         if (this.modeTimer >= currentModeConfig.duration) {
             this.modeTimer = 0;
             this.modeIndex++;
-            this.currentMode = this.modeDurations[this.modeIndex]?.mode || ghostModes.CHASE;
+            this.currentMode =
+				this.modeDurations[this.modeIndex]?.mode || ghostModes.CHASE;
 
             // Reverse all ghosts on mode change
             for (const ghost of this.gameModel.ghosts) {
@@ -65,10 +75,10 @@ export class GhostAIAdapter {
     }
 
     /**
-     * Update individual ghost AI
-     * @param {GhostState} ghost - Ghost to update
-     * @param {number} deltaSeconds - Time delta
-     */
+	 * Update individual ghost AI
+	 * @param {GhostState} ghost - Ghost to update
+	 * @param {number} deltaSeconds - Time delta
+	 */
     updateGhostAI(ghost, deltaSeconds) {
         // Skip AI for eaten ghosts (they have special logic)
         if (ghost.isEaten) {
@@ -118,10 +128,10 @@ export class GhostAIAdapter {
     }
 
     /**
-     * Update eaten ghost (returning to ghost house)
-     * @param {GhostState} ghost - Eaten ghost
-     * @param {number} deltaSeconds - Time delta
-     */
+	 * Update eaten ghost (returning to ghost house)
+	 * @param {GhostState} ghost - Eaten ghost
+	 * @param {number} deltaSeconds - Time delta
+	 */
     updateEatenGhost(ghost, deltaSeconds) {
         const entranceX = ghostHouse.entrance?.x || 13;
         const entranceY = ghostHouse.entrance?.y || 11;
@@ -154,10 +164,10 @@ export class GhostAIAdapter {
     }
 
     /**
-     * Choose direction for ghost based on its AI personality
-     * @param {GhostState} ghost - Ghost to choose direction for
-     * @returns {Object|null} - Chosen direction
-     */
+	 * Choose direction for ghost based on its AI personality
+	 * @param {GhostState} ghost - Ghost to choose direction for
+	 * @returns {Object|null} - Chosen direction
+	 */
     chooseDirection(ghost) {
         const validDirs = getValidDirections(
             this.gameModel.maze,
@@ -173,7 +183,9 @@ export class GhostAIAdapter {
         let filteredDirs = validDirs;
         if (ghost.direction !== directions.NONE) {
             const opposite = getOpposite(ghost.direction);
-            filteredDirs = validDirs.filter(d => !(d.x === opposite.x && d.y === opposite.y));
+            filteredDirs = validDirs.filter(
+                (d) => !(d.x === opposite.x && d.y === opposite.y)
+            );
         }
 
         if (filteredDirs.length === 0) {
@@ -207,12 +219,12 @@ export class GhostAIAdapter {
     }
 
     /**
-     * Choose direction to reach a specific target
-     * @param {GhostState} ghost - Ghost
-     * @param {number} targetX - Target grid X
-     * @param {number} targetY - Target grid Y
-     * @returns {Object|null} - Chosen direction
-     */
+	 * Choose direction to reach a specific target
+	 * @param {GhostState} ghost - Ghost
+	 * @param {number} targetX - Target grid X
+	 * @param {number} targetY - Target grid Y
+	 * @returns {Object|null} - Chosen direction
+	 */
     chooseDirectionToTarget(ghost, targetX, targetY) {
         const validDirs = getValidDirections(
             this.gameModel.maze,
@@ -228,7 +240,9 @@ export class GhostAIAdapter {
         let filteredDirs = validDirs;
         if (ghost.direction !== directions.NONE) {
             const opposite = getOpposite(ghost.direction);
-            filteredDirs = validDirs.filter(d => !(d.x === opposite.x && d.y === opposite.y));
+            filteredDirs = validDirs.filter(
+                (d) => !(d.x === opposite.x && d.y === opposite.y)
+            );
         }
 
         if (filteredDirs.length === 0) {
@@ -254,47 +268,47 @@ export class GhostAIAdapter {
     }
 
     /**
-     * Get target position for ghost based on its personality
-     * @param {GhostState} ghost - Ghost
-     * @returns {Object} - Target {x, y}
-     */
+	 * Get target position for ghost based on its personality
+	 * @param {GhostState} ghost - Ghost
+	 * @returns {Object} - Target {x, y}
+	 */
     getTargetForGhost(ghost) {
         const pacman = this.gameModel.pacman;
 
         switch (ghost.ghostType) {
-        case 'blinky':
-            return this.getBlinkyTarget(pacman, ghost);
-        case 'pinky':
-            return this.getPinkyTarget(pacman, ghost);
-        case 'inky':
-            return this.getInkyTarget(pacman, ghost);
-        case 'clyde':
-            return this.getClydeTarget(pacman, ghost);
+        case 'alpha':
+            return this.getAlphaTarget(pacman, ghost);
+        case 'beta':
+            return this.getBetaTarget(pacman, ghost);
+        case 'gamma':
+            return this.getGammaTarget(pacman, ghost);
+        case 'delta':
+            return this.getDeltaTarget(pacman, ghost);
         default:
             return { x: pacman.gridX, y: pacman.gridY };
         }
     }
 
     /**
-     * Blinky: Direct chase
-     */
-    getBlinkyTarget(pacman, ghost) {
+	 * Alpha: Direct chase
+	 */
+    getAlphaTarget(pacman, ghost) {
         if (ghost.mode === ghostModes.SCATTER) {
-            return scatterTargets.blinky;
+            return scatterTargets.alpha;
         }
         return { x: pacman.gridX, y: pacman.gridY };
     }
 
     /**
-     * Pinky: 4 tiles ahead of Pacman
-     */
-    getPinkyTarget(pacman, ghost) {
+	 * Beta: 4 tiles ahead of Pacman
+	 */
+    getBetaTarget(pacman, ghost) {
         if (ghost.mode === ghostModes.SCATTER) {
-            return scatterTargets.pinky;
+            return scatterTargets.beta;
         }
 
-        let targetX = pacman.gridX + (pacman.direction.x * 4);
-        let targetY = pacman.gridY + (pacman.direction.y * 4);
+        let targetX = pacman.gridX + pacman.direction.x * 4;
+        const targetY = pacman.gridY + pacman.direction.y * 4;
 
         // Arcade bug: Up also moves target left
         if (pacman.direction.y === -1) {
@@ -305,48 +319,53 @@ export class GhostAIAdapter {
     }
 
     /**
-     * Inky: Vector from Blinky through 2 tiles ahead of Pacman
-     */
-    getInkyTarget(pacman, ghost) {
+	 * Gamma: Vector from Alpha through 2 tiles ahead of Pacman
+	 */
+    getGammaTarget(pacman, ghost) {
         if (ghost.mode === ghostModes.SCATTER) {
-            return scatterTargets.inky;
+            return scatterTargets.gamma;
         }
 
-        const blinky = this.gameModel.getGhostByType('blinky');
-        const pivotX = pacman.gridX + (pacman.direction.x * 2);
-        const pivotY = pacman.gridY + (pacman.direction.y * 2);
+        const alpha = this.gameModel.getGhostByType('alpha');
+        const pivotX = pacman.gridX + pacman.direction.x * 2;
+        const pivotY = pacman.gridY + pacman.direction.y * 2;
 
-        if (blinky) {
+        if (alpha) {
             return {
-                x: pivotX + (pivotX - blinky.gridX),
-                y: pivotY + (pivotY - blinky.gridY)
+                x: pivotX + (pivotX - alpha.gridX),
+                y: pivotY + (pivotY - alpha.gridY)
             };
         }
         return { x: pivotX, y: pivotY };
     }
 
     /**
-     * Clyde: Chase if far, scatter if close
-     */
-    getClydeTarget(pacman, ghost) {
+	 * Delta: Chase if far, scatter if close
+	 */
+    getDeltaTarget(pacman, ghost) {
         if (ghost.mode === ghostModes.SCATTER) {
-            return scatterTargets.clyde;
+            return scatterTargets.delta;
         }
 
-        const dist = getDistance(ghost.gridX, ghost.gridY, pacman.gridX, pacman.gridY);
+        const dist = getDistance(
+            ghost.gridX,
+            ghost.gridY,
+            pacman.gridX,
+            pacman.gridY
+        );
 
         if (dist > 8) {
             return { x: pacman.gridX, y: pacman.gridY };
         } else {
             // Return to scatter corner if too close
-            return scatterTargets.clyde;
+            return scatterTargets.delta;
         }
     }
 
     /**
-     * Reverse ghost direction
-     * @param {GhostState} ghost - Ghost to reverse
-     */
+	 * Reverse ghost direction
+	 * @param {GhostState} ghost - Ghost to reverse
+	 */
     reverseGhost(ghost) {
         if (ghost.direction !== directions.NONE) {
             const opposite = getOpposite(ghost.direction);
@@ -355,11 +374,11 @@ export class GhostAIAdapter {
     }
 
     /**
-     * Get tile center position
-     * @param {number} gridX - Grid X
-     * @param {number} gridY - Grid Y
-     * @returns {Object} - Center position {x, y}
-     */
+	 * Get tile center position
+	 * @param {number} gridX - Grid X
+	 * @param {number} gridY - Grid Y
+	 * @returns {Object} - Center position {x, y}
+	 */
     getTileCenter(gridX, gridY) {
         const tileSize = 20; // From gameConfig
         return {
@@ -369,8 +388,8 @@ export class GhostAIAdapter {
     }
 
     /**
-     * Reset AI state
-     */
+	 * Reset AI state
+	 */
     reset() {
         this.modeTimer = 0;
         this.modeIndex = 0;

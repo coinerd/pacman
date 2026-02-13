@@ -2,10 +2,10 @@
  * Fruit Entity Tests (Optimized with Sprites)
  */
 
-import Fruit from '../../src/entities/Fruit.js';
-import { createMockScene } from '../utils/testHelpers.js';
 import { fruitConfig } from '../../src/config/gameConfig.js';
+import Fruit from '../../src/entities/Fruit.js';
 import { msToSeconds } from '../../src/utils/Time.js';
+import { createMockScene } from '../utils/testHelpers.js';
 
 describe('Fruit (Optimized with Sprites)', () => {
     let scene;
@@ -52,28 +52,28 @@ describe('Fruit (Optimized with Sprites)', () => {
     describe('scoring', () => {
         test('should return correct score for each fruit type', () => {
             fruit.reset(0);
-            expect(fruit.getScore()).toBe(100); // cherry
+            expect(fruit.getScore()).toBe(100); // dataFragment
 
             fruit.reset(1);
-            expect(fruit.getScore()).toBe(300); // strawberry
+            expect(fruit.getScore()).toBe(300); // powerCore
 
             fruit.reset(2);
-            expect(fruit.getScore()).toBe(500); // orange
+            expect(fruit.getScore()).toBe(500); // algorithm
 
             fruit.reset(3);
-            expect(fruit.getScore()).toBe(700); // apple
+            expect(fruit.getScore()).toBe(700); // firewall
 
             fruit.reset(4);
-            expect(fruit.getScore()).toBe(1000); // melon
+            expect(fruit.getScore()).toBe(1000); // encryption
 
             fruit.reset(5);
-            expect(fruit.getScore()).toBe(2000); // galaxian
+            expect(fruit.getScore()).toBe(2000); // network
 
             fruit.reset(6);
-            expect(fruit.getScore()).toBe(3000); // bell
+            expect(fruit.getScore()).toBe(3000); // kernel
 
             fruit.reset(7);
-            expect(fruit.getScore()).toBe(5000); // key
+            expect(fruit.getScore()).toBe(5000); // quantum
         });
     });
 

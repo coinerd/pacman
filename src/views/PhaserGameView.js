@@ -4,26 +4,22 @@
  */
 
 import {
-    gameConfig,
+    animationConfig,
     colors,
-    pacmanStartPosition,
     fruitConfig,
-    animationConfig
+    gameConfig,
+    pacmanStartPosition
 } from '../config/gameConfig.js';
-import {
-    gridToPixel,
-    TILE_TYPES,
-    PELLET_TYPES
-} from '../utils/MazeLayout.js';
-import Pacman from '../entities/Pacman.js';
-import { GhostFactory } from '../entities/GhostFactory.js';
+import { GAME_EVENTS, gameEvents } from '../core/EventBus.js';
+import { EnemyFactory } from '../entities/EnemyFactory.js';
 import Fruit, { generateFruitTextures } from '../entities/Fruit.js';
+import Player from '../entities/Player.js';
 import { SoundManager } from '../managers/SoundManager.js';
-import { EffectManager } from '../scenes/systems/EffectManager.js';
-import { DeathHandler } from '../scenes/systems/DeathHandler.js';
 import { PelletPool } from '../pools/PelletPool.js';
 import { PowerPelletPool } from '../pools/PowerPelletPool.js';
-import { gameEvents, GAME_EVENTS } from '../core/EventBus.js';
+import { DeathHandler } from '../scenes/systems/DeathHandler.js';
+import { EffectManager } from '../scenes/systems/EffectManager.js';
+import { gridToPixel, PELLET_TYPES, TILE_TYPES } from '../utils/MazeLayout.js';
 
 export default class PhaserGameView {
     constructor({ scene, model, storageManager }) {
@@ -77,7 +73,11 @@ export default class PhaserGameView {
         }
 
         graphics.strokePath();
-        graphics.generateTexture('backgroundGrid', this.scene.scale.width, this.scene.scale.height);
+        graphics.generateTexture(
+            'backgroundGrid',
+            this.scene.scale.width,
+            this.scene.scale.height
+        );
         graphics.destroy();
 
         this.scene.add.image(
@@ -107,11 +107,7 @@ export default class PhaserGameView {
         graphics.generateTexture('mazeWalls', mazeWidth, mazeHeight);
         graphics.destroy();
 
-        this.scene.add.image(
-            mazeWidth / 2,
-            mazeHeight / 2,
-            'mazeWalls'
-        );
+        this.scene.add.image(mazeWidth / 2, mazeHeight / 2, 'mazeWalls');
     }
 
     drawWallToGraphics(graphics, x, y) {
@@ -124,10 +120,10 @@ export default class PhaserGameView {
         graphics.fillStyle(colors.wall, 1);
         graphics.fillRect(pixel.x, pixel.y, size, size);
 
-        graphics.fillStyle(0x3333FF, 0.3);
+        graphics.fillStyle(0x3333ff, 0.3);
         graphics.fillRect(pixel.x + 2, pixel.y + 2, size - 4, size - 4);
 
-        graphics.lineStyle(1, 0x4444FF, 0.5);
+        graphics.lineStyle(1, 0x4444ff, 0.5);
         graphics.strokeRect(pixel.x, pixel.y, size, size);
     }
 
@@ -173,13 +169,13 @@ export default class PhaserGameView {
     }
 
     createEntities() {
-        this.pacman = new Pacman(
+        this.pacman = new Player(
             this.scene,
             pacmanStartPosition.x,
             pacmanStartPosition.y
         );
 
-        this.ghosts = GhostFactory.createGhosts(this.scene);
+        this.ghosts = EnemyFactory.createGhosts(this.scene);
         generateFruitTextures(this.scene);
         this.fruit = new Fruit(
             this.scene,
@@ -201,7 +197,8 @@ export default class PhaserGameView {
                 this.soundManager.playWakaWaka();
             }),
             gameEvents.on(GAME_EVENTS.POWER_PELLET_EATEN, (data) => {
-                const duration = data?.frightenedDuration ?? this.model.getFrightenedDuration();
+                const duration =
+					data?.frightenedDuration ?? this.model.getFrightenedDuration();
                 for (const ghost of this.ghosts) {
                     if (!ghost.isEaten) {
                         ghost.setFrightened(duration);
@@ -250,24 +247,31 @@ export default class PhaserGameView {
             this.scene.scale.height - 100
         );
 
-        const bg = this.scene.add.rectangle(0, 0, 300, 80, 0x000000)
+        const bg = this.scene.add
+            .rectangle(0, 0, 300, 80, 0x000000)
             .setAlpha(0.8)
-            .setStrokeStyle(2, 0xFFD700);
+            .setStrokeStyle(2, 0xffd700);
 
-        const icon = this.scene.add.text(-130, 0, achievement.icon, {
-            fontSize: '32px'
-        }).setOrigin(0.5);
+        const icon = this.scene.add
+            .text(-130, 0, achievement.icon, {
+                fontSize: '32px'
+            })
+            .setOrigin(0.5);
 
-        const name = this.scene.add.text(-20, -15, achievement.name, {
-            fontSize: '18px',
-            color: '#FFD700',
-            fontStyle: 'bold'
-        }).setOrigin(0, 0.5);
+        const name = this.scene.add
+            .text(-20, -15, achievement.name, {
+                fontSize: '18px',
+                color: '#FFD700',
+                fontStyle: 'bold'
+            })
+            .setOrigin(0, 0.5);
 
-        const desc = this.scene.add.text(-20, 15, achievement.description, {
-            fontSize: '12px',
-            color: '#FFFFFF'
-        }).setOrigin(0, 0.5);
+        const desc = this.scene.add
+            .text(-20, 15, achievement.description, {
+                fontSize: '12px',
+                color: '#FFFFFF'
+            })
+            .setOrigin(0, 0.5);
 
         notification.add([bg, icon, name, desc]);
         notification.setAlpha(0);

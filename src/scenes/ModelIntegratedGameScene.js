@@ -6,35 +6,34 @@
 
 import Phaser from 'phaser';
 import {
-    gameConfig,
-    directions,
-    pacmanStartPosition,
-    fruitConfig,
     animationConfig,
+    directions,
+    fruitConfig,
+    gameConfig,
+    pacmanStartPosition,
     physicsConfig
 } from '../config/gameConfig.js';
-import { createMazeData } from '../utils/MazeLayout.js';
-import { GhostAISystem } from '../systems/GhostAISystem.js';
-import { CollisionSystem } from '../systems/CollisionSystem.js';
-import { StorageManager } from '../managers/StorageManager.js';
-import { UIController } from './systems/UIController.js';
-import { InputController } from './systems/InputController.js';
-import { LevelManager } from './systems/LevelManager.js';
-import { AchievementSystem } from '../systems/AchievementSystem.js';
-import { DebugOverlay } from '../systems/DebugOverlay.js';
-import { ReplaySystem } from '../systems/ReplaySystem.js';
-import { PacmanAI } from '../systems/PacmanAI.js';
-import { FixedTimeStepLoop } from '../systems/FixedTimeStepLoop.js';
-import { gameEvents, GAME_EVENTS } from '../core/EventBus.js';
-import { normalizeDeltaSeconds } from '../utils/Time.js';
-import GameModel from '../core/GameModel.js';
 import { GameController } from '../controllers/GameController.js';
-import PhaserGameView from '../views/PhaserGameView.js';
-
+import { GAME_EVENTS, gameEvents } from '../core/EventBus.js';
+import GameModel from '../core/GameModel.js';
+import { StorageManager } from '../managers/StorageManager.js';
 // Model integration imports
 import { GameState } from '../model/GameState.js';
-import { ModelCollisionSystem } from '../model/systems/ModelCollisionSystem.js';
 import { ModelStateAdapter } from '../model/ModelStateAdapter.js';
+import { ModelCollisionSystem } from '../model/systems/ModelCollisionSystem.js';
+import { AchievementSystem } from '../systems/AchievementSystem.js';
+import { CollisionSystem } from '../systems/CollisionSystem.js';
+import { DebugOverlay } from '../systems/DebugOverlay.js';
+import { EnemyAISystem } from '../systems/EnemyAISystem.js';
+import { FixedTimeStepLoop } from '../systems/FixedTimeStepLoop.js';
+import { PlayerAI } from '../systems/PlayerAI.js';
+import { ReplaySystem } from '../systems/ReplaySystem.js';
+import { createMazeData } from '../utils/MazeLayout.js';
+import { normalizeDeltaSeconds } from '../utils/Time.js';
+import PhaserGameView from '../views/PhaserGameView.js';
+import { InputController } from './systems/InputController.js';
+import { LevelManager } from './systems/LevelManager.js';
+import { UIController } from './systems/UIController.js';
 
 export default class ModelIntegratedGameScene extends Phaser.Scene {
     constructor() {
@@ -83,7 +82,9 @@ export default class ModelIntegratedGameScene extends Phaser.Scene {
         this.pelletGrid = liveLevelData.pelletGrid;
 
         // Sync pellet grid to model
-        this.modelGameState.pelletGrid = levelData.pelletGrid.map(row => [...row]);
+        this.modelGameState.pelletGrid = levelData.pelletGrid.map((row) => [
+            ...row
+        ]);
         this.modelGameState.totalPellets = this.gameState.totalPellets;
         this.modelGameState.pelletsRemaining = this.gameState.totalPellets;
 
@@ -131,10 +132,10 @@ export default class ModelIntegratedGameScene extends Phaser.Scene {
         this.collisionSystem.setPelletGrid(this.pelletGrid);
         this.collisionSystem.setPelletCounts(this.gameState.totalPellets);
 
-        this.ghostAISystem = new GhostAISystem();
-        this.ghostAISystem.setGhosts(this.ghosts);
+        this.ghostAISystem = new EnemyAISystem();
+        this.ghostAISystem.setEnemies(this.ghosts);
 
-        this.pacmanAI = new PacmanAI();
+        this.pacmanAI = new PlayerAI();
 
         this.debugOverlay = new DebugOverlay(this);
         if (this.settings.showFps) {
@@ -207,7 +208,12 @@ export default class ModelIntegratedGameScene extends Phaser.Scene {
         }
 
         if (this.sys.game.isDemo) {
-            this.pacmanAI.update(this.pacman, this.maze, this.pelletGrid, this.ghosts);
+            this.pacmanAI.update(
+                this.pacman,
+                this.maze,
+                this.pelletGrid,
+                this.ghosts
+            );
         } else {
             this.inputController.handleInput();
         }
@@ -226,10 +232,13 @@ export default class ModelIntegratedGameScene extends Phaser.Scene {
             this.debugOverlay.updateDebugInfo({
                 'Frame dt': `${deltaInSeconds.toFixed(4)}s`,
                 'Fixed dt': `${physicsConfig.FIXED_DT.toFixed(4)}s`,
-                'Steps': this.fixedTimeStepLoop.getLastStepCount(),
-                'Accumulator': `${this.fixedTimeStepLoop.getAccumulator().toFixed(4)}s`,
-                'Model collision radius': collisionStats?.collisionRadius?.toFixed(1) || 'n/a',
-                'Legacy collision ms': legacyStats ? `${legacyStats.collisionMs.toFixed(2)}ms` : 'n/a',
+                Steps: this.fixedTimeStepLoop.getLastStepCount(),
+                Accumulator: `${this.fixedTimeStepLoop.getAccumulator().toFixed(4)}s`,
+                'Model collision radius':
+					collisionStats?.collisionRadius?.toFixed(1) || 'n/a',
+                'Legacy collision ms': legacyStats
+                    ? `${legacyStats.collisionMs.toFixed(2)}ms`
+                    : 'n/a',
                 'Pellets remaining': this.modelGameState.pelletsRemaining ?? 'n/a',
                 'Model pellets': this.modelGameState.pelletsRemaining ?? 'n/a'
             });
@@ -264,8 +273,8 @@ export default class ModelIntegratedGameScene extends Phaser.Scene {
     }
 
     /**
-     * Handle collisions using ModelCollisionSystem
-     */
+	 * Handle collisions using ModelCollisionSystem
+	 */
     handleModelCollisions() {
         // Check ghost collisions with model system
         const ghostCollision = this.modelCollisionSystem.checkGhostCollisions();
@@ -277,7 +286,9 @@ export default class ModelIntegratedGameScene extends Phaser.Scene {
                 this.achievementSystem.check(this.gameState);
 
                 // Apply to visual ghost
-                const ghost = this.ghosts.find(g => g.ghostType === ghostCollision.ghostType);
+                const ghost = this.ghosts.find(
+                    (g) => g.ghostType === ghostCollision.ghostType
+                );
                 if (ghost) {
                     ghost.eat();
                 }
@@ -303,8 +314,8 @@ export default class ModelIntegratedGameScene extends Phaser.Scene {
     }
 
     /**
-     * Handle pellet collisions using legacy system (for sprite pool)
-     */
+	 * Handle pellet collisions using legacy system (for sprite pool)
+	 */
     handlePelletCollisions() {
         const snapshot = this.collisionSystem.createCollisionSnapshot();
         const result = this.collisionSystem.checkPelletTileCollision(snapshot, {
@@ -316,16 +327,26 @@ export default class ModelIntegratedGameScene extends Phaser.Scene {
         if (result.pelletScore > 0 || result.powerPelletScore > 0) {
             // Sync to model pellet grid
             const pacmanGrid = snapshot.pacman.grid;
-            const pelletType = this.modelGameState.getPelletAt(pacmanGrid.x, pacmanGrid.y);
+            const pelletType = this.modelGameState.getPelletAt(
+                pacmanGrid.x,
+                pacmanGrid.y
+            );
 
-            if (pelletType !== 0) { // 0 = NONE
-                const eatResult = this.modelGameState.eatPelletAt(pacmanGrid.x, pacmanGrid.y);
+            if (pelletType !== 0) {
+                // 0 = NONE
+                const eatResult = this.modelGameState.eatPelletAt(
+                    pacmanGrid.x,
+                    pacmanGrid.y
+                );
 
                 if (eatResult) {
                     // Update game model score
                     const score = result.pelletScore || result.powerPelletScore;
                     if (result.powerPelletScore > 0) {
-                        this.gameModel.onPowerPelletEaten(score, this.modelGameState.pelletsRemaining);
+                        this.gameModel.onPowerPelletEaten(
+                            score,
+                            this.modelGameState.pelletsRemaining
+                        );
 
                         // Set ghosts frightened in model
                         const duration = this.gameModel.getFrightenedDuration();
@@ -338,7 +359,10 @@ export default class ModelIntegratedGameScene extends Phaser.Scene {
                             }
                         }
                     } else {
-                        this.gameModel.onPelletEaten(score, this.modelGameState.pelletsRemaining);
+                        this.gameModel.onPelletEaten(
+                            score,
+                            this.modelGameState.pelletsRemaining
+                        );
                     }
 
                     this.achievementSystem.check(this.gameState);
@@ -349,7 +373,10 @@ export default class ModelIntegratedGameScene extends Phaser.Scene {
     }
 
     checkFruitSpawn() {
-        if (this.gameModel.shouldSpawnFruit(fruitConfig.pelletThreshold) && !this.fruit.active) {
+        if (
+            this.gameModel.shouldSpawnFruit(fruitConfig.pelletThreshold) &&
+			!this.fruit.active
+        ) {
             this.fruit.reset(this.gameState.level - 1);
             this.fruit.activate();
 

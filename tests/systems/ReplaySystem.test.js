@@ -1,5 +1,5 @@
-import { ReplaySystem } from '../../src/systems/ReplaySystem.js';
 import { gameEvents } from '../../src/core/EventBus.js';
+import { ReplaySystem } from '../../src/systems/ReplaySystem.js';
 
 jest.mock('../../src/core/EventBus.js', () => ({
     ...jest.requireActual('../../src/core/EventBus.js'),
@@ -37,7 +37,11 @@ const localStorageProxy = new Proxy(mockLocalStorage, {
     ownKeys: () => Object.keys(mockLocalStorage.store),
     getOwnPropertyDescriptor: (target, prop) => {
         if (prop in mockLocalStorage.store) {
-            return { enumerable: true, configurable: true, value: mockLocalStorage.store[prop] };
+            return {
+                enumerable: true,
+                configurable: true,
+                value: mockLocalStorage.store[prop]
+            };
         }
         return Object.getOwnPropertyDescriptor(target, prop);
     }
@@ -137,7 +141,9 @@ describe('ReplaySystem', () => {
         });
 
         test('should save recording to localStorage', () => {
-            system.recording.inputs = [{ type: 'direction', data: { direction: 'UP' } }];
+            system.recording.inputs = [
+                { type: 'direction', data: { direction: 'UP' } }
+            ];
             system.recording.score = 500;
             system.recording.level = 2;
 
@@ -145,7 +151,7 @@ describe('ReplaySystem', () => {
 
             expect(mockLocalStorage.setItem).toHaveBeenCalled();
             const setItemCall = mockLocalStorage.setItem.mock.calls[0];
-            expect(setItemCall[0]).toMatch(/^pacman_replay_\d+$/);
+            expect(setItemCall[0]).toMatch(/^player_replay_\d+$/);
         });
 
         test('should emit RECORDING_STOPPED event', () => {
@@ -182,10 +188,12 @@ describe('ReplaySystem', () => {
             system.recordInput(input);
 
             expect(system.recording.inputs).toHaveLength(1);
-            expect(system.recording.inputs[0]).toEqual(expect.objectContaining({
-                type: 'direction',
-                data: { direction: 'UP' }
-            }));
+            expect(system.recording.inputs[0]).toEqual(
+                expect.objectContaining({
+                    type: 'direction',
+                    data: { direction: 'UP' }
+                })
+            );
         });
 
         test('should set timestamp on recorded input', () => {
@@ -249,7 +257,7 @@ describe('ReplaySystem', () => {
             system.saveRecording();
 
             expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
-                'pacman_replay_1234567890',
+                'player_replay_1234567890',
                 expect.stringContaining('inputs')
             );
         });
@@ -259,7 +267,7 @@ describe('ReplaySystem', () => {
 
             // Create 10 existing recordings
             for (let i = 0; i < 10; i++) {
-                mockLocalStorage.store[`pacman_replay_${timestamp + i}`] = '{}';
+                mockLocalStorage.store[`player_replay_${timestamp + i}`] = '{}';
             }
 
             system.startRecording();
@@ -267,7 +275,9 @@ describe('ReplaySystem', () => {
             system.saveRecording();
 
             // Should have removed the oldest recording
-            const keys = Object.keys(mockLocalStorage.store).filter(k => k.startsWith('pacman_replay_'));
+            const keys = Object.keys(mockLocalStorage.store).filter((k) =>
+                k.startsWith('player_replay_')
+            );
             expect(keys.length).toBe(10);
         });
 
@@ -293,8 +303,10 @@ describe('ReplaySystem', () => {
             const recording1 = { inputs: [], score: 100, level: 1, timestamp: 12345 };
             const recording2 = { inputs: [], score: 200, level: 2, timestamp: 12346 };
 
-            mockLocalStorage.store['pacman_replay_12345'] = JSON.stringify(recording1);
-            mockLocalStorage.store['pacman_replay_12346'] = JSON.stringify(recording2);
+            mockLocalStorage.store['player_replay_12345'] =
+				JSON.stringify(recording1);
+            mockLocalStorage.store['player_replay_12346'] =
+				JSON.stringify(recording2);
 
             const recordings = system.getRecordings();
 
@@ -303,7 +315,7 @@ describe('ReplaySystem', () => {
 
         test('should parse recordings from JSON', () => {
             const recording = { inputs: [], score: 500, level: 3, timestamp: 12345 };
-            mockLocalStorage.store['pacman_replay_12345'] = JSON.stringify(recording);
+            mockLocalStorage.store['player_replay_12345'] = JSON.stringify(recording);
 
             const recordings = system.getRecordings();
 
@@ -312,7 +324,12 @@ describe('ReplaySystem', () => {
 
         test('should ignore non-replay keys', () => {
             mockLocalStorage.store['other_key'] = '{}';
-            mockLocalStorage.store['pacman_replay_12345'] = JSON.stringify({ inputs: [], score: 100, level: 1, timestamp: 12345 });
+            mockLocalStorage.store['player_replay_12345'] = JSON.stringify({
+                inputs: [],
+                score: 100,
+                level: 1,
+                timestamp: 12345
+            });
 
             const recordings = system.getRecordings();
 
@@ -383,7 +400,11 @@ describe('ReplaySystem', () => {
             const recording = {
                 timestamp: now - 1000,
                 inputs: [
-                    { timestamp: now - 100, type: 'direction', data: { direction: 'UP' } }
+                    {
+                        timestamp: now - 100,
+                        type: 'direction',
+                        data: { direction: 'UP' }
+                    }
                 ],
                 score: 0,
                 level: 1
@@ -392,7 +413,9 @@ describe('ReplaySystem', () => {
             system.loadRecording(recording);
             system.update(16);
 
-            expect(gameEvents.emit).toHaveBeenCalledWith('replay:input', { direction: 'UP' });
+            expect(gameEvents.emit).toHaveBeenCalledWith('replay:input', {
+                direction: 'UP'
+            });
         });
 
         test('should not emit input when time has not elapsed', () => {
@@ -401,7 +424,11 @@ describe('ReplaySystem', () => {
             const recording = {
                 timestamp: now,
                 inputs: [
-                    { timestamp: now + 1000, type: 'direction', data: { direction: 'UP' } }
+                    {
+                        timestamp: now + 1000,
+                        type: 'direction',
+                        data: { direction: 'UP' }
+                    }
                 ],
                 score: 0,
                 level: 1
@@ -419,7 +446,11 @@ describe('ReplaySystem', () => {
             const recording = {
                 timestamp: now - 2000,
                 inputs: [
-                    { timestamp: now - 100, type: 'direction', data: { direction: 'UP' } }
+                    {
+                        timestamp: now - 100,
+                        type: 'direction',
+                        data: { direction: 'UP' }
+                    }
                 ],
                 score: 0,
                 level: 1
@@ -436,7 +467,13 @@ describe('ReplaySystem', () => {
             const now = Date.now();
             const recording = {
                 timestamp: now - 2000,
-                inputs: [{ timestamp: now - 100, type: 'direction', data: { direction: 'UP' } }],
+                inputs: [
+                    {
+                        timestamp: now - 100,
+                        type: 'direction',
+                        data: { direction: 'UP' }
+                    }
+                ],
                 score: 0,
                 level: 1
             };
@@ -450,12 +487,14 @@ describe('ReplaySystem', () => {
 
     describe('deleteRecording', () => {
         test('should remove recording from localStorage', () => {
-            mockLocalStorage.store['pacman_replay_12345'] = '{}';
+            mockLocalStorage.store['player_replay_12345'] = '{}';
 
-            system.deleteRecording('pacman_replay_12345');
+            system.deleteRecording('player_replay_12345');
 
-            expect(mockLocalStorage.removeItem).toHaveBeenCalledWith('pacman_replay_12345');
-            expect(mockLocalStorage.store['pacman_replay_12345']).toBeUndefined();
+            expect(mockLocalStorage.removeItem).toHaveBeenCalledWith(
+                'player_replay_12345'
+            );
+            expect(mockLocalStorage.store['player_replay_12345']).toBeUndefined();
         });
     });
 

@@ -198,7 +198,7 @@ describe('CollisionAdapter', () => {
 
     describe('checkGhostCollisions', () => {
         test('returns null when no collision', () => {
-            // Ghost is far away
+            // Enemy is far away
             mockGameModel.ghosts[0].x = 1000;
             mockGameModel.ghosts[0].y = 1000;
 

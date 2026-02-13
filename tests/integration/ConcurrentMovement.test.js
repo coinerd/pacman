@@ -1,16 +1,20 @@
-import Pacman from '../../src/entities/Pacman.js';
-import Ghost from '../../src/entities/Ghost.js';
-import { GhostAISystem } from '../../src/systems/GhostAISystem.js';
 import { directions, gameConfig } from '../../src/config/gameConfig.js';
+import Enemy from '../../src/entities/Enemy.js';
+import Pacman from '../../src/entities/Pacman.js';
+import { EnemyAISystem } from '../../src/systems/EnemyAISystem.js';
 import { TILE_TYPES } from '../../src/utils/MazeLayout.js';
 import { msToSeconds } from '../../src/utils/Time.js';
-import { createMockScene, createMockMaze, measureTime } from '../utils/testHelpers.js';
+import {
+    createMockMaze,
+    createMockScene,
+    measureTime
+} from '../utils/testHelpers.js';
 
 describe('Concurrent Movement Integration', () => {
     let mockScene;
     let mockMaze;
     let pacman;
-    let ghosts;
+    let enemies;
     let aiSystem;
 
     beforeEach(() => {
@@ -18,28 +22,28 @@ describe('Concurrent Movement Integration', () => {
         mockScene.gameState = { level: 1 };
         mockMaze = createMockMaze(createTestMaze());
         pacman = new Pacman(mockScene, 3, 3);
-        ghosts = [
-            new Ghost(mockScene, 3, 5, 'blinky', 0xFF0000),
-            new Ghost(mockScene, 5, 3, 'pinky', 0xFFB8FF),
-            new Ghost(mockScene, 5, 5, 'inky', 0x00FFFF),
-            new Ghost(mockScene, 3, 7, 'clyde', 0xFFB852)
+        enemies = [
+            new Enemy(mockScene, 3, 5, 'blinky', 0xff0000),
+            new Enemy(mockScene, 5, 3, 'pinky', 0xffb8ff),
+            new Enemy(mockScene, 5, 5, 'inky', 0x00ffff),
+            new Enemy(mockScene, 3, 7, 'clyde', 0xffb852)
         ];
-        ghosts.forEach(g => g.direction = directions.RIGHT);
-        aiSystem = new GhostAISystem();
-        aiSystem.setGhosts(ghosts);
-        mockScene.ghostAISystem = aiSystem;
+        enemies.forEach((g) => (g.direction = directions.RIGHT));
+        aiSystem = new EnemyAISystem();
+        aiSystem.setEnemies(enemies);
+        mockScene.enemyAISystem = aiSystem;
     });
 
-    describe('Pacman and Ghost moving simultaneously', () => {
+    describe('Pacman and Enemy moving simultaneously', () => {
         test('both entities update correctly', () => {
             const initialPacmanX = pacman.x;
-            const initialGhostX = ghosts[0].x;
+            const initialEnemyX = enemies[0].x;
 
             pacman.update(msToSeconds(16.67), mockMaze);
-            ghosts[0].update(msToSeconds(16.67), mockMaze, pacman);
+            enemies[0].update(msToSeconds(16.67), mockMaze, pacman);
 
             expect(pacman.x).toBeDefined();
-            expect(ghosts[0].x).toBeDefined();
+            expect(enemies[0].x).toBeDefined();
         });
 
         test('multiple consecutive updates work', () => {
@@ -49,58 +53,60 @@ describe('Concurrent Movement Integration', () => {
             expect(() => {
                 for (let i = 0; i < frames; i++) {
                     pacman.update(deltaPerFrame, mockMaze);
-                    ghosts.forEach(g => g.update(deltaPerFrame, mockMaze, pacman));
+                    enemies.forEach((g) => g.update(deltaPerFrame, mockMaze, pacman));
                 }
             }).not.toThrow();
         });
 
         test('direction changes processed concurrently', () => {
             pacman.setDirection(directions.DOWN);
-            ghosts[0].setDirection(directions.UP);
+            enemies[0].setDirection(directions.UP);
 
             pacman.update(msToSeconds(16.67), mockMaze);
-            ghosts[0].update(msToSeconds(16.67), mockMaze, pacman);
+            enemies[0].update(msToSeconds(16.67), mockMaze, pacman);
 
             expect(pacman.direction).toBe(directions.DOWN);
-            expect(ghosts[0].direction).toBe(directions.UP);
+            expect(enemies[0].direction).toBe(directions.UP);
         });
     });
 
-    describe('Multiple Ghosts at intersections', () => {
-        test('all ghosts update without errors', () => {
+    describe('Multiple Enemys at intersections', () => {
+        test('all enemies update without errors', () => {
             expect(() => {
                 for (let i = 0; i < 10; i++) {
-                    ghosts.forEach(g => g.update(msToSeconds(16.67), mockMaze, pacman));
+                    enemies.forEach((g) =>
+                        g.update(msToSeconds(16.67), mockMaze, pacman)
+                    );
                 }
             }).not.toThrow();
         });
 
-        test('ghosts have independent states', () => {
-            const states = ghosts.map(g => ({
+        test('enemies have independent states', () => {
+            const states = enemies.map((g) => ({
                 gridX: g.gridX,
                 gridY: g.gridY,
                 direction: g.direction
             }));
 
-            ghosts.forEach(g => g.update(msToSeconds(16.67), mockMaze, pacman));
+            enemies.forEach((g) => g.update(msToSeconds(16.67), mockMaze, pacman));
 
             expect(states.length).toBe(4);
-            states.forEach(state => {
+            states.forEach((state) => {
                 expect(state.gridX).toBeGreaterThanOrEqual(0);
                 expect(state.gridY).toBeGreaterThanOrEqual(0);
                 expect(state.direction).toBeDefined();
             });
         });
 
-        test('AI system processes all ghosts', () => {
+        test('AI system processes all enemies', () => {
             expect(() => {
-                aiSystem.chooseDirection(ghosts[0], mockMaze);
-                aiSystem.chooseDirection(ghosts[1], mockMaze);
-                aiSystem.chooseDirection(ghosts[2], mockMaze);
-                aiSystem.chooseDirection(ghosts[3], mockMaze);
+                aiSystem.chooseDirection(enemies[0], mockMaze);
+                aiSystem.chooseDirection(enemies[1], mockMaze);
+                aiSystem.chooseDirection(enemies[2], mockMaze);
+                aiSystem.chooseDirection(enemies[3], mockMaze);
             }).not.toThrow();
 
-            ghosts.forEach(g => {
+            enemies.forEach((g) => {
                 expect(g.direction).toBeDefined();
             });
         });
@@ -108,33 +114,33 @@ describe('Concurrent Movement Integration', () => {
 
     describe('Entity interaction behavior', () => {
         test('entities can occupy same tile', () => {
-            ghosts.forEach(g => {
+            enemies.forEach((g) => {
                 g.gridX = 5;
                 g.gridY = 5;
                 g.x = 5 * gameConfig.tileSize + gameConfig.tileSize / 2;
                 g.y = 5 * gameConfig.tileSize + gameConfig.tileSize / 2;
             });
 
-            ghosts.forEach(g => {
-                expect(g.x).toBe(ghosts[0].x);
-                expect(g.y).toBe(ghosts[0].y);
+            enemies.forEach((g) => {
+                expect(g.x).toBe(enemies[0].x);
+                expect(g.y).toBe(enemies[0].y);
             });
 
-            ghosts.forEach(g => g.update(msToSeconds(16.67), mockMaze, pacman));
+            enemies.forEach((g) => g.update(msToSeconds(16.67), mockMaze, pacman));
 
-            ghosts.forEach(g => {
+            enemies.forEach((g) => {
                 expect(g.x).toBeDefined();
                 expect(g.y).toBeDefined();
             });
         });
 
-        test('all ghosts move simultaneously', () => {
-            const initialX = ghosts.map(g => g.x);
-            const initialY = ghosts.map(g => g.y);
+        test('all enemies move simultaneously', () => {
+            const initialX = enemies.map((g) => g.x);
+            const initialY = enemies.map((g) => g.y);
 
-            ghosts.forEach(g => g.update(msToSeconds(16.67), mockMaze, pacman));
+            enemies.forEach((g) => g.update(msToSeconds(16.67), mockMaze, pacman));
 
-            ghosts.forEach((g, idx) => {
+            enemies.forEach((g, idx) => {
                 expect(g.x).toBeDefined();
                 expect(g.y).toBeDefined();
             });
@@ -149,7 +155,7 @@ describe('Concurrent Movement Integration', () => {
             const { result, time } = measureTime(() => {
                 for (let i = 0; i < frames; i++) {
                     pacman.update(deltaPerFrame, mockMaze);
-                    ghosts.forEach(g => g.update(deltaPerFrame, mockMaze, pacman));
+                    enemies.forEach((g) => g.update(deltaPerFrame, mockMaze, pacman));
                 }
             });
 
@@ -166,15 +172,15 @@ describe('Concurrent Movement Integration', () => {
                 const { time } = measureTime(() => {
                     for (let i = 0; i < frames / 4; i++) {
                         pacman.update(deltaPerFrame, mockMaze);
-                        ghosts.forEach(g => g.update(deltaPerFrame, mockMaze, pacman));
+                        enemies.forEach((g) => g.update(deltaPerFrame, mockMaze, pacman));
                     }
                 });
                 times.push(time);
             }
 
             const avgTime = times.reduce((a, b) => a + b, 0) / times.length;
-            times.forEach(t => {
-                expect(t).toBeLessThan(avgTime * 3);  // Allow more variance for timing fluctuations
+            times.forEach((t) => {
+                expect(t).toBeLessThan(avgTime * 3); // Allow more variance for timing fluctuations
             });
         });
 
@@ -185,7 +191,7 @@ describe('Concurrent Movement Integration', () => {
             expect(() => {
                 for (let i = 0; i < frames; i++) {
                     pacman.update(deltaPerFrame, mockMaze);
-                    ghosts.forEach(g => g.update(deltaPerFrame, mockMaze, pacman));
+                    enemies.forEach((g) => g.update(deltaPerFrame, mockMaze, pacman));
                 }
             }).not.toThrow();
         });
@@ -195,7 +201,7 @@ describe('Concurrent Movement Integration', () => {
         test('all entities update at same time', () => {
             expect(() => {
                 pacman.update(msToSeconds(16.67), mockMaze);
-                ghosts.forEach(g => g.update(msToSeconds(16.67), mockMaze, pacman));
+                enemies.forEach((g) => g.update(msToSeconds(16.67), mockMaze, pacman));
             }).not.toThrow();
         });
 
@@ -207,7 +213,7 @@ describe('Concurrent Movement Integration', () => {
             pacman.x = 1 * gameConfig.tileSize + gameConfig.tileSize / 2;
             pacman.y = tunnelY * gameConfig.tileSize + gameConfig.tileSize / 2;
 
-            ghosts.forEach((g, idx) => {
+            enemies.forEach((g, idx) => {
                 g.gridX = idx + 2;
                 g.gridY = tunnelY;
                 g.x = (idx + 2) * gameConfig.tileSize + gameConfig.tileSize / 2;
@@ -221,7 +227,9 @@ describe('Concurrent Movement Integration', () => {
             expect(() => {
                 for (let i = 0; i < tunnelWidth * 2; i++) {
                     pacman.update(msToSeconds(16.67), tunnelMaze);
-                    ghosts.forEach(g => g.update(msToSeconds(16.67), tunnelMaze, pacman));
+                    enemies.forEach((g) =>
+                        g.update(msToSeconds(16.67), tunnelMaze, pacman)
+                    );
                 }
             }).not.toThrow();
         });

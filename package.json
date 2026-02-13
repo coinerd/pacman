@@ -1,8 +1,8 @@
 {
-  "name": "pacman-game",
+  "name": "ada-woman-game",
   "version": "1.0.0",
   "type": "module",
-  "description": "A classic Pac-Man game built with Phaser.js",
+  "description": "ADA-Woman: A tech-themed maze game built with Phaser.js",
   "main": "src/main.js",
   "scripts": {
     "dev": "vite",
@@ -26,6 +26,7 @@
   "devDependencies": {
     "@babel/core": "^7.28.5",
     "@babel/preset-env": "^7.28.5",
+    "@biomejs/biome": "2.3.14",
     "@playwright/test": "^1.58.2",
     "babel-jest": "^30.2.0",
     "eslint": "^9.39.2",

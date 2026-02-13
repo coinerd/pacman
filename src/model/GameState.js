@@ -4,26 +4,38 @@
  * Pure data - NO Phaser dependencies.
  */
 
-import { PacmanState } from './entities/PacmanState.js';
-import { GhostState } from './entities/GhostState.js';
+import {
+    directions,
+    enemyStartPositions,
+    fruitConfig,
+    gameConfig,
+    ghostModes,
+    playerStartPosition
+} from '../config/gameConfig.js';
+import {
+    countPellets,
+    createMazeData,
+    PELLET_TYPES
+} from '../utils/MazeLayout.js';
+import { EnemyState } from './entities/EnemyState.js';
 import { FruitState } from './entities/FruitState.js';
-import { gameConfig, ghostStartPositions, pacmanStartPosition, ghostModes, directions, fruitConfig } from '../config/gameConfig.js';
-import { createMazeData, countPellets, PELLET_TYPES } from '../utils/MazeLayout.js';
+import { PlayerState } from './entities/PlayerState.js';
 
 export class GameState {
     /**
-     * @param {Object} config - Game configuration
-     * @param {number} config.level - Starting level
-     * @param {Array<Array<number>>} config.maze - Optional maze override
-     * @param {Array<Array<number>>} config.pelletGrid - Optional pellet grid override
-     */
+	 * @param {Object} config - Game configuration
+	 * @param {number} config.level - Starting level
+	 * @param {Array<Array<number>>} config.maze - Optional maze override
+	 * @param {Array<Array<number>>} config.pelletGrid - Optional pellet grid override
+	 */
     constructor(config = {}) {
         this.level = config.level || 1;
 
         // World state
-        const mazeData = config.maze && config.pelletGrid
-            ? { maze: config.maze, pelletGrid: config.pelletGrid }
-            : createMazeData();
+        const mazeData =
+			config.maze && config.pelletGrid
+			    ? { maze: config.maze, pelletGrid: config.pelletGrid }
+			    : createMazeData();
 
         this.maze = mazeData.maze;
         this.pelletGrid = mazeData.pelletGrid;
@@ -60,29 +72,29 @@ export class GameState {
     }
 
     /**
-     * Create Pacman entity
-     * @returns {PacmanState}
-     */
+	 * Create Player entity
+	 * @returns {PlayerState}
+	 */
     createPacman() {
-        return new PacmanState(
-            pacmanStartPosition.x,
-            pacmanStartPosition.y,
+        return new PlayerState(
+            playerStartPosition.x,
+            playerStartPosition.y,
             this.level
         );
     }
 
     /**
-     * Create Ghost entities
-     * @returns {Array<GhostState>}
-     */
+	 * Create Enemy entities
+	 * @returns {Array<EnemyState>}
+	 */
     createGhosts() {
-        const ghostTypes = ['blinky', 'pinky', 'inky', 'clyde'];
+        const ghostTypes = ['alpha', 'beta', 'gamma', 'delta'];
         const ghosts = [];
 
         for (const ghostType of ghostTypes) {
-            const pos = ghostStartPositions[ghostType];
+            const pos = enemyStartPositions[ghostType];
             if (pos) {
-                ghosts.push(new GhostState(pos.x, pos.y, ghostType, this.level));
+                ghosts.push(new EnemyState(pos.x, pos.y, ghostType, this.level));
             }
         }
 
@@ -90,19 +102,19 @@ export class GameState {
     }
 
     /**
-     * Create Fruit entity
-     * @returns {FruitState}
-     */
+	 * Create Fruit entity
+	 * @returns {FruitState}
+	 */
     createFruit() {
         return new FruitState();
     }
 
     /**
-     * Update entire game state
-     * @param {number} deltaSeconds - Time since last frame
-     * @param {Object} input - Input state { direction }
-     * @returns {Array<Object>} - All events generated this frame
-     */
+	 * Update entire game state
+	 * @param {number} deltaSeconds - Time since last frame
+	 * @param {Object} input - Input state { direction }
+	 * @returns {Array<Object>} - All events generated this frame
+	 */
     update(deltaSeconds, input = {}) {
         const events = [];
 
@@ -124,7 +136,11 @@ export class GameState {
         }
 
         // Update Pacman
-        const pacmanEvents = this.pacman.update(deltaSeconds, this.maze, this.desiredDirection);
+        const pacmanEvents = this.pacman.update(
+            deltaSeconds,
+            this.maze,
+            this.desiredDirection
+        );
         events.push(...pacmanEvents);
 
         // Update ghosts
@@ -138,8 +154,10 @@ export class GameState {
         events.push(...fruitEvents);
 
         // Clear consumed direction if it was applied
-        if (this.pacman.direction !== directions.NONE &&
-            this.desiredDirection === this.pacman.direction) {
+        if (
+            this.pacman.direction !== directions.NONE &&
+			this.desiredDirection === this.pacman.direction
+        ) {
             this.desiredDirection = null;
         }
 
@@ -147,10 +165,10 @@ export class GameState {
     }
 
     /**
-     * Update death sequence timer
-     * @param {number} deltaSeconds - Time since last frame
-     * @returns {Array<Object>} - Death events
-     */
+	 * Update death sequence timer
+	 * @param {number} deltaSeconds - Time since last frame
+	 * @returns {Array<Object>} - Death events
+	 */
     updateDeathSequence(deltaSeconds) {
         const events = [];
 
@@ -169,15 +187,18 @@ export class GameState {
                 events.push({ type: 'respawn' });
             }
         } else {
-            events.push({ type: 'death_tick', progress: this.deathTimer / this.deathPauseDuration });
+            events.push({
+                type: 'death_tick',
+                progress: this.deathTimer / this.deathPauseDuration
+            });
         }
 
         return events;
     }
 
     /**
-     * Handle Pacman death
-     */
+	 * Handle Pacman death
+	 */
     onPacmanDeath() {
         this.isDying = true;
         this.deathTimer = 0;
@@ -185,14 +206,18 @@ export class GameState {
     }
 
     /**
-     * Eat a pellet at position
-     * @param {number} gridX - Grid X position
-     * @param {number} gridY - Grid Y position
-     * @returns {Object|null} - Pellet eat result or null
-     */
+	 * Eat a pellet at position
+	 * @param {number} gridX - Grid X position
+	 * @param {number} gridY - Grid Y position
+	 * @returns {Object|null} - Pellet eat result or null
+	 */
     eatPelletAt(gridX, gridY) {
-        if (gridY < 0 || gridY >= this.pelletGrid.length ||
-            gridX < 0 || gridX >= this.pelletGrid[0].length) {
+        if (
+            gridY < 0 ||
+			gridY >= this.pelletGrid.length ||
+			gridX < 0 ||
+			gridX >= this.pelletGrid[0].length
+        ) {
             return null;
         }
 
@@ -207,7 +232,8 @@ export class GameState {
         this.pelletsRemaining--;
 
         const result = {
-            type: pelletType === PELLET_TYPES.POWER_PELLET ? 'power_pellet' : 'pellet',
+            type:
+				pelletType === PELLET_TYPES.POWER_PELLET ? 'power_pellet' : 'pellet',
             gridX,
             gridY,
             pelletsRemaining: this.pelletsRemaining
@@ -223,10 +249,10 @@ export class GameState {
     }
 
     /**
-     * Eat a ghost
-     * @param {GhostState} ghost - Ghost to eat
-     * @returns {Object} - Eat result with score
-     */
+	 * Eat a ghost
+	 * @param {EnemyState} ghost - Enemy to eat
+	 * @returns {Object} - Eat result with score
+	 */
     eatGhost(ghost) {
         if (!ghost.isFrightened || ghost.isEaten) {
             return null;
@@ -235,7 +261,10 @@ export class GameState {
         ghost.eat();
         this.ghostsEaten++;
         this.currentComboGhosts++;
-        this.maxComboGhosts = Math.max(this.maxComboGhosts, this.currentComboGhosts);
+        this.maxComboGhosts = Math.max(
+            this.maxComboGhosts,
+            this.currentComboGhosts
+        );
 
         // Calculate score based on combo
         const scoreIndex = Math.min(this.currentComboGhosts - 1, 3);
@@ -252,9 +281,9 @@ export class GameState {
     }
 
     /**
-     * Set all ghosts to frightened mode
-     * @param {number} duration - Duration in seconds
-     */
+	 * Set all ghosts to frightened mode
+	 * @param {number} duration - Duration in seconds
+	 */
     setGhostsFrightened(duration) {
         // Reset combo when power pellet eaten
         this.currentComboGhosts = 0;
@@ -267,10 +296,10 @@ export class GameState {
     }
 
     /**
-     * Reset ghost positions after death
-     */
+	 * Reset ghost positions after death
+	 */
     resetPositions() {
-        this.pacman.reset(pacmanStartPosition.x, pacmanStartPosition.y);
+        this.pacman.reset(playerStartPosition.x, playerStartPosition.y);
 
         for (const ghost of this.ghosts) {
             ghost.reset();
@@ -281,8 +310,8 @@ export class GameState {
     }
 
     /**
-     * Advance to next level
-     */
+	 * Advance to next level
+	 */
     nextLevel() {
         this.level++;
         this.levelComplete = false;
@@ -298,9 +327,9 @@ export class GameState {
         this.resetPositions();
 
         // Update speeds for new level
-        this.pacman = new PacmanState(
-            pacmanStartPosition.x,
-            pacmanStartPosition.y,
+        this.pacman = new PlayerState(
+            playerStartPosition.x,
+            playerStartPosition.y,
             this.level
         );
 
@@ -308,73 +337,94 @@ export class GameState {
     }
 
     /**
-     * Get ghost by type
-     * @param {string} ghostType - Ghost type name
-     * @returns {GhostState|null}
-     */
+	 * Get ghost by type
+	 * @param {string} ghostType - Ghost type name
+	 * @returns {EnemyState|null}
+	 */
     getGhostByType(ghostType) {
-        return this.ghosts.find(g => g.ghostType === ghostType) || null;
+        const ghostTypeMapping = {
+            blinky: 'alpha',
+            pinky: 'beta',
+            inky: 'gamma',
+            clyde: 'delta',
+            BLINKY: 'alpha',
+            PINKY: 'beta',
+            INKY: 'gamma',
+            CLYDE: 'delta'
+        };
+
+        const mappedType = ghostTypeMapping[ghostType] || ghostType;
+
+        return this.ghosts.find((g) => g.ghostType === mappedType) || null;
     }
 
     /**
-     * Get pellet type at position
-     * @param {number} gridX - Grid X
-     * @param {number} gridY - Grid Y
-     * @returns {number} - Pellet type
-     */
+	 * Get pellet type at position
+	 * @param {number} gridX - Grid X
+	 * @param {number} gridY - Grid Y
+	 * @returns {number} - Pellet type
+	 */
     getPelletAt(gridX, gridY) {
-        if (gridY < 0 || gridY >= this.pelletGrid.length ||
-            gridX < 0 || gridX >= this.pelletGrid[0].length) {
+        if (
+            gridY < 0 ||
+			gridY >= this.pelletGrid.length ||
+			gridX < 0 ||
+			gridX >= this.pelletGrid[0].length
+        ) {
             return PELLET_TYPES.NONE;
         }
         return this.pelletGrid[gridY][gridX];
     }
 
     /**
-     * Get percentage of pellets eaten
-     * @returns {number}
-     */
+	 * Get percentage of pellets eaten
+	 * @returns {number}
+	 */
     getPelletsEatenPercentage() {
-        if (this.totalPellets === 0) {return 0;}
-        return ((this.totalPellets - this.pelletsRemaining) / this.totalPellets) * 100;
+        if (this.totalPellets === 0) {
+            return 0;
+        }
+        return (
+            ((this.totalPellets - this.pelletsRemaining) / this.totalPellets) * 100
+        );
     }
 
     /**
-     * Check if fruit should spawn
-     * @returns {boolean}
-     */
+	 * Check if fruit should spawn
+	 * @returns {boolean}
+	 */
     shouldSpawnFruit() {
         return this.getPelletsEatenPercentage() >= fruitConfig.pelletThreshold;
     }
 
     /**
-     * Get frightened duration for current level
-     * @returns {number}
-     */
+	 * Get frightened duration for current level
+	 * @returns {number}
+	 */
     getFrightenedDuration() {
         return Math.max(2, 8 - (this.level - 1) * 0.5);
     }
 
     /**
-     * Get speed multiplier for current level
-     * @returns {number}
-     */
+	 * Get speed multiplier for current level
+	 * @returns {number}
+	 */
     getSpeedMultiplier() {
         return 1 + (this.level - 1) * 0.05;
     }
 
     /**
-     * Set paused state
-     * @param {boolean} paused
-     */
+	 * Set paused state
+	 * @param {boolean} paused
+	 */
     setPaused(paused) {
         this.isPaused = paused;
     }
 
     /**
-     * Get complete state snapshot
-     * @returns {Object}
-     */
+	 * Get complete state snapshot
+	 * @returns {Object}
+	 */
     getSnapshot() {
         return {
             level: this.level,
@@ -388,28 +438,28 @@ export class GameState {
             totalPellets: this.totalPellets,
             pelletsEatenPercent: this.getPelletsEatenPercentage(),
             pacman: this.pacman.getSnapshot(),
-            ghosts: this.ghosts.map(g => g.getSnapshot()),
+            ghosts: this.ghosts.map((g) => g.getSnapshot()),
             fruit: this.fruit.getSnapshot(),
             tickCount: this.tickCount
         };
     }
 
     /**
-     * Serialize state for save/replay
-     * @returns {Object}
-     */
+	 * Serialize state for save/replay
+	 * @returns {Object}
+	 */
     serialize() {
         return {
             level: this.level,
             score: this.score,
             lives: this.lives,
-            pelletGrid: this.pelletGrid.map(row => [...row]),
+            pelletGrid: this.pelletGrid.map((row) => [...row]),
             pacman: {
                 gridX: this.pacman.gridX,
                 gridY: this.pacman.gridY,
                 direction: this.pacman.direction
             },
-            ghosts: this.ghosts.map(g => ({
+            ghosts: this.ghosts.map((g) => ({
                 ghostType: g.ghostType,
                 gridX: g.gridX,
                 gridY: g.gridY,
@@ -421,5 +471,3 @@ export class GameState {
         };
     }
 }
-
-
