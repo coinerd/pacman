@@ -74,7 +74,13 @@ describe('GameStateController', () => {
             controller.setInputDirection(directions.RIGHT);
             controller.update(1 / 60);
 
-            expect([null, directions.NONE]).toContainEqual(controller.inputDirection);
+            // Input direction should be consumed (null or NONE with all zeros)
+            expect(
+                controller.inputDirection === null ||
+					(controller.inputDirection &&
+						controller.inputDirection.x === 0 &&
+						controller.inputDirection.y === 0)
+            ).toBe(true);
         });
 
         it('should return movement events', () => {
