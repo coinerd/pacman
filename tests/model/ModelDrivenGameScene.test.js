@@ -212,6 +212,13 @@ describe('ModelDriven Architecture - Pure Observer Pattern', () => {
                         setFillStyle: jest.fn().mockReturnThis(),
                         destroy: jest.fn()
                     })),
+                    circle: jest.fn((x, y, radius, color) => ({
+                        x, y, radius, color,
+                        visible: true,
+                        setDepth: jest.fn().mockReturnThis(),
+                        setVisible: jest.fn().mockReturnThis(),
+                        destroy: jest.fn()
+                    })),
                     arc: jest.fn((x, y, radius, startAngle, endAngle, anticlockwise, color, alpha) => ({
                         x, y, radius, startAngle, endAngle, anticlockwise, color, alpha,
                         visible: true,
@@ -276,6 +283,13 @@ describe('ModelDriven Architecture - Pure Observer Pattern', () => {
                         setFillStyle: jest.fn().mockReturnThis(),
                         destroy: jest.fn()
                     })),
+                    circle: jest.fn((x, y, radius, color) => ({
+                        x, y, radius, color,
+                        visible: true,
+                        setDepth: jest.fn().mockReturnThis(),
+                        setVisible: jest.fn().mockReturnThis(),
+                        destroy: jest.fn()
+                    })),
                     arc: jest.fn((x, y, radius, startAngle, endAngle, anticlockwise, color, alpha) => ({
                         x, y, radius, startAngle, endAngle, anticlockwise, color, alpha,
                         visible: true,
@@ -318,6 +332,13 @@ describe('ModelDriven Architecture - Pure Observer Pattern', () => {
                         setRotation: jest.fn().mockReturnThis(),
                         setOrigin: jest.fn().mockReturnThis(),
                         setFillStyle: jest.fn().mockReturnThis(),
+                        destroy: jest.fn()
+                    })),
+                    circle: jest.fn((x, y, radius, color) => ({
+                        x, y, radius, color,
+                        visible: true,
+                        setDepth: jest.fn().mockReturnThis(),
+                        setVisible: jest.fn().mockReturnThis(),
                         destroy: jest.fn()
                     })),
                     graphics: jest.fn().mockReturnValue({

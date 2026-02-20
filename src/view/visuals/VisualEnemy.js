@@ -22,8 +22,8 @@ export class VisualEnemy {
         // Create geometric shape based on enemy type
         const shape = this.createShape(enemyState.ghostType, radius, color);
 
-        this.sprite = new Phaser.GameObjects.Polygon(
-            scene,
+        // Use scene.add.polygon() instead of new Phaser.GameObjects.Polygon()
+        this.sprite = scene.add.polygon(
             enemyState.x,
             enemyState.y,
             shape.points,
@@ -33,9 +33,8 @@ export class VisualEnemy {
         // Set origin to center so rotation works correctly
         this.sprite.setOrigin(0.5, 0.5);
         this.sprite.setDepth(100);
-        scene.add.existing(this.sprite);
 
-        // Create eyes
+        // Create eyes using scene.add.circle()
         this.eyeLeft = this.createEye(
             scene,
             -radius * 0.3,
@@ -131,19 +130,14 @@ export class VisualEnemy {
 	 * Create an eye
 	 */
     createEye(scene, offsetX, offsetY, radius) {
-        const eye = new Phaser.GameObjects.Arc(
-            scene,
+        // Use scene.add.circle() instead of new Phaser.GameObjects.Arc()
+        const eye = scene.add.circle(
             this.state.x + offsetX,
             this.state.y + offsetY,
             radius,
-            0,
-            360,
-            false,
-            0xffffff,
-            1
+            0xffffff
         );
         eye.setDepth(101);
-        scene.add.existing(eye);
         return eye;
     }
 
@@ -151,19 +145,14 @@ export class VisualEnemy {
 	 * Create a pupil
 	 */
     createPupil(scene, offsetX, offsetY, radius) {
-        const pupil = new Phaser.GameObjects.Arc(
-            scene,
+        // Use scene.add.circle() instead of new Phaser.GameObjects.Arc()
+        const pupil = scene.add.circle(
             this.state.x + offsetX,
             this.state.y + offsetY,
             radius,
-            0,
-            360,
-            false,
-            0x0000ff,
-            1
+            0x0000ff
         );
         pupil.setDepth(102);
-        scene.add.existing(pupil);
         return pupil;
     }
 

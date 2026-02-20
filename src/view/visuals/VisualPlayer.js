@@ -28,8 +28,8 @@ export class VisualPlayer {
             });
         }
 
-        this.sprite = new Phaser.GameObjects.Polygon(
-            scene,
+        // Use scene.add.polygon() instead of new Phaser.GameObjects.Polygon()
+        this.sprite = scene.add.polygon(
             playerState.x,
             playerState.y,
             hexagonPoints,
@@ -40,21 +40,15 @@ export class VisualPlayer {
         this.sprite.setOrigin(0.5, 0.5);
         this.sprite.setDepth(100);
         this.sprite.setRotation((playerState.direction.angle * Math.PI) / 180);
-        scene.add.existing(this.sprite);
 
-        this.eye = new Phaser.GameObjects.Arc(
-            scene,
+        // Use scene.add.circle() instead of new Phaser.GameObjects.Arc()
+        this.eye = scene.add.circle(
             playerState.x,
             playerState.y - radius * 0.3,
             radius * 0.15,
-            0,
-            360,
-            false,
-            0x000000,
-            1
+            0x000000
         );
         this.eye.setDepth(101);
-        scene.add.existing(this.eye);
 
         this.pulsePhase = 0;
 

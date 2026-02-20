@@ -213,6 +213,7 @@ describe('EnemyAIAdapter', () => {
             ghost.x = 3 * 20 + 10; // Center of tile
             ghost.y = 1 * 20 + 10;
             ghost.direction = directions.NONE;
+            ghost.moveProgress = 0; // At tile center (new movement system)
 
             adapter.updateEnemyAI(ghost, 0.1);
 
@@ -264,6 +265,8 @@ describe('EnemyAIAdapter', () => {
         test('updates AI for all ghosts', () => {
             const ghost1 = createMockGhost('alpha', 3, 1);
             const ghost2 = createMockGhost('beta', 3, 1);
+            ghost1.moveProgress = 0; // At tile center (new movement system)
+            ghost2.moveProgress = 0;
             mockGameModel.ghosts = [ghost1, ghost2];
 
             adapter.update(0.1);
