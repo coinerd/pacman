@@ -199,7 +199,26 @@ describe('ModelDriven Architecture - Pure Observer Pattern', () => {
             const model = new GameModel({});
             const mockScene = {
                 add: {
-                    existing: jest.fn()
+                    existing: jest.fn(),
+                    polygon: jest.fn((x, y, points, color) => ({
+                        x, y, points, color,
+                        visible: true,
+                        setDepth: jest.fn().mockReturnThis(),
+                        setVisible: jest.fn().mockReturnThis(),
+                        setScale: jest.fn().mockReturnThis(),
+                        setAlpha: jest.fn().mockReturnThis(),
+                        setRotation: jest.fn().mockReturnThis(),
+                        setOrigin: jest.fn().mockReturnThis(),
+                        setFillStyle: jest.fn().mockReturnThis(),
+                        destroy: jest.fn()
+                    })),
+                    arc: jest.fn((x, y, radius, startAngle, endAngle, anticlockwise, color, alpha) => ({
+                        x, y, radius, startAngle, endAngle, anticlockwise, color, alpha,
+                        visible: true,
+                        setDepth: jest.fn().mockReturnThis(),
+                        setVisible: jest.fn().mockReturnThis(),
+                        destroy: jest.fn()
+                    }))
                 }
             };
 
@@ -245,6 +264,25 @@ describe('ModelDriven Architecture - Pure Observer Pattern', () => {
             const mockScene = {
                 add: {
                     existing: jest.fn(),
+                    polygon: jest.fn((x, y, points, color) => ({
+                        x, y, points, color,
+                        visible: true,
+                        setDepth: jest.fn().mockReturnThis(),
+                        setVisible: jest.fn().mockReturnThis(),
+                        setScale: jest.fn().mockReturnThis(),
+                        setAlpha: jest.fn().mockReturnThis(),
+                        setRotation: jest.fn().mockReturnThis(),
+                        setOrigin: jest.fn().mockReturnThis(),
+                        setFillStyle: jest.fn().mockReturnThis(),
+                        destroy: jest.fn()
+                    })),
+                    arc: jest.fn((x, y, radius, startAngle, endAngle, anticlockwise, color, alpha) => ({
+                        x, y, radius, startAngle, endAngle, anticlockwise, color, alpha,
+                        visible: true,
+                        setDepth: jest.fn().mockReturnThis(),
+                        setVisible: jest.fn().mockReturnThis(),
+                        destroy: jest.fn()
+                    })),
                     graphics: jest.fn().mockReturnValue(mockGraphics)
                 }
             };
@@ -269,6 +307,19 @@ describe('ModelDriven Architecture - Pure Observer Pattern', () => {
             const model = new GameModel({});
             const mockScene = {
                 add: {
+                    existing: jest.fn(),
+                    polygon: jest.fn((x, y, points, color) => ({
+                        x, y, points, color,
+                        visible: true,
+                        setDepth: jest.fn().mockReturnThis(),
+                        setVisible: jest.fn().mockReturnThis(),
+                        setScale: jest.fn().mockReturnThis(),
+                        setAlpha: jest.fn().mockReturnThis(),
+                        setRotation: jest.fn().mockReturnThis(),
+                        setOrigin: jest.fn().mockReturnThis(),
+                        setFillStyle: jest.fn().mockReturnThis(),
+                        destroy: jest.fn()
+                    })),
                     graphics: jest.fn().mockReturnValue({
                         clear: jest.fn().mockReturnThis(),
                         fillStyle: jest.fn().mockReturnThis(),
@@ -475,7 +526,26 @@ describe('ModelDriven Architecture - Pure Observer Pattern', () => {
             const model = new GameModel({});
             const mockScene = {
                 add: {
-                    existing: jest.fn()
+                    existing: jest.fn(),
+                    polygon: jest.fn((x, y, points, color) => ({
+                        x, y, points, color,
+                        visible: true,
+                        setDepth: jest.fn().mockReturnThis(),
+                        setVisible: jest.fn().mockReturnThis(),
+                        setScale: jest.fn().mockReturnThis(),
+                        setAlpha: jest.fn().mockReturnThis(),
+                        setRotation: jest.fn().mockReturnThis(),
+                        setOrigin: jest.fn().mockReturnThis(),
+                        setFillStyle: jest.fn().mockReturnThis(),
+                        destroy: jest.fn()
+                    })),
+                    circle: jest.fn((x, y, radius, color) => ({
+                        x, y, radius, color,
+                        visible: true,
+                        setDepth: jest.fn().mockReturnThis(),
+                        setVisible: jest.fn().mockReturnThis(),
+                        destroy: jest.fn()
+                    }))
                 }
             };
 
@@ -497,6 +567,37 @@ describe('ModelDriven Architecture - Pure Observer Pattern', () => {
 
         test('Game loop should be Model-driven', () => {
             const model = new GameModel({});
+            const mockScene = {
+                add: {
+                    existing: jest.fn(),
+                    polygon: jest.fn((x, y, points, color) => ({
+                        x, y, points, color,
+                        visible: true,
+                        setDepth: jest.fn().mockReturnThis(),
+                        setVisible: jest.fn().mockReturnThis(),
+                        setScale: jest.fn().mockReturnThis(),
+                        setAlpha: jest.fn().mockReturnThis(),
+                        setRotation: jest.fn().mockReturnThis(),
+                        setOrigin: jest.fn().mockReturnThis(),
+                        setFillStyle: jest.fn().mockReturnThis(),
+                        destroy: jest.fn()
+                    })),
+                    circle: jest.fn((x, y, radius, color) => ({
+                        x, y, radius, color,
+                        visible: true,
+                        setDepth: jest.fn().mockReturnThis(),
+                        setVisible: jest.fn().mockReturnThis(),
+                        destroy: jest.fn()
+                    })),
+                    arc: jest.fn((x, y, radius, startAngle, endAngle, anticlockwise, color, alpha) => ({
+                        x, y, radius, startAngle, endAngle, anticlockwise, color, alpha,
+                        visible: true,
+                        setDepth: jest.fn().mockReturnThis(),
+                        setVisible: jest.fn().mockReturnThis(),
+                        destroy: jest.fn()
+                    }))
+                }
+            };
 
             // Initial state
             const initialX = model.pacman.x;

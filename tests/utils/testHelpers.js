@@ -174,6 +174,49 @@ export const createMockScene = () => {
         },
         add: {
             existing: jest.fn(),
+            polygon: jest.fn((x, y, points, color) => {
+                const mockPolygon = {
+                    x,
+                    y,
+                    points,
+                    color,
+                    visible: true,
+                    depth: 0,
+                    scale: 1,
+                    alpha: 1,
+                    rotation: 0,
+                    setDepth: jest.fn(function (val) {
+                        this.depth = val;
+                        return this;
+                    }),
+                    setVisible: jest.fn(function (val) {
+                        this.visible = val;
+                        return this;
+                    }),
+                    setScale: jest.fn(function (val) {
+                        this.scale = val;
+                        return this;
+                    }),
+                    setAlpha: jest.fn(function (val) {
+                        this.alpha = val;
+                        return this;
+                    }),
+                    setRotation: jest.fn(function (val) {
+                        this.rotation = val;
+                        return this;
+                    }),
+                    setOrigin: jest.fn(function (x, y) {
+                        return this;
+                    }),
+                    setFillStyle: jest.fn(function (color, alpha) {
+                        this.color = color;
+                        this.alpha = alpha !== undefined ? alpha : 1;
+                        return this;
+                    }),
+                    destroy: jest.fn()
+                };
+                return mockPolygon;
+            }),
             graphics: jest.fn(() => ({
                 fillStyle: jest.fn().mockReturnThis(),
                 lineStyle: jest.fn().mockReturnThis(),
