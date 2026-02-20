@@ -91,24 +91,25 @@ export class VisualPlayer {
         const pulseScale = 1 + Math.sin(this.pulsePhase) * 0.05;
         this.sprite.setScale(pulseScale);
 
+        // Use sprite position for eye (syncs with interpolated movement)
         const eyeOffset = radius * 0.3;
 
         const angle = this.state.direction.angle;
         if (angle === 0) {
-            this.eye.x = this.state.x + eyeOffset;
-            this.eye.y = this.state.y - eyeOffset;
+            this.eye.x = this.sprite.x + eyeOffset;
+            this.eye.y = this.sprite.y - eyeOffset;
         } else if (angle === 180) {
             this.eye.x = this.state.x - eyeOffset;
             this.eye.y = this.state.y - eyeOffset;
         } else if (angle === 270) {
-            this.eye.x = this.state.x;
-            this.eye.y = this.state.y - eyeOffset * 1.5;
+            this.eye.x = this.sprite.x;
+            this.eye.y = this.sprite.y - eyeOffset * 1.5;
         } else if (angle === 90) {
-            this.eye.x = this.state.x;
-            this.eye.y = this.state.y - eyeOffset * 0.5;
+            this.eye.x = this.sprite.x;
+            this.eye.y = this.sprite.y - eyeOffset * 0.5;
         } else {
-            this.eye.x = this.state.x + eyeOffset;
-            this.eye.y = this.state.y - eyeOffset;
+            this.eye.x = this.sprite.x + eyeOffset;
+            this.eye.y = this.sprite.y - eyeOffset;
         }
 
         if (this.state.isDying) {
@@ -140,7 +141,7 @@ export class VisualPlayer {
             this.shieldEffect.clear();
             this.shieldEffect.lineStyle(3, 0x00ced1, 0.6);
             const radius = gameConfig.tileSize * 0.5;
-            this.shieldEffect.strokeCircle(this.state.x, this.state.y, radius);
+            this.shieldEffect.strokeCircle(this.sprite.x, this.sprite.y, radius);
         }
 
         if (this.magnetField) {
@@ -149,8 +150,8 @@ export class VisualPlayer {
             const radius = gameConfig.tileSize * 0.7;
             for (let i = 0; i < 3; i++) {
                 this.magnetField.strokeCircle(
-                    this.state.x,
-                    this.state.y,
+                    this.sprite.x,
+                    this.sprite.y,
                     radius * (i + 1) * 0.3
                 );
             }
@@ -195,7 +196,7 @@ export class VisualPlayer {
         const radius = gameConfig.tileSize * 0.5;
         this.shieldEffect = this.scene.add.graphics();
         this.shieldEffect.lineStyle(3, 0x00ced1, 0.6);
-        this.shieldEffect.strokeCircle(this.state.x, this.state.y, radius);
+        this.shieldEffect.strokeCircle(this.sprite.x, this.sprite.y, radius);
         this.shieldEffect.setDepth(95);
 
         this.scene.tweens.add({
@@ -222,8 +223,8 @@ export class VisualPlayer {
 
         const trail = this.scene.add
             .circle(
-                this.state.x,
-                this.state.y,
+                this.sprite.x,
+                this.sprite.y,
                 gameConfig.tileSize * 0.2,
                 0xffd700,
                 0.3
@@ -257,8 +258,8 @@ export class VisualPlayer {
 
         for (let i = 0; i < 3; i++) {
             this.magnetField.strokeCircle(
-                this.state.x,
-                this.state.y,
+                this.sprite.x,
+                this.sprite.y,
                 radius * (i + 1) * 0.3
             );
         }

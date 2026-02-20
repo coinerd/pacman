@@ -132,8 +132,8 @@ export class VisualEnemy {
     createEye(scene, offsetX, offsetY, radius) {
         // Use scene.add.circle() instead of new Phaser.GameObjects.Arc()
         const eye = scene.add.circle(
-            this.state.x + offsetX,
-            this.state.y + offsetY,
+            this.sprite.x + offsetX,
+            this.sprite.y + offsetY,
             radius,
             0xffffff
         );
@@ -147,8 +147,8 @@ export class VisualEnemy {
     createPupil(scene, offsetX, offsetY, radius) {
         // Use scene.add.circle() instead of new Phaser.GameObjects.Arc()
         const pupil = scene.add.circle(
-            this.state.x + offsetX,
-            this.state.y + offsetY,
+            this.sprite.x + offsetX,
+            this.sprite.y + offsetY,
             radius,
             0x0000ff
         );
@@ -201,8 +201,8 @@ export class VisualEnemy {
     updateEyes(radius) {
         const eyeOffsetX = radius * 0.3;
         const eyeOffsetY = -radius * 0.2;
-        const baseX = this.state.x;
-        const baseY = this.state.y;
+        const baseX = this.sprite.x;
+        const baseY = this.sprite.y;
 
         this.eyeLeft.x = baseX - eyeOffsetX;
         this.eyeLeft.y = baseY + eyeOffsetY;
