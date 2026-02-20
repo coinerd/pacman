@@ -19,16 +19,15 @@ export class VisualPlayer {
         const radius = gameConfig.tileSize * 0.4;
         const cyanColor = 0x00ced1;
 
+        // Create hexagon points (flat array of x, y values)
         const hexagonPoints = [];
         for (let i = 0; i < 6; i++) {
             const angle = (i * 60 - 90) * (Math.PI / 180);
-            hexagonPoints.push({
-                x: radius * Math.cos(angle),
-                y: radius * Math.sin(angle)
-            });
+            hexagonPoints.push(radius * Math.cos(angle));
+            hexagonPoints.push(radius * Math.sin(angle));
         }
 
-        // Use scene.add.polygon() instead of new Phaser.GameObjects.Polygon()
+        // Use scene.add.polygon() with flat array
         this.sprite = scene.add.polygon(
             playerState.x,
             playerState.y,
