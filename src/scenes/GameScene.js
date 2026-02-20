@@ -44,7 +44,8 @@ export default class GameScene extends Phaser.Scene {
             score: data.score || 0,
             lives: 3,
             level: data.level || 1,
-            deathPauseDuration: animationConfig.deathPauseDuration
+            deathPauseDuration: animationConfig.deathPauseDuration,
+            useTileCenterMovement: true  // Enable tile-center movement system
         });
         this.gameState = this.gameModel.state;
 
