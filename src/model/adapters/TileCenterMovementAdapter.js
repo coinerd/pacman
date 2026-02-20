@@ -28,7 +28,7 @@ export class TileCenterMovementAdapter {
     updatePacman(pacman, deltaSeconds, inputDirection = null) {
         // Queue input direction in buffer if provided
         if (inputDirection && inputDirection !== directions.NONE) {
-            pacman.setDirection(inputDirection);
+            pacman.nextDirection = inputDirection;
         }
 
         this.stats.movesAttempted++;
@@ -51,9 +51,6 @@ export class TileCenterMovementAdapter {
                     }];
                 }
             }
-        } else {
-            // Entity at rest, no movement
-            return [];
         }
 
         // Entity is moving, update progress
@@ -78,7 +75,9 @@ export class TileCenterMovementAdapter {
      * @returns {Array<Object>} - Movement events
      */
     updateGhost(ghost, deltaSeconds) {
-        const direction = ghost.nextDirection || ghost.direction;
+        const direction = ghost.nextDirection && ghost.nextDirection !== directions.NONE
+            ? ghost.nextDirection
+            : ghost.direction;
 
         this.stats.movesAttempted++;
 
