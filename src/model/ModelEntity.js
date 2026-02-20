@@ -7,7 +7,6 @@
 import { directions, gameConfig } from '../config/gameConfig.js';
 import {
     getCenterPixel,
-    gridToPixel,
     isWalkableTile
 } from '../utils/MazeLayout.js';
 import { DirectionBuffer } from '../utils/movement/DirectionBuffer.js';
@@ -33,21 +32,33 @@ export class ModelEntity {
         // Grid position (logical)
         this.gridX = gridX;
         this.gridY = gridY;
+
+        // Previous grid position (for interpolation)
         this.prevGridX = gridX;
         this.prevGridY = gridY;
 
-        // Pixel position (for collision and sync)
+        // Target grid position (for movement progress)
+        this.targetGridX = gridX;
+        this.targetGridY = gridY;
+
+        // Pixel position (for collision and sync) - always derived from grid position
         const pixel = getCenterPixel(gridX, gridY);
         this.x = pixel.x;
         this.y = pixel.y;
         this.prevX = this.x;
         this.prevY = this.y;
 
+        // Movement progress (0.0 = at current tile, 1.0 = at target tile)
+        this.moveProgress = 0.0;
+
         // Movement
         this.speed = config.speed || 100;
         this.directionBuffer = new DirectionBuffer();
         this.directionBuffer.apply(directions.NONE);
         this.isMoving = false;
+
+        // Current direction (direct value, not buffered)
+        this.direction = directions.NONE;
 
         // Visual state (data only, no rendering)
         this.visualState = {
@@ -66,6 +77,7 @@ export class ModelEntity {
 
     set direction(value) {
         this.directionBuffer.apply(value);
+        // No direct assignment - use the buffer's getCurrent() via getter
     }
 
     /**
@@ -160,6 +172,53 @@ export class ModelEntity {
     }
 
     /**
+	 * Start movement to target tile
+	 * @param {number} targetGridX - Target grid X
+	 * @param {number} targetGridY - Target grid Y
+	 * @param {Object} direction - Movement direction
+	 */
+    startMove(targetGridX, targetGridY, direction) {
+        this.prevGridX = this.gridX;
+        this.prevGridY = this.gridY;
+
+        this.targetGridX = targetGridX;
+        this.targetGridY = targetGridY;
+
+        this.direction = direction;
+        this.moveProgress = 0.001; // Start moving
+        this.isMoving = true;
+    }
+
+    /**
+	 * Update movement progress
+	 * @param {number} deltaTime - Time since last frame in seconds
+	 */
+    updateMovement(deltaTime) {
+        if (this.moveProgress > 0) {
+            const tileSize = gameConfig.tileSize;
+            const tilesPerSecond = this.speed / tileSize;
+            this.moveProgress += tilesPerSecond * deltaTime;
+
+            if (this.moveProgress >= 1.0) {
+                // Arrived at target tile
+                this.gridX = this.targetGridX;
+                this.gridY = this.targetGridY;
+
+                // Update pixel position from new grid position
+                const pixel = getCenterPixel(this.gridX, this.gridY);
+                this.x = pixel.x;
+                this.y = pixel.y;
+
+                this.moveProgress = 0;
+                this.isMoving = false;
+
+                return true; // Movement completed
+            }
+        }
+        return false; // Still moving
+    }
+
+    /**
 	 * Reset entity to a position
 	 * @param {number} gridX - New grid X
 	 * @param {number} gridY - New grid Y
@@ -169,6 +228,9 @@ export class ModelEntity {
         this.gridY = gridY;
         this.prevGridX = gridX;
         this.prevGridY = gridY;
+        this.targetGridX = gridX;
+        this.targetGridY = gridY;
+        this.moveProgress = 0;
         this.directionBuffer.reset();
         this.direction = directions.NONE;
         this.isMoving = false;
@@ -211,17 +273,20 @@ export class ModelEntity {
             direction: this.direction,
             isMoving: this.isMoving,
             speed: this.speed,
+            moveProgress: this.moveProgress,
+            targetGridX: this.targetGridX,
+            targetGridY: this.targetGridY,
             visualState: { ...this.visualState }
         };
     }
 
     /**
 	 * Update entity (to be overridden by subclasses)
-	 * @param {number} deltaSeconds - Time since last frame
-	 * @param {Array<Array<number>>} maze - Maze grid
+	 * @param {number} _deltaSeconds - Time since last frame
+	 * @param {Array<Array<number>>} _maze - Maze grid
 	 * @returns {Array<Object>} - Events generated during update
 	 */
-    update(deltaSeconds, maze) {
+    update(_deltaSeconds, _maze) {
         // Base implementation - subclasses override
         return [];
     }

@@ -9,7 +9,8 @@ import {
     getOpposite,
     ghostHouse,
     ghostModes,
-    scatterTargets
+    scatterTargets,
+    gameConfig
 } from '../../config/gameConfig.js';
 import { getDistance, getValidDirections } from '../../utils/MazeLayout.js';
 
@@ -92,32 +93,13 @@ export class EnemyAIAdapter {
             enemy.mode = this.currentMode;
         }
 
-        // AI chooses direction at tile center OR when blocked
-        // When blocked, enemy is at tile boundary (10px from center of current tile,
-        // which is center of tile we're trying to enter)
-        const center = this.getTileCenter(enemy.gridX, enemy.gridY);
-        const distToCenter = Math.hypot(center.x - enemy.x, center.y - enemy.y);
-        const EPSILON = 3;
-        const BLOCKED_EPSILON = 12; // Allow direction choice when blocked near boundary
+        // AI chooses direction at tile center
+        // With new movement system: only change direction when moveProgress === 0 (at tile center)
+        // Check if we're at tile center (ready for new decision)
+        const isAtDecisionPoint = enemy.moveProgress === 0;
 
-        // Check if we're close enough to center to make a decision
-        // OR if we're blocked (not moving but have a direction)
-        const isAtDecisionPoint = distToCenter <= EPSILON;
-        const isBlocked = !enemy.isMoving && enemy.direction !== directions.NONE;
-
-        if (!isAtDecisionPoint && !isBlocked) {
+        if (!isAtDecisionPoint) {
             return;
-        }
-
-        // When blocked at boundary, snap to center of tile we're in
-        // This ensures AI makes decision from a valid grid position
-        if (isBlocked && distToCenter <= BLOCKED_EPSILON) {
-            enemy.x = center.x;
-            enemy.y = center.y;
-            // Reset the entire direction buffer (both current and buffered)
-            if (enemy.directionBuffer) {
-                enemy.directionBuffer.reset();
-            }
         }
 
         // Choose direction based on AI

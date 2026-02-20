@@ -169,13 +169,30 @@ export class VisualEnemy {
 
     /**
 	 * Sync visual to model state
+     * Uses interpolation when entity is moving between tiles
 	 */
     sync() {
         const visualState = this.state.getVisualState();
         const radius = gameConfig.tileSize * 0.4;
 
-        this.sprite.x = this.state.x;
-        this.sprite.y = this.state.y;
+        // Check if entity is moving between tiles (interpolation needed)
+        if (this.state.moveProgress > 0) {
+            const tileSize = gameConfig.tileSize;
+
+            // Interpolate between previous and target tile centers
+            const prevCenterX = this.state.prevGridX * tileSize + tileSize / 2;
+            const prevCenterY = this.state.prevGridY * tileSize + tileSize / 2;
+            const nextCenterX = this.state.targetGridX * tileSize + tileSize / 2;
+            const nextCenterY = this.state.targetGridY * tileSize + tileSize / 2;
+
+            // Lerp based on moveProgress
+            this.sprite.x = prevCenterX + (nextCenterX - prevCenterX) * this.state.moveProgress;
+            this.sprite.y = prevCenterY + (nextCenterY - prevCenterY) * this.state.moveProgress;
+        } else {
+            // At rest - use exact grid position
+            this.sprite.x = this.state.x;
+            this.sprite.y = this.state.y;
+        }
 
         this.sprite.setFillStyle(visualState.color, visualState.opacity);
 
