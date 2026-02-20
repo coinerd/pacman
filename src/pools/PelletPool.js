@@ -6,7 +6,7 @@ export class PelletPool {
         this.scene = scene;
         this.available = [];
         this.active = [];
-        this.initialSize = 300;
+        this.initialSize = 800; // Increased from 300 for larger mazes (25x33=825 max)
         this.gridIndex = new Map();
     }
 

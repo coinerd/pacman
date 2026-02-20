@@ -301,9 +301,11 @@ export default class GameModel {
             events.push(...fruitEvents);
 
             // Clear consumed direction if it was applied
+            // Also clear if pacman is not moving (blocked) to allow fresh input
             if (
-                this.pacman.direction !== directions.NONE &&
-				this.desiredDirection === this.pacman.direction
+                (this.pacman.direction !== directions.NONE &&
+				this.desiredDirection === this.pacman.direction) ||
+                this.pacman.direction === directions.NONE
             ) {
                 this.desiredDirection = null;
                 this.inputDirection = null;
@@ -344,9 +346,11 @@ export default class GameModel {
             events.push(...fruitEvents);
 
             // Clear consumed direction if it was applied
+            // Also clear if pacman is not moving (blocked) to allow fresh input
             if (
-                this.pacman.direction !== directions.NONE &&
-				this.desiredDirection === this.pacman.direction
+                (this.pacman.direction !== directions.NONE &&
+				this.desiredDirection === this.pacman.direction) ||
+                this.pacman.direction === directions.NONE
             ) {
                 this.desiredDirection = null;
                 this.inputDirection = null;

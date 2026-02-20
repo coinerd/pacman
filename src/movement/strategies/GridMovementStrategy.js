@@ -84,7 +84,14 @@ export class GridMovementStrategy extends MovementInterface {
         const atCenter = distToCenter <= this.eps;
 
         if (atCenter && !this.canMove(entity, context, currentDirection)) {
-            return this.createResult(MOVEMENT_RESULTS.BLOCKED, entity, 0, events);
+            // Snap to center and reset direction when blocked
+            entity.x = center.x;
+            entity.y = center.y;
+            // Return BLOCKED with direction reset to NONE
+            return this.createResult(MOVEMENT_RESULTS.BLOCKED, {
+                ...entity,
+                direction: { x: 0, y: 0, angle: 0 } // directions.NONE
+            }, 0, events);
         }
 
         // Perform movement
@@ -287,17 +294,19 @@ export class GridMovementStrategy extends MovementInterface {
                 }
             }
 
-            // Calculate distance to next center or boundary
+            // Calculate distance to next center
             let targetDist;
+            let targetCenter;
             if (movingTowardCenter) {
                 targetDist = Math.hypot(center.x - x, center.y - y);
+                targetCenter = center;
             } else {
                 // Moving away from center - next center is one tile ahead
-                const nextCenter = mazeQuery.getTileCenter(
+                targetCenter = mazeQuery.getTileCenter(
                     gridX + direction.x,
                     gridY + direction.y
                 );
-                targetDist = Math.hypot(nextCenter.x - x, nextCenter.y - y);
+                targetDist = Math.hypot(targetCenter.x - x, targetCenter.y - y);
             }
 
             // Move
@@ -307,25 +316,25 @@ export class GridMovementStrategy extends MovementInterface {
             remainingDist -= moveDist;
             totalDistanceMoved += moveDist;
 
-            // Check if we reached center
-            const newDistToCenter = Math.hypot(center.x - x, center.y - y);
-            if (newDistToCenter <= this.eps && movingTowardCenter) {
-                x = center.x;
-                y = center.y;
+            // Check if we reached a tile center - snap to it
+            const distToTargetCenter = Math.hypot(targetCenter.x - x, targetCenter.y - y);
+            if (distToTargetCenter <= this.eps) {
+                x = targetCenter.x;
+                y = targetCenter.y;
+
+                // Update grid position if we moved to a new tile
+                if (!movingTowardCenter) {
+                    gridX = gridX + direction.x;
+                    gridY = gridY + direction.y;
+                    events.push({
+                        type: MOVEMENT_EVENTS.TILE_ENTER,
+                        tileX: gridX,
+                        tileY: gridY
+                    });
+                }
+
                 events.push({
                     type: MOVEMENT_EVENTS.CENTER_REACHED,
-                    tileX: gridX,
-                    tileY: gridY
-                });
-            }
-
-            // Update grid position if we crossed to next tile
-            const newGridPos = mazeQuery.worldToTile(x, y);
-            if (newGridPos.tileX !== gridX || newGridPos.tileY !== gridY) {
-                gridX = newGridPos.tileX;
-                gridY = newGridPos.tileY;
-                events.push({
-                    type: MOVEMENT_EVENTS.TILE_ENTER,
                     tileX: gridX,
                     tileY: gridY
                 });

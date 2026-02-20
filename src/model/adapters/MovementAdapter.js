@@ -61,8 +61,10 @@ export class MovementAdapter {
         const bufferedDirection = pacman.nextDirection || pacman.direction;
 
         // Build movement context with buffered direction
+        // Always use current maze from gameModel (in case it was replaced)
+        const currentMazeQuery = new MazeQueryAdapter(this.gameModel.maze);
         const context = {
-            mazeQuery: this.mazeQuery,
+            mazeQuery: currentMazeQuery,
             inputDirection: bufferedDirection,
             entityType: 'pacman'
         };
@@ -73,12 +75,13 @@ export class MovementAdapter {
         // Apply movement result to entity
         this.applyMovementResult(pacman, result);
 
-        // If a turn was successfully made, clear the buffer
+        // Clear buffer on successful turn OR when blocked (to allow fresh input)
         if (
             result.result === MOVEMENT_RESULTS.TURNED ||
+            result.result === MOVEMENT_RESULTS.BLOCKED ||
 			(result.newDirection && result.newDirection !== pacman.direction)
         ) {
-            // Direction was applied, clear from buffer
+            // Direction was applied or blocked, clear from buffer
             pacman.directionBuffer.clear();
         }
 
@@ -108,8 +111,10 @@ export class MovementAdapter {
         // We use ghost.nextDirection (buffered) or ghost.direction (current)
         const direction = ghost.nextDirection || ghost.direction;
 
+        // Always use current maze from gameModel (in case it was replaced)
+        const currentMazeQuery = new MazeQueryAdapter(this.gameModel.maze);
         const context = {
-            mazeQuery: this.mazeQuery,
+            mazeQuery: currentMazeQuery,
             inputDirection: direction,
             entityType: 'ghost'
         };
@@ -117,8 +122,8 @@ export class MovementAdapter {
         const result = this.movementEngine.move(ghost, context, deltaSeconds);
         this.applyMovementResult(ghost, result);
 
-        // If a turn was made, clear the buffer
-        if (result.result === MOVEMENT_RESULTS.TURNED) {
+        // Clear buffer on successful turn OR when blocked
+        if (result.result === MOVEMENT_RESULTS.TURNED || result.result === MOVEMENT_RESULTS.BLOCKED) {
             ghost.directionBuffer.clear();
         }
 

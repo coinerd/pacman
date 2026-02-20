@@ -30,6 +30,8 @@ export class VisualEnemy {
             shape.color
         );
 
+        // Set origin to center so rotation works correctly
+        this.sprite.setOrigin(0.5, 0.5);
         this.sprite.setDepth(100);
         scene.add.existing(this.sprite);
 
@@ -205,7 +207,7 @@ export class VisualEnemy {
         let pupilOffsetY = 0;
         const lookDistance = radius * 0.08;
 
-        const angle = this.state.direction.angle;
+        const angle = this.state.direction?.angle ?? 0;
         if (angle === 0) {
             pupilOffsetX = lookDistance;
         } else if (angle === 180) {

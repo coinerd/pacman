@@ -114,6 +114,10 @@ export class EnemyAIAdapter {
         if (isBlocked && distToCenter <= BLOCKED_EPSILON) {
             enemy.x = center.x;
             enemy.y = center.y;
+            // Reset the entire direction buffer (both current and buffered)
+            if (enemy.directionBuffer) {
+                enemy.directionBuffer.reset();
+            }
         }
 
         // Choose direction based on AI
@@ -177,11 +181,13 @@ export class EnemyAIAdapter {
 
         // Filter out reverse direction (enemies can't reverse)
         let filteredDirs = validDirs;
-        if (enemy.direction !== directions.NONE) {
+        if (enemy.direction && enemy.direction !== directions.NONE) {
             const opposite = getOpposite(enemy.direction);
-            filteredDirs = validDirs.filter(
-                (d) => !(d.x === opposite.x && d.y === opposite.y)
-            );
+            if (opposite && opposite !== directions.NONE) {
+                filteredDirs = validDirs.filter(
+                    (d) => !(d.x === opposite.x && d.y === opposite.y)
+                );
+            }
         }
 
         if (filteredDirs.length === 0) {
@@ -234,11 +240,13 @@ export class EnemyAIAdapter {
 
         // Filter out reverse direction
         let filteredDirs = validDirs;
-        if (enemy.direction !== directions.NONE) {
+        if (enemy.direction && enemy.direction !== directions.NONE) {
             const opposite = getOpposite(enemy.direction);
-            filteredDirs = validDirs.filter(
-                (d) => !(d.x === opposite.x && d.y === opposite.y)
-            );
+            if (opposite && opposite !== directions.NONE) {
+                filteredDirs = validDirs.filter(
+                    (d) => !(d.x === opposite.x && d.y === opposite.y)
+                );
+            }
         }
 
         if (filteredDirs.length === 0) {

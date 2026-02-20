@@ -44,13 +44,18 @@ export default class ModelDrivenGameScene extends Phaser.Scene {
     }
 
     init(data) {
-        // Create unified GameModel - single source of truth
+        // Create maze data FIRST before GameModel so entities get correct positions
+        const levelData = createMazeData();
+
+        // Create unified GameModel - single source of truth with maze data
         this.gameModel = new GameModel({
             score: data.score || 0,
             lives: data.lives ?? 3,
             level: data.level || 1,
             highScore: data.highScore || 0,
-            deathPauseDuration: animationConfig.deathPauseDuration
+            deathPauseDuration: animationConfig.deathPauseDuration,
+            maze: levelData.maze,
+            pelletGrid: levelData.pelletGrid
         });
 
         this.storageManager = new StorageManager();
@@ -74,11 +79,8 @@ export default class ModelDrivenGameScene extends Phaser.Scene {
         // Set camera background color from theme
         this.cameras.main.setBackgroundColor(themeConfig.colors.background);
 
-        // Create maze data
-        const levelData = createMazeData();
-        this.gameModel.maze = levelData.maze;
-        this.gameModel.pelletGrid = levelData.pelletGrid;
-        this.gameModel.totalPellets = this.countPellets(levelData.pelletGrid);
+        // Maze data was already created in init() - just update pellet counts
+        this.gameModel.totalPellets = this.countPellets(this.gameModel.pelletGrid);
         this.gameModel.pelletsRemaining = this.gameModel.totalPellets;
 
         // Create view - pure observer that creates visuals from model

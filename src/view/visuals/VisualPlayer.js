@@ -36,6 +36,8 @@ export class VisualPlayer {
             cyanColor
         );
 
+        // Set origin to center so rotation works correctly
+        this.sprite.setOrigin(0.5, 0.5);
         this.sprite.setDepth(100);
         this.sprite.setRotation((playerState.direction.angle * Math.PI) / 180);
         scene.add.existing(this.sprite);
