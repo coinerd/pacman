@@ -530,16 +530,6 @@ export default class ModelDrivenGameView {
         // Debug: Log player position every 60 frames
         if (!this._debugFrame) {this._debugFrame = 0;}
         this._debugFrame++;
-        if (this._debugFrame % 60 === 0) {
-            const pacman = this.gameModel.pacman;
-            const tileSize = 20;
-            const expectedCenterX = pacman.gridX * tileSize + tileSize / 2;
-            const expectedCenterY = pacman.gridY * tileSize + tileSize / 2;
-            console.log('Player pos:', pacman.x, pacman.y,
-                'Grid:', pacman.gridX, pacman.gridY,
-                'Expected center:', expectedCenterX, expectedCenterY,
-                'Diff:', (pacman.x - expectedCenterX).toFixed(2), (pacman.y - expectedCenterY).toFixed(2));
-        }
 
         this.visualPlayer.sync();
 

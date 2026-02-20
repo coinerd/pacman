@@ -21,6 +21,7 @@ import {
     EnemyAIAdapter,
     MovementAdapter
 } from '../model/adapters/index.js';
+import { TileCenterMovementAdapter } from '../model/adapters/TileCenterMovementAdapter.js';
 import { EnemyState } from '../model/entities/EnemyState.js';
 import { FruitState } from '../model/entities/FruitState.js';
 import { PlayerState } from '../model/entities/PlayerState.js';
@@ -54,6 +55,9 @@ export default class GameModel {
 
         // Feature flag for decoupled systems (default true - decoupled is now standard)
         this.useDecoupledSystems = config.useDecoupledSystems ?? true;
+
+        // Feature flag for new tile-center movement system
+        this.useTileCenterMovement = config.useTileCenterMovement ?? false;
 
         // World state
         const mazeData =
@@ -110,8 +114,14 @@ export default class GameModel {
         this.tickCount = 0;
 
         // Initialize movement/collision systems
-        if (this.useDecoupledSystems) {
-            // Use new decoupled systems
+        if (this.useTileCenterMovement) {
+            // Use new tile-center movement system
+            this.movementAdapter = new TileCenterMovementAdapter(this.maze);
+            this.collisionAdapter = new CollisionAdapter(this);
+            this.ghostAIAdapter = new EnemyAIAdapter(this);
+            this.collisionSystem = null; // Not used in decoupled mode
+        } else if (this.useDecoupledSystems) {
+            // Use new decoupled systems (grid-based)
             this.movementAdapter = new MovementAdapter(this);
             this.collisionAdapter = new CollisionAdapter(this);
             this.ghostAIAdapter = new EnemyAIAdapter(this);
