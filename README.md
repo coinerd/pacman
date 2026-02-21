@@ -2,7 +2,7 @@
 
 A modern, fully-featured tech-themed maze game built with Phaser.js and Vite. This implementation includes maze-chase gameplay mechanics enhanced with modern visual effects, sound, mobile support, progressive difficulty, and a clean MVC architecture with decoupled systems.
 
-![ADA-Woman](https://img.shields.io/badge/Status-Stable-green) ![Phaser](https://img.shields.io/badge/Phaser-3.90+-blue) ![License](https://img.shields.io/badge/License-MIT-orange) ![Tests](https://img.shields.io/badge/Tests-1488%20passing-brightgreen)
+![ADA-Woman](https://img.shields.io/badge/Status-Stable-green) ![Phaser](https://img.shields.io/badge/Phaser-3.80-blue) ![License](https://img.shields.io/badge/License-MIT-orange) ![Tests](https://img.shields.io/badge/Tests-1488%20passing-brightgreen)
 
 ## Features
 
@@ -13,6 +13,8 @@ A modern, fully-featured tech-themed maze game built with Phaser.js and Vite. Th
 - **Data fragments**: Collect data for extra points
 - **Level progression**: Increasing difficulty with faster viruses and shorter decrypted durations
 - **High score system**: Persistent high scores saved to localStorage
+- **Story mode**: Narrative chapters with boss battles
+- **Additional power-ups**: Shield, Speed Boost, Data Magnet
 
 ### Visual Enhancements
 - **Enhanced maze rendering**: Circuit-style walls with glow and digital aesthetics
@@ -31,6 +33,7 @@ A modern, fully-featured tech-themed maze game built with Phaser.js and Vite. Th
   - System crash sequence
   - Data upload complete
   - Data fragment collection
+  - Boss battle sounds
 
 ### Mobile Support
 - **Touch controls**: Swipe gestures for movement
@@ -42,7 +45,7 @@ A modern, fully-featured tech-themed maze game built with Phaser.js and Vite. Th
 - **Keyboard shortcuts**: P for pause, ESC to return to menu
 - **Enhanced screens**: Improved game over and win screens with animations
 - **"Ready!" countdown**: Brief pause before each level starts
-- **Death pause**: Momentary pause when Pac-Man dies
+- **Death pause**: Momentary pause when ADA-Woman dies
 - **High score display**: Shows current and all-time best
 
 ### Advanced Features
@@ -137,12 +140,27 @@ Each level increases difficulty:
 - Viruses move faster (5% speed increase per level)
 - Decrypted mode duration decreases (500ms less per level)
 - New data fragment types appear at higher levels
+- Boss battles at specific levels
 
 ### Data Fragment System
 
 Data fragments appear when approximately 70% of data bits have been collected:
 - Fragments disappear after 10 seconds if not collected
 - Each level introduces new fragment types with increasing point values
+
+### Boss Battles
+
+Multi-phase boss encounters at specific levels:
+- Alpha Virus Boss: Direct pursuit with phase-based speed increases
+- Beta Virus Boss: Ambush tactics with variable speed
+- Gamma Virus Boss: Erratic movement with speed phases
+- Delta Virus Boss: Proximity behavior with speed phases
+
+### Additional Power-Ups
+
+- **Shield**: Temporary invincibility (visual cyan shield)
+- **Speed Boost**: Increased movement speed with trail effect
+- **Data Magnet**: Attracts nearby data bits (expanding field effect)
 
 ## Technical Details
 
@@ -156,59 +174,48 @@ src/
 │   ├── GameModel.js           # Pure game state (no Phaser deps)
 │   └── EventBus.js          # Pub/sub for decoupled communication
 ├── model/
-│   ├── GameStateController.js  # Headless game simulation
-│   ├── entities/            # Pure data entities (PlayerState, EnemyState, FruitState)
-│   ├── systems/             # Model-level systems (ModelCollisionSystem, EnemyAIAdapter)
-│   └── adapters/            # Model/View bridge (CollisionAdapter, MovementAdapter)
+│   ├── ModelEntity.js          # Base class for pure data entities
+│   ├── entities/              # Pure data entities (PlayerState, EnemyState, FruitState)
+│   └── adapters/             # AI adapters (EnemyAIAdapter, GhostAIAdapter)
 ├── controllers/
-│   ├── GameController.js      # Input translation (no scene refs)
-│   └── ActionRouter.js       # Routes actions with state validation
-├── input/
-│   ├── InputManager.js       # Multi-adapter coordinator
-│   ├── InputAdapter.js      # Base adapter interface
-│   └── adapters/
-│       ├── KeyboardAdapter.js  # Keyboard input wrapper
-│       ├── ReplayAdapter.js    # Replay playback/recording
-│       └── AIInputAdapter.js  # AI-driven input
+│   └── GameController.js     # Input translation (no scene refs)
 ├── views/
 │   ├── ModelDrivenGameView.js  # Pure observer view
-│   └── visuals/
-│       ├── VisualPlayer.js   # Visual wrapper for Player
-│       ├── VisualEnemy.js    # Visual wrapper for Enemies
-│       └── VisualFruit.js   # Visual wrapper for Fruit
-├── collision/
-│   ├── CollisionEngine.js     # Decoupled collision detection
-│   ├── shapes/              # Collision shape definitions
-│   └── spatial/             # Spatial indexing
-├── movement/
-│   ├── MovementEngine.js      # Decoupled movement system
-│   ├── strategies/           # Movement strategies
-│   └── adapters/            # Maze query adapters
-├── entities/
-│   ├── BaseEntity.js         # Base entity class
-│   ├── Player.js           # Player character
-│   ├── Enemy.js            # Enemy entities
-│   └── Fruit.js            # Bonus data fragment entities
-├── scenes/
-│   ├── ModelDrivenGameScene.js  # Main MVC game scene
-│   ├── MenuScene.js             # Main menu
-│   ├── PauseScene.js            # Pause overlay
-│   ├── GameOverScene.js         # Game over screen
-│   ├── WinScene.js              # Level complete screen
-│   └── SettingsScene.js         # Settings configuration
+│   └── components/           # Visual wrappers (PlayerRenderer, GhostRenderer, FruitRenderer)
+├── input/
+│   ├── InputManager.js        # Multi-adapter coordinator
+│   ├── InputAdapter.js       # Base adapter interface
+│   └── adapters/            # Keyboard, Replay, AI adapters
 ├── systems/
-│   ├── EnemyAISystem.js     # Enemy AI logic
-│   ├── ReplaySystem.js      # Replay recording/playback
-│   └── AchievementSystem.js  # Achievement tracking
+│   ├── EnemyAISystem.js      # Virus AI logic
+│   ├── AchievementSystem.js   # Achievement tracking
+│   ├── ReplaySystem.js        # Replay recording/playback
+│   ├── BossBattleSystem.js   # Multi-phase boss battles
+│   ├── AdditionalPowerUpSystem.js # Shield, Speed Boost, Data Magnet
+│   ├── StoryMode.js          # Narrative chapters
+│   └── FixedTimeStepLoop.js  # Fixed-step update loop
+├── scenes/
+│   ├── GameScene.js          # Main gameplay scene (MVC coordinator)
+│   ├── MenuScene.js          # Main menu
+│   ├── PauseScene.js         # Pause overlay
+│   ├── GameOverScene.js      # Game over screen
+│   ├── WinScene.js           # Level complete screen
+│   ├── SettingsScene.js      # Settings configuration
+│   └── systems/             # Scene subsystems (UI, GameFlow, Death, Level)
 ├── managers/
-│   ├── SoundManager.js      # Web Audio API wrapper
-│   └── StorageManager.js    # LocalStorage wrapper
+│   ├── SoundManager.js       # Web Audio API wrapper
+│   └── StorageManager.js     # LocalStorage wrapper
+├── pools/
+│   ├── PelletPool.js        # Object pool for pellets
+│   └── PowerPelletPool.js   # Object pool for power pellets
 └── utils/
-    ├── MazeLayout.js       # Maze data and utilities
-    ├── TileMath.js         # Grid/pixel conversions
-    └── movement/
-        ├── DirectionBuffer.js   # Direction queue/apply pattern
-        └── CenterSnapper.js    # Tile center snapping
+    ├── MazeLayout.js         # Maze data and utilities
+    ├── MazeGenerator.js      # Procedural maze generation
+    ├── TileMath.js           # Grid/pixel conversions
+    ├── TileMovement.js       # Movement utilities
+    ├── WarpTunnel.js         # Tunnel/warp behavior
+    ├── CollisionUtils.js      # Collision math
+    └── movement/            # Movement utilities (DirectionBuffer, etc.)
 ```
 
 ### MVC Architecture Benefits
@@ -222,15 +229,16 @@ src/
 
 ### Key Technologies
 
-- **Phaser.js 3.90+**: Game engine for rendering and input handling
-- **Vite 7.3+**: Build tool and development server
-- **Jest 30.2+**: Testing framework with 76 test suites (1,488+ tests)
+- **Phaser.js 3.80.1**: Game engine for rendering and input handling
+- **Vite 5.0+**: Build tool and development server
+- **Jest**: Testing framework with 76 test suites (1,488+ tests)
 - **Web Audio API**: Sound generation without external audio files
 - **localStorage**: High score, settings, and replay persistence
 
 ### Performance Optimizations
 
 - **Frame rate limiting**: Capped at 60 FPS
+- **Fixed timestep**: 60Hz deterministic game logic
 - **Spatial partitioning**: Grid-based collision detection
 - **Object pooling**: Reuse entities where possible
 - **Efficient rendering**: Graphics objects reused and updated
@@ -249,8 +257,8 @@ src/
 
 - **Model**: Pure game state in `src/core/GameModel.js` and `src/model/`
 - **View**: Rendering in `src/views/` with Visual wrappers from model entities
-- **Controller**: Input translation in `src/controllers/` with ActionRouter
-- **Systems**: Reusable logic in `src/systems/` and `src/model/systems/`
+- **Controller**: Input translation in `src/controllers/` with GameController
+- **Systems**: Reusable logic in `src/systems/`
 - **Managers**: Cross-cutting services (sound, storage) in `src/managers/`
 - **Utilities**: Helper functions in `src/utils/` for grid math, movement, collision
 
@@ -265,7 +273,7 @@ src/
 
 1. **New enemy type**: Add enemy state to `src/model/entities/EnemyState.js` and update `EnemyAIAdapter`
 2. **New data fragment**: Add to `fruitConfig` in `src/config/gameConfig.js`
-3. **New sound**: Add method to `src/managers/SoundManager.js`
+3. **New sound**: Add method to `src/managers/SoundManager.js` or `TechSoundManager.js`
 4. **New scene**: Create in `src/scenes/` and register in `src/main.js`
 5. **New input source**: Implement `InputAdapter` interface and register with `InputManager`
 
@@ -320,8 +328,8 @@ Please ensure all changes align with the tech-themed aesthetic of ADA-Woman.
 Potential features for future versions:
 - [ ] Multiplayer support
 - [ ] Custom maze editor
-- [ ] Additional ghost AI modes
-- [ ] Power-ups beyond power pellets
+- [ ] Additional virus AI modes
+- [ ] Additional boss battle types
 - [ ] Online leaderboards
 - [ ] Additional difficulty settings
 - [ ] Network-based replay sharing
@@ -334,4 +342,3 @@ For issues, questions, or suggestions, please open an issue on the repository.
 ---
 
 **Enjoy ADA-Woman! 🎮**
-
