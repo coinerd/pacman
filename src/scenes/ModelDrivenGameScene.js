@@ -55,8 +55,7 @@ export default class ModelDrivenGameScene extends Phaser.Scene {
             highScore: data.highScore || 0,
             deathPauseDuration: animationConfig.deathPauseDuration,
             maze: levelData.maze,
-            pelletGrid: levelData.pelletGrid,
-            useTileCenterMovement: true  // Enable tile-center movement system
+            pelletGrid: levelData.pelletGrid
         });
 
         this.storageManager = new StorageManager();

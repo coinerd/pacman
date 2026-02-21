@@ -59,29 +59,15 @@ export class VisualPlayer {
 
     /**
 	 * Sync visual to model state
-     * Uses interpolation when entity is moving between tiles
+     * Model entity.x/y is already interpolated by TileCenterMovementStrategy
 	 */
     sync() {
         const radius = gameConfig.tileSize * 0.4;
 
-        // Check if entity is moving between tiles (interpolation needed)
-        if (this.state.moveProgress > 0) {
-            const tileSize = gameConfig.tileSize;
-
-            // Interpolate between previous and target tile centers
-            const prevCenterX = this.state.prevGridX * tileSize + tileSize / 2;
-            const prevCenterY = this.state.prevGridY * tileSize + tileSize / 2;
-            const nextCenterX = this.state.targetGridX * tileSize + tileSize / 2;
-            const nextCenterY = this.state.targetGridY * tileSize + tileSize / 2;
-
-            // Lerp based on moveProgress
-            this.sprite.x = prevCenterX + (nextCenterX - prevCenterX) * this.state.moveProgress;
-            this.sprite.y = prevCenterY + (nextCenterY - prevCenterY) * this.state.moveProgress;
-        } else {
-            // At rest - use exact grid position
-            this.sprite.x = this.state.x;
-            this.sprite.y = this.state.y;
-        }
+        // Model.x/y is always correctly interpolated by TileCenterMovementStrategy
+        // No need to recalculate interpolation in the view
+        this.sprite.x = this.state.x;
+        this.sprite.y = this.state.y;
 
         const rotation = (this.state.direction.angle * Math.PI) / 180;
         this.sprite.setRotation(rotation);
@@ -98,8 +84,8 @@ export class VisualPlayer {
             this.eye.x = this.sprite.x + eyeOffset;
             this.eye.y = this.sprite.y - eyeOffset;
         } else if (angle === 180) {
-            this.eye.x = this.state.x - eyeOffset;
-            this.eye.y = this.state.y - eyeOffset;
+            this.eye.x = this.sprite.x - eyeOffset;
+            this.eye.y = this.sprite.y - eyeOffset;
         } else if (angle === 270) {
             this.eye.x = this.sprite.x;
             this.eye.y = this.sprite.y - eyeOffset * 1.5;

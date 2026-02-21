@@ -21,18 +21,50 @@ export class GameController {
      * @param {Object} options.scene
      * @param {Object} options.gameModel
      * @param {Object} options.replaySystem
+     * @param {Object} options.inputManager
      */
-    constructor({ scene, gameModel, replaySystem }) {
+    constructor({ scene, gameModel, replaySystem, inputManager }) {
         this.scene = scene;
         this.gameModel = gameModel;
         this.replaySystem = replaySystem;
+        this.inputManager = inputManager;
+        this.isActive = false;
+        this.unsubscribeInput = null;
+    }
+
+    /**
+     * Activate the controller and start listening for input
+     */
+    activate() {
+        if (this.isActive) {
+            return;
+        }
+        this.isActive = true;
+
+        // Subscribe to input manager events
+        if (this.inputManager) {
+            this.unsubscribeInput = this.inputManager.onInput((input) => {
+                this.handleInput(input);
+            });
+        }
+    }
+
+    /**
+     * Deactivate the controller and stop listening for input
+     */
+    deactivate() {
+        this.isActive = false;
+        if (this.unsubscribeInput) {
+            this.unsubscribeInput();
+            this.unsubscribeInput = null;
+        }
     }
 
     /**
      * @param {GameInputState} inputState
      */
     handleInput(inputState) {
-        if (!inputState) {
+        if (!inputState || !this.isActive) {
             return;
         }
 
@@ -40,7 +72,7 @@ export class GameController {
         const gameState = this.gameModel.state;
 
         if (direction && !gameState.isDying) {
-            this.gameModel.setDesiredDirection(direction);
+            this.gameModel.setInputDirection(direction);
             gameEvents.emit(GAME_EVENTS.DIRECTION_CHANGED, { direction });
         }
 

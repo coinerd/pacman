@@ -1,24 +1,24 @@
 /**
- * Integration tests for decoupled movement and collision systems
+ * Integration tests for TileCenterMovement system
  */
 
 import GameModel from '../../src/core/GameModel.js';
 import { directions } from '../../src/config/gameConfig.js';
 
-describe('Decoupled Systems Integration', () => {
-    describe('GameModel with useDecoupledSystems=true', () => {
+describe('TileCenterMovement System Integration', () => {
+    describe('GameModel with TileCenterMovement', () => {
         let gameModel;
 
         beforeEach(() => {
             gameModel = new GameModel({
-                level: 1,
-                useDecoupledSystems: true
+                level: 1
             });
         });
 
-        test('creates movement adapter', () => {
+        test('creates TileCenterMovementAdapter', () => {
             expect(gameModel.movementAdapter).toBeDefined();
             expect(gameModel.movementAdapter).not.toBeNull();
+            expect(gameModel.movementAdapter.constructor.name).toBe('TileCenterMovementAdapter');
         });
 
         test('creates collision adapter', () => {
@@ -26,8 +26,9 @@ describe('Decoupled Systems Integration', () => {
             expect(gameModel.collisionAdapter).not.toBeNull();
         });
 
-        test('does not create legacy collision system', () => {
-            expect(gameModel.collisionSystem).toBeNull();
+        test('creates ghost AI adapter', () => {
+            expect(gameModel.ghostAIAdapter).toBeDefined();
+            expect(gameModel.ghostAIAdapter).not.toBeNull();
         });
 
         test('runs game step without errors', () => {
@@ -56,7 +57,6 @@ describe('Decoupled Systems Integration', () => {
             gameModel.step(0.016);
 
             const stats = gameModel.getStats();
-            expect(stats.useDecoupledSystems).toBe(true);
             expect(stats.movementStats).toBeDefined();
             expect(stats.collisionStats).toBeDefined();
         });
@@ -83,92 +83,42 @@ describe('Decoupled Systems Integration', () => {
         });
     });
 
-    describe('GameModel with useDecoupledSystems=false (legacy)', () => {
-        let gameModel;
+    describe('Both systems handle game flow states', () => {
+        test('handles pause/resume', () => {
+            const gameModel = new GameModel({ level: 1 });
 
-        beforeEach(() => {
-            gameModel = new GameModel({
-                level: 1,
-                useDecoupledSystems: false
-            });
-        });
+            expect(gameModel.isPaused).toBe(false);
 
-        test('creates legacy collision system', () => {
-            expect(gameModel.collisionSystem).toBeDefined();
-            expect(gameModel.collisionSystem).not.toBeNull();
-        });
-
-        test('does not create adapters', () => {
-            expect(gameModel.movementAdapter).toBeNull();
-            expect(gameModel.collisionAdapter).toBeNull();
-        });
-
-        test('runs game step without errors', () => {
-            gameModel.setInputDirection(directions.RIGHT);
+            gameModel.setPaused(true);
+            expect(gameModel.isPaused).toBe(true);
 
             const events = gameModel.step(0.016);
+            expect(events).toHaveLength(0); // No events when paused
 
-            expect(Array.isArray(events)).toBe(true);
+            gameModel.setPaused(false);
+            expect(gameModel.isPaused).toBe(false);
         });
 
-        test('tracks statistics', () => {
-            gameModel.setInputDirection(directions.RIGHT);
-            gameModel.step(0.016);
+        test('handles game over', () => {
+            const gameModel = new GameModel({ level: 1, lives: 0 });
 
-            const stats = gameModel.getStats();
-            expect(stats.useDecoupledSystems).toBe(false);
-            expect(stats.collisionStats).toBeDefined();
-        });
-    });
+            gameModel.setGameOver(true);
+            expect(gameModel.isGameOver).toBe(true);
 
-    describe('Feature parity between systems', () => {
-        test('both systems handle pellet eating', () => {
-            const decoupled = new GameModel({ level: 1, useDecoupledSystems: true });
-            const legacy = new GameModel({ level: 1, useDecoupledSystems: false });
-
-            // Position both pacmans at a pellet location
-            const pelletX = 20; // First pellet location
-            const pelletY = 60;
-
-            decoupled.pacman.x = pelletX;
-            decoupled.pacman.y = pelletY;
-            decoupled.pacman.gridX = 1;
-            decoupled.pacman.gridY = 3;
-
-            legacy.pacman.x = pelletX;
-            legacy.pacman.y = pelletY;
-            legacy.pacman.gridX = 1;
-            legacy.pacman.gridY = 3;
-
-            // Both should detect pellet collision
-            const decoupledEvents = decoupled.step(0.016);
-            const legacyEvents = legacy.step(0.016);
-
-            // Both should return arrays of events
-            expect(Array.isArray(decoupledEvents)).toBe(true);
-            expect(Array.isArray(legacyEvents)).toBe(true);
+            const events = gameModel.step(0.016);
+            expect(events).toHaveLength(0); // No events when game over
         });
 
-        test('both systems handle game flow states', () => {
-            const decoupled = new GameModel({ level: 1, useDecoupledSystems: true });
-            const legacy = new GameModel({ level: 1, useDecoupledSystems: false });
+        test('handles death sequence', () => {
+            const gameModel = new GameModel({ level: 1, lives: 3 });
 
-            expect(decoupled.isPaused).toBe(false);
-            expect(legacy.isPaused).toBe(false);
+            gameModel.onPacmanDeath();
+            expect(gameModel.isDying).toBe(true);
 
-            expect(decoupled.isGameOver).toBe(false);
-            expect(legacy.isGameOver).toBe(false);
-
-            // Both should respect paused state
-            decoupled.setPaused(true);
-            legacy.setPaused(true);
-
-            const decoupledEvents = decoupled.step(0.016);
-            const legacyEvents = legacy.step(0.016);
-
-            // Should return empty arrays when paused
-            expect(decoupledEvents).toHaveLength(0);
-            expect(legacyEvents).toHaveLength(0);
+            // Step through death sequence
+            const events = gameModel.step(2.0); // Longer than deathPauseDuration
+            expect(events.some((e) => e.type === 'respawn')).toBe(true);
+            expect(gameModel.isDying).toBe(false);
         });
     });
 });

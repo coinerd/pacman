@@ -77,7 +77,7 @@ export class ActionRouter {
         // Direction input - directly control Player
         this.registerHandler(INPUT_TYPES.DIRECTION, (input, context) => {
             if (context.canAcceptInput() && input.value) {
-                this.gameModel.setDesiredDirection(input.value);
+                this.gameModel.setInputDirection(input.value);
                 gameEvents.emit(GAME_EVENTS.DIRECTION_CHANGED, {
                     direction: input.value
                 });

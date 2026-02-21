@@ -1,7 +1,7 @@
 /**
  * GameStateController
  *
- * Phase 3 Update: Now a wrapper around unified GameModel.
+ * Phase 4 Update: Wrapper around unified GameModel with TileCenterMovement.
  * Maintains backward compatibility with existing tests and code.
  *
  * For new code, use GameModel directly:
@@ -11,7 +11,6 @@
 
 import GameModel from '../core/GameModel.js';
 import { directions } from '../config/gameConfig.js';
-import { gameEvents, GAME_EVENTS } from '../core/EventBus.js';
 
 export class GameStateController {
     /**
@@ -23,18 +22,15 @@ export class GameStateController {
      * @param {Array<Array<number>>} config.pelletGrid - Optional pellet grid override
      */
     constructor(config = {}) {
-        // Create unified GameModel with legacy systems for backward compatibility
-        this.model = new GameModel({
-            ...config,
-            useDecoupledSystems: false
-        });
+        // Create unified GameModel with TileCenterMovement
+        this.model = new GameModel(config);
 
         // For backward compatibility: state should reference the model itself
         // since GameModel now has all the properties GameState had
         this.state = this.model;
 
         // Collision system reference
-        this.collisionSystem = this.model.collisionSystem;
+        this.collisionSystem = this.model.collisionAdapter;
 
         // Input state (also maintained in model)
         this.inputDirection = null;
@@ -61,26 +57,7 @@ export class GameStateController {
      * @returns {Array<Object>} - Events generated this frame
      */
     update(deltaSeconds) {
-        const result = this.model.step(deltaSeconds);
-
-        // Normalize return value to always be an array
-        // (model.step() may return a single legacy-format object during death)
-        let events;
-        if (Array.isArray(result)) {
-            events = result;
-        } else if (result && result.event) {
-            // Convert legacy format { event: 'deathTick' } to new format { type: 'death_tick' }
-            const typeMap = {
-                'deathTick': 'death_tick',
-                'respawn': 'respawn',
-                'gameOver': 'game_over'
-            };
-            events = [{ type: typeMap[result.event] || result.event }];
-        } else if (result) {
-            events = [result];
-        } else {
-            events = [];
-        }
+        const events = this.model.step(deltaSeconds);
 
         // Update backward-compatible properties
         this.lastUpdateTime = this.model.lastUpdateTime;
@@ -88,15 +65,6 @@ export class GameStateController {
         this.inputDirection = this.model.inputDirection;
 
         return events;
-    }
-
-    /**
-     * Emit events via EventBus
-     * @param {Array<Object>} events - Events to emit
-     * @deprecated Events are now emitted automatically in step()
-     */
-    emitEvents(events) {
-        this.model.emitEvents(events);
     }
 
     /**

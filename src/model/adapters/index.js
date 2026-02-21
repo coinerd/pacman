@@ -8,4 +8,4 @@ export {
     createCollisionAdapter
 } from './CollisionAdapter.js';
 export { EnemyAIAdapter } from './EnemyAIAdapter.js';
-export { createMovementAdapter, MovementAdapter } from './MovementAdapter.js';
+export { TileCenterMovementAdapter } from './TileCenterMovementAdapter.js';

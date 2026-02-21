@@ -11,6 +11,8 @@ import { TileCenterMovementStrategy } from '../../movement/strategies/TileCenter
 export class TileCenterMovementAdapter {
     constructor(maze) {
         this.maze = maze;
+        // mazeQuery alias for compatibility with tests and other code
+        this.mazeQuery = maze;
         this.strategy = new TileCenterMovementStrategy(maze);
         this.stats = {
             movesProcessed: 0,

@@ -40,6 +40,12 @@ export class TileCenterMovementStrategy {
             return false; // Already moving
         }
 
+        const tileSize = gameConfig.tileSize;
+
+        // CRITICAL: Ensure entity is at exact tile center before starting movement
+        entity.x = entity.gridX * tileSize + tileSize / 2;
+        entity.y = entity.gridY * tileSize + tileSize / 2;
+
         const targetGridX = entity.gridX + direction.x;
         const targetGridY = entity.gridY + direction.y;
 
@@ -90,6 +96,25 @@ export class TileCenterMovementStrategy {
                 entity.isMoving = false;
 
                 return true; // Movement completed
+            } else {
+                // Update x/y during movement for accurate collision detection
+                const prevCenterX = entity.prevGridX * tileSize + tileSize / 2;
+                const prevCenterY = entity.prevGridY * tileSize + tileSize / 2;
+                const nextCenterX = entity.targetGridX * tileSize + tileSize / 2;
+                const nextCenterY = entity.targetGridY * tileSize + tileSize / 2;
+
+                entity.x = prevCenterX + (nextCenterX - prevCenterX) * entity.moveProgress;
+                entity.y = prevCenterY + (nextCenterY - prevCenterY) * entity.moveProgress;
+                
+                // Safety: Ensure orthogonal axis stays exactly centered during movement
+                // This handles any potential floating point drift
+                if (entity.direction.x !== 0) {
+                    // Horizontal movement - Y should not change
+                    entity.y = prevCenterY;
+                } else if (entity.direction.y !== 0) {
+                    // Vertical movement - X should not change
+                    entity.x = prevCenterX;
+                }
             }
         }
         return false; // Still moving

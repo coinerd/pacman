@@ -1,6 +1,6 @@
 /**
  * Movement System
- * Decoupled grid-based movement system with no external dependencies
+ * Tile-center based movement system with no external dependencies
  *
  * @module movement
  */
@@ -23,8 +23,8 @@ export {
 
 // Strategies
 export {
-    GridMovementStrategy
-} from './strategies/GridMovementStrategy.js';
+    TileCenterMovementStrategy
+} from './strategies/TileCenterMovementStrategy.js';
 
 // Adapters
 export {
