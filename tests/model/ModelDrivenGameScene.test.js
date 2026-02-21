@@ -209,6 +209,11 @@ describe('ModelDriven Architecture - Pure Observer Pattern', () => {
                         setAlpha: jest.fn().mockReturnThis(),
                         setRotation: jest.fn().mockReturnThis(),
                         setOrigin: jest.fn().mockReturnThis(),
+                        setPosition: jest.fn(function(newX, newY) {
+                            this.x = newX !== undefined ? newX : this.x;
+                            this.y = newY !== undefined ? newY : this.y;
+                            return this;
+                        }),
                         setFillStyle: jest.fn().mockReturnThis(),
                         destroy: jest.fn()
                     })),
@@ -280,6 +285,11 @@ describe('ModelDriven Architecture - Pure Observer Pattern', () => {
                         setAlpha: jest.fn().mockReturnThis(),
                         setRotation: jest.fn().mockReturnThis(),
                         setOrigin: jest.fn().mockReturnThis(),
+                        setPosition: jest.fn(function(newX, newY) {
+                            this.x = newX !== undefined ? newX : this.x;
+                            this.y = newY !== undefined ? newY : this.y;
+                            return this;
+                        }),
                         setFillStyle: jest.fn().mockReturnThis(),
                         destroy: jest.fn()
                     })),
@@ -331,6 +341,11 @@ describe('ModelDriven Architecture - Pure Observer Pattern', () => {
                         setAlpha: jest.fn().mockReturnThis(),
                         setRotation: jest.fn().mockReturnThis(),
                         setOrigin: jest.fn().mockReturnThis(),
+                        setPosition: jest.fn(function(newX, newY) {
+                            this.x = newX !== undefined ? newX : this.x;
+                            this.y = newY !== undefined ? newY : this.y;
+                            return this;
+                        }),
                         setFillStyle: jest.fn().mockReturnThis(),
                         destroy: jest.fn()
                     })),
@@ -557,6 +572,11 @@ describe('ModelDriven Architecture - Pure Observer Pattern', () => {
                         setAlpha: jest.fn().mockReturnThis(),
                         setRotation: jest.fn().mockReturnThis(),
                         setOrigin: jest.fn().mockReturnThis(),
+                        setPosition: jest.fn(function(newX, newY) {
+                            this.x = newX !== undefined ? newX : this.x;
+                            this.y = newY !== undefined ? newY : this.y;
+                            return this;
+                        }),
                         setFillStyle: jest.fn().mockReturnThis(),
                         destroy: jest.fn()
                     })),
@@ -600,6 +620,11 @@ describe('ModelDriven Architecture - Pure Observer Pattern', () => {
                         setAlpha: jest.fn().mockReturnThis(),
                         setRotation: jest.fn().mockReturnThis(),
                         setOrigin: jest.fn().mockReturnThis(),
+                        setPosition: jest.fn(function(newX, newY) {
+                            this.x = newX !== undefined ? newX : this.x;
+                            this.y = newY !== undefined ? newY : this.y;
+                            return this;
+                        }),
                         setFillStyle: jest.fn().mockReturnThis(),
                         destroy: jest.fn()
                     })),

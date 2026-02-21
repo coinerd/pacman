@@ -22,17 +22,15 @@ export class VisualEnemy {
         // Create geometric shape based on enemy type
         const shape = this.createShape(enemyState.ghostType, radius, color);
 
-        // Use scene.add.polygon() instead of new Phaser.GameObjects.Polygon()
-        this.sprite = scene.add.polygon(
-            enemyState.x,
-            enemyState.y,
-            shape.points,
-            shape.color
-        );
+        // Create polygon at position (0, 0) with relative points
+        this.sprite = scene.add.polygon(0, 0, shape.points, shape.color);
 
-        // Set origin to center so rotation works correctly
+        // Set origin to center so points are relative to center
         this.sprite.setOrigin(0.5, 0.5);
         this.sprite.setDepth(100);
+
+        // Position sprite at actual enemy position
+        this.sprite.setPosition(enemyState.x, enemyState.y);
 
         // Create eyes using scene.add.circle()
         this.eyeLeft = this.createEye(

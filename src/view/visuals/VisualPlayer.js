@@ -19,31 +19,31 @@ export class VisualPlayer {
         const radius = gameConfig.tileSize * 0.4;
         const cyanColor = 0x00ced1;
 
-        // Create hexagon points (flat array of x, y values)
+        // Create hexagon points as array of objects (relative to center)
         const hexagonPoints = [];
         for (let i = 0; i < 6; i++) {
             const angle = (i * 60 - 90) * (Math.PI / 180);
-            hexagonPoints.push(radius * Math.cos(angle));
-            hexagonPoints.push(radius * Math.sin(angle));
+            hexagonPoints.push({
+                x: radius * Math.cos(angle),
+                y: radius * Math.sin(angle)
+            });
         }
 
-        // Use scene.add.polygon() with flat array
-        this.sprite = scene.add.polygon(
-            playerState.x,
-            playerState.y,
-            hexagonPoints,
-            cyanColor
-        );
+        // Create polygon at position (0, 0) with relative points
+        this.sprite = scene.add.polygon(0, 0, hexagonPoints, cyanColor);
 
-        // Set origin to center so rotation works correctly
+        // Set origin to center so points are relative to center
         this.sprite.setOrigin(0.5, 0.5);
         this.sprite.setDepth(100);
+
+        // Position sprite at actual player position
+        this.sprite.setPosition(playerState.x, playerState.y);
         this.sprite.setRotation((playerState.direction.angle * Math.PI) / 180);
 
         // Use scene.add.circle() instead of new Phaser.GameObjects.Arc()
         this.eye = scene.add.circle(
-            playerState.x,
-            playerState.y - radius * 0.3,
+            this.sprite.x,
+            this.sprite.y - radius * 0.3,
             radius * 0.15,
             0x000000
         );
