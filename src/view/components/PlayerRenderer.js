@@ -1,13 +1,12 @@
 /**
- * VisualPlayer
- * Phaser visual representation of Player model entity.
- * Syncs Phaser sprite to PlayerState.
+ * PlayerRenderer
+ * Renders Player entity using Phaser graphics.
+ * Pure view component - no game logic.
  */
 
-import Phaser from 'phaser';
 import { gameConfig } from '../../config/gameConfig.js';
 
-export class VisualPlayer {
+export class PlayerRenderer {
     /**
 	 * @param {Phaser.Scene} scene - Phaser scene
 	 * @param {PlayerState} playerState - Player model state

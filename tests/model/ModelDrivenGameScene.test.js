@@ -6,9 +6,9 @@
 import { directions } from '../../src/config/gameConfig.js';
 import { GAME_EVENTS, gameEvents } from '../../src/core/EventBus.js';
 import GameModel from '../../src/core/GameModel.js';
-import { VisualEnemy } from '../../src/view/visuals/VisualEnemy.js';
-import { VisualFruit } from '../../src/view/visuals/VisualFruit.js';
-import { VisualPlayer } from '../../src/view/visuals/VisualPlayer.js';
+import { GhostRenderer } from '../../src/view/components/GhostRenderer.js';
+import { FruitRenderer } from '../../src/view/components/FruitRenderer.js';
+import { PlayerRenderer } from '../../src/view/components/PlayerRenderer.js';
 
 // Mock Phaser for visual tests
 jest.mock('phaser', () => ({

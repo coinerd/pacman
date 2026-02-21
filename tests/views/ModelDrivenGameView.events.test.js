@@ -10,9 +10,9 @@ jest.mock('../../src/managers/SoundManager.js');
 jest.mock('../../src/scenes/systems/EffectManager.js');
 jest.mock('../../src/pools/PelletPool.js');
 jest.mock('../../src/pools/PowerPelletPool.js');
-jest.mock('../../src/view/visuals/VisualPlayer.js');
-jest.mock('../../src/view/visuals/VisualEnemy.js');
-jest.mock('../../src/view/visuals/VisualFruit.js');
+jest.mock('../../src/view/components/PlayerRenderer.js');
+jest.mock('../../src/view/components/GhostRenderer.js');
+jest.mock('../../src/view/components/FruitRenderer.js');
 
 describe('ModelDrivenGameView - Controller Events (Phase 7)', () => {
     let view;

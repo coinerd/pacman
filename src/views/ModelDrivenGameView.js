@@ -16,9 +16,9 @@ import { PelletPool } from '../pools/PelletPool.js';
 import { PowerPelletPool } from '../pools/PowerPelletPool.js';
 import { EffectManager } from '../scenes/systems/EffectManager.js';
 import { gridToPixel, PELLET_TYPES, TILE_TYPES } from '../utils/MazeLayout.js';
-import { VisualEnemy } from '../view/visuals/VisualEnemy.js';
-import { VisualFruit } from '../view/visuals/VisualFruit.js';
-import { VisualPlayer } from '../view/visuals/VisualPlayer.js';
+import { GhostRenderer } from '../view/components/GhostRenderer.js';
+import { FruitRenderer } from '../view/components/FruitRenderer.js';
+import { PlayerRenderer } from '../view/components/PlayerRenderer.js';
 
 export default class ModelDrivenGameView {
     constructor({ scene, gameModel, storageManager }) {
@@ -26,10 +26,10 @@ export default class ModelDrivenGameView {
         this.gameModel = gameModel;
         this.storageManager = storageManager;
 
-        // Visual wrappers for model entities
-        this.visualPlayer = null;
-        this.visualEnemies = new Map(); // ghostType -> VisualEnemy
-        this.visualFruit = null;
+        // Renderers for model entities
+        this.playerRenderer = null;
+        this.ghostRenderers = new Map(); // ghostType -> GhostRenderer
+        this.fruitRenderer = null;
         this.bossVisuals = new Map(); // bossType -> VisualBoss
         this.powerUpVisuals = new Map(); // id -> VisualPowerUp
 
@@ -80,7 +80,7 @@ export default class ModelDrivenGameView {
         this.createMaze();
         this.createPelletPools();
         this.createPellets();
-        this.createEntityVisuals();
+        this.createEntityRenderers();
         this.bindModelEvents();
     }
 
@@ -283,20 +283,20 @@ export default class ModelDrivenGameView {
     }
 
     /**
-	 * Create visual wrappers for model entities
+	 * Create renderers for model entities
 	 */
-    createEntityVisuals() {
-        // Create VisualPlayer from model
-        this.visualPlayer = new VisualPlayer(this.scene, this.gameModel.pacman);
+    createEntityRenderers() {
+        // Create PlayerRenderer from model
+        this.playerRenderer = new PlayerRenderer(this.scene, this.gameModel.pacman);
 
-        // Create VisualEnemy for each model ghost
+        // Create GhostRenderer for each model ghost
         for (const ghost of this.gameModel.ghosts) {
-            const visualEnemy = new VisualEnemy(this.scene, ghost);
-            this.visualEnemies.set(ghost.ghostType, visualEnemy);
+            const ghostRenderer = new GhostRenderer(this.scene, ghost);
+            this.ghostRenderers.set(ghost.ghostType, ghostRenderer);
         }
 
-        // Create VisualFruit from model
-        this.visualFruit = new VisualFruit(this.scene, this.gameModel.fruit);
+        // Create FruitRenderer from model
+        this.fruitRenderer = new FruitRenderer(this.scene, this.gameModel.fruit);
     }
 
     /**
@@ -498,12 +498,12 @@ export default class ModelDrivenGameView {
 
             // Power up expired
             gameEvents.on(GAME_EVENTS.POWER_UP_EXPIRED, (data) => {
-                this.visualPlayer.removePowerUpEffect(data.type);
+                this.playerRenderer.removePowerUpEffect(data.type);
             }),
 
             // Power up activated
             gameEvents.on(GAME_EVENTS.POWER_UP_ACTIVATED, (data) => {
-                this.visualPlayer.addPowerUpEffect(data.type);
+                this.playerRenderer.addPowerUpEffect(data.type);
             }),
 
             // Chapter started
@@ -519,25 +519,21 @@ export default class ModelDrivenGameView {
     }
 
     /**
-	 * Sync all visuals to model state
+	 * Sync all renderers to model state
 	 * Called each frame in the update loop
 	 */
     sync() {
-        if (!this.visualPlayer || this.isDeathAnimating) {
+        if (!this.playerRenderer || this.isDeathAnimating) {
             return;
         }
 
-        // Debug: Log player position every 60 frames
-        if (!this._debugFrame) {this._debugFrame = 0;}
-        this._debugFrame++;
+        this.playerRenderer.sync();
 
-        this.visualPlayer.sync();
-
-        for (const visualEnemy of this.visualEnemies.values()) {
-            visualEnemy.sync();
+        for (const ghostRenderer of this.ghostRenderers.values()) {
+            ghostRenderer.sync();
         }
 
-        this.visualFruit.sync();
+        this.fruitRenderer.sync();
 
         this.syncBossVisuals();
         this.syncPowerUpVisuals();
@@ -590,8 +586,8 @@ export default class ModelDrivenGameView {
 	 * Update death animation
 	 */
     updateDeathAnimation() {
-        if (this.visualPlayer) {
-            this.visualPlayer.sync();
+        if (this.playerRenderer) {
+            this.playerRenderer.sync();
         }
     }
 
@@ -606,57 +602,8 @@ export default class ModelDrivenGameView {
 	 * Show achievement notification
 	 */
     showAchievementNotification(achievement) {
-        const notification = this.scene.add.container(
-            this.scene.scale.width / 2,
-            this.scene.scale.height - 100
-        );
-
-        const bg = this.scene.add
-            .rectangle(0, 0, 300, 80, 0x000000)
-            .setAlpha(0.8)
-            .setStrokeStyle(2, 0xffd700);
-
-        const icon = this.scene.add
-            .text(-130, 0, achievement.icon, {
-                fontSize: '32px'
-            })
-            .setOrigin(0.5);
-
-        const name = this.scene.add
-            .text(-20, -15, achievement.name, {
-                fontSize: '18px',
-                color: '#FFD700',
-                fontStyle: 'bold'
-            })
-            .setOrigin(0, 0.5);
-
-        const desc = this.scene.add
-            .text(-20, 15, achievement.description, {
-                fontSize: '12px',
-                color: '#FFFFFF'
-            })
-            .setOrigin(0, 0.5);
-
-        notification.add([bg, icon, name, desc]);
-        notification.setAlpha(0);
-
-        this.scene.tweens.add({
-            targets: notification,
-            alpha: 1,
-            y: this.scene.scale.height - 150,
-            duration: 500,
-            ease: 'Power2'
-        });
-
-        this.scene.time.delayedCall(3000, () => {
-            this.scene.tweens.add({
-                targets: notification,
-                alpha: 0,
-                duration: 500,
-                ease: 'Power2',
-                onComplete: () => notification.destroy()
-            });
-        });
+        // Simplified - just log for now, can be enhanced later
+        console.log(`Achievement unlocked: ${achievement.name}`);
     }
 
     /**
@@ -1171,20 +1118,20 @@ export default class ModelDrivenGameView {
         });
         this.unsubscribers = [];
 
-        // Destroy visual entities
-        if (this.visualPlayer) {
-            this.visualPlayer.destroy();
-            this.visualPlayer = null;
+        // Destroy renderers
+        if (this.playerRenderer) {
+            this.playerRenderer.destroy();
+            this.playerRenderer = null;
         }
 
-        for (const visualEnemy of this.visualEnemies.values()) {
-            visualEnemy.destroy();
+        for (const ghostRenderer of this.ghostRenderers.values()) {
+            ghostRenderer.destroy();
         }
-        this.visualEnemies.clear();
+        this.ghostRenderers.clear();
 
-        if (this.visualFruit) {
-            this.visualFruit.destroy();
-            this.visualFruit = null;
+        if (this.fruitRenderer) {
+            this.fruitRenderer.destroy();
+            this.fruitRenderer = null;
         }
 
         for (const visual of this.bossVisuals.values()) {

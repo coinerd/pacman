@@ -1,13 +1,12 @@
 /**
- * VisualFruit
- * Phaser visual representation of Fruit model entity.
- * Syncs Phaser graphics to FruitState.
+ * FruitRenderer
+ * Renders Fruit entity using Phaser graphics.
+ * Pure view component - no game logic.
  */
 
-import Phaser from 'phaser';
 import { gameConfig, fruitConfig } from '../../config/gameConfig.js';
 
-export class VisualFruit {
+export class FruitRenderer {
     /**
      * @param {Phaser.Scene} scene - Phaser scene
      * @param {FruitState} fruitState - Fruit model state

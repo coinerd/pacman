@@ -1,13 +1,12 @@
 /**
- * VisualEnemy
- * Phaser visual representation of Enemy model entity.
- * Syncs Phaser sprite to EnemyState.
+ * GhostRenderer
+ * Renders Ghost entity using Phaser graphics.
+ * Pure view component - no game logic.
  */
 
-import Phaser from 'phaser';
 import { enemyColors, gameConfig } from '../../config/gameConfig.js';
 
-export class VisualEnemy {
+export class GhostRenderer {
     /**
 	 * @param {Phaser.Scene} scene - Phaser scene
 	 * @param {EnemyState} enemyState - Enemy model state
