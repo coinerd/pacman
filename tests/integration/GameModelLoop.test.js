@@ -15,7 +15,9 @@ describe('GameModel + FixedTimeStepLoop Integration', () => {
                 events.push(model.step(fixedDt));
             });
 
-            model.beginDeath();
+            // Simulate death by triggering death state
+            model.isDying = true;
+            model.deathTimer = 0;
             loop.update(fixedDt * 3);
 
             return {

@@ -183,10 +183,7 @@ describe('ModelDriven Architecture - Pure Observer Pattern', () => {
         test('Model should handle all collision detection', () => {
             const model = new GameModel({});
 
-            // Should have collision system
-            expect(model.collisionSystem).toBeDefined();
-
-            // Step should trigger collision detection
+            // Step should trigger collision detection and return events
             const events = model.step(1 / 60);
 
             // Events array should be present (may be empty if no collisions)
@@ -195,7 +192,7 @@ describe('ModelDriven Architecture - Pure Observer Pattern', () => {
     });
 
     describe('Visual Wrappers - Sync to Model', () => {
-        test('VisualPlayer should sync to PacmanState', () => {
+        test('PlayerRenderer should sync to PacmanState', () => {
             const model = new GameModel({});
             const mockScene = {
                 add: {
@@ -234,7 +231,7 @@ describe('ModelDriven Architecture - Pure Observer Pattern', () => {
                 }
             };
 
-            const visualPacman = new VisualPlayer(mockScene, model.pacman);
+            const visualPacman = new PlayerRenderer(mockScene, model.pacman);
 
             // Initial position should match
             expect(visualPacman.sprite.x).toBe(model.pacman.x);
@@ -252,7 +249,7 @@ describe('ModelDriven Architecture - Pure Observer Pattern', () => {
             expect(visualPacman.sprite.y).toBe(200);
         });
 
-        test('VisualEnemy should sync to GhostState', () => {
+        test('GhostRenderer should sync to GhostState', () => {
             const model = new GameModel({});
             const mockGraphics = {
                 clear: jest.fn().mockReturnThis(),
@@ -312,7 +309,7 @@ describe('ModelDriven Architecture - Pure Observer Pattern', () => {
             };
 
             const ghost = model.ghosts[0];
-            const visualGhost = new VisualEnemy(mockScene, ghost);
+            const visualGhost = new GhostRenderer(mockScene, ghost);
 
             // Initial position should match
             expect(visualGhost.sprite.x).toBe(ghost.x);
@@ -327,7 +324,7 @@ describe('ModelDriven Architecture - Pure Observer Pattern', () => {
             expect(visualGhost.sprite.x).toBe(150);
         });
 
-        test('VisualFruit should sync to FruitState', () => {
+        test('FruitRenderer should sync to FruitState', () => {
             const model = new GameModel({});
             const mockScene = {
                 add: {
@@ -382,7 +379,7 @@ describe('ModelDriven Architecture - Pure Observer Pattern', () => {
                 }
             };
 
-            const visualFruit = new VisualFruit(mockScene, model.fruit);
+            const visualFruit = new FruitRenderer(mockScene, model.fruit);
 
             // Fruit should sync
             model.fruit.activate(1);
@@ -590,7 +587,7 @@ describe('ModelDriven Architecture - Pure Observer Pattern', () => {
                 }
             };
 
-            const visualPacman = new VisualPlayer(mockScene, model.pacman);
+            const visualPacman = new PlayerRenderer(mockScene, model.pacman);
 
             // Record initial state
             const initialX = model.pacman.x;

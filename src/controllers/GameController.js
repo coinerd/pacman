@@ -1,133 +1,189 @@
 /**
  * GameController
- * Translates raw input into model intents and scene-level actions.
- * The GameModel remains unaware of Phaser objects and rendering concerns.
+ * Simplified controller that translates input into model actions.
+ * No Phaser dependencies - uses EventBus for View-layer communication.
  */
 
 import { gameEvents, GAME_EVENTS } from '../core/EventBus.js';
-
-/**
- * @typedef {Object} GameInputState
- * @property {Object|null} direction
- * @property {boolean} pause
- * @property {boolean} replayToggle
- * @property {boolean} [returnToMenu]
- * @property {boolean} [loadReplay]
- */
+import { INPUT_ACTIONS, INPUT_TYPES } from '../input/InputAdapter.js';
 
 export class GameController {
     /**
      * @param {Object} options
-     * @param {Object} options.scene
-     * @param {Object} options.gameModel
-     * @param {Object} options.replaySystem
-     * @param {Object} options.inputManager
+     * @param {Object} options.gameModel - The game model
+     * @param {Object} options.replaySystem - Optional replay system
+     * @param {InputManager} options.inputManager - Optional input manager
      */
-    constructor({ scene, gameModel, replaySystem, inputManager }) {
-        this.scene = scene;
+    constructor({ gameModel, replaySystem = null, inputManager = null } = {}) {
         this.gameModel = gameModel;
         this.replaySystem = replaySystem;
-        this.inputManager = inputManager;
+        this.inputManager = null;
         this.isActive = false;
         this.unsubscribeInput = null;
+
+        if (inputManager) {
+            this.setInputManager(inputManager);
+        }
     }
 
     /**
-     * Activate the controller and start listening for input
+     * Set the input manager
+     * @param {InputManager} inputManager - Input manager instance
      */
-    activate() {
-        if (this.isActive) {
-            return;
+    setInputManager(inputManager) {
+        if (this.unsubscribeInput) {
+            this.unsubscribeInput();
+            this.unsubscribeInput = null;
         }
-        this.isActive = true;
 
-        // Subscribe to input manager events
-        if (this.inputManager) {
-            this.unsubscribeInput = this.inputManager.onInput((input) => {
+        this.inputManager = inputManager;
+
+        if (inputManager) {
+            this.unsubscribeInput = inputManager.onInput((input) => {
                 this.handleInput(input);
             });
         }
     }
 
     /**
-     * Deactivate the controller and stop listening for input
+     * Handle input from any source
+     * @param {Object} input - Normalized input { type, value }
      */
-    deactivate() {
-        this.isActive = false;
-        if (this.unsubscribeInput) {
-            this.unsubscribeInput();
-            this.unsubscribeInput = null;
+    handleInput(input) {
+        if (!this.isActive || !input) {
+            return;
+        }
+
+        const state = this.gameModel.state || this.gameModel;
+
+        // Handle direction input
+        if (input.type === INPUT_TYPES.DIRECTION && input.value) {
+            if (!state.isGameOver && !state.isDying) {
+                this.gameModel.setInputDirection(input.value);
+                gameEvents.emit(GAME_EVENTS.DIRECTION_CHANGED, {
+                    direction: input.value
+                });
+            }
+            return;
+        }
+
+        // Handle action input
+        if (input.type === INPUT_TYPES.ACTION) {
+            this.handleAction(input.value, state);
         }
     }
 
     /**
-     * @param {GameInputState} inputState
+     * Handle action input
+     * @param {string} action - Action name
+     * @param {Object} state - Game state
      */
-    handleInput(inputState) {
-        if (!inputState || !this.isActive) {
+    handleAction(action, state) {
+        switch (action) {
+        case INPUT_ACTIONS.PAUSE:
+            if (!state.isGameOver && !state.isDying && !state.isPaused) {
+                this.gameModel.togglePaused();
+                gameEvents.emit(GAME_EVENTS.PAUSE_REQUESTED);
+            } else if (state.isPaused) {
+                this.gameModel.togglePaused();
+                gameEvents.emit(GAME_EVENTS.RESUME_REQUESTED);
+            }
+            break;
+
+        case INPUT_ACTIONS.RESUME:
+            if (state.isPaused) {
+                this.gameModel.togglePaused();
+                gameEvents.emit(GAME_EVENTS.RESUME_REQUESTED);
+            }
+            break;
+
+        case INPUT_ACTIONS.RETURN_TO_MENU:
+            if (!state.isGameOver) {
+                gameEvents.emit(GAME_EVENTS.RETURN_TO_MENU_REQUESTED);
+            }
+            break;
+
+        case INPUT_ACTIONS.RESTART:
+            gameEvents.emit(GAME_EVENTS.RESTART_LEVEL_REQUESTED);
+            break;
+
+        case INPUT_ACTIONS.TOGGLE_REPLAY:
+            this.handleReplayToggle();
+            break;
+
+        case INPUT_ACTIONS.LOAD_REPLAY:
+            this.handleLoadReplay();
+            break;
+        }
+    }
+
+    /**
+     * Handle replay toggle
+     */
+    handleReplayToggle() {
+        if (!this.replaySystem) {
             return;
         }
 
-        const { direction, pause, replayToggle, returnToMenu, loadReplay } = inputState;
-        const gameState = this.gameModel.state;
-
-        if (direction && !gameState.isDying) {
-            this.gameModel.setInputDirection(direction);
-            gameEvents.emit(GAME_EVENTS.DIRECTION_CHANGED, { direction });
-        }
-
-        if (pause) {
-            this.handlePause();
-        }
-
-        if (returnToMenu) {
-            this.handleReturnToMenu();
-        }
-
-        if (replayToggle) {
-            this.handleReplayToggle();
-        }
-
-        if (loadReplay) {
-            this.handleLoadReplay();
+        if (this.replaySystem.isRecording) {
+            this.replaySystem.stopRecording();
+        } else if (!this.replaySystem.isReplaying) {
+            this.replaySystem.startRecording();
         }
     }
 
-    handlePause() {
-        const gameState = this.gameModel.state;
-        if (!gameState.isGameOver && !gameState.isDying) {
-            const isPaused = this.gameModel.togglePaused();
-            if (isPaused) {
-                this.scene.scene.pause();
-                this.scene.scene.launch('PauseScene');
-            }
-        }
-    }
-
-    handleReturnToMenu() {
-        if (!this.gameModel.isGameOver) {
-            this.scene.cleanup();
-            this.scene.scene.start('MenuScene');
-        }
-    }
-
-    handleReplayToggle() {
-        if (this.replaySystem) {
-            if (this.replaySystem.isRecording) {
-                this.replaySystem.stopRecording();
-            } else if (!this.replaySystem.isReplaying) {
-                this.replaySystem.startRecording();
-            }
-        }
-    }
-
+    /**
+     * Handle load replay
+     */
     handleLoadReplay() {
-        if (this.replaySystem && !this.replaySystem.isReplaying) {
-            const recordings = this.replaySystem.getRecordings();
-            if (recordings.length > 0) {
-                const lastRecording = recordings[recordings.length - 1];
-                this.replaySystem.loadRecording(lastRecording);
-            }
+        if (!this.replaySystem || this.replaySystem.isReplaying) {
+            return;
         }
+
+        const recordings = this.replaySystem.getRecordings();
+        if (recordings.length > 0) {
+            const lastRecording = recordings[recordings.length - 1];
+            this.replaySystem.loadRecording(lastRecording);
+        }
+    }
+
+    /**
+     * Activate the controller
+     */
+    activate() {
+        this.isActive = true;
+    }
+
+    /**
+     * Deactivate the controller
+     */
+    deactivate() {
+        this.isActive = false;
+    }
+
+    /**
+     * Check if controller is active
+     * @returns {boolean}
+     */
+    getIsActive() {
+        return this.isActive;
+    }
+
+    /**
+     * Clean up resources
+     */
+    destroy() {
+        this.deactivate();
+
+        if (this.unsubscribeInput) {
+            this.unsubscribeInput();
+            this.unsubscribeInput = null;
+        }
+
+        this.inputManager = null;
+        this.gameModel = null;
+        this.replaySystem = null;
     }
 }
+
+export default GameController;

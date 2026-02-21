@@ -14,9 +14,9 @@ import {
     fruitConfig,
     playerStartPosition
 } from '../config/gameConfig.js';
-import { CollisionAdapter } from '../model/adapters/CollisionAdapter.js';
+import { scoreValues } from '../config/gameConfig.js';
 import { EnemyAIAdapter } from '../model/adapters/EnemyAIAdapter.js';
-import { TileCenterMovementAdapter } from '../model/adapters/TileCenterMovementAdapter.js';
+import { gameConfig } from '../config/gameConfig.js';
 import { EnemyState } from '../model/entities/EnemyState.js';
 import { FruitState } from '../model/entities/FruitState.js';
 import { PlayerState } from '../model/entities/PlayerState.js';
@@ -99,10 +99,15 @@ export default class GameModel {
         // Frame/tick counter for replay determinism
         this.tickCount = 0;
 
-        // Initialize movement/collision systems (TileCenterMovement only)
-        this.movementAdapter = new TileCenterMovementAdapter(this.maze);
-        this.collisionAdapter = new CollisionAdapter(this);
+        // Initialize AI system
         this.ghostAIAdapter = new EnemyAIAdapter(this);
+
+        // Collision statistics
+        this.collisionStats = {
+            checksPerformed: 0,
+            collisionsDetected: 0
+        };
+        this.lastPelletGrid = { x: null, y: null };
 
         this.bossBattleSystem = new BossBattleSystem(this);
         this.additionalPowerUpSystem = new AdditionalPowerUpSystem(this);
@@ -111,6 +116,12 @@ export default class GameModel {
         // Profiling
         this.lastUpdateTime = 0;
         this.updateCount = 0;
+
+        // Movement statistics
+        this.movementStats = {
+            movesProcessed: 0,
+            movesAttempted: 0
+        };
     }
 
     /**
@@ -234,12 +245,8 @@ export default class GameModel {
             this.desiredDirection = inputDirection;
         }
 
-        // Update Pacman movement
-        const pacmanMoveEvents = this.movementAdapter.updatePacman(
-            this.pacman,
-            deltaSeconds,
-            this.desiredDirection
-        );
+        // Update Pacman movement (integrated from TileCenterMovementStrategy)
+        const pacmanMoveEvents = this.updatePacmanMovement(deltaSeconds);
         events.push(...pacmanMoveEvents);
 
         // Update Pacman state (animations, etc.)
@@ -256,10 +263,7 @@ export default class GameModel {
 
         // Update ghosts movement and state
         for (const ghost of this.ghosts) {
-            const ghostMoveEvents = this.movementAdapter.updateGhost(
-                ghost,
-                deltaSeconds
-            );
+            const ghostMoveEvents = this.updateGhostMovement(ghost, deltaSeconds);
             events.push(...ghostMoveEvents);
 
             const ghostStateEvents = ghost.update(
@@ -286,8 +290,8 @@ export default class GameModel {
             this.inputDirection = null;
         }
 
-        // Check collisions
-        const collisionEvents = this.collisionAdapter.checkAllCollisions();
+        // Check collisions (integrated from CollisionAdapter)
+        const collisionEvents = this.checkAllCollisions();
         events.push(...collisionEvents);
 
         // Apply collision effects
@@ -431,8 +435,8 @@ export default class GameModel {
         this.currentComboGhosts = 0;
         this.additionalPowerUpSystem.reset();
 
-        this.movementAdapter.reset();
-        this.collisionAdapter.reset();
+        this.resetMovementStats();
+        this.resetCollisionStats();
         this.ghostAIAdapter.reset();
     }
 
@@ -470,9 +474,8 @@ export default class GameModel {
         this.currentComboGhosts = 0;
         this.additionalPowerUpSystem.reset();
 
-        this.movementAdapter.updateMaze(this.maze);
-        this.movementAdapter.reset();
-        this.collisionAdapter.reset();
+        this.resetMovementStats();
+        this.resetCollisionStats();
         this.ghostAIAdapter.reset();
     }
 
@@ -808,8 +811,426 @@ export default class GameModel {
             updateTime: this.lastUpdateTime,
             updateCount: this.updateCount,
             tickCount: this.tickCount,
-            movementStats: this.movementAdapter.getStats(),
-            collisionStats: this.collisionAdapter.getStats()
+            movementStats: this.getMovementStats(),
+            collisionStats: this.getCollisionStats()
+        };
+    }
+
+    // ============================================================
+    // MOVEMENT METHODS (Integrated from TileCenterMovementStrategy)
+    // ============================================================
+
+    /**
+     * Update Pacman movement with direction buffer integration
+     * @param {number} deltaSeconds - Time delta
+     * @returns {Array<Object>} - Movement events
+     */
+    updatePacmanMovement(deltaSeconds) {
+        const pacman = this.pacman;
+        const inputDirection = this.desiredDirection;
+
+        // Queue input direction in buffer if provided
+        if (inputDirection && inputDirection !== directions.NONE) {
+            pacman.nextDirection = inputDirection;
+        }
+
+        this.movementStats.movesAttempted++;
+
+        // If entity is not moving, try to start movement in buffered direction
+        if (pacman.moveProgress === 0) {
+            const targetDirection = pacman.nextDirection || pacman.direction;
+
+            if (targetDirection && targetDirection !== directions.NONE) {
+                const targetGridX = pacman.gridX + targetDirection.x;
+                const targetGridY = pacman.gridY + targetDirection.y;
+
+                if (this.startMovement(pacman, targetDirection)) {
+                    return [{
+                        type: 'movement_started',
+                        entityId: pacman.id,
+                        direction: targetDirection,
+                        fromGrid: { x: pacman.gridX, y: pacman.gridY },
+                        toGrid: { x: targetGridX, y: targetGridY }
+                    }];
+                }
+            }
+        }
+
+        // Entity is moving, update progress
+        const completed = this.updateMovementProgress(pacman, deltaSeconds);
+
+        if (completed) {
+            return [{
+                type: 'movement_completed',
+                entityId: pacman.id,
+                gridX: pacman.gridX,
+                gridY: pacman.gridY
+            }];
+        }
+
+        return [];
+    }
+
+    /**
+     * Update ghost movement
+     * @param {EnemyState} ghost - Ghost entity
+     * @param {number} deltaSeconds - Time delta
+     * @returns {Array<Object>} - Movement events
+     */
+    updateGhostMovement(ghost, deltaSeconds) {
+        const direction = ghost.nextDirection && ghost.nextDirection !== directions.NONE
+            ? ghost.nextDirection
+            : ghost.direction;
+
+        this.movementStats.movesAttempted++;
+
+        // If entity is not moving, try to start movement in direction
+        if (ghost.moveProgress === 0 && direction && direction !== directions.NONE) {
+            if (this.startMovement(ghost, direction)) {
+                return [{
+                    type: 'movement_started',
+                    entityId: ghost.id,
+                    direction: direction,
+                    fromGrid: { x: ghost.gridX, y: ghost.gridY },
+                    toGrid: { x: ghost.targetGridX, y: ghost.targetGridY }
+                }];
+            }
+        }
+
+        // Entity is moving, update progress
+        const completed = this.updateMovementProgress(ghost, deltaSeconds);
+
+        if (completed) {
+            return [{
+                type: 'movement_completed',
+                entityId: ghost.id,
+                gridX: ghost.gridX,
+                gridY: ghost.gridY
+            }];
+        }
+
+        return [];
+    }
+
+    /**
+     * Start movement to target tile
+     * @param {Object} entity - Entity to move
+     * @param {Object} direction - Movement direction
+     * @returns {boolean} - True if movement started
+     */
+    startMovement(entity, direction) {
+        if (!entity || entity.moveProgress > 0) {
+            return false; // Already moving
+        }
+
+        const tileSize = gameConfig.tileSize;
+        const targetGridX = entity.gridX + direction.x;
+        const targetGridY = entity.gridY + direction.y;
+
+        // Check if target tile is walkable
+        if (!this.isWalkable(targetGridX, targetGridY)) {
+            return false; // Can't move there
+        }
+
+        // CRITICAL: Ensure entity is at exact tile center before starting movement
+        entity.x = entity.gridX * tileSize + tileSize / 2;
+        entity.y = entity.gridY * tileSize + tileSize / 2;
+
+        // Start movement
+        entity.prevGridX = entity.gridX;
+        entity.prevGridY = entity.gridY;
+        entity.targetGridX = targetGridX;
+        entity.targetGridY = targetGridY;
+        entity.direction = direction;
+        entity.moveProgress = 0.001; // Start moving
+        entity.isMoving = true;
+
+        this.movementStats.movesProcessed++;
+        return true;
+    }
+
+    /**
+     * Update movement progress
+     * @param {Object} entity - Entity to update
+     * @param {number} deltaTime - Time since last frame in seconds
+     * @returns {boolean} - True if movement completed
+     */
+    updateMovementProgress(entity, deltaTime) {
+        if (entity.moveProgress > 0) {
+            const tileSize = gameConfig.tileSize;
+            const tilesPerSecond = entity.speed / tileSize;
+            entity.moveProgress += tilesPerSecond * deltaTime;
+
+            if (entity.moveProgress >= 1.0) {
+                // Arrived at target tile
+                entity.gridX = entity.targetGridX;
+                entity.gridY = entity.targetGridY;
+
+                // Update pixel position from new grid position
+                const mazeWidth = gameConfig.mazeWidth * gameConfig.tileSize;
+                if (entity.x >= mazeWidth - 1) {
+                    entity.x = 0;
+                    entity.gridX = 0;
+                } else {
+                    entity.x = entity.gridX * tileSize + tileSize / 2;
+                }
+                entity.y = entity.gridY * tileSize + tileSize / 2;
+
+                entity.moveProgress = 0;
+                entity.isMoving = false;
+
+                return true; // Movement completed
+            } else {
+                // Update x/y during movement for accurate collision detection
+                const prevCenterX = entity.prevGridX * tileSize + tileSize / 2;
+                const prevCenterY = entity.prevGridY * tileSize + tileSize / 2;
+                const nextCenterX = entity.targetGridX * tileSize + tileSize / 2;
+                const nextCenterY = entity.targetGridY * tileSize + tileSize / 2;
+
+                entity.x = prevCenterX + (nextCenterX - prevCenterX) * entity.moveProgress;
+                entity.y = prevCenterY + (nextCenterY - prevCenterY) * entity.moveProgress;
+
+                // Safety: Ensure orthogonal axis stays exactly centered during movement
+                if (entity.direction.x !== 0) {
+                    entity.y = prevCenterY;
+                } else if (entity.direction.y !== 0) {
+                    entity.x = prevCenterX;
+                }
+            }
+        }
+        return false; // Still moving
+    }
+
+    /**
+     * Check if a tile is walkable
+     * @param {number} gridX - Grid X position
+     * @param {number} gridY - Grid Y position
+     * @returns {boolean}
+     */
+    isWalkable(gridX, gridY) {
+        if (!this.maze || gridY < 0 || gridY >= this.maze.length ||
+            gridX < 0 || gridX >= this.maze[0].length) {
+            return false;
+        }
+        return this.maze[gridY][gridX] === 0;
+    }
+
+    /**
+     * Get movement statistics
+     * @returns {Object}
+     */
+    getMovementStats() {
+        return this.movementStats;
+    }
+
+    /**
+     * Reset movement statistics
+     */
+    resetMovementStats() {
+        this.movementStats = {
+            movesProcessed: 0,
+            movesAttempted: 0
+        };
+    }
+
+    // ============================================================
+    // COLLISION METHODS (Integrated from CollisionAdapter)
+    // ============================================================
+
+    /**
+     * Check all collisions for current frame
+     * @returns {Array<Object>} - Collision events
+     */
+    checkAllCollisions() {
+        const events = [];
+
+        const pelletEvents = this.checkPelletCollision();
+        events.push(...pelletEvents);
+
+        const ghostEvent = this.checkGhostCollisions();
+        if (ghostEvent) {
+            events.push(ghostEvent);
+        }
+
+        const fruitEvent = this.checkFruitCollision();
+        if (fruitEvent) {
+            events.push(fruitEvent);
+        }
+
+        return events;
+    }
+
+    /**
+     * Check pellet collision at Pacman's position
+     * @returns {Array<Object>} - Array of collision events
+     */
+    checkPelletCollision() {
+        const pacman = this.pacman;
+        const gridX = Math.floor(pacman.x / gameConfig.tileSize);
+        const gridY = Math.floor(pacman.y / gameConfig.tileSize);
+
+        // Prevent duplicate eating at same position
+        if (gridX === this.lastPelletGrid.x && gridY === this.lastPelletGrid.y) {
+            return [];
+        }
+
+        const pelletType = this.getPelletAt(gridX, gridY);
+        if (pelletType === PELLET_TYPES.NONE) {
+            return [];
+        }
+
+        // Simple distance check for eating
+        const tileCenterX = gridX * gameConfig.tileSize + gameConfig.tileSize / 2;
+        const tileCenterY = gridY * gameConfig.tileSize + gameConfig.tileSize / 2;
+        const dx = pacman.x - tileCenterX;
+        const dy = pacman.y - tileCenterY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        if (distance > gameConfig.tileSize * 0.5) {
+            return [];
+        }
+
+        const result = this.eatPelletAt(gridX, gridY);
+        if (!result) {
+            return [];
+        }
+
+        this.lastPelletGrid = { x: gridX, y: gridY };
+
+        const isPowerPellet = result.type === 'power_pellet';
+        const score = isPowerPellet ? scoreValues.powerPellet : scoreValues.pellet;
+
+        const pelletEvent = {
+            type: isPowerPellet ? 'power_pellet_eaten' : 'pellet_eaten',
+            gridX: result.gridX,
+            gridY: result.gridY,
+            score: score,
+            pelletsRemaining: result.pelletsRemaining
+        };
+
+        if (isPowerPellet) {
+            pelletEvent.frightenedDuration = this.getFrightenedDuration();
+        }
+
+        this.collisionStats.checksPerformed++;
+        this.collisionStats.collisionsDetected++;
+
+        const events = [pelletEvent];
+        if (result.levelComplete) {
+            events.push({
+                type: 'level_complete',
+                score: this.score,
+                level: this.level
+            });
+        }
+
+        return events;
+    }
+
+    /**
+     * Check collisions between Pacman and all ghosts
+     * @returns {Object|null}
+     */
+    checkGhostCollisions() {
+        const pacman = this.pacman;
+        const collisionRadius = gameConfig.tileSize * 0.6;
+
+        for (const ghost of this.ghosts) {
+            if (ghost.isEaten) {
+                continue;
+            }
+
+            const dx = pacman.x - ghost.x;
+            const dy = pacman.y - ghost.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance <= collisionRadius) {
+                this.collisionStats.checksPerformed++;
+                this.collisionStats.collisionsDetected++;
+                return this.handleGhostCollision(ghost);
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Handle ghost collision result
+     * @param {EnemyState} ghost - Ghost that collided
+     * @returns {Object}
+     */
+    handleGhostCollision(ghost) {
+        if (ghost.isFrightened) {
+            this.currentComboGhosts++;
+            const scoreIndex = Math.min(this.currentComboGhosts - 1, 3);
+            const scores = [200, 400, 800, 1600];
+            const score = scores[scoreIndex];
+
+            ghost.eat();
+
+            return {
+                type: 'ghost_eaten',
+                ghostType: ghost.ghostType,
+                score: score,
+                combo: this.currentComboGhosts
+            };
+        } else {
+            return {
+                type: 'pacman_died',
+                livesRemaining: this.lives
+            };
+        }
+    }
+
+    /**
+     * Check fruit collision
+     * @returns {Object|null}
+     */
+    checkFruitCollision() {
+        const fruit = this.fruit;
+        if (!fruit.active) {
+            return null;
+        }
+
+        const pacman = this.pacman;
+        const collisionRadius = gameConfig.tileSize;
+
+        const dx = pacman.x - fruit.x;
+        const dy = pacman.y - fruit.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        if (distance > collisionRadius) {
+            return null;
+        }
+
+        const score = fruit.eat();
+
+        this.collisionStats.checksPerformed++;
+        this.collisionStats.collisionsDetected++;
+
+        return {
+            type: 'fruit_eaten',
+            score: score,
+            fruitType: fruit.getFruitType().name
+        };
+    }
+
+    /**
+     * Get collision statistics
+     * @returns {Object}
+     */
+    getCollisionStats() {
+        return this.collisionStats;
+    }
+
+    /**
+     * Reset collision statistics
+     */
+    resetCollisionStats() {
+        this.lastPelletGrid = { x: null, y: null };
+        this.collisionStats = {
+            checksPerformed: 0,
+            collisionsDetected: 0
         };
     }
 

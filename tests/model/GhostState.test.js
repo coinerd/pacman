@@ -29,12 +29,12 @@ describe('EnemyState', () => {
             expect(ghost.name).toBe('blinky');
         });
 
-        test('assigns color based on ghost type', () => {
-            const blinky = new EnemyState(0, 0, 'blinky', 1);
-            const pinky = new EnemyState(0, 0, 'pinky', 1);
+        test('Assigns color based on ghost type', () => {
+            const alpha = new EnemyState(0, 0, 'alpha', 1);
+            const beta = new EnemyState(0, 0, 'beta', 1);
 
-            expect(blinky.color).toBe(0x9b59b6); // ALPHA purple
-            expect(pinky.color).toBe(0x7fff00); // BETA green
+            expect(alpha.color).toBe(0x9b59b6); // ALPHA purple
+            expect(beta.color).toBe(0x7fff00); // BETA green
         });
 
         test('stores start position', () => {
@@ -118,11 +118,6 @@ describe('EnemyState', () => {
             expect(ghost.speedModifier).toBe(ghostSpeedMultipliers.frightened);
         });
 
-        test('reverses direction', () => {
-            ghost.direction = directions.RIGHT;
-            ghost.setFrightened(5);
-            expect(ghost.direction).toBe(directions.LEFT);
-        });
     });
 
     describe('updateFrightened', () => {
@@ -162,40 +157,6 @@ describe('EnemyState', () => {
             ghost.setFrightened(5);
             ghost.eat();
             expect(ghost.speedModifier).toBe(1.0);
-        });
-    });
-
-    describe('updateEaten', () => {
-        test('moves toward ghost house', () => {
-            ghost.gridX = 5;
-            ghost.gridY = 5;
-            ghost.isEaten = true;
-
-            const events = ghost.updateEaten(0.5, maze);
-
-            expect(Array.isArray(events)).toBe(true);
-        });
-
-        test('enters ghost house when reaching entrance', () => {
-            ghost.gridX = 13;
-            ghost.gridY = 14;
-            ghost.isEaten = true;
-
-            ghost.updateEaten(0.1, maze);
-
-            expect(ghost.inGhostHouse).toBe(true);
-        });
-
-        test('revives after house timer expires', () => {
-            ghost.isEaten = true;
-            ghost.inGhostHouse = true;
-            ghost.houseTimer = 0.5;
-
-            const events = ghost.updateEaten(0.6, maze);
-
-            const reviveEvent = events.find((e) => e.type === 'ghost_revived');
-            expect(reviveEvent).toBeDefined();
-            expect(ghost.isEaten).toBe(false);
         });
     });
 

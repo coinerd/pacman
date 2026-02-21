@@ -6,7 +6,7 @@
 import Phaser from 'phaser';
 import { gameConfig } from './config/gameConfig.js';
 import MenuScene from './scenes/MenuScene.js';
-import ModelDrivenGameScene from './scenes/ModelDrivenGameScene.js';
+import GameScene from './scenes/GameScene.js';
 import PauseScene from './scenes/PauseScene.js';
 import GameOverScene from './scenes/GameOverScene.js';
 import WinScene from './scenes/WinScene.js';
@@ -45,7 +45,7 @@ const config = {
         forceSetTimeOut: true,
         smoothStep: true
     },
-    scene: [MenuScene, ModelDrivenGameScene, PauseScene, GameOverScene, WinScene, SettingsScene]
+    scene: [MenuScene, GameScene, PauseScene, GameOverScene, WinScene, SettingsScene]
 };
 
 const game = new Phaser.Game(config);

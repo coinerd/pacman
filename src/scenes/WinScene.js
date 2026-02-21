@@ -30,7 +30,7 @@ export default class WinScene extends Phaser.Scene {
         this.createScanlineOverlay();
 
         this.input.keyboard.once('keydown-SPACE', () => {
-            this.scene.start('ModelDrivenGameScene', {
+            this.scene.start('GameScene', {
                 score: this.score,
                 level: this.level + 1,
                 highScore: this.highScore

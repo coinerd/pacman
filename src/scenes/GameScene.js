@@ -1,53 +1,44 @@
 /**
- * ModelDrivenGameScene
- * Pure MVC implementation where View is a passive observer of Model state.
- *
- * Key differences from GameScene:
- * - View creates Visual wrappers from Model entities (not visual entities)
- * - Model drives all updates via gameModel.step()
- * - View only syncs visual representation to model state
- * - No dual entity system (visual + model)
+ * GameScene
+ * Main game scene using pure MVC architecture.
+ * Model drives all updates, View is a passive observer.
  */
 
 import Phaser from 'phaser';
 import {
     animationConfig,
     directions,
-    fruitConfig,
     gameConfig,
     physicsConfig
 } from '../config/gameConfig.js';
 import { themeConfig } from '../config/themeConfig.js';
-import { GameController } from '../controllers/ActionRouter.js'; // Phase 6: Clean Controller
+import { GameController } from '../controllers/GameController.js';
 import { GAME_EVENTS, gameEvents } from '../core/EventBus.js';
 import GameModel from '../core/GameModel.js';
 import {
     AIInputAdapter,
     InputManager,
     KeyboardAdapter
-} from '../input/index.js'; // Phase 5: Input System
+} from '../input/index.js';
 import { StorageManager } from '../managers/StorageManager.js';
 import { AchievementSystem } from '../systems/AchievementSystem.js';
 import { DebugOverlay } from '../systems/DebugOverlay.js';
 import { FixedTimeStepLoop } from '../systems/FixedTimeStepLoop.js';
-import { PlayerAI } from '../systems/PlayerAI.js';
 import { ReplaySystem } from '../systems/ReplaySystem.js';
 import { createMazeData } from '../utils/MazeLayout.js';
 import { normalizeDeltaSeconds } from '../utils/Time.js';
-import ModelDrivenGameView from '../views/ModelDrivenGameView.js';
+import GameView from '../views/ModelDrivenGameView.js';
 import { LevelManager } from './systems/LevelManager.js';
 import { UIController } from './systems/UIController.js';
 
-export default class ModelDrivenGameScene extends Phaser.Scene {
+export default class GameScene extends Phaser.Scene {
     constructor() {
-        super({ key: 'ModelDrivenGameScene' });
+        super({ key: 'GameScene' });
     }
 
     init(data) {
-        // Create maze data FIRST before GameModel so entities get correct positions
         const levelData = createMazeData();
 
-        // Create unified GameModel - single source of truth with maze data
         this.gameModel = new GameModel({
             score: data.score || 0,
             lives: data.lives ?? 3,
@@ -70,52 +61,35 @@ export default class ModelDrivenGameScene extends Phaser.Scene {
 
         this.replaySystem = new ReplaySystem();
         this.settings = this.storageManager.getSettings();
-
-        // Track if we're in the death sequence
         this.isDeathSequence = false;
     }
 
     create() {
-        // Set camera background color from theme
         this.cameras.main.setBackgroundColor(themeConfig.colors.background);
 
-        // Maze data was already created in init() - just update pellet counts
         this.gameModel.totalPellets = this.countPellets(this.gameModel.pelletGrid);
         this.gameModel.pelletsRemaining = this.gameModel.totalPellets;
 
-        // Create view - pure observer that creates visuals from model
-        this.gameView = new ModelDrivenGameView({
+        this.gameView = new GameView({
             scene: this,
             gameModel: this.gameModel,
             storageManager: this.storageManager
         });
         this.gameView.applySettings(this.settings);
-
-        // Create all visual elements from model state
         this.gameView.create();
 
-        // Setup UI
         this.uiController = new UIController(this, this.gameModel);
         this.uiController.create();
 
-        // Phase 5 & 6: Setup InputManager and clean GameController
         this.inputManager = new InputManager();
-        this.inputManager.registerAdapter(
-            'keyboard',
-            new KeyboardAdapter(this.input)
-        );
+        this.inputManager.registerAdapter('keyboard', new KeyboardAdapter(this.input));
 
-        // Setup AI adapter for demo mode
         this.aiAdapter = new AIInputAdapter();
         this.aiAdapter.setGameModel(this.gameModel);
         this.inputManager.registerAdapter('ai', this.aiAdapter);
 
-        // Set active adapter based on mode
-        this.inputManager.setActiveAdapter(
-            this.sys.game.isDemo ? 'ai' : 'keyboard'
-        );
+        this.inputManager.setActiveAdapter(this.sys.game.isDemo ? 'ai' : 'keyboard');
 
-        // Phase 6: Setup clean GameController (no scene reference)
         this.gameController = new GameController({
             gameModel: this.gameModel,
             replaySystem: this.replaySystem,
@@ -123,38 +97,26 @@ export default class ModelDrivenGameScene extends Phaser.Scene {
         });
         this.gameController.activate();
 
-        // Setup debug overlay
         this.debugOverlay = new DebugOverlay(this);
         if (this.settings.showFps) {
             this.debugOverlay.setVisible(true);
         }
 
-        // Setup touch controls
         this.setupTouchControls();
 
-        // Setup fixed timestep loop for game logic
         this.fixedTimeStepLoop = new FixedTimeStepLoop(() => {
             this.fixedUpdate();
         });
 
-        // Setup event listeners
         this.setupEventListeners();
-
-        // Apply level settings
         this.levelManager.applySettings();
-
-        // Show ready message
         this.uiController.showReadyMessage();
 
-        // Emit game started event
         gameEvents.emit(GAME_EVENTS.GAME_STARTED, {
             level: this.gameModel.level
         });
     }
 
-    /**
-	 * Count pellets in grid
-	 */
     countPellets(pelletGrid) {
         let count = 0;
         for (const row of pelletGrid) {
@@ -167,9 +129,6 @@ export default class ModelDrivenGameScene extends Phaser.Scene {
         return count;
     }
 
-    /**
-	 * Setup touch controls for mobile
-	 */
     setupTouchControls() {
         let startX = 0;
         let startY = 0;
@@ -187,59 +146,38 @@ export default class ModelDrivenGameScene extends Phaser.Scene {
             if (Math.abs(deltaX) > Math.abs(deltaY)) {
                 if (Math.abs(deltaX) > threshold) {
                     const direction = deltaX > 0 ? directions.RIGHT : directions.LEFT;
-                    this.gameController.handleInput({
-                        type: 'direction',
-                        value: direction
-                    });
+                    this.gameController.handleInput({ type: 'direction', value: direction });
                 }
             } else {
                 if (Math.abs(deltaY) > threshold) {
                     const direction = deltaY > 0 ? directions.DOWN : directions.UP;
-                    this.gameController.handleInput({
-                        type: 'direction',
-                        value: direction
-                    });
+                    this.gameController.handleInput({ type: 'direction', value: direction });
                 }
             }
         });
     }
 
-    /**
-	 * Main Phaser update loop
-	 * Handles input, syncs view to model, updates UI
-	 */
     update(time, delta) {
         if (this.gameModel.isPaused || this.gameModel.isGameOver) {
             return;
         }
 
         const deltaInSeconds = normalizeDeltaSeconds(delta);
-
-        // Run fixed timestep updates (NEVER skip - death timer needs to increment)
         this.fixedTimeStepLoop.update(deltaInSeconds);
 
-        // Handle death sequence UI updates separately
         if (this.isDeathSequence) {
             this.gameView.updateDeathAnimation(deltaInSeconds);
-            // Still sync view during death
             this.gameView.sync();
-            // Update UI
             this.uiController.update();
             this.debugOverlay.update(time, delta);
             return;
         }
 
-        // Update input manager (handles keyboard polling and AI decisions)
-        this.inputManager.update(deltaInSeconds * 1000); // Convert to ms
-
-        // Sync view to model state
+        this.inputManager.update(deltaInSeconds * 1000);
         this.gameView.sync();
-
-        // Update UI
         this.uiController.update();
         this.debugOverlay.update(time, delta);
 
-        // Update debug info
         if (this.debugOverlay.visible) {
             const stats = this.gameModel.getStats();
             this.debugOverlay.updateDebugInfo({
@@ -255,66 +193,54 @@ export default class ModelDrivenGameScene extends Phaser.Scene {
         }
     }
 
-    /**
-	 * Fixed timestep update - runs at 60 Hz
-	 * All game logic happens here via model.step()
-	 */
     fixedUpdate() {
         const deltaSeconds = physicsConfig.FIXED_DT;
-
-        // Single source of truth: model.step() runs all game logic
         const events = this.gameModel.step(deltaSeconds);
 
-        // Debug logging for death sequence
-        if (this.gameModel.isDying) {
-            console.log(
-                `Death: timer=${this.gameModel.deathTimer.toFixed(3)}/${this.gameModel.deathPauseDuration}, isDeathSequence=${this.isDeathSequence}`
-            );
-        }
-
-        // Process events for achievements
         for (const event of events) {
             this.achievementSystem.check(this.gameModel);
 
-            // Handle fruit spawn
-            if (
-                event.type === 'pellet_eaten' ||
-				event.type === 'power_pellet_eaten'
-            ) {
+            if (event.type === 'pellet_eaten' || event.type === 'power_pellet_eaten') {
                 this.checkFruitSpawn();
             }
 
-            // Handle death sequence start
             if (event.type === 'pacman_died') {
                 this.isDeathSequence = true;
                 this.gameView.startDeathAnimation();
             }
 
-            // Handle respawn
             if (event.type === 'respawn') {
                 this.isDeathSequence = false;
                 this.gameView.endDeathAnimation();
             }
         }
 
-        // Update replay system
         this.replaySystem.update(deltaSeconds);
     }
 
-    /**
-	 * Check if fruit should spawn
-	 */
     checkFruitSpawn() {
         if (this.gameModel.shouldSpawnFruit() && !this.gameModel.fruit.active) {
             this.gameModel.fruit.activate(this.gameModel.level);
         }
     }
 
-    /**
-	 * Setup event listeners
-	 */
     setupEventListeners() {
-        // Achievement notifications
+        // Handle pause/resume requests from controller
+        gameEvents.on(GAME_EVENTS.PAUSE_REQUESTED, () => {
+            this.scene.pause();
+            this.scene.launch('PauseScene');
+        });
+
+        gameEvents.on(GAME_EVENTS.RESUME_REQUESTED, () => {
+            this.gameModel.setPaused(false);
+            this.gameView.resumeAudio();
+        });
+
+        gameEvents.on(GAME_EVENTS.RETURN_TO_MENU_REQUESTED, () => {
+            this.cleanup();
+            this.scene.start('MenuScene');
+        });
+
         gameEvents.on(GAME_EVENTS.ACHIEVEMENT_UNLOCKED, (achievement) => {
             this.gameView.showAchievementNotification(achievement);
         });
@@ -327,14 +253,10 @@ export default class ModelDrivenGameScene extends Phaser.Scene {
             });
         });
 
-        // Replay recording
         if (this.replaySystem && !this.replaySystem.isReplaying) {
             gameEvents.on(GAME_EVENTS.DIRECTION_CHANGED, (data) => {
                 if (this.replaySystem.isRecording) {
-                    this.replaySystem.recordInput({
-                        type: 'direction',
-                        data: data
-                    });
+                    this.replaySystem.recordInput({ type: 'direction', data });
                 }
             });
 
@@ -357,38 +279,18 @@ export default class ModelDrivenGameScene extends Phaser.Scene {
         }
     }
 
-    /**
-	 * Resume from pause
-	 */
     resume() {
         this.gameModel.setPaused(false);
         this.gameView.resumeAudio();
     }
 
-    /**
-	 * Cleanup resources
-	 */
     cleanup() {
-        if (this.uiController) {
-            this.uiController.cleanup();
-        }
-        if (this.inputManager) {
-            this.inputManager.destroy();
-        }
-        if (this.gameController) {
-            this.gameController.destroy();
-        }
-        if (this.gameView) {
-            this.gameView.cleanup();
-        }
-        if (this.debugOverlay) {
-            this.debugOverlay.cleanup();
-        }
-        if (this.achievementSystem) {
-            this.achievementSystem.save();
-        }
-        if (this.replaySystem) {
-            this.replaySystem.cleanup();
-        }
+        this.uiController?.cleanup();
+        this.inputManager?.destroy();
+        this.gameController?.destroy();
+        this.gameView?.cleanup();
+        this.debugOverlay?.cleanup();
+        this.achievementSystem?.save();
+        this.replaySystem?.cleanup();
     }
 }
