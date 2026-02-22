@@ -3,20 +3,22 @@
  * Single source of truth for all game state and logic.
  * Pure data model - NO Phaser dependencies.
  *
- * Phase 4: Simplified to use only TileCenterMovementStrategy
- * - Tile-based movement with center-to-center interpolation
- * - Ensures entities stay perfectly centered in corridors
+ * Phase 5: MovementSystem integration
+ * - Full MovementSystem for entity movement and AI
+ * - Cleaned up legacy movement code
  */
 
 import {
     directions,
     enemyStartPositions,
     fruitConfig,
-    playerStartPosition
+    playerStartPosition,
+    virusCore,
+    scatterTargets
 } from '../config/gameConfig.js';
 import { scoreValues } from '../config/gameConfig.js';
-import { EnemyAIAdapter } from '../model/adapters/EnemyAIAdapter.js';
 import { gameConfig } from '../config/gameConfig.js';
+import { MovementSystem } from '../movement/index.js';
 import { EnemyState } from '../model/entities/EnemyState.js';
 import { FruitState } from '../model/entities/FruitState.js';
 import { PlayerState } from '../model/entities/PlayerState.js';
@@ -104,8 +106,8 @@ export default class GameModel {
         // Frame/tick counter for replay determinism
         this.tickCount = 0;
 
-        // Initialize AI system
-        this.ghostAIAdapter = new EnemyAIAdapter(this);
+        // Initialize Movement System
+        this.initializeMovementSystem();
 
         // Initialize entity state tracking
         this.initializeEntityStateTracking();
@@ -191,6 +193,34 @@ export default class GameModel {
     }
 
     /**
+     * Initialize new Movement System
+     */
+    initializeMovementSystem() {
+        this.movementSystem = new MovementSystem({
+            tileSize: gameConfig.tileSize,
+            tunnelRow: gameConfig.tunnelRow,
+            virusCoreCenter: virusCore.center,
+            virusCoreEntrance: virusCore.entrance
+        });
+
+        this.movementSystem.initialize(this.maze, {
+            virusCoreCenter: virusCore.center
+        });
+
+        // Register player
+        this.movementSystem.registerEntity(this.pacman);
+
+        // Register ghosts with AI
+        for (const ghost of this.ghosts) {
+            this.movementSystem.registerEntity(ghost, {
+                aiType: ghost.ghostType,
+                scatterTarget: scatterTargets[ghost.ghostType],
+                initialMode: 'SCATTER'
+            });
+        }
+    }
+
+    /**
      * Generate maze for specific level using MazeGenerator
      * @param {number} level - Level number
      * @returns {Object} - { maze, pelletGrid }
@@ -240,6 +270,7 @@ export default class GameModel {
 
     /**
      * Main game step - runs simulation for one frame
+     * Uses MovementSystem for entity movement and AI
      * @param {number} deltaSeconds - Time since last frame
      * @param {Object} input - Optional input override
      * @returns {Array<Object>} - Events generated this frame
@@ -267,9 +298,12 @@ export default class GameModel {
             this.desiredDirection = inputDirection;
         }
 
-        // Update Pacman movement (integrated from TileCenterMovementStrategy)
-        const pacmanMoveEvents = this.updatePacmanMovement(deltaSeconds);
-        events.push(...pacmanMoveEvents);
+        // Update via MovementSystem
+        const movementEvents = this.movementSystem.update(deltaSeconds, {
+            player: this.pacman,
+            allEntities: this.ghosts
+        });
+        events.push(...movementEvents);
 
         // Track Pacman direction changes for view events
         this.trackPacmanDirectionChange();
@@ -278,19 +312,13 @@ export default class GameModel {
         const pacmanStateEvents = this.pacman.update(
             deltaSeconds,
             this.maze,
-            null, // Input already handled by adapter
+            null, // Input already handled by movement system
             true
         );
         events.push(...pacmanStateEvents);
 
-        // Update Ghost AI (sets directions for all ghosts)
-        this.ghostAIAdapter.update(deltaSeconds);
-
-        // Update ghosts movement and state
+        // Update ghosts state
         for (const ghost of this.ghosts) {
-            const ghostMoveEvents = this.updateGhostMovement(ghost, deltaSeconds);
-            events.push(...ghostMoveEvents);
-
             const ghostStateEvents = ghost.update(
                 deltaSeconds,
                 this.maze,
@@ -308,7 +336,6 @@ export default class GameModel {
         events.push(...fruitEvents);
 
         // Clear consumed direction if it was applied
-        // Also clear if pacman is not moving (blocked) to allow fresh input
         if (
             (this.pacman.direction !== directions.NONE &&
                 this.desiredDirection === this.pacman.direction) ||
@@ -432,6 +459,7 @@ export default class GameModel {
      * @param {number} duration - Duration in seconds
      */
     setGhostsFrightened(duration) {
+        this.movementSystem.setFrightened(duration);
         for (const ghost of this.ghosts) {
             if (!ghost.isEaten) {
                 ghost.setFrightened(duration);
@@ -465,7 +493,17 @@ export default class GameModel {
 
         this.resetMovementStats();
         this.resetCollisionStats();
-        this.ghostAIAdapter.reset();
+
+        this.movementSystem.reset();
+        // Re-register entities after reset
+        this.movementSystem.registerEntity(this.pacman);
+        for (const ghost of this.ghosts) {
+            this.movementSystem.registerEntity(ghost, {
+                aiType: ghost.ghostType,
+                scatterTarget: scatterTargets[ghost.ghostType],
+                initialMode: 'SCATTER'
+            });
+        }
 
         // Reset tracking
         this.lastPacmanDirection = null;
@@ -551,7 +589,9 @@ export default class GameModel {
 
         this.resetMovementStats();
         this.resetCollisionStats();
-        this.ghostAIAdapter.reset();
+
+        // Reinitialize MovementSystem for new level
+        this.initializeMovementSystem();
     }
 
     /**
@@ -845,6 +885,9 @@ export default class GameModel {
 
         ghost.eat();
 
+        // Notify MovementSystem
+        this.movementSystem.onGhostEaten(ghost);
+
         // Calculate score based on combo
         const scoreIndex = Math.min(this.currentComboGhosts, 3);
         const scores = [200, 400, 800, 1600];
@@ -1004,203 +1047,8 @@ export default class GameModel {
     }
 
     // ============================================================
-    // MOVEMENT METHODS (Integrated from TileCenterMovementStrategy)
+    // MOVEMENT METHODS
     // ============================================================
-
-    /**
-     * Update Pacman movement with direction buffer integration
-     * @param {number} deltaSeconds - Time delta
-     * @returns {Array<Object>} - Movement events
-     */
-    updatePacmanMovement(deltaSeconds) {
-        const pacman = this.pacman;
-        const inputDirection = this.desiredDirection;
-
-        // Queue input direction in buffer if provided
-        if (inputDirection && inputDirection !== directions.NONE) {
-            pacman.nextDirection = inputDirection;
-        }
-
-        this.movementStats.movesAttempted++;
-
-        // If entity is not moving, try to start movement in buffered direction
-        if (pacman.moveProgress === 0) {
-            const targetDirection = pacman.nextDirection || pacman.direction;
-
-            if (targetDirection && targetDirection !== directions.NONE) {
-                const targetGridX = pacman.gridX + targetDirection.x;
-                const targetGridY = pacman.gridY + targetDirection.y;
-
-                if (this.startMovement(pacman, targetDirection)) {
-                    return [{
-                        type: 'movement_started',
-                        entityId: pacman.id,
-                        direction: targetDirection,
-                        fromGrid: { x: pacman.gridX, y: pacman.gridY },
-                        toGrid: { x: targetGridX, y: targetGridY }
-                    }];
-                }
-            }
-        }
-
-        // Entity is moving, update progress
-        const completed = this.updateMovementProgress(pacman, deltaSeconds);
-
-        if (completed) {
-            return [{
-                type: 'movement_completed',
-                entityId: pacman.id,
-                gridX: pacman.gridX,
-                gridY: pacman.gridY
-            }];
-        }
-
-        return [];
-    }
-
-    /**
-     * Update ghost movement
-     * @param {EnemyState} ghost - Ghost entity
-     * @param {number} deltaSeconds - Time delta
-     * @returns {Array<Object>} - Movement events
-     */
-    updateGhostMovement(ghost, deltaSeconds) {
-        const direction = ghost.nextDirection && ghost.nextDirection !== directions.NONE
-            ? ghost.nextDirection
-            : ghost.direction;
-
-        this.movementStats.movesAttempted++;
-
-        // If entity is not moving, try to start movement in direction
-        if (ghost.moveProgress === 0 && direction && direction !== directions.NONE) {
-            if (this.startMovement(ghost, direction)) {
-                return [{
-                    type: 'movement_started',
-                    entityId: ghost.id,
-                    direction: direction,
-                    fromGrid: { x: ghost.gridX, y: ghost.gridY },
-                    toGrid: { x: ghost.targetGridX, y: ghost.targetGridY }
-                }];
-            }
-        }
-
-        // Entity is moving, update progress
-        const completed = this.updateMovementProgress(ghost, deltaSeconds);
-
-        if (completed) {
-            return [{
-                type: 'movement_completed',
-                entityId: ghost.id,
-                gridX: ghost.gridX,
-                gridY: ghost.gridY
-            }];
-        }
-
-        return [];
-    }
-
-    /**
-     * Start movement to target tile
-     * @param {Object} entity - Entity to move
-     * @param {Object} direction - Movement direction
-     * @returns {boolean} - True if movement started
-     */
-    startMovement(entity, direction) {
-        if (!entity || entity.moveProgress > 0) {
-            return false; // Already moving
-        }
-
-        const tileSize = gameConfig.tileSize;
-        const targetGridX = entity.gridX + direction.x;
-        const targetGridY = entity.gridY + direction.y;
-
-        // Check if target tile is walkable
-        if (!this.isWalkable(targetGridX, targetGridY)) {
-            return false; // Can't move there
-        }
-
-        // CRITICAL: Ensure entity is at exact tile center before starting movement
-        entity.x = entity.gridX * tileSize + tileSize / 2;
-        entity.y = entity.gridY * tileSize + tileSize / 2;
-
-        // Start movement
-        entity.prevGridX = entity.gridX;
-        entity.prevGridY = entity.gridY;
-        entity.targetGridX = targetGridX;
-        entity.targetGridY = targetGridY;
-        entity.direction = direction;
-        entity.moveProgress = 0.001; // Start moving
-        entity.isMoving = true;
-
-        this.movementStats.movesProcessed++;
-        return true;
-    }
-
-    /**
-     * Update movement progress
-     * @param {Object} entity - Entity to update
-     * @param {number} deltaTime - Time since last frame in seconds
-     * @returns {boolean} - True if movement completed
-     */
-    updateMovementProgress(entity, deltaTime) {
-        if (entity.moveProgress > 0) {
-            const tileSize = gameConfig.tileSize;
-            const tilesPerSecond = entity.speed / tileSize;
-            entity.moveProgress += tilesPerSecond * deltaTime;
-
-            if (entity.moveProgress >= 1.0) {
-                // Arrived at target tile
-                entity.gridX = entity.targetGridX;
-                entity.gridY = entity.targetGridY;
-
-                // Update pixel position from new grid position
-                const mazeWidth = gameConfig.mazeWidth * gameConfig.tileSize;
-                if (entity.x >= mazeWidth - 1) {
-                    entity.x = 0;
-                    entity.gridX = 0;
-                } else {
-                    entity.x = entity.gridX * tileSize + tileSize / 2;
-                }
-                entity.y = entity.gridY * tileSize + tileSize / 2;
-
-                entity.moveProgress = 0;
-                entity.isMoving = false;
-
-                return true; // Movement completed
-            } else {
-                // Update x/y during movement for accurate collision detection
-                const prevCenterX = entity.prevGridX * tileSize + tileSize / 2;
-                const prevCenterY = entity.prevGridY * tileSize + tileSize / 2;
-                const nextCenterX = entity.targetGridX * tileSize + tileSize / 2;
-                const nextCenterY = entity.targetGridY * tileSize + tileSize / 2;
-
-                entity.x = prevCenterX + (nextCenterX - prevCenterX) * entity.moveProgress;
-                entity.y = prevCenterY + (nextCenterY - prevCenterY) * entity.moveProgress;
-
-                // Safety: Ensure orthogonal axis stays exactly centered during movement
-                if (entity.direction.x !== 0) {
-                    entity.y = prevCenterY;
-                } else if (entity.direction.y !== 0) {
-                    entity.x = prevCenterX;
-                }
-            }
-        }
-        return false; // Still moving
-    }
-
-    /**
-     * Check if a tile is walkable
-     * @param {number} gridX - Grid X position
-     * @param {number} gridY - Grid Y position
-     * @returns {boolean}
-     */
-    isWalkable(gridX, gridY) {
-        if (!this.maze || gridY < 0 || gridY >= this.maze.length ||
-            gridX < 0 || gridX >= this.maze[0].length) {
-            return false;
-        }
-        return this.maze[gridY][gridX] === 0;
-    }
 
     /**
      * Get movement statistics
