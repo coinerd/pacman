@@ -1,16 +1,24 @@
 /**
  * ModelDrivenGameView
- * Pure observer View that renders Model state without creating visual entities.
+ * Pure observer View that renders Model state using snapshots.
+ *
+ * Phase 1: Snapshot-based rendering
+ * - Receives ViewContext instead of direct gameModel reference
+ * - Uses updateFromSnapshot(snapshot) for state synchronization
+ * - No direct access to gameModel properties
  *
  * Key characteristics:
  * - Creates VisualPlayer/VisualEnemy/VisualFruit from model entities
  * - Does NOT create Player/Enemy/Fruit visual entities
- * - Syncs visual representation to model state each frame
+ * - Syncs visual representation to snapshot state each frame
  * - Responds to model events for effects and sounds
  */
 
 import { colors, gameConfig } from '../config/gameConfig.js';
 import { GAME_EVENTS, gameEvents } from '../core/EventBus.js';
+import { ViewContext, ViewState, GameSnapshot } from './ViewInterface.js';
+import { SceneTransitionHandler } from './SceneTransitionHandler.js';
+import { VIEW_EVENTS } from './ViewEvents.js';
 import { SoundManager } from '../managers/SoundManager.js';
 import { PelletPool } from '../pools/PelletPool.js';
 import { PowerPelletPool } from '../pools/PowerPelletPool.js';
@@ -21,17 +29,52 @@ import { FruitRenderer } from '../view/components/FruitRenderer.js';
 import { PlayerRenderer } from '../view/components/PlayerRenderer.js';
 
 export default class ModelDrivenGameView {
-    constructor({ scene, gameModel, storageManager }) {
-        this.scene = scene;
-        this.gameModel = gameModel;
-        this.storageManager = storageManager;
+    /**
+     * @param {ViewContext|Object} contextOrConfig - ViewContext with dependencies (phase 1) OR legacy config for backward compatibility
+     * @deprecated Legacy { scene, gameModel, storageManager } format is deprecated. Use ViewContext instead.
+     */
+    constructor(contextOrConfig) {
+        // Backward compatibility: Support both old and new constructor signature
+        if (contextOrConfig instanceof ViewContext) {
+            // New signature: ViewContext
+            this.context = contextOrConfig;
+            this.scene = contextOrConfig.scene;
+            this.storageManager = contextOrConfig.storageManager;
+            this.eventBus = contextOrConfig.eventBus;
+            this.gameModel = null; // No direct model access
+            this.useSnapshotMode = true;
+        } else {
+            // Legacy signature: { scene, gameModel, storageManager }
+            console.warn('[DEPRECATED] ModelDrivenGameView constructor with { scene, gameModel, storageManager } is deprecated. Use ViewContext instead.');
+            this.scene = contextOrConfig.scene;
+            this.gameModel = contextOrConfig.gameModel;
+            this.storageManager = contextOrConfig.storageManager;
+            this.context = null;
+            this.eventBus = gameEvents; // Use global event bus for legacy mode
+            this.useSnapshotMode = false;
+        }
+
+        // Internal view state (managed by View)
+        this.viewState = new ViewState();
+
+        // Scene Transition Handler (Phase 2)
+        this.transitionHandler = new SceneTransitionHandler({
+            eventBus: this.eventBus
+        });
+
+        // Latest snapshot (for snapshot-based rendering)
+        this.lastSnapshot = null;
+        this.frameCount = 0;
 
         // Renderers for model entities
         this.playerRenderer = null;
         this.ghostRenderers = new Map(); // ghostType -> GhostRenderer
         this.fruitRenderer = null;
-        this.bossVisuals = new Map(); // bossType -> VisualBoss
-        this.powerUpVisuals = new Map(); // id -> VisualPowerUp
+
+        // Phase 4: Minimal visual tracking (NOT state duplication)
+        // Only track visuals for update/destroy - decisions based on snapshot
+        this.bossVisual = null; // Single boss visual (no Map)
+        this.powerUpVisuals = new Map(); // Minimal tracking for cleanup only
 
         // Story overlay for narrative display
         this.storyOverlay = null;
@@ -39,15 +82,14 @@ export default class ModelDrivenGameView {
         this.storyDescription = null;
 
         // Managers
-        this.soundManager = new SoundManager(scene);
-        this.effectManager = new EffectManager(scene);
+        this.soundManager = new SoundManager(this.scene);
+        this.effectManager = new EffectManager(this.scene);
 
         // Pellet pools
         this.pelletPool = null;
         this.powerPelletPool = null;
 
-        // Track which pellets are currently visible
-        this.activePellets = new Map(); // key: "x,y" -> pellet sprite
+        // Phase 4: No pellet state tracking - pools maintain their own gridIndex
 
         // Event unsubscribers
         this.unsubscribers = [];
@@ -127,10 +169,10 @@ export default class ModelDrivenGameView {
     }
 
     /**
-	 * Create maze walls from model
+	 * Create maze walls from snapshot or model
 	 */
-    createMaze() {
-        const maze = this.gameModel.maze;
+    createMaze(mazeOverride = null) {
+        const maze = mazeOverride || (this.lastSnapshot ? this.lastSnapshot.maze : this.gameModel?.maze);
         if (!maze) {
             return;
         }
@@ -140,7 +182,7 @@ export default class ModelDrivenGameView {
         for (let y = 0; y < maze.length; y++) {
             for (let x = 0; x < maze[y].length; x++) {
                 if (maze[y][x] === TILE_TYPES.WALL) {
-                    this.drawWallToGraphics(graphics, x, y);
+                    this.drawWallToGraphics(graphics, x, y, maze);
                 }
             }
         }
@@ -222,8 +264,8 @@ export default class ModelDrivenGameView {
         );
     }
 
-    isWallAt(gridX, gridY) {
-        const maze = this.gameModel.maze;
+    isWallAt(gridX, gridY, mazeOverride = null) {
+        const maze = mazeOverride || (this.lastSnapshot ? this.lastSnapshot.maze : this.gameModel?.maze);
         if (
             !maze ||
 			gridY < 0 ||
@@ -247,10 +289,11 @@ export default class ModelDrivenGameView {
     }
 
     /**
-	 * Create pellets from model's pellet grid
+	 * Create pellets from snapshot's pellet grid
+	 * Phase 4: Render directly from snapshot, no local state tracking
 	 */
-    createPellets() {
-        const pelletGrid = this.gameModel.pelletGrid;
+    createPellets(pelletGridOverride = null) {
+        const pelletGrid = pelletGridOverride || (this.lastSnapshot ? this.lastSnapshot.pelletGrid : this.gameModel?.pelletGrid);
         if (!pelletGrid) {
             return;
         }
@@ -258,15 +301,11 @@ export default class ModelDrivenGameView {
         for (let y = 0; y < pelletGrid.length; y++) {
             for (let x = 0; x < pelletGrid[y].length; x++) {
                 const pelletType = pelletGrid[y][x];
-                const key = `${x},${y}`;
 
                 if (pelletType === PELLET_TYPES.PELLET) {
-                    const pellet = this.pelletPool.get(x, y);
-                    this.activePellets.set(key, pellet);
+                    this.pelletPool.get(x, y);
                 } else if (pelletType === PELLET_TYPES.POWER_PELLET) {
                     const powerPellet = this.powerPelletPool.get(x, y);
-                    this.activePellets.set(key, powerPellet);
-
                     // Add pulse animation
                     this.scene.tweens.add({
                         targets: powerPellet,
@@ -286,100 +325,163 @@ export default class ModelDrivenGameView {
 	 * Create renderers for model entities
 	 */
     createEntityRenderers() {
-        // Create PlayerRenderer from model
-        this.playerRenderer = new PlayerRenderer(this.scene, this.gameModel.pacman);
+        // Get entity data from snapshot or model (backward compatibility)
+        const pacmanData = this.lastSnapshot?.pacman || this.gameModel?.pacman;
+        const ghostsData = this.lastSnapshot?.ghosts || this.gameModel?.ghosts;
+        const fruitData = this.lastSnapshot?.fruit || this.gameModel?.fruit;
 
-        // Create GhostRenderer for each model ghost
-        for (const ghost of this.gameModel.ghosts) {
-            const ghostRenderer = new GhostRenderer(this.scene, ghost);
-            this.ghostRenderers.set(ghost.ghostType, ghostRenderer);
+        if (!pacmanData || !ghostsData || !fruitData) {
+            console.warn('[ModelDrivenGameView] Cannot create entity renderers - missing data');
+            return;
         }
 
-        // Create FruitRenderer from model
-        this.fruitRenderer = new FruitRenderer(this.scene, this.gameModel.fruit);
+        // Create PlayerRenderer from snapshot data
+        this.playerRenderer = new PlayerRenderer(this.scene, pacmanData);
+
+        // Create GhostRenderer for each ghost from snapshot data
+        for (const ghostData of ghostsData) {
+            const ghostRenderer = new GhostRenderer(this.scene, ghostData);
+            this.ghostRenderers.set(ghostData.ghostType, ghostRenderer);
+        }
+
+        // Create FruitRenderer from snapshot data
+        this.fruitRenderer = new FruitRenderer(this.scene, fruitData);
     }
 
     /**
 	 * Bind to model events
+	 * Phase 3: Subscribes to VIEW_EVENTS for rendering-specific updates
+	 * - VIEW_EVENTS: Rendering-specific (pellet eaten, ghost eaten, effects, etc.)
+	 * - GAME_EVENTS: Game-flow specific (level complete, game over, etc.)
 	 */
     bindModelEvents() {
         this.unsubscribers.push(
+            // === VIEW_EVENTS: Rendering-specific ===
+
             // Pellet eaten - play sound and remove visual pellet
-            gameEvents.on(GAME_EVENTS.PELLET_EATEN, (data) => {
-                this.soundManager.playWakaWaka();
+            gameEvents.on(VIEW_EVENTS.PELLET_EATEN, (data) => {
+                if (data.type === 'power_pellet') {
+                    this.soundManager.playPowerPellet();
+                    const pixel = gridToPixel(data.gridX, data.gridY);
+                    this.effectManager.createPowerPelletEffect(pixel.x, pixel.y);
+                } else {
+                    this.soundManager.playWakaWaka();
+                }
 
-                // Remove the visual pellet
-                const key = `${data.gridX},${data.gridY}`;
-                const pellet = this.activePellets.get(key);
-                if (pellet) {
-                    this.pelletPool.release(pellet);
-                    this.activePellets.delete(key);
+                // Phase 4: Release pellet from pool (pools maintain their own gridIndex)
+                let pellet;
+                if (data.type === 'power_pellet') {
+                    pellet = this.powerPelletPool.getByGrid(data.gridX, data.gridY);
+                    if (pellet) {
+                        this.powerPelletPool.release(pellet);
+                    }
+                } else {
+                    pellet = this.pelletPool.getByGrid(data.gridX, data.gridY);
+                    if (pellet) {
+                        this.pelletPool.release(pellet);
+                    }
                 }
             }),
 
-            // Power pellet eaten
-            gameEvents.on(GAME_EVENTS.POWER_PELLET_EATEN, (data) => {
-                this.soundManager.playPowerPellet();
-                const pixel = gridToPixel(data.gridX, data.gridY);
-                this.effectManager.createPowerPelletEffect(pixel.x, pixel.y);
-
-                // Remove the visual power pellet
-                const key = `${data.gridX},${data.gridY}`;
-                const pellet = this.activePellets.get(key);
-                if (pellet) {
-                    this.powerPelletPool.release(pellet);
-                    this.activePellets.delete(key);
-                }
-            }),
-
-            // Ghost eaten
-            gameEvents.on(GAME_EVENTS.GHOST_EATEN, (data) => {
+            // Ghost eaten - play sound and create effect
+            gameEvents.on(VIEW_EVENTS.GHOST_EATEN, (data) => {
                 this.soundManager.playGhostEaten();
-                const ghost = this.gameModel.ghosts.find(
-                    (g) => g.ghostType === data.ghostType
-                );
+                // Use snapshot data instead of direct model access
+                const ghost = this.lastSnapshot?.getGhost?.(data.ghostType) ||
+                              this.lastSnapshot?.ghosts?.find((g) => g.ghostType === data.ghostType) ||
+                              this.gameModel?.ghosts?.find((g) => g.ghostType === data.ghostType);
                 if (ghost) {
                     this.effectManager.createGhostEatenEffect(ghost.x, ghost.y);
                 }
             }),
 
-            // Pacman died
-            gameEvents.on(GAME_EVENTS.LIVES_LOST, () => {
+            // Pacman death started - play sound
+            gameEvents.on(VIEW_EVENTS.PACMAN_DEATH_STARTED, () => {
                 this.soundManager.playDeath();
+                this.startDeathAnimation();
             }),
 
-            // Fruit eaten
-            gameEvents.on(GAME_EVENTS.FRUIT_EATEN, (data) => {
+            // Fruit eaten - play sound and create effect
+            gameEvents.on(VIEW_EVENTS.FRUIT_EATEN, (data) => {
                 this.soundManager.playFruitEat();
-                const fruit = this.gameModel.fruit;
-                const color = fruit.fruitType?.color || 0xff00ff;
-                this.effectManager.createFruitEatEffect(fruit.x, fruit.y, color);
-                this.visualFruit.showScore(data.score);
+                // Use snapshot data instead of direct model access
+                const fruit = this.lastSnapshot?.fruit || this.gameModel?.fruit;
+                const color = fruit?.fruitType?.color || 0xff00ff;
+                if (fruit) {
+                    this.effectManager.createFruitEatEffect(fruit.x, fruit.y, color);
+                }
+                if (this.fruitRenderer) {
+                    this.fruitRenderer.showScore?.(data.score);
+                }
             }),
 
-            // Level complete
+            // Screen flash effect
+            gameEvents.on(VIEW_EVENTS.SCREEN_FLASH, (data) => {
+                this.effectManager.createScreenFlash(data.color, data.duration);
+            }),
+
+            // Screen shake effect
+            gameEvents.on(VIEW_EVENTS.SCREEN_SHAKE, (data) => {
+                this.effectManager.createScreenShake(data.intensity, data.duration);
+            }),
+
+            // Entity moved - can be used for smooth interpolation
+            gameEvents.on(VIEW_EVENTS.ENTITY_MOVED, (data) => {
+                // Optional: Use for smooth movement interpolation
+                // Currently handled by snapshot-based rendering
+            }),
+
+            // Pacman direction changed
+            gameEvents.on(VIEW_EVENTS.PACMAN_DIRECTION_CHANGED, (data) => {
+                // Can be used to trigger direction-specific animations
+                if (this.playerRenderer) {
+                    this.playerRenderer.updateDirectionAnimation(data.newDirection);
+                }
+            }),
+
+            // Ghost mode changed
+            gameEvents.on(VIEW_EVENTS.GHOST_MODE_CHANGED, (data) => {
+                const ghostRenderer = this.ghostRenderers.get(data.ghostType);
+                if (ghostRenderer) {
+                    ghostRenderer.updateModeAnimation(data.newMode, data.isFrightened);
+                }
+            }),
+
+            // === GAME_EVENTS: Game-flow specific ===
+
+            // Level complete - play sound and transition
             gameEvents.on(GAME_EVENTS.LEVEL_COMPLETE, () => {
                 this.soundManager.playLevelComplete();
-                this.storageManager.saveHighScore(this.gameModel.score);
-                this.scene.scene.start('WinScene', {
-                    score: this.gameModel.score,
-                    level: this.gameModel.level,
-                    highScore: this.gameModel.highScore
+                // Use snapshot data instead of direct model access
+                const score = this.lastSnapshot?.score ?? this.gameModel?.score ?? 0;
+                const level = this.lastSnapshot?.level ?? this.gameModel?.level ?? 1;
+                const highScore = this.lastSnapshot?.highScore ?? this.gameModel?.highScore ?? 0;
+                this.storageManager.saveHighScore(highScore);
+                // Phase 2: Use SceneTransitionHandler instead of direct scene.start()
+                this.transitionHandler.requestSceneTransition('WinScene', {
+                    score,
+                    level,
+                    highScore
                 });
             }),
 
-            // Game over
+            // Game over - transition to game over scene
             gameEvents.on(GAME_EVENTS.GAME_OVER, () => {
-                this.storageManager.saveHighScore(this.gameModel.score);
-                this.scene.scene.start('GameOverScene', {
-                    score: this.gameModel.score,
-                    highScore: this.gameModel.highScore
+                // Use snapshot data instead of direct model access
+                const score = this.lastSnapshot?.score ?? this.gameModel?.score ?? 0;
+                const highScore = this.lastSnapshot?.highScore ?? this.gameModel?.highScore ?? 0;
+                this.storageManager.saveHighScore(highScore);
+                // Phase 2: Use SceneTransitionHandler instead of direct scene.start()
+                this.transitionHandler.requestSceneTransition('GameOverScene', {
+                    score,
+                    highScore
                 });
             }),
 
-            // Respawn
+            // Respawn - end death animation
             gameEvents.on(GAME_EVENTS.RESPAWN, () => {
                 this.isDeathAnimating = false;
+                this.endDeathAnimation();
             })
         );
 
@@ -392,7 +494,7 @@ export default class ModelDrivenGameView {
 
     /**
 	 * Bind to controller action events (Phase 7)
-	 * Scene transitions are handled by View, triggered by controller events
+	 * Scene transitions are handled by SceneTransitionHandler, triggered by controller events
 	 */
     bindControllerEvents() {
         this.unsubscribers.push(
@@ -408,19 +510,17 @@ export default class ModelDrivenGameView {
                 this.scene.scene.stop('PauseScene');
             }),
 
-            // Return to menu requested
+            // Return to menu requested (Phase 2: Use SceneTransitionHandler)
             gameEvents.on(GAME_EVENTS.RETURN_TO_MENU_REQUESTED, () => {
                 this.scene.cleanup();
-                this.scene.scene.start('MenuScene');
+                this.transitionHandler.requestSceneTransition('MenuScene');
             }),
 
-            // Restart level requested
+            // Restart level requested (Phase 2: Use SceneTransitionHandler)
             gameEvents.on(GAME_EVENTS.RESTART_LEVEL_REQUESTED, () => {
-                this.scene.scene.restart({
-                    score: 0,
-                    lives: 3,
-                    level: 1
-                });
+                // Note: scene.restart() is handled directly in GameScene
+                // This event just notifies the view that a restart is happening
+                // GameScene will handle the actual scene.restart() call
             }),
 
             // Replay toggle requested
@@ -451,28 +551,31 @@ export default class ModelDrivenGameView {
 
     /**
 	 * Bind to Phase 5 system events
+	 * Phase 3: Uses VIEW_EVENTS for rendering-specific updates
 	 */
     bindPhase5Events() {
         this.unsubscribers.push(
+            // === VIEW_EVENTS: Rendering-specific ===
+
             // Boss spawned
-            gameEvents.on(GAME_EVENTS.BOSS_SPAWNED, (data) => {
+            gameEvents.on(VIEW_EVENTS.BOSS_SPAWNED, (data) => {
                 this.createBossVisual(data.bossType);
                 this.showBossWarning(data.bossType);
             }),
 
             // Boss phase changed
-            gameEvents.on(GAME_EVENTS.BOSS_PHASE_CHANGED, (data) => {
+            gameEvents.on(VIEW_EVENTS.BOSS_PHASE_CHANGED, (data) => {
                 this.updateBossVisualPhase(data.bossType, data.phase);
             }),
 
             // Boss damaged
-            gameEvents.on(GAME_EVENTS.BOSS_DAMAGED, (data) => {
+            gameEvents.on(VIEW_EVENTS.BOSS_DAMAGED, (data) => {
                 this.flashBossVisual(data.bossType);
             }),
 
             // Boss defeated
-            gameEvents.on(GAME_EVENTS.BOSS_DEFEATED, (data) => {
-                this.removeBossVisual(data.bossType);
+            gameEvents.on(VIEW_EVENTS.BOSS_DEFEATED, (data) => {
+                this.removeBossVisual();
                 this.effectManager.createExplosionEffect(
                     this.scene.scale.width / 2,
                     this.scene.scale.height / 2,
@@ -481,13 +584,22 @@ export default class ModelDrivenGameView {
                 this.showBossDefeatMessage(data.scoreBonus);
             }),
 
+            // Boss health update
+            gameEvents.on(VIEW_EVENTS.BOSS_HEALTH_UPDATE, (data) => {
+                // Phase 4: Boss health is synced from snapshot in syncBossVisuals()
+                // This event can trigger additional animations
+                if (this.bossVisual) {
+                    // Animation feedback for damage/heal
+                }
+            }),
+
             // Power up spawned
-            gameEvents.on(GAME_EVENTS.POWER_UP_SPAWNED, (data) => {
+            gameEvents.on(VIEW_EVENTS.POWERUP_SPAWNED, (data) => {
                 this.createPowerUpVisual(data.type, data.x, data.y);
             }),
 
             // Power up collected
-            gameEvents.on(GAME_EVENTS.POWER_UP_COLLECTED, (data) => {
+            gameEvents.on(VIEW_EVENTS.POWERUP_COLLECTED, (data) => {
                 const powerUpKey = `${data.x},${data.y}`;
                 const visual = this.powerUpVisuals.get(powerUpKey);
                 if (visual) {
@@ -497,30 +609,276 @@ export default class ModelDrivenGameView {
             }),
 
             // Power up expired
-            gameEvents.on(GAME_EVENTS.POWER_UP_EXPIRED, (data) => {
+            gameEvents.on(VIEW_EVENTS.POWERUP_EXPIRED, (data) => {
                 this.playerRenderer.removePowerUpEffect(data.type);
             }),
 
             // Power up activated
-            gameEvents.on(GAME_EVENTS.POWER_UP_ACTIVATED, (data) => {
+            gameEvents.on(VIEW_EVENTS.POWERUP_ACTIVATED, (data) => {
                 this.playerRenderer.addPowerUpEffect(data.type);
             }),
 
-            // Chapter started
-            gameEvents.on(GAME_EVENTS.CHAPTER_STARTED, (data) => {
+            // Story chapter start
+            gameEvents.on(VIEW_EVENTS.STORY_CHAPTER_START, (data) => {
                 this.showStoryNarrative(data);
             }),
 
-            // Chapter completed
-            gameEvents.on(GAME_EVENTS.CHAPTER_COMPLETED, (data) => {
+            // Story chapter complete
+            gameEvents.on(VIEW_EVENTS.STORY_CHAPTER_COMPLETE, (data) => {
                 this.showChapterCompleteMessage(data);
+            }),
+
+            // Story narrative show
+            gameEvents.on(VIEW_EVENTS.STORY_NARRATIVE_SHOW, (data) => {
+                this.showStoryNarrative(data);
             })
         );
     }
 
     /**
+	 * Phase 1 & 4: Update view from snapshot
+	 * Main update method for snapshot-based rendering with Dirty-Tracking
+	 * @param {GameSnapshot} snapshot - Immutable game state snapshot
+	 */
+    updateFromSnapshot(snapshot) {
+        if (!snapshot) {
+            return;
+        }
+
+        // Phase 4: Dirty-Tracking - Skip if snapshot hasn't changed
+        if (this.lastSnapshot && this.snapshotEquals(this.lastSnapshot, snapshot)) {
+            return;
+        }
+
+        // Store latest snapshot for reference
+        this.lastSnapshot = snapshot;
+        this.frameCount++;
+
+        // Update maze if changed (first time or level change)
+        if (!this.lastMazeSnapshot || !this.mazeEquals(this.lastMazeSnapshot.maze, snapshot.maze)) {
+            this.createMaze(snapshot.maze);
+            this.lastMazeSnapshot = { maze: snapshot.maze };
+            this.createPellets(snapshot.pelletGrid);
+        }
+
+        // Phase 4: Update pellets (no local state, direct from snapshot)
+        this.updatePelletVisuals(snapshot.pelletGrid);
+
+        // Update entity renderers
+        if (this.playerRenderer && snapshot.pacman) {
+            this.playerRenderer.sync();
+        }
+
+        if (snapshot.ghosts) {
+            for (const ghost of snapshot.ghosts) {
+                const ghostRenderer = this.ghostRenderers.get(ghost.ghostType);
+                if (ghostRenderer) {
+                    ghostRenderer.sync();
+                }
+            }
+        }
+
+        if (this.fruitRenderer && snapshot.fruit) {
+            this.fruitRenderer.sync();
+        }
+
+        // Phase 4: Update boss visuals from snapshot (single visual, no Map)
+        this.syncBossVisuals(snapshot.boss);
+
+        // Phase 4: Update power-up visuals from snapshot (minimal tracking)
+        if (snapshot.powerUps) {
+            this.syncPowerUpVisuals(snapshot.powerUps);
+        }
+
+        // Handle game state changes
+        if (snapshot.isDying && !this.isDeathAnimating) {
+            this.startDeathAnimation();
+        } else if (!snapshot.isDying && this.isDeathAnimating) {
+            this.endDeathAnimation();
+        }
+    }
+
+    /**
+	 * Compare two mazes for equality
+	 */
+    mazeEquals(maze1, maze2) {
+        if (!maze1 || !maze2) {
+            return maze1 === maze2;
+        }
+        if (maze1.length !== maze2.length) {
+            return false;
+        }
+        for (let i = 0; i < maze1.length; i++) {
+            if (maze1[i].length !== maze2[i].length) {
+                return false;
+            }
+            for (let j = 0; j < maze1[i].length; j++) {
+                if (maze1[i][j] !== maze2[i][j]) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
+	 * Phase 4: Compare two pellet grids for equality
+	 */
+    pelletGridEquals(grid1, grid2) {
+        if (!grid1 || !grid2) {
+            return grid1 === grid2;
+        }
+        if (grid1.length !== grid2.length) {
+            return false;
+        }
+        for (let i = 0; i < grid1.length; i++) {
+            if (grid1[i].length !== grid2[i].length) {
+                return false;
+            }
+            for (let j = 0; j < grid1[i].length; j++) {
+                if (grid1[i][j] !== grid2[i][j]) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
+	 * Phase 4: Compare two snapshots for equality (Deep comparison)
+	 * Returns true if snapshots are functionally equivalent for rendering
+	 */
+    snapshotEquals(s1, s2) {
+        if (!s1 || !s2) {
+            return s1 === s2;
+        }
+
+        // Quick tick count check
+        if (s1.tickCount !== s2.tickCount) {
+            return false;
+        }
+
+        // Compare critical rendering data
+        if (s1.score !== s2.score ||
+            s1.lives !== s2.lives ||
+            s1.level !== s2.level ||
+            s1.isDying !== s2.isDying) {
+            return false;
+        }
+
+        // Compare maze (expensive but necessary)
+        if (!this.mazeEquals(s1.maze, s2.maze)) {
+            return false;
+        }
+
+        // Compare pellet grid (expensive but necessary)
+        if (!this.pelletGridEquals(s1.pelletGrid, s2.pelletGrid)) {
+            return false;
+        }
+
+        // Compare entities (pacman position, ghosts, fruit)
+        if (s1.pacman && s2.pacman) {
+            if (s1.pacman.x !== s2.pacman.x ||
+                s1.pacman.y !== s2.pacman.y ||
+                s1.pacman.direction !== s2.pacman.direction) {
+                return false;
+            }
+        } else if (s1.pacman !== s2.pacman) {
+            return false;
+        }
+
+        // Compare boss state
+        if (s1.boss && s2.boss) {
+            if (s1.boss.type !== s2.boss.type ||
+                s1.boss.x !== s2.boss.x ||
+                s1.boss.y !== s2.boss.y ||
+                s1.boss.health !== s2.boss.health) {
+                return false;
+            }
+        } else if (s1.boss !== s2.boss) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+	 * Update pellet visuals based on snapshot
+	 * Phase 4: Render directly from snapshot, no local state tracking
+	 * Uses pools' gridIndex for efficient lookup
+	 */
+    updatePelletVisuals(pelletGrid) {
+        if (!pelletGrid) {
+            return;
+        }
+
+        // Phase 4: Remove pellets that are no longer in the grid
+        // Iterate through pool's active pellets and check against snapshot
+        const pelletsToRemove = [];
+
+        // Check regular pellets
+        for (const pellet of [...this.pelletPool.active]) {
+            const gridX = Math.floor(pellet.x / gameConfig.tileSize);
+            const gridY = Math.floor(pellet.y / gameConfig.tileSize);
+
+            if (gridY < 0 || gridY >= pelletGrid.length ||
+                gridX < 0 || gridX >= pelletGrid[0].length ||
+                pelletGrid[gridY][gridX] !== PELLET_TYPES.PELLET) {
+                pelletsToRemove.push({ pellet, pool: this.pelletPool });
+            }
+        }
+
+        // Check power pellets
+        for (const pellet of [...this.powerPelletPool.active]) {
+            const gridX = Math.floor(pellet.x / gameConfig.tileSize);
+            const gridY = Math.floor(pellet.y / gameConfig.tileSize);
+
+            if (gridY < 0 || gridY >= pelletGrid.length ||
+                gridX < 0 || gridX >= pelletGrid[0].length ||
+                pelletGrid[gridY][gridX] !== PELLET_TYPES.POWER_PELLET) {
+                pelletsToRemove.push({ pellet, pool: this.powerPelletPool });
+            }
+        }
+
+        // Remove outdated pellets
+        for (const { pellet, pool } of pelletsToRemove) {
+            pool.release(pellet);
+        }
+
+        // Phase 4: Add new pellets from snapshot
+        for (let y = 0; y < pelletGrid.length; y++) {
+            for (let x = 0; x < pelletGrid[y].length; x++) {
+                const pelletType = pelletGrid[y][x];
+
+                if (pelletType === PELLET_TYPES.PELLET) {
+                    // Check if pellet already exists in pool
+                    if (!this.pelletPool.getByGrid(x, y)) {
+                        this.pelletPool.get(x, y);
+                    }
+                } else if (pelletType === PELLET_TYPES.POWER_PELLET) {
+                    // Check if power pellet already exists in pool
+                    if (!this.powerPelletPool.getByGrid(x, y)) {
+                        const powerPellet = this.powerPelletPool.get(x, y);
+                        // Add pulse animation for new power pellets
+                        this.scene.tweens.add({
+                            targets: powerPellet,
+                            scale: { from: 1, to: 1.5 },
+                            alpha: { from: 1, to: 0.7 },
+                            duration: 500,
+                            yoyo: true,
+                            repeat: -1,
+                            ease: 'Sine.easeInOut'
+                        });
+                    }
+                }
+            }
+        }
+    }
+
+    /**
 	 * Sync all renderers to model state
 	 * Called each frame in the update loop
+	 * @deprecated Use updateFromSnapshot(snapshot) instead for Phase 1 & 4
 	 */
     sync() {
         if (!this.playerRenderer || this.isDeathAnimating) {
@@ -535,43 +893,90 @@ export default class ModelDrivenGameView {
 
         this.fruitRenderer.sync();
 
-        this.syncBossVisuals();
-        this.syncPowerUpVisuals();
-    }
-
-    syncBossVisuals() {
-        for (const [, visual] of this.bossVisuals) {
-            const boss = this.gameModel.getBossEntity();
-            if (!boss) {
-                continue;
-            }
-
-            visual.sprite.x = boss.x;
-            visual.sprite.y = boss.y;
-
-            const barWidth = gameConfig.tileSize * 2;
-            const healthPercent =
-				this.gameModel.getBossHealth() / this.gameModel.getBossMaxHealth();
-            visual.healthBar.fill.width = barWidth * healthPercent;
-            visual.healthBar.fill.x = boss.x - barWidth / 2;
-
-            const healthColor =
-				healthPercent > 0.5
-				    ? 0x00ff00
-				    : healthPercent > 0.25
-				        ? 0xffff00
-				        : 0xff0000;
-            visual.healthBar.fill.setFillStyle(healthColor);
+        // Phase 4: Sync boss and power-ups from last snapshot
+        if (this.lastSnapshot) {
+            this.syncBossVisuals(this.lastSnapshot.boss);
+            this.syncPowerUpVisuals(this.lastSnapshot.powerUps);
         }
     }
 
-    syncPowerUpVisuals() {
-        for (const visual of this.powerUpVisuals.values()) {
-            const pixel = gridToPixel(visual.gridX, visual.gridY);
-            visual.sprite.x = pixel.x + gameConfig.tileSize * 0.35;
-            visual.sprite.y = pixel.y + gameConfig.tileSize * 0.35;
-            visual.text.x = pixel.x + gameConfig.tileSize * 0.35;
-            visual.text.y = pixel.y + gameConfig.tileSize * 0.35;
+    /**
+	 * Sync boss visual from snapshot
+	 * Phase 4: Update single boss visual from snapshot (no Map state duplication)
+	 */
+    syncBossVisuals(bossSnapshot = null) {
+        const boss = bossSnapshot || (this.lastSnapshot?.boss);
+
+        if (!boss) {
+            // Remove boss visual if boss no longer exists
+            if (this.bossVisual) {
+                this.removeBossVisual();
+            }
+            return;
+        }
+
+        // Phase 4: Create boss visual if it doesn't exist
+        if (!this.bossVisual) {
+            this.createBossVisual(boss.type);
+        }
+
+        // Update existing boss visual from snapshot
+        if (this.bossVisual) {
+            this.bossVisual.sprite.x = boss.x;
+            this.bossVisual.sprite.y = boss.y;
+
+            const barWidth = gameConfig.tileSize * 2;
+            const healthPercent = boss.healthPercent || 1;
+            this.bossVisual.healthBar.fill.width = barWidth * healthPercent;
+            this.bossVisual.healthBar.fill.x = boss.x - barWidth / 2;
+
+            const healthColor =
+                healthPercent > 0.5
+                    ? 0x00ff00
+                    : healthPercent > 0.25
+                        ? 0xffff00
+                        : 0xff0000;
+            this.bossVisual.healthBar.fill.setFillStyle(healthColor);
+        }
+    }
+
+    /**
+	 * Sync power-up visuals from snapshot
+	 * Phase 4: Update power-up visuals based on snapshot (minimal state tracking)
+	 */
+    syncPowerUpVisuals(powerUpsSnapshot = null) {
+        const powerUps = powerUpsSnapshot || (this.lastSnapshot?.powerUps);
+
+        if (!powerUps) {
+            return;
+        }
+
+        // Phase 4: Build set of current power-up keys from snapshot
+        const currentKeys = new Set(powerUps.map(pu => `${pu.type}_${pu.gridX}_${pu.gridY}`));
+
+        // Phase 4: Remove power-ups that are no longer in the snapshot
+        for (const [key, visual] of this.powerUpVisuals) {
+            if (!currentKeys.has(key)) {
+                this.removePowerUpVisual(visual);
+            }
+        }
+
+        // Phase 4: Update or create power-ups from snapshot
+        for (const powerUp of powerUps) {
+            const key = `${powerUp.type}_${powerUp.gridX}_${powerUp.gridY}`;
+            let visual = this.powerUpVisuals.get(key);
+
+            if (visual) {
+                // Update existing visual
+                const pixel = gridToPixel(powerUp.gridX, powerUp.gridY);
+                visual.sprite.x = pixel.x + gameConfig.tileSize * 0.35;
+                visual.sprite.y = pixel.y + gameConfig.tileSize * 0.35;
+                visual.text.x = pixel.x + gameConfig.tileSize * 0.35;
+                visual.text.y = pixel.y + gameConfig.tileSize * 0.35;
+            } else {
+                // Create new visual from snapshot
+                this.createPowerUpVisual(powerUp.type, powerUp.gridX, powerUp.gridY);
+            }
         }
     }
 
@@ -615,21 +1020,25 @@ export default class ModelDrivenGameView {
 
     /**
 	 * Create boss visual
+	 * Phase 4: Create single boss visual (no Map, minimal state)
 	 */
     createBossVisual(bossType) {
-        const boss = this.gameModel.getBossEntity();
-        if (!boss || this.bossVisuals.has(bossType)) {
+        // Phase 4: Use snapshot data instead of direct model access
+        const boss = this.lastSnapshot?.boss ||
+                     (this.gameModel?.getBossEntity ? this.gameModel.getBossEntity() : null);
+
+        if (!boss || this.bossVisual) {
             return;
         }
 
         const radius = gameConfig.tileSize * 0.6;
 
-        this.bossVisuals.set(bossType, {
+        this.bossVisual = {
             sprite: this.createBossSprite(bossType, boss.x, boss.y, radius),
             healthBar: this.createBossHealthBar(boss, radius),
             phaseIndicator: this.createPhaseIndicator(boss.x, boss.y, radius),
-            boss
-        });
+            bossType
+        };
 
         this.updateBossVisualPhase(bossType, boss.phase);
     }
@@ -714,20 +1123,23 @@ export default class ModelDrivenGameView {
         return { bossConfig: colors[bossType] || colors.alpha };
     }
 
+    /**
+	 * Update boss visual phase
+	 * Phase 4: Update single boss visual
+	 */
     updateBossVisualPhase(bossType, phase) {
-        const visual = this.bossVisuals.get(bossType);
-        if (!visual) {
+        if (!this.bossVisual) {
             return;
         }
 
-        visual.phaseIndicator.setText(`PHASE ${phase}`);
+        this.bossVisual.phaseIndicator.setText(`PHASE ${phase}`);
 
         const intensity = phase === 1 ? 1 : 1.5;
-        visual.sprite.setScale(intensity);
+        this.bossVisual.sprite.setScale(intensity);
 
         if (phase > 1) {
             this.scene.tweens.add({
-                targets: visual.sprite,
+                targets: this.bossVisual.sprite,
                 scale: intensity + 0.1,
                 duration: 200,
                 yoyo: true,
@@ -736,14 +1148,17 @@ export default class ModelDrivenGameView {
         }
     }
 
+    /**
+	 * Flash boss visual (damage feedback)
+	 * Phase 4: Flash single boss visual
+	 */
     flashBossVisual(bossType) {
-        const visual = this.bossVisuals.get(bossType);
-        if (!visual) {
+        if (!this.bossVisual) {
             return;
         }
 
         this.scene.tweens.add({
-            targets: visual.sprite,
+            targets: this.bossVisual.sprite,
             alpha: 0.3,
             duration: 50,
             yoyo: true,
@@ -751,18 +1166,21 @@ export default class ModelDrivenGameView {
         });
     }
 
-    removeBossVisual(bossType) {
-        const visual = this.bossVisuals.get(bossType);
-        if (!visual) {
+    /**
+	 * Remove boss visual
+	 * Phase 4: Remove single boss visual (no Map)
+	 */
+    removeBossVisual() {
+        if (!this.bossVisual) {
             return;
         }
 
-        visual.sprite.destroy();
-        visual.healthBar.background.destroy();
-        visual.healthBar.fill.destroy();
-        visual.phaseIndicator.destroy();
+        this.bossVisual.sprite.destroy();
+        this.bossVisual.healthBar.background.destroy();
+        this.bossVisual.healthBar.fill.destroy();
+        this.bossVisual.phaseIndicator.destroy();
 
-        this.bossVisuals.delete(bossType);
+        this.bossVisual = null;
     }
 
     showBossWarning(bossType) {
@@ -942,7 +1360,14 @@ export default class ModelDrivenGameView {
         return { powerUpConfig: configs[type] || configs.SHIELD };
     }
 
+    /**
+	 * Remove power-up visual
+	 * Phase 4: Clean up power-up visual and remove from tracking Map
+	 */
     removePowerUpVisual(visual) {
+        if (!visual) {
+            return;
+        }
         visual.sprite.destroy();
         visual.text.destroy();
         const key = `${visual.type}_${visual.gridX}_${visual.gridY}`;
@@ -1134,13 +1559,14 @@ export default class ModelDrivenGameView {
             this.fruitRenderer = null;
         }
 
-        for (const visual of this.bossVisuals.values()) {
-            visual.sprite.destroy();
-            visual.healthBar.background.destroy();
-            visual.healthBar.fill.destroy();
-            visual.phaseIndicator.destroy();
+        // Phase 4: Cleanup single boss visual
+        if (this.bossVisual) {
+            this.bossVisual.sprite.destroy();
+            this.bossVisual.healthBar.background.destroy();
+            this.bossVisual.healthBar.fill.destroy();
+            this.bossVisual.phaseIndicator.destroy();
+            this.bossVisual = null;
         }
-        this.bossVisuals.clear();
 
         for (const visual of this.powerUpVisuals.values()) {
             visual.sprite.destroy();
@@ -1160,7 +1586,7 @@ export default class ModelDrivenGameView {
         if (this.powerPelletPool) {
             this.powerPelletPool.destroy();
         }
-        this.activePellets.clear();
+        // Phase 4: No activePellets Map - pools maintain their own gridIndex
 
         // Disable sound
         this.soundManager.setEnabled(false);

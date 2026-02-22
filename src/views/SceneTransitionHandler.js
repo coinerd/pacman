@@ -4,6 +4,8 @@
  * Delegates to Controller via events
  */
 
+import { GAME_EVENTS } from '../core/EventBus.js';
+
 export class SceneTransitionHandler {
     constructor({ eventBus }) {
         this.eventBus = eventBus;
@@ -35,27 +37,27 @@ export class SceneTransitionHandler {
      * Request pause
      */
     requestPause() {
-        this.eventBus.emit('PAUSE_REQUESTED');
+        this.eventBus.emit(GAME_EVENTS.PAUSE_REQUESTED);
     }
 
     /**
      * Request resume
      */
     requestResume() {
-        this.eventBus.emit('RESUME_REQUESTED');
+        this.eventBus.emit(GAME_EVENTS.RESUME_REQUESTED);
     }
 
     /**
      * Request restart
      */
     requestRestart() {
-        this.eventBus.emit('RESTART_LEVEL_REQUESTED');
+        this.eventBus.emit(GAME_EVENTS.RESTART_LEVEL_REQUESTED);
     }
 
     /**
      * Request return to menu
      */
     requestReturnToMenu() {
-        this.eventBus.emit('RETURN_TO_MENU_REQUESTED');
+        this.eventBus.emit(GAME_EVENTS.RETURN_TO_MENU_REQUESTED);
     }
 }

@@ -2,6 +2,10 @@
  * GameController
  * Simplified controller that translates input into model actions.
  * No Phaser dependencies - uses EventBus for View-layer communication.
+ *
+ * Phase 2: Scene-Transition Handler
+ * - Listens for scene transition requests from View
+ * - Emits transition events for Scene layer to handle
  */
 
 import { gameEvents, GAME_EVENTS } from '../core/EventBus.js';
@@ -20,6 +24,9 @@ export class GameController {
         this.inputManager = null;
         this.isActive = false;
         this.unsubscribeInput = null;
+
+        // Scene transition event handlers (Phase 2)
+        this.unsubscribeTransitionEvents = null;
 
         if (inputManager) {
             this.setInputManager(inputManager);
@@ -42,6 +49,82 @@ export class GameController {
             this.unsubscribeInput = inputManager.onInput((input) => {
                 this.handleInput(input);
             });
+        }
+    }
+
+    /**
+     * Bind to scene transition events (Phase 2)
+     * These events are emitted by SceneTransitionHandler in the View
+     */
+    bindSceneTransitionEvents() {
+        const unsubscribers = [];
+
+        // Game win transition
+        unsubscribers.push(
+            gameEvents.on('GAME_WIN', (data) => {
+                this.handleSceneTransition('WinScene', data);
+            })
+        );
+
+        // Game over transition
+        unsubscribers.push(
+            gameEvents.on('GAME_OVER', (data) => {
+                this.handleSceneTransition('GameOverScene', data);
+            })
+        );
+
+        // Return to menu transition
+        unsubscribers.push(
+            gameEvents.on('RETURN_TO_MENU', (data) => {
+                this.handleSceneTransition('MenuScene', data);
+            })
+        );
+
+        // Pause game transition
+        unsubscribers.push(
+            gameEvents.on('PAUSE_GAME', (data) => {
+                gameEvents.emit(GAME_EVENTS.PAUSE_REQUESTED, data);
+            })
+        );
+
+        // Open settings transition
+        unsubscribers.push(
+            gameEvents.on('OPEN_SETTINGS', (data) => {
+                this.handleSceneTransition('SettingsScene', data);
+            })
+        );
+
+        // Generic navigation event (fallback)
+        unsubscribers.push(
+            gameEvents.on('NAVIGATE_TO_SCENE', (data) => {
+                this.handleSceneTransition(data.sceneKey, data.data);
+            })
+        );
+
+        this.unsubscribeTransitionEvents = () => {
+            unsubscribers.forEach(unsub => unsub());
+            this.unsubscribeTransitionEvents = null;
+        };
+    }
+
+    /**
+     * Handle scene transition (Phase 2)
+     * Note: Actual scene.start() is handled by the Scene layer, not by Controller
+     * This method just re-emits the event for the Scene layer to handle
+     * @param {string} sceneKey - Target scene key
+     * @param {Object} data - Optional data to pass to scene
+     */
+    handleSceneTransition(sceneKey, data = {}) {
+        // Re-emit as a scene transition event for the Scene layer
+        gameEvents.emit(`SCENE_TRANSITION:${sceneKey}`, data);
+    }
+
+    /**
+     * Unbind scene transition events
+     */
+    unbindSceneTransitionEvents() {
+        if (this.unsubscribeTransitionEvents) {
+            this.unsubscribeTransitionEvents();
         }
     }
 
@@ -179,6 +262,9 @@ export class GameController {
             this.unsubscribeInput();
             this.unsubscribeInput = null;
         }
+
+        // Cleanup scene transition events (Phase 2)
+        this.unbindSceneTransitionEvents();
 
         this.inputManager = null;
         this.gameModel = null;

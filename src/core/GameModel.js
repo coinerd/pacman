@@ -30,6 +30,7 @@ import {
     PELLET_TYPES
 } from '../utils/MazeLayout.js';
 import { GAME_EVENTS, gameEvents } from './EventBus.js';
+import { VIEW_EVENTS } from '../views/ViewEvents.js';
 
 export default class GameModel {
     /**
@@ -88,6 +89,10 @@ export default class GameModel {
         this.pelletsEaten = 0;
         this.levelDeaths = 0;
 
+        // Entity state tracking for view events
+        this.lastPacmanDirection = null;
+        this.lastGhostModes = new Map(); // ghostType -> mode
+
         // Timers
         this.deathTimer = 0;
         this.deathPauseDuration = config.deathPauseDuration ?? 2;
@@ -101,6 +106,23 @@ export default class GameModel {
 
         // Initialize AI system
         this.ghostAIAdapter = new EnemyAIAdapter(this);
+
+        // Initialize entity state tracking
+        this.initializeEntityStateTracking();
+    }
+
+    /**
+     * Initialize entity state tracking for view events
+     * Sets initial values to avoid emitting events on first frame
+     */
+    initializeEntityStateTracking() {
+        // Track initial Pacman direction
+        this.lastPacmanDirection = this.pacman?.direction || null;
+
+        // Track initial ghost modes
+        for (const ghost of this.ghosts) {
+            this.lastGhostModes.set(ghost.ghostType, ghost.mode);
+        }
 
         // Collision statistics
         this.collisionStats = {
@@ -249,6 +271,9 @@ export default class GameModel {
         const pacmanMoveEvents = this.updatePacmanMovement(deltaSeconds);
         events.push(...pacmanMoveEvents);
 
+        // Track Pacman direction changes for view events
+        this.trackPacmanDirectionChange();
+
         // Update Pacman state (animations, etc.)
         const pacmanStateEvents = this.pacman.update(
             deltaSeconds,
@@ -273,6 +298,9 @@ export default class GameModel {
                 true
             );
             events.push(...ghostStateEvents);
+
+            // Track ghost mode changes for view events
+            this.trackGhostModeChange(ghost);
         }
 
         // Update fruit
@@ -438,6 +466,53 @@ export default class GameModel {
         this.resetMovementStats();
         this.resetCollisionStats();
         this.ghostAIAdapter.reset();
+
+        // Reset tracking
+        this.lastPacmanDirection = null;
+        this.lastGhostModes.clear();
+    }
+
+    /**
+     * Track Pacman direction changes and emit view events
+     * Phase 3: Emits VIEW_EVENTS.PACMAN_DIRECTION_CHANGED
+     */
+    trackPacmanDirectionChange() {
+        const currentDirection = this.pacman.direction;
+
+        if (this.lastPacmanDirection !== currentDirection) {
+            gameEvents.emit(VIEW_EVENTS.PACMAN_DIRECTION_CHANGED, {
+                oldDirection: this.lastPacmanDirection,
+                newDirection: currentDirection,
+                gridX: this.pacman.gridX,
+                gridY: this.pacman.gridY,
+                timestamp: Date.now()
+            });
+
+            this.lastPacmanDirection = currentDirection;
+        }
+    }
+
+    /**
+     * Track ghost mode changes and emit view events
+     * Phase 3: Emits VIEW_EVENTS.GHOST_MODE_CHANGED
+     * @param {EnemyState} ghost - Ghost entity to track
+     */
+    trackGhostModeChange(ghost) {
+        const lastMode = this.lastGhostModes.get(ghost.ghostType);
+        const currentMode = ghost.mode;
+
+        if (lastMode !== currentMode) {
+            gameEvents.emit(VIEW_EVENTS.GHOST_MODE_CHANGED, {
+                ghostType: ghost.ghostType,
+                oldMode: lastMode,
+                newMode: currentMode,
+                isFrightened: ghost.isFrightened,
+                isEaten: ghost.isEaten,
+                timestamp: Date.now()
+            });
+
+            this.lastGhostModes.set(ghost.ghostType, currentMode);
+        }
     }
 
     /**
@@ -481,21 +556,34 @@ export default class GameModel {
 
     /**
      * Emit events via EventBus for view layer
+     * Phase 3: Emits both GAME_EVENTS and VIEW_EVENTS
+     * - GAME_EVENTS: Game-flow specific (Level Complete, Game Over, etc.)
+     * - VIEW_EVENTS: Rendering-specific (Entity movement, Pellet eaten, etc.)
      * @param {Array<Object>} events - Events to emit
      */
     emitEvents(events) {
         for (const event of events) {
             switch (event.type) {
             case 'pellet_eaten':
+                // GAME_EVENTS: For controller and game flow
                 gameEvents.emit(GAME_EVENTS.PELLET_EATEN, {
                     score: event.score,
                     pelletsRemaining: event.pelletsRemaining,
                     gridX: event.gridX,
                     gridY: event.gridY
                 });
+                // VIEW_EVENTS: For view rendering (particle effects, etc.)
+                gameEvents.emit(VIEW_EVENTS.PELLET_EATEN, {
+                    score: event.score,
+                    pelletsRemaining: event.pelletsRemaining,
+                    gridX: event.gridX,
+                    gridY: event.gridY,
+                    timestamp: Date.now()
+                });
                 break;
 
             case 'power_pellet_eaten':
+                // GAME_EVENTS: For controller and game flow
                 gameEvents.emit(GAME_EVENTS.POWER_PELLET_EATEN, {
                     score: event.score,
                     pelletsRemaining: event.pelletsRemaining,
@@ -503,53 +591,129 @@ export default class GameModel {
                     gridX: event.gridX,
                     gridY: event.gridY
                 });
+                // VIEW_EVENTS: For view rendering (visual effects)
+                gameEvents.emit(VIEW_EVENTS.PELLET_EATEN, {
+                    score: event.score,
+                    pelletsRemaining: event.pelletsRemaining,
+                    gridX: event.gridX,
+                    gridY: event.gridY,
+                    type: 'power_pellet',
+                    timestamp: Date.now()
+                });
+                // Screen flash effect
+                gameEvents.emit(VIEW_EVENTS.SCREEN_FLASH, {
+                    color: 0xffff00,
+                    duration: 200,
+                    timestamp: Date.now()
+                });
                 break;
 
             case 'ghost_eaten':
+                // GAME_EVENTS: For controller and game flow
                 gameEvents.emit(GAME_EVENTS.GHOST_EATEN, {
                     score: event.score,
                     ghostType: event.ghostType,
                     combo: event.combo
                 });
+                // VIEW_EVENTS: For view rendering (ghost disappearing effect)
+                gameEvents.emit(VIEW_EVENTS.GHOST_EATEN, {
+                    score: event.score,
+                    ghostType: event.ghostType,
+                    combo: event.combo,
+                    timestamp: Date.now()
+                });
                 break;
 
             case 'fruit_eaten':
+                // GAME_EVENTS: For controller and game flow
                 gameEvents.emit(GAME_EVENTS.FRUIT_EATEN, {
                     score: event.score
+                });
+                // VIEW_EVENTS: For view rendering (fruit collected effect)
+                gameEvents.emit(VIEW_EVENTS.FRUIT_EATEN, {
+                    score: event.score,
+                    timestamp: Date.now()
                 });
                 break;
 
             case 'pacman_died':
+                // GAME_EVENTS: For controller and game flow
                 gameEvents.emit(GAME_EVENTS.LIVES_LOST, {
                     livesRemaining: event.livesRemaining ?? this.lives
+                });
+                // VIEW_EVENTS: For view rendering (death animation)
+                gameEvents.emit(VIEW_EVENTS.PACMAN_DEATH_STARTED, {
+                    livesRemaining: event.livesRemaining ?? this.lives,
+                    timestamp: Date.now()
                 });
                 break;
 
             case 'level_complete':
+                // GAME_EVENTS: For controller and game flow
                 gameEvents.emit(GAME_EVENTS.LEVEL_COMPLETE, {
                     level: this.level,
                     score: this.score
                 });
+                // VIEW_EVENTS: For view rendering (completion effect)
+                gameEvents.emit(VIEW_EVENTS.EFFECT_CREATED, {
+                    effectType: 'level_complete',
+                    timestamp: Date.now()
+                });
                 break;
 
             case 'game_over':
+                // GAME_EVENTS: For controller and game flow
                 gameEvents.emit(GAME_EVENTS.GAME_OVER, {
                     score: this.score,
                     highScore: this.highScore
                 });
+                // VIEW_EVENTS: For view rendering (screen shake, flash)
+                gameEvents.emit(VIEW_EVENTS.SCREEN_SHAKE, {
+                    intensity: 10,
+                    duration: 500,
+                    timestamp: Date.now()
+                });
+                gameEvents.emit(VIEW_EVENTS.SCREEN_FLASH, {
+                    color: 0xff0000,
+                    duration: 300,
+                    timestamp: Date.now()
+                });
                 break;
 
             case 'respawn':
+                // GAME_EVENTS: For controller and game flow
                 gameEvents.emit(GAME_EVENTS.RESPAWN, {
                     livesRemaining: this.lives
+                });
+                // VIEW_EVENTS: For view rendering (respawn effect)
+                gameEvents.emit(VIEW_EVENTS.EFFECT_CREATED, {
+                    effectType: 'respawn',
+                    timestamp: Date.now()
                 });
                 break;
 
             case 'score_changed':
+                // GAME_EVENTS: For controller and game flow
                 gameEvents.emit(GAME_EVENTS.SCORE_CHANGED, {
                     score: this.score,
                     highScore: this.highScore
                 });
+                // No view event needed - score is part of snapshot
+                break;
+
+            case 'movement_started':
+                // Internal event - emit view event for entity movement
+                gameEvents.emit(VIEW_EVENTS.ENTITY_MOVED, {
+                    entityId: event.entityId,
+                    direction: event.direction,
+                    fromGrid: event.fromGrid,
+                    toGrid: event.toGrid,
+                    timestamp: Date.now()
+                });
+                break;
+
+            case 'movement_completed':
+                // Internal event - no view event needed (position in snapshot)
                 break;
 
             case 'tile_center_reached':
@@ -738,10 +902,20 @@ export default class GameModel {
 
     /**
      * Get complete state snapshot for view sync
-     * @returns {Object}
+     * Returns an immutable GameSnapshot object for view consumption
+     * @returns {GameSnapshot}
      */
     getSnapshot() {
-        return {
+        // Deep freeze maze and pelletGrid arrays for true immutability
+        const deepFreezeArray = (arr) => {
+            if (!arr) {
+                return arr;
+            }
+            const frozen = arr.map(row => Object.freeze([...row]));
+            return Object.freeze(frozen);
+        };
+
+        const snapshotData = {
             level: this.level,
             score: this.score,
             lives: this.lives,
@@ -753,14 +927,27 @@ export default class GameModel {
             pelletsRemaining: this.pelletsRemaining,
             totalPellets: this.totalPellets,
             pelletsEatenPercent: this.getPelletsEatenPercentage(),
-            pacman: this.pacman.getSnapshot(),
-            ghosts: this.ghosts.map((g) => g.getSnapshot()),
-            fruit: this.fruit.getSnapshot(),
-            boss: this.bossBattleSystem.getSnapshot(),
-            powerUps: this.additionalPowerUpSystem.getSnapshot(),
-            story: this.storyMode.getSnapshot(),
+
+            // Maze data for view rendering (deep frozen for immutability)
+            maze: deepFreezeArray(this.maze),
+            pelletGrid: deepFreezeArray(this.pelletGrid),
+
+            // Entity snapshots
+            pacman: Object.freeze(this.pacman.getSnapshot()),
+            ghosts: Object.freeze(this.ghosts.map((g) => Object.freeze(g.getSnapshot()))),
+            fruit: Object.freeze(this.fruit.getSnapshot()),
+
+            // Advanced features
+            boss: Object.freeze(this.bossBattleSystem.getSnapshot()),
+            powerUps: Object.freeze(this.additionalPowerUpSystem.getSnapshot()),
+            story: Object.freeze(this.storyMode.getSnapshot()),
+
+            // Debug info
             tickCount: this.tickCount
         };
+
+        // Return immutable snapshot (Object.freeze makes it read-only)
+        return Object.freeze(snapshotData);
     }
 
     /**

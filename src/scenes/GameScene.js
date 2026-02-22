@@ -97,6 +97,9 @@ export default class GameScene extends Phaser.Scene {
         });
         this.gameController.activate();
 
+        // Phase 2: Bind scene transition events in controller
+        this.gameController.bindSceneTransitionEvents();
+
         this.debugOverlay = new DebugOverlay(this);
         if (this.settings.showFps) {
             this.debugOverlay.setVisible(true);
@@ -241,16 +244,33 @@ export default class GameScene extends Phaser.Scene {
             this.scene.start('MenuScene');
         });
 
+        // Phase 2: Handle scene transition events from SceneTransitionHandler
+        gameEvents.on('GAME_WIN', (data) => {
+            this.scene.start('WinScene', data);
+        });
+
+        gameEvents.on('GAME_OVER', (data) => {
+            this.scene.start('GameOverScene', data);
+        });
+
+        gameEvents.on('RETURN_TO_MENU', (data) => {
+            this.cleanup();
+            this.scene.start('MenuScene', data);
+        });
+
+        // Handle restart level requests
+        gameEvents.on(GAME_EVENTS.RESTART_LEVEL_REQUESTED, (data) => {
+            this.scene.restart(data);
+        });
+
         gameEvents.on(GAME_EVENTS.ACHIEVEMENT_UNLOCKED, (achievement) => {
             this.gameView.showAchievementNotification(achievement);
         });
 
         gameEvents.on(GAME_EVENTS.LEVEL_COMPLETE, () => {
-            this.scene.start('WinScene', {
-                score: this.gameModel.score,
-                level: this.gameModel.level,
-                highScore: this.gameModel.highScore
-            });
+            // Phase 2: Level complete event is now handled by View's SceneTransitionHandler
+            // The View will emit 'GAME_WIN' event which is handled above
+            // Kept for backward compatibility during migration
         });
 
         if (this.replaySystem && !this.replaySystem.isReplaying) {
@@ -285,6 +305,9 @@ export default class GameScene extends Phaser.Scene {
     }
 
     cleanup() {
+        // Phase 2: Unbind scene transition events before destroying controller
+        this.gameController?.unbindSceneTransitionEvents();
+
         this.uiController?.cleanup();
         this.inputManager?.destroy();
         this.gameController?.destroy();
