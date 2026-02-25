@@ -22,6 +22,7 @@ import {
 } from '../input/index.js';
 import { StorageManager } from '../managers/StorageManager.js';
 import { ViewContext } from '../views/ViewInterface.js';
+import { PlayerScoreFacade } from '../model/PlayerScoreFacade.js';
 import { AchievementSystem } from '../systems/AchievementSystem.js';
 import { DebugOverlay } from '../systems/DebugOverlay.js';
 import { FixedTimeStepLoop } from '../systems/FixedTimeStepLoop.js';
@@ -56,6 +57,8 @@ export default class GameScene extends Phaser.Scene {
             this.storageManager.getHighScore()
         );
 
+        this.playerScoreFacade = new PlayerScoreFacade(this.gameModel);
+
         this.levelManager = new LevelManager(this, this.gameModel);
         this.achievementSystem = new AchievementSystem(this);
         this.achievementSystem.init();
@@ -82,7 +85,7 @@ export default class GameScene extends Phaser.Scene {
 
         this.gameView.create();
 
-        this.uiController = new UIController(this, this.gameModel);
+        this.uiController = new UIController(this, this.playerScoreFacade);
         this.uiController.create();
 
         this.inputManager = new InputManager();
@@ -96,6 +99,7 @@ export default class GameScene extends Phaser.Scene {
 
         this.gameController = new GameController({
             gameModel: this.gameModel,
+            playerScoreFacade: this.playerScoreFacade,
             replaySystem: this.replaySystem,
             inputManager: this.inputManager
         });
@@ -121,8 +125,9 @@ export default class GameScene extends Phaser.Scene {
 
         // Get initial snapshot for view and UI
         const initialSnapshot = this.gameModel.getSnapshot();
+        const initialHudSnapshot = this.playerScoreFacade.toHudSnapshot();
         this.gameView.updateFromSnapshot(initialSnapshot);
-        this.uiController.updateFromSnapshot(initialSnapshot);
+        this.uiController.updateFromSnapshot(initialHudSnapshot);
 
         gameEvents.emit(GAME_EVENTS.GAME_STARTED, {
             level: this.gameModel.level
@@ -189,6 +194,7 @@ export default class GameScene extends Phaser.Scene {
 
         // Update view with snapshot (new architecture)
         const snapshot = this.gameModel.getSnapshot();
+        const hudSnapshot = this.playerScoreFacade.toHudSnapshot();
 
         // Debug logging for UI updates
         if (!this._uiLogFrames) {
@@ -196,11 +202,11 @@ export default class GameScene extends Phaser.Scene {
         }
         this._uiLogFrames++;
         if (this._uiLogFrames % 60 === 0) {
-            console.log(`[GameScene.update] Frame ${this._uiLogFrames}: Score=${snapshot.score}, HighScore=${snapshot.highScore}, Lives=${snapshot.lives}, Level=${snapshot.level}`);
+            console.log(`[GameScene.update] Frame ${this._uiLogFrames}: Score=${hudSnapshot.score}, HighScore=${hudSnapshot.highScore}, Lives=${hudSnapshot.lives}, Level=${hudSnapshot.level}`);
         }
 
         this.gameView.updateFromSnapshot(snapshot);
-        this.uiController.updateFromSnapshot(snapshot);
+        this.uiController.updateFromSnapshot(hudSnapshot);
 
         this.debugOverlay.update(time, delta);
 
