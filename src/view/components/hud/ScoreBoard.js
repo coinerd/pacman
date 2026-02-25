@@ -82,7 +82,8 @@ export class ScoreBoard {
             return;
         }
 
-        this.scoreText.setText(`${score}`);
+        const safeScore = Number.isFinite(Number(score)) ? Number(score) : 0;
+        this.scoreText.setText(`${safeScore}`);
     }
 
     destroy() {
