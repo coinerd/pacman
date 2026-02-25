@@ -83,8 +83,9 @@ export class HighScoreWidget {
             return;
         }
 
-        this.highScoreText.setText(`${highScore}`);
-        this.lastHighScore = highScore;
+        const safeHighScore = Number.isFinite(Number(highScore)) ? Number(highScore) : 0;
+        this.highScoreText.setText(`${safeHighScore}`);
+        this.lastHighScore = safeHighScore;
     }
 
     highlightIfNewRecord() {

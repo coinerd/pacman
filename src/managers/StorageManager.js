@@ -15,7 +15,12 @@ export class StorageManager {
     getHighScore() {
         try {
             const highScore = this.storage.getItem('pacman_high_score');
-            return highScore ? parseInt(highScore, 10) : 0;
+            if (!highScore) {
+                return 0;
+            }
+
+            const parsedHighScore = parseInt(highScore, 10);
+            return Number.isFinite(parsedHighScore) ? parsedHighScore : 0;
         } catch (error) {
             console.warn('Error reading high score:', error);
             return 0;

@@ -13,13 +13,14 @@ export default class ScoreModule {
      * @param {{emit: Function}} [config.eventBus]
      */
     constructor(config = {}) {
-        this.score = config.score ?? 0;
+        this.score = this.normalizeScoreValue(config.score);
         this.scorePersistenceService =
             config.scorePersistenceService ?? new ScorePersistenceService();
         this.eventBus = config.eventBus ?? gameEvents;
 
-        const savedHighScore = this.scorePersistenceService.loadHighScore();
-        this.highScore = Math.max(config.highScore ?? 0, savedHighScore);
+        const savedHighScore = this.normalizeScoreValue(this.scorePersistenceService.loadHighScore());
+        const configuredHighScore = this.normalizeScoreValue(config.highScore);
+        this.highScore = Math.max(configuredHighScore, savedHighScore);
 
         this.ghostsEaten = 0;
         this.currentComboGhosts = 0;
@@ -28,14 +29,14 @@ export default class ScoreModule {
     }
 
     applyPelletScore(score) {
-        this.score += score;
+        this.score += this.normalizeScoreValue(score);
         this.pelletsEaten++;
         const isNewHighScore = this.checkHighScore();
         this.emitScoreChanged(isNewHighScore);
     }
 
     applyGhostScore(score) {
-        this.score += score;
+        this.score += this.normalizeScoreValue(score);
         this.ghostsEaten++;
         this.currentComboGhosts++;
         this.maxComboGhosts = Math.max(this.maxComboGhosts, this.currentComboGhosts);
@@ -44,9 +45,19 @@ export default class ScoreModule {
     }
 
     applyFruitScore(score) {
-        this.score += score;
+        this.score += this.normalizeScoreValue(score);
         const isNewHighScore = this.checkHighScore();
         this.emitScoreChanged(isNewHighScore);
+    }
+
+    /**
+     * Normalize score-like values to finite numbers.
+     * @param {unknown} value
+     * @returns {number}
+     */
+    normalizeScoreValue(value) {
+        const numericValue = Number(value);
+        return Number.isFinite(numericValue) ? numericValue : 0;
     }
 
     resetCombo() {
