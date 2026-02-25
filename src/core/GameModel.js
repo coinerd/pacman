@@ -21,7 +21,11 @@ import { gameConfig } from '../config/gameConfig.js';
 import { MovementSystem } from '../movement/index.js';
 import { EnemyState } from '../model/entities/EnemyState.js';
 import { FruitState } from '../model/entities/FruitState.js';
-import { PlayerState } from '../model/entities/PlayerState.js';
+import {
+    PlayerModule,
+    ScoreModule,
+    SessionModule
+} from '../model/systems/index.js';
 import AdditionalPowerUpSystem from '../systems/AdditionalPowerUpSystem.js';
 import BossBattleSystem from '../systems/BossBattleSystem.js';
 import StoryMode from '../systems/StoryMode.js';
@@ -46,7 +50,15 @@ export default class GameModel {
      */
     constructor(config = {}) {
         // Level and configuration
-        this.level = config.level || 1;
+        this.sessionModule = new SessionModule({
+            level: config.level || 1,
+            lives: config.lives
+        });
+        this.scoreModule = new ScoreModule({
+            score: config.score,
+            highScore: config.highScore
+        });
+        this.level = this.sessionModule.level;
         this.levelConfig = null;
 
         // World state
@@ -69,27 +81,14 @@ export default class GameModel {
         }
 
         // Create entities
+        this.playerModule = new PlayerModule({
+            level: this.level,
+            spawnPoint: this.spawnPoints?.player || playerStartPosition
+        });
+
         this.pacman = this.createPacman();
         this.ghosts = this.createGhosts();
         this.fruit = this.createFruit();
-
-        // Game flow state
-        this.score = config.score ?? 0;
-        this.lives = config.lives ?? 3;
-        this.highScore = config.highScore ?? 0;
-        this.isPaused = false;
-        this.isGameOver = false;
-        this.isDying = false;
-        this.levelComplete = false;
-
-        // Ghost combo tracking
-        this.ghostsEaten = 0;
-        this.currentComboGhosts = 0;
-        this.maxComboGhosts = 0;
-
-        // Tracking
-        this.pelletsEaten = 0;
-        this.levelDeaths = 0;
 
         // Entity state tracking for view events
         this.lastPacmanDirection = null;
@@ -157,13 +156,53 @@ export default class GameModel {
         return this;
     }
 
+    get level() { return this.sessionModule.level; }
+    set level(value) { this.sessionModule.level = value; }
+
+    get score() { return this.scoreModule.score; }
+    set score(value) { this.scoreModule.score = value; }
+
+    get highScore() { return this.scoreModule.highScore; }
+    set highScore(value) { this.scoreModule.highScore = value; }
+
+    get ghostsEaten() { return this.scoreModule.ghostsEaten; }
+    set ghostsEaten(value) { this.scoreModule.ghostsEaten = value; }
+
+    get currentComboGhosts() { return this.scoreModule.currentComboGhosts; }
+    set currentComboGhosts(value) { this.scoreModule.currentComboGhosts = value; }
+
+    get maxComboGhosts() { return this.scoreModule.maxComboGhosts; }
+    set maxComboGhosts(value) { this.scoreModule.maxComboGhosts = value; }
+
+    get pelletsEaten() { return this.scoreModule.pelletsEaten; }
+    set pelletsEaten(value) { this.scoreModule.pelletsEaten = value; }
+
+    get lives() { return this.sessionModule.lives; }
+    set lives(value) { this.sessionModule.lives = value; }
+
+    get isPaused() { return this.sessionModule.isPaused; }
+    set isPaused(value) { this.sessionModule.isPaused = Boolean(value); }
+
+    get isGameOver() { return this.sessionModule.isGameOver; }
+    set isGameOver(value) { this.sessionModule.isGameOver = Boolean(value); }
+
+    get levelComplete() { return this.sessionModule.levelComplete; }
+    set levelComplete(value) { this.sessionModule.levelComplete = Boolean(value); }
+
+    get levelDeaths() { return this.sessionModule.levelDeaths; }
+    set levelDeaths(value) { this.sessionModule.levelDeaths = value; }
+
+    get isDying() { return this.playerModule.isDying; }
+    set isDying(value) { this.playerModule.setDying(value); }
+
     /**
      * Create Player entity
      * @returns {PlayerState}
      */
     createPacman() {
-        const pos = this.spawnPoints?.player || playerStartPosition;
-        return new PlayerState(pos.x, pos.y, this.level);
+        this.playerModule.setLevel(this.level);
+        this.playerModule.setSpawnPoint(this.spawnPoints?.player || playerStartPosition);
+        return this.playerModule.createPlayer();
     }
 
     /**
@@ -384,13 +423,13 @@ export default class GameModel {
 
         if (this.deathTimer >= this.deathPauseDuration) {
             this.deathTimer = 0;
-            this.isDying = false;
+            this.playerModule.setDying(false);
 
             if (this.lives <= 0) {
-                this.isGameOver = true;
+                this.sessionModule.setGameOver(true);
                 events.push({ type: 'game_over' });
             } else {
-                this.lives--;
+                this.sessionModule.consumeLife();
                 this.resetPositions();
                 events.push({ type: 'respawn' });
             }
@@ -409,43 +448,23 @@ export default class GameModel {
      * @param {Object} event - Collision event
      */
     applyCollisionEffect(event) {
-        switch (event.type) {
-        case 'pellet_eaten':
-            this.score += event.score;
-            this.pelletsEaten++;
-            this.checkHighScore();
-            break;
+        this.scoreModule.applyEvent(event);
 
+        switch (event.type) {
         case 'power_pellet_eaten':
-            this.score += event.score;
-            this.currentComboGhosts = 0;
-            this.checkHighScore();
             this.setGhostsFrightened(event.frightenedDuration);
             break;
 
-        case 'ghost_eaten':
-            this.score += event.score;
-            this.ghostsEaten++;
-            this.currentComboGhosts++;
-            this.maxComboGhosts = Math.max(
-                this.maxComboGhosts,
-                this.currentComboGhosts
-            );
-            this.checkHighScore();
-            break;
-
-        case 'fruit_eaten':
-            this.score += event.score;
-            this.checkHighScore();
-            break;
-
         case 'pacman_died':
-            this.levelDeaths++;
+            this.sessionModule.onPacmanDeath();
             this.onPacmanDeath();
             break;
 
         case 'level_complete':
-            this.levelComplete = true;
+            this.sessionModule.markLevelComplete();
+            break;
+
+        default:
             break;
         }
     }
@@ -454,9 +473,7 @@ export default class GameModel {
      * Check and update high score
      */
     checkHighScore() {
-        if (this.score > this.highScore) {
-            this.highScore = this.score;
-        }
+        this.scoreModule.checkHighScore();
     }
 
     /**
@@ -476,24 +493,23 @@ export default class GameModel {
      * Handle Pacman death
      */
     onPacmanDeath() {
-        this.isDying = true;
         this.deathTimer = 0;
-        this.levelComplete = false;
-        this.pacman.die();
+        this.sessionModule.levelComplete = false;
+        this.playerModule.onPacmanDeath(this.pacman);
     }
 
     /**
      * Reset positions after death
      */
     resetPositions() {
-        this.pacman.reset(playerStartPosition.x, playerStartPosition.y);
+        this.playerModule.resetPlayer(this.pacman);
 
         for (const ghost of this.ghosts) {
             ghost.reset();
         }
 
         this.fruit.reset();
-        this.currentComboGhosts = 0;
+        this.scoreModule.resetCombo();
         this.additionalPowerUpSystem.reset();
 
         this.resetMovementStats();
@@ -565,8 +581,8 @@ export default class GameModel {
         // Complete story chapter if applicable
         this.storyMode.completeChapter();
 
-        this.level++;
-        this.levelComplete = false;
+        this.sessionModule.startNextLevel();
+        this.level = this.sessionModule.level;
 
         // Start new level's story chapter
         this.storyMode.startLevel(this.level);
@@ -589,7 +605,7 @@ export default class GameModel {
         this.pacman = this.createPacman();
         this.ghosts = this.createGhosts();
         this.fruit = this.createFruit();
-        this.currentComboGhosts = 0;
+        this.scoreModule.resetCombo();
         this.additionalPowerUpSystem.reset();
 
         this.resetMovementStats();
@@ -780,8 +796,8 @@ export default class GameModel {
      * @param {boolean} paused
      */
     setPaused(paused) {
-        this.isPaused = paused;
-        gameEvents.emit(GAME_EVENTS.PAUSE_TOGGLED, { isPaused: paused });
+        const isPaused = this.sessionModule.setPaused(paused);
+        gameEvents.emit(GAME_EVENTS.PAUSE_TOGGLED, { isPaused });
     }
 
     /**
@@ -789,9 +805,9 @@ export default class GameModel {
      * @returns {boolean} - New paused state
      */
     togglePaused() {
-        this.isPaused = !this.isPaused;
-        gameEvents.emit(GAME_EVENTS.PAUSE_TOGGLED, { isPaused: this.isPaused });
-        return this.isPaused;
+        const isPaused = this.sessionModule.togglePaused();
+        gameEvents.emit(GAME_EVENTS.PAUSE_TOGGLED, { isPaused });
+        return isPaused;
     }
 
     /**
@@ -799,7 +815,7 @@ export default class GameModel {
      * @param {boolean} isGameOver
      */
     setGameOver(isGameOver) {
-        this.isGameOver = isGameOver;
+        this.sessionModule.setGameOver(isGameOver);
         if (isGameOver) {
             gameEvents.emit(GAME_EVENTS.GAME_OVER, {
                 score: this.score,
@@ -870,7 +886,7 @@ export default class GameModel {
 
         // Check win condition
         if (this.pelletsRemaining === 0 && !this.levelComplete) {
-            this.levelComplete = true;
+            this.sessionModule.markLevelComplete();
             result.levelComplete = true;
             result.level = this.level;
         }
@@ -1201,8 +1217,7 @@ export default class GameModel {
      */
     handleGhostCollision(ghost) {
         if (ghost.isFrightened) {
-            this.currentComboGhosts++;
-            const scoreIndex = Math.min(this.currentComboGhosts - 1, 3);
+            const scoreIndex = Math.min(this.currentComboGhosts, 3);
             const scores = [200, 400, 800, 1600];
             const score = scores[scoreIndex];
 
@@ -1212,7 +1227,7 @@ export default class GameModel {
                 type: 'ghost_eaten',
                 ghostType: ghost.ghostType,
                 score: score,
-                combo: this.currentComboGhosts
+                combo: this.currentComboGhosts + 1
             };
         } else {
             return {

@@ -3,4 +3,6 @@
  * Exports all model system classes.
  */
 
-export { ModelCollisionSystem } from './ModelCollisionSystem.js';
+export { default as PlayerModule } from './PlayerModule.js';
+export { default as ScoreModule } from './ScoreModule.js';
+export { default as SessionModule } from './SessionModule.js';
