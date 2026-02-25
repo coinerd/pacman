@@ -5,3 +5,4 @@
 export { PlayerRenderer } from './PlayerRenderer.js';
 export { GhostRenderer } from './GhostRenderer.js';
 export { FruitRenderer } from './FruitRenderer.js';
+export * from './hud/index.js';
