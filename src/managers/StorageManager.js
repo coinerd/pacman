@@ -42,6 +42,17 @@ export class StorageManager {
     }
 
     /**
+     * Clear the stored high score
+     */
+    clearHighScore() {
+        try {
+            this.storage.removeItem('pacman_high_score');
+        } catch (error) {
+            console.warn('Error clearing high score:', error);
+        }
+    }
+
+    /**
      * Get game settings from storage
      * @returns {Object} Settings object
      */
@@ -85,7 +96,7 @@ export class StorageManager {
      */
     clearAll() {
         try {
-            this.storage.removeItem('pacman_high_score');
+            this.clearHighScore();
             this.storage.removeItem('pacman_settings');
         } catch (error) {
             console.warn('Error clearing storage:', error);

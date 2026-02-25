@@ -52,10 +52,6 @@ export default class GameScene extends Phaser.Scene {
         });
 
         this.storageManager = new StorageManager();
-        this.gameModel.highScore = Math.max(
-            this.gameModel.highScore,
-            this.storageManager.getHighScore()
-        );
 
         this.playerScoreFacade = new PlayerScoreFacade(this.gameModel);
 
