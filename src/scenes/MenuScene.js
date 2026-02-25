@@ -29,29 +29,182 @@ export default class MenuScene extends Phaser.Scene {
         this.createControls();
         this.createStartPrompt();
 
+        // Keyboard start
         this.input.keyboard.once('keydown-SPACE', () => {
-            this.soundManager.initialize();
-
-            const settings = this.storageManager.getSettings();
-            if (settings) {
-                if (settings.soundEnabled !== undefined) {
-                    this.soundManager.setEnabled(settings.soundEnabled);
-                }
-                if (settings.volume !== undefined) {
-                    this.soundManager.setVolume(settings.volume);
-                }
-            }
-
-            this.scene.start('GameScene', { level: 1, score: 0 });
+            this.startGame();
         });
 
-        this.input.keyboard.once('keydown-H', () => {
+        // Touch start - add touch listener for mobile
+        this.input.on('pointerdown', () => {
+            this.startGame();
+        });
+
+        // Also add visible touch buttons for mobile
+        this.createTouchStartButton();
+        this.createTouchSettingsButton();
+        this.createTouchHowToPlayButton();
+    }
+
+    /**
+	 * Start the game
+	 */
+    startGame() {
+        this.soundManager.initialize();
+
+        const settings = this.storageManager.getSettings();
+        if (settings) {
+            if (settings.soundEnabled !== undefined) {
+                this.soundManager.setEnabled(settings.soundEnabled);
+            }
+            if (settings.volume !== undefined) {
+                this.soundManager.setVolume(settings.volume);
+            }
+        }
+
+        // Pass high score to GameScene
+        this.scene.start('GameScene', {
+            level: 1,
+            score: 0,
+            highScore: this.highScore
+        });
+    }
+
+    /**
+	 * Create touch-friendly start button for mobile
+	 */
+    createTouchStartButton() {
+        const menuFont = this.theme.fonts.menu.item;
+        const colors = this.theme.colors;
+
+        const buttonWidth = 200;
+        const buttonHeight = 60;
+        const buttonX = this.scale.width / 2;
+        const buttonY = this.scale.height * 0.85;
+
+        // Button background
+        const buttonBg = this.add.rectangle(
+            buttonX,
+            buttonY,
+            buttonWidth,
+            buttonHeight,
+            0x004444
+        );
+        buttonBg.setOrigin(0.5);
+        buttonBg.setStrokeStyle(2, colors.status.success);
+
+        // Button text
+        const buttonText = this.add.text(
+            buttonX,
+            buttonY,
+            'START GAME',
+            {
+                fontFamily: menuFont.family,
+                fontSize: menuFont.size,
+                fontStyle: menuFont.style,
+                fontWeight: menuFont.weight,
+                letterSpacing: menuFont.letterSpacing,
+                color: `#${colors.status.success.toString(16).padStart(6, '0')}`
+            }
+        );
+        buttonText.setOrigin(0.5);
+
+        // Make interactive
+        buttonBg.setInteractive({ useHandCursor: true });
+        buttonBg.on('pointerdown', () => {
+            this.startGame();
+        });
+
+        // Pulse animation
+        this.tweens.add({
+            targets: buttonBg,
+            scaleX: { from: 1, to: 1.05 },
+            scaleY: { from: 1, to: 1.05 },
+            duration: 800,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+        });
+
+        // Store references
+        this.startButton = {
+            bg: buttonBg,
+            text: buttonText
+        };
+    }
+
+    /**
+	 * Create touch-friendly settings button for mobile
+	 */
+    createTouchSettingsButton() {
+        const colors = this.theme.colors;
+        const buttonSize = 60;
+        const margin = 15;
+
+        const buttonBg = this.add.rectangle(
+            this.scale.width - margin - buttonSize / 2,
+            margin + buttonSize / 2,
+            buttonSize,
+            buttonSize,
+            0x004444
+        );
+        buttonBg.setOrigin(0.5);
+        buttonBg.setStrokeStyle(2, colors.text.primary);
+
+        const buttonText = this.add.text(
+            this.scale.width - margin - buttonSize / 2,
+            margin + buttonSize / 2,
+            '⚙️',
+            {
+                fontSize: '24px'
+            }
+        );
+        buttonText.setOrigin(0.5);
+
+        buttonBg.setInteractive({ useHandCursor: true });
+        buttonBg.on('pointerdown', () => {
+            this.scene.start('SettingsScene');
+        });
+
+        this.settingsButton = { bg: buttonBg, text: buttonText };
+    }
+
+    /**
+	 * Create touch-friendly how-to-play button for mobile
+	 */
+    createTouchHowToPlayButton() {
+        const colors = this.theme.colors;
+        const buttonWidth = 180;
+        const buttonHeight = 50;
+        const buttonX = this.scale.width / 2;
+        const buttonY = this.scale.height * 0.7;
+
+        const buttonBg = this.add.rectangle(
+            buttonX,
+            buttonY,
+            buttonWidth,
+            buttonHeight,
+            0x004444
+        );
+        buttonBg.setOrigin(0.5);
+        buttonBg.setStrokeStyle(2, colors.status.info);
+
+        const buttonText = this.add.text(
+            buttonX,
+            buttonY,
+            '? HOW TO PLAY',
+            {
+                fontSize: '18px',
+                color: `#${colors.status.info.toString(16).padStart(6, '0')}`
+            }
+        );
+        buttonText.setOrigin(0.5);
+
+        buttonBg.setInteractive({ useHandCursor: true });
+        buttonBg.on('pointerdown', () => {
             this.toggleHowToPlay();
         });
 
-        this.input.keyboard.on('keydown-S', () => {
-            this.scene.start('SettingsScene');
-        });
+        this.howToPlayButton = { bg: buttonBg, text: buttonText };
     }
 
     /**

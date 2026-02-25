@@ -36,7 +36,8 @@ export class FruitRenderer {
      * Sync visual to model state
      */
     sync() {
-        const visualState = this.state.getVisualState();
+        // Handle both FruitState instances and snapshot objects
+        const visualState = this.state.visual || (typeof this.state.getVisualState === 'function' ? this.state.getVisualState() : { active: this.state.active ?? false, bobOffset: 0 });
 
         if (!visualState.active || !this.state.active) {
             this.graphics.clear();
@@ -49,8 +50,9 @@ export class FruitRenderer {
         const drawX = this.state.x;
         const drawY = this.state.y + bobOffset;
 
-        // Get fruit type info
-        const fruitType = this.state.getFruitType();
+        // Get fruit type info - handle both state and snapshot
+        const fruitTypeName = visualState.fruitType || (typeof this.state.getFruitType === 'function' ? this.state.getFruitType().name : 'cherry');
+        const fruitType = fruitConfig.types.find(t => t.name === fruitTypeName) || fruitConfig.types[0];
 
         // Redraw if fruit type changed
         if (fruitType.name !== this.lastFruitType) {

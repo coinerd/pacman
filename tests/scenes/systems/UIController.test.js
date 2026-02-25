@@ -15,12 +15,18 @@ describe('UIController', () => {
                 text,
                 style
             });
-            return {
+            const textObj = {
+                x, y, text, style,
                 setOrigin: jest.fn().mockReturnThis(),
                 setAlpha: jest.fn().mockReturnThis(),
-                setText: jest.fn(),
-                destroy: jest.fn()
+                setDepth: jest.fn().mockReturnThis(),
+                setScrollFactor: jest.fn().mockReturnThis(),
+                setVisible: jest.fn().mockReturnThis(),
+                setText: jest.fn(function(newText) { this.text = newText; return this; }),
+                destroy: jest.fn(),
+                visible: true
             };
+            return textObj;
         };
 
         mockScene = {
@@ -36,6 +42,13 @@ describe('UIController', () => {
             },
             add: {
                 text: jest.fn(createTextMock),
+                rectangle: jest.fn(() => ({
+                    setStrokeStyle: jest.fn().mockReturnThis(),
+                    setAlpha: jest.fn().mockReturnThis(),
+                    setDepth: jest.fn().mockReturnThis(),
+                    setScrollFactor: jest.fn().mockReturnThis(),
+                    destroy: jest.fn()
+                })),
                 graphics: jest.fn(() => ({
                     fillStyle: jest.fn().mockReturnThis(),
                     fillRoundedRect: jest.fn().mockReturnThis(),
@@ -43,6 +56,11 @@ describe('UIController', () => {
                     strokeRoundedRect: jest.fn().mockReturnThis(),
                     strokePoints: jest.fn().mockReturnThis(),
                     fillCircle: jest.fn().mockReturnThis(),
+                    beginPath: jest.fn().mockReturnThis(),
+                    moveTo: jest.fn().mockReturnThis(),
+                    lineTo: jest.fn().mockReturnThis(),
+                    strokePath: jest.fn().mockReturnThis(),
+                    fillRect: jest.fn().mockReturnThis(),
                     destroy: jest.fn()
                 }))
             },
@@ -60,115 +78,126 @@ describe('UIController', () => {
         controller.create();
 
         expect(renderLog).toMatchInlineSnapshot(`
-     [
-       {
-         "style": {
-           "color": "#aaaaaa",
-           "fontFamily": "Arial, sans-serif",
-           "fontSize": "14px",
-         },
-         "text": "SCORE",
-         "type": "text",
-         "x": 26,
-         "y": 20,
-       },
-       {
-         "style": {
-           "color": "#00ffaa",
-           "fontFamily": "Courier New, monospace",
-           "fontSize": "28px",
-           "fontStyle": "bold",
-           "fontWeight": "bold",
-           "letterSpacing": "3px",
-           "shadowBlur": 6,
-           "shadowColor": "#00ced1",
-           "shadowOffsetX": 0,
-           "shadowOffsetY": 0,
-         },
-         "text": "0",
-         "type": "text",
-         "x": 101,
-         "y": 20,
-       },
-       {
-         "style": {
-           "color": "#aaaaaa",
-           "fontFamily": "Arial, sans-serif",
-           "fontSize": "14px",
-         },
-         "text": "HIGH SCORE",
-         "type": "text",
-         "x": 26,
-         "y": 70,
-       },
-       {
-         "style": {
-           "color": "#00ced1",
-           "fontFamily": "Courier New, monospace",
-           "fontSize": "28px",
-           "fontStyle": "bold",
-           "fontWeight": "bold",
-           "letterSpacing": "3px",
-         },
-         "text": "0",
-         "type": "text",
-         "x": 111,
-         "y": 70,
-       },
-       {
-         "style": {
-           "color": "#aaaaaa",
-           "fontFamily": "Arial, sans-serif",
-           "fontSize": "14px",
-         },
-         "text": "LIVES",
-         "type": "text",
-         "x": 444,
-         "y": 20,
-       },
-       {
-         "style": {
-           "color": "#00ced1",
-           "fontFamily": "Arial, sans-serif",
-           "fontSize": "24px",
-           "fontStyle": "bold",
-         },
-         "text": "3",
-         "type": "text",
-         "x": 534,
-         "y": 20,
-       },
-       {
-         "style": {
-           "color": "#aaaaaa",
-           "fontFamily": "Arial, sans-serif",
-           "fontSize": "14px",
-         },
-         "text": "LVL",
-         "type": "text",
-         "x": 230,
-         "y": 20,
-       },
-       {
-         "style": {
-           "color": "#00ffaa",
-           "fontFamily": "Courier New, monospace",
-           "fontSize": "28px",
-           "fontStyle": "bold",
-           "fontWeight": "bold",
-           "letterSpacing": "3px",
-           "shadowBlur": 6,
-           "shadowColor": "#00ced1",
-           "shadowOffsetX": 0,
-           "shadowOffsetY": 0,
-         },
-         "text": "1",
-         "type": "text",
-         "x": 330,
-         "y": 20,
-       },
-     ]
-    `);
+[
+  {
+    "style": {
+      "color": "#00ffaa",
+      "fontFamily": "Arial, sans-serif",
+      "fontSize": "14px",
+      "fontStyle": "normal",
+      "fontWeight": "400",
+      "letterSpacing": undefined,
+    },
+    "text": "SCORE",
+    "type": "text",
+    "x": 63.5,
+    "y": 32.5,
+  },
+  {
+    "style": {
+      "backgroundColor": "#000000",
+      "color": "#00ced1",
+      "fontFamily": "Courier New, monospace",
+      "fontSize": "28px",
+      "fontStyle": "bold",
+      "fontWeight": "bold",
+      "letterSpacing": "3px",
+      "padding": {
+        "x": 2,
+        "y": 2,
+      },
+    },
+    "text": "0",
+    "type": "text",
+    "x": 161,
+    "y": 32.5,
+  },
+  {
+    "style": {
+      "color": "#00ffaa",
+      "fontFamily": "Arial, sans-serif",
+      "fontSize": "14px",
+      "fontStyle": "normal",
+      "fontWeight": "400",
+      "letterSpacing": undefined,
+    },
+    "text": "HIGH SCORE",
+    "type": "text",
+    "x": 76,
+    "y": 87.5,
+  },
+  {
+    "style": {
+      "color": "#ffffff",
+      "fontFamily": "Courier New, monospace",
+      "fontSize": "28px",
+      "fontStyle": "bold",
+      "fontWeight": "bold",
+      "letterSpacing": "3px",
+    },
+    "text": "0",
+    "type": "text",
+    "x": 186,
+    "y": 87.5,
+  },
+  {
+    "style": {
+      "color": "#00ffaa",
+      "fontFamily": "Arial, sans-serif",
+      "fontSize": "14px",
+      "fontStyle": "normal",
+      "fontWeight": "400",
+      "letterSpacing": undefined,
+    },
+    "text": "LIVES",
+    "type": "text",
+    "x": 63.5,
+    "y": 142.5,
+  },
+  {
+    "style": {
+      "color": "#ffffff",
+      "fontFamily": "Courier New, monospace",
+      "fontSize": "28px",
+      "fontStyle": "bold",
+      "fontWeight": "bold",
+      "letterSpacing": "3px",
+    },
+    "text": "3",
+    "type": "text",
+    "x": 141,
+    "y": 142.5,
+  },
+  {
+    "style": {
+      "color": "#00ffaa",
+      "fontFamily": "Arial, sans-serif",
+      "fontSize": "14px",
+      "fontStyle": "normal",
+      "fontWeight": "400",
+      "letterSpacing": undefined,
+    },
+    "text": "LEVEL",
+    "type": "text",
+    "x": 63.5,
+    "y": 197.5,
+  },
+  {
+    "style": {
+      "color": "#ffffff",
+      "fontFamily": "Courier New, monospace",
+      "fontSize": "28px",
+      "fontStyle": "bold",
+      "fontWeight": "bold",
+      "letterSpacing": "3px",
+    },
+    "text": "1",
+    "type": "text",
+    "x": 141,
+    "y": 197.5,
+  },
+]
+`);
     });
 
     test('renders the ready message text', () => {
@@ -199,21 +228,22 @@ describe('UIController', () => {
     });
 
     test('renders the level message text', () => {
-        mockScene.gameState.level = 5;
-
-        controller.showLevelMessage();
+        controller.showLevelMessage(5);
 
         expect(renderLog).toMatchInlineSnapshot(`
      [
        {
          "style": {
-           "color": "#ffffff",
-           "fontFamily": "Arial, sans-serif",
-           "fontSize": "32px",
+           "color": "#00ffaa",
+           "fontFamily": "Arial Black, Arial, sans-serif",
+           "fontSize": "64px",
            "fontStyle": "bold",
-           "fontWeight": "700",
-           "letterSpacing": "1px",
-           "textTransform": "uppercase",
+           "fontWeight": "900",
+           "letterSpacing": "2px",
+           "shadowBlur": 12,
+           "shadowColor": "#00ffff",
+           "shadowOffsetX": 0,
+           "shadowOffsetY": 0,
          },
          "text": "LEVEL 5",
          "type": "text",

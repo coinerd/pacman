@@ -8,7 +8,29 @@ import ModelDrivenGameView from '../../src/views/ModelDrivenGameView.js';
 
 // Create mock functions
 const mockFn = () => ({});
-const mockNestedFn = () => ({ setDepth: mockFn });
+
+// Create a chainable mock that returns itself for all methods
+const createChainableMock = () => {
+    const chainable = {
+        setDepth: () => chainable,
+        setVisible: () => chainable,
+        setAlpha: () => chainable,
+        setX: () => chainable,
+        setY: () => chainable,
+        setOrigin: () => chainable,
+        setScale: () => chainable,
+        setText: () => chainable,
+        setInteractive: () => chainable,
+        on: () => chainable,
+        setFillStyle: () => chainable,
+        fillPath: () => chainable,
+        destroy: () => {}
+    };
+    return chainable;
+};
+
+const mockNestedFn = () => createChainableMock();
+const mockTextFn = () => createChainableMock();
 
 // Mock Phaser scene - simplified to avoid syntax errors
 const mockScene = {
@@ -16,9 +38,27 @@ const mockScene = {
         rectangle: mockNestedFn,
         circle: mockNestedFn,
         image: mockNestedFn,
-        text: mockNestedFn,
+        text: mockTextFn,
         polygon: mockNestedFn,
-        container: () => ({ add: mockFn, setAlpha: mockFn })
+        container: () => ({ add: mockFn, setAlpha: mockFn }),
+        graphics: () => ({
+            setDepth: mockFn,
+            setAlpha: mockFn,
+            setVisible: mockFn,
+            fillStyle: mockFn,
+            lineStyle: mockFn,
+            fillRect: mockFn,
+            fillCircle: mockFn,
+            strokeRect: mockFn,
+            strokePath: mockFn,
+            moveTo: mockFn,
+            lineTo: mockFn,
+            beginPath: mockFn,
+            closePath: mockFn,
+            fillPath: mockFn,
+            destroy: mockFn,
+            clear: mockFn
+        })
     },
     make: {
         graphics: () => ({
@@ -67,6 +107,18 @@ const mockEventBus = {
     emit: jest.fn()
 };
 
+// Helper to create proper direction objects for tests
+const createDirection = (angle = 0) => ({ angle, name: 'RIGHT' });
+const createPacman = (x = 10, y = 10, angle = 0) => ({
+    x,
+    y,
+    gridX: 0,
+    gridY: 0,
+    direction: createDirection(angle),
+    mouthAngle: 30,
+    visualState: { visible: true }
+});
+
 describe('ModelDrivenGameView.updateFromSnapshot()', () => {
     let view;
     let context;
@@ -87,13 +139,17 @@ describe('ModelDrivenGameView.updateFromSnapshot()', () => {
         // Create mock pellet pools
         view.pelletPool = {
             get: jest.fn(() => ({ gridX: 0, gridY: 0 })),
+            getByGrid: jest.fn(() => null),
             release: jest.fn(),
+            releaseAll: jest.fn(),
             active: [],
             gridIndex: new Map()
         };
         view.powerPelletPool = {
             get: jest.fn(() => ({ gridX: 0, gridY: 0 })),
+            getByGrid: jest.fn(() => null),
             release: jest.fn(),
+            releaseAll: jest.fn(),
             active: [],
             gridIndex: new Map()
         };
@@ -120,10 +176,10 @@ describe('ModelDrivenGameView.updateFromSnapshot()', () => {
             pelletsEatenPercent: 16.67,
             maze: [[0, 1], [1, 0]],
             pelletGrid: [[1, 0], [0, 1]],
-            pacman: { x: 10, y: 10, gridX: 0, gridY: 0, direction: 'RIGHT' },
+            pacman: createPacman(10, 10, 0),
             ghosts: [
-                { ghostType: 'alpha', x: 5, y: 5 },
-                { ghostType: 'beta', x: 6, y: 6 }
+                { ghostType: 'alpha', x: 5, y: 5, direction: createDirection(0) },
+                { ghostType: 'beta', x: 6, y: 6, direction: createDirection(0) }
             ],
             fruit: { active: false },
             boss: null,
@@ -155,7 +211,7 @@ describe('ModelDrivenGameView.updateFromSnapshot()', () => {
             pelletsEatenPercent: 0,
             maze: [[0, 1], [1, 0]],
             pelletGrid: [[1, 0], [0, 1]],
-            pacman: { x: 10, y: 10 },
+            pacman: createPacman(),
             ghosts: [],
             fruit: { active: false },
             boss: null,
@@ -186,7 +242,7 @@ describe('ModelDrivenGameView.updateFromSnapshot()', () => {
             pelletsEatenPercent: 0,
             maze: [[0, 1], [1, 0]],
             pelletGrid: [[1, 0], [0, 1]],
-            pacman: { x: 10, y: 10 },
+            pacman: createPacman(),
             ghosts: [],
             fruit: { active: false },
             boss: null,
@@ -220,7 +276,7 @@ describe('ModelDrivenGameView.updateFromSnapshot()', () => {
             pelletsEatenPercent: 0,
             maze: [[0, 1], [1, 0]],
             pelletGrid: [[1, 0], [0, 1]],
-            pacman: { x: 10, y: 10 },
+            pacman: createPacman(),
             ghosts: [],
             fruit: { active: false },
             boss: null,
@@ -260,7 +316,7 @@ describe('ModelDrivenGameView.updateFromSnapshot()', () => {
             pelletsEatenPercent: 50,
             maze: [[0, 1], [1, 0]],
             pelletGrid: [[1, 0], [0, 1]],
-            pacman: { x: 10, y: 10 },
+            pacman: createPacman(),
             ghosts: [],
             fruit: { active: false },
             boss: null,
@@ -298,7 +354,7 @@ describe('ModelDrivenGameView.updateFromSnapshot()', () => {
             pelletsEatenPercent: 0,
             maze: [[0, 1], [1, 0]],
             pelletGrid: [[1, 0], [0, 1]],
-            pacman: { x: 10, y: 10, gridX: 0, gridY: 0, direction: 'RIGHT' },
+            pacman: createPacman(10, 10, 0),
             ghosts: [],
             fruit: { active: false },
             boss: null,
@@ -313,7 +369,7 @@ describe('ModelDrivenGameView.updateFromSnapshot()', () => {
         const updatedSnapshot = {
             ...snapshot,
             tickCount: 2,
-            pacman: { x: 20, y: 20, gridX: 1, gridY: 0, direction: 'DOWN' }
+            pacman: createPacman(20, 20, 90)
         };
 
         view.updateFromSnapshot(updatedSnapshot);
@@ -336,10 +392,10 @@ describe('ModelDrivenGameView.updateFromSnapshot()', () => {
             pelletsEatenPercent: 0,
             maze: [[0, 1], [1, 0]],
             pelletGrid: [[1, 0], [0, 1]],
-            pacman: { x: 10, y: 10 },
+            pacman: createPacman(),
             ghosts: [
-                { ghostType: 'alpha', x: 5, y: 5, mode: 'chase' },
-                { ghostType: 'beta', x: 6, y: 6, mode: 'scatter' }
+                { ghostType: 'alpha', x: 5, y: 5, mode: 'chase', direction: createDirection(0) },
+                { ghostType: 'beta', x: 6, y: 6, mode: 'scatter', direction: createDirection(0) }
             ],
             fruit: { active: false },
             boss: null,
@@ -355,8 +411,8 @@ describe('ModelDrivenGameView.updateFromSnapshot()', () => {
             ...snapshot,
             tickCount: 2,
             ghosts: [
-                { ghostType: 'alpha', x: 6, y: 6, mode: 'frightened' },
-                { ghostType: 'beta', x: 7, y: 7, mode: 'scatter' }
+                { ghostType: 'alpha', x: 6, y: 6, mode: 'frightened', direction: createDirection(0) },
+                { ghostType: 'beta', x: 7, y: 7, mode: 'scatter', direction: createDirection(0) }
             ]
         };
 
@@ -380,7 +436,7 @@ describe('ModelDrivenGameView.updateFromSnapshot()', () => {
             pelletsEatenPercent: 0,
             maze: [[0, 1], [1, 0]],
             pelletGrid: [[1, 0], [0, 1]],
-            pacman: { x: 10, y: 10 },
+            pacman: createPacman(),
             ghosts: [],
             fruit: { active: false },
             boss: { type: 'alpha', x: 100, y: 100, healthPercent: 1.0 },
@@ -417,7 +473,7 @@ describe('ModelDrivenGameView.updateFromSnapshot()', () => {
             pelletsEatenPercent: 0,
             maze: [[0, 1], [1, 0]],
             pelletGrid: [[1, 0], [0, 1]],
-            pacman: { x: 10, y: 10 },
+            pacman: createPacman(),
             ghosts: [],
             fruit: { active: false },
             boss: null,
@@ -449,7 +505,7 @@ describe('ModelDrivenGameView.updateFromSnapshot()', () => {
             pelletsEatenPercent: 0,
             maze: [[0, 1], [1, 0]],
             pelletGrid: [[1, 0], [0, 1]],
-            pacman: { x: 10, y: 10 },
+            pacman: createPacman(),
             ghosts: [],
             fruit: { active: false },
             boss: null,

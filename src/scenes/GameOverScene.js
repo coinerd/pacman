@@ -198,11 +198,15 @@ export default class GameOverScene extends Phaser.Scene {
 	 */
     addGlitchEffect(textObject) {
         const glitchConfig = this.theme.animations.glitch;
+
+        // Ensure minimum delay to prevent infinite loop
+        const delay = Math.max(glitchConfig.frequency, 50); // Minimum 50ms
+
         const originalX = textObject.x;
         const originalY = textObject.y;
 
         this.time.addEvent({
-            delay: glitchConfig.frequency,
+            delay: delay,
             callback: () => {
                 if (Math.random() < glitchConfig.probability) {
                     const offsetX = (Math.random() - 0.5) * glitchConfig.intensity * 4;

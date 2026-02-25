@@ -21,6 +21,7 @@ import {
     KeyboardAdapter
 } from '../input/index.js';
 import { StorageManager } from '../managers/StorageManager.js';
+import { ViewContext } from '../views/ViewInterface.js';
 import { AchievementSystem } from '../systems/AchievementSystem.js';
 import { DebugOverlay } from '../systems/DebugOverlay.js';
 import { FixedTimeStepLoop } from '../systems/FixedTimeStepLoop.js';
@@ -70,12 +71,15 @@ export default class GameScene extends Phaser.Scene {
         this.gameModel.totalPellets = this.countPellets(this.gameModel.pelletGrid);
         this.gameModel.pelletsRemaining = this.gameModel.totalPellets;
 
-        this.gameView = new GameView({
+        const viewContext = new ViewContext({
             scene: this,
-            gameModel: this.gameModel,
-            storageManager: this.storageManager
+            storageManager: this.storageManager,
+            eventBus: gameEvents
         });
+
+        this.gameView = new GameView(viewContext);
         this.gameView.applySettings(this.settings);
+
         this.gameView.create();
 
         this.uiController = new UIController(this, this.gameModel);
@@ -114,6 +118,11 @@ export default class GameScene extends Phaser.Scene {
         this.setupEventListeners();
         this.levelManager.applySettings();
         this.uiController.showReadyMessage();
+
+        // Get initial snapshot for view and UI
+        const initialSnapshot = this.gameModel.getSnapshot();
+        this.gameView.updateFromSnapshot(initialSnapshot);
+        this.uiController.updateFromSnapshot(initialSnapshot);
 
         gameEvents.emit(GAME_EVENTS.GAME_STARTED, {
             level: this.gameModel.level
@@ -177,8 +186,22 @@ export default class GameScene extends Phaser.Scene {
         }
 
         this.inputManager.update(deltaInSeconds * 1000);
-        this.gameView.sync();
-        this.uiController.update();
+
+        // Update view with snapshot (new architecture)
+        const snapshot = this.gameModel.getSnapshot();
+
+        // Debug logging for UI updates
+        if (!this._uiLogFrames) {
+            this._uiLogFrames = 0;
+        }
+        this._uiLogFrames++;
+        if (this._uiLogFrames % 60 === 0) {
+            console.log(`[GameScene.update] Frame ${this._uiLogFrames}: Score=${snapshot.score}, HighScore=${snapshot.highScore}, Lives=${snapshot.lives}, Level=${snapshot.level}`);
+        }
+
+        this.gameView.updateFromSnapshot(snapshot);
+        this.uiController.updateFromSnapshot(snapshot);
+
         this.debugOverlay.update(time, delta);
 
         if (this.debugOverlay.visible) {
@@ -245,11 +268,18 @@ export default class GameScene extends Phaser.Scene {
         });
 
         // Phase 2: Handle scene transition events from SceneTransitionHandler
-        gameEvents.on('GAME_WIN', (data) => {
+        gameEvents.on('GAME_WIN', (eventData) => {
+            // Handle both formats
+            const data = eventData?.data || eventData;
+            console.log('[GameScene] GAME_WIN event received:', data);
             this.scene.start('WinScene', data);
         });
 
-        gameEvents.on('GAME_OVER', (data) => {
+        gameEvents.on('GAME_OVER', (eventData) => {
+            // Handle both formats: { score, highScore } from Model
+            // and { sceneKey, data: { score, highScore }, timestamp } from View
+            const data = eventData?.data || eventData;
+            console.log('[GameScene] GAME_OVER event received:', data);
             this.scene.start('GameOverScene', data);
         });
 

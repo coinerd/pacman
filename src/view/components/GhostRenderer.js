@@ -15,78 +15,132 @@ export class GhostRenderer {
         this.scene = scene;
         this.state = enemyState;
 
+        // Create graphics object for drawing ghost
+        this.graphics = scene.add.graphics();
+        this.graphics.setDepth(100);
+
         const radius = gameConfig.tileSize * 0.4;
         const color = enemyColors[enemyState.ghostType.toUpperCase()] || 0xffffff;
-
-        // Create geometric shape based on enemy type
-        const shape = this.createShape(enemyState.ghostType, radius, color);
-
-        // Create polygon at position (0, 0) with relative points
-        this.sprite = scene.add.polygon(0, 0, shape.points, shape.color);
-
-        // Set origin to center so points are relative to center
-        this.sprite.setOrigin(0.5, 0.5);
-        this.sprite.setDepth(100);
-
-        // Position sprite at actual enemy position
-        this.sprite.setPosition(enemyState.x, enemyState.y);
 
         // Create eyes using scene.add.circle()
         this.eyeLeft = this.createEye(
             scene,
-            -radius * 0.3,
-            -radius * 0.2,
+            enemyState.x - radius * 0.3,
+            enemyState.y - radius * 0.2,
             radius * 0.25
         );
         this.eyeRight = this.createEye(
             scene,
-            radius * 0.3,
-            -radius * 0.2,
+            enemyState.x + radius * 0.3,
+            enemyState.y - radius * 0.2,
             radius * 0.25
         );
 
         // Pupils
         this.pupilLeft = this.createPupil(
             scene,
-            -radius * 0.3,
-            -radius * 0.2,
+            enemyState.x - radius * 0.3,
+            enemyState.y - radius * 0.2,
             radius * 0.12
         );
         this.pupilRight = this.createPupil(
             scene,
-            radius * 0.3,
-            -radius * 0.2,
+            enemyState.x + radius * 0.3,
+            enemyState.y - radius * 0.2,
             radius * 0.12
         );
 
         this.currentRadius = radius;
         this.currentColor = color;
+
+        // Initial draw
+        this.drawGhost(enemyState.x, enemyState.y);
     }
 
     /**
-	 * Create geometric shape based on enemy type
+	 * Create an eye
 	 */
-    createShape(ghostType, radius, color) {
-        const points = [];
+    createEye(scene, x, y, radius) {
+        const eye = scene.add.circle(x, y, radius, 0xffffff);
+        eye.setDepth(101);
+        return eye;
+    }
+
+    /**
+	 * Create a pupil
+	 */
+    createPupil(scene, x, y, radius) {
+        const pupil = scene.add.circle(x, y, radius, 0x0000ff);
+        pupil.setDepth(102);
+        return pupil;
+    }
+
+    /**
+	 * Draw ghost shape
+	 */
+    drawGhost(x, y) {
+        const radius = gameConfig.tileSize * 0.4;
+
+        // Clear previous frame
+        this.graphics.clear();
+
+        // Get color based on state
+        let color = this.currentColor;
+
+        const isFrightened = this.state.isFrightened ?? false;
+        const isEaten = this.state.isEaten ?? false;
+
+        if (isFrightened) {
+            const isBlinking = this.state.isBlinking ?? false;
+            if (isBlinking && Math.floor((this.state.blinkTimer || 0) / 0.2) % 2 === 0) {
+                color = 0xffffff; // White when blinking
+            } else {
+                color = 0x0000ff; // Blue when frightened
+            }
+        } else if (isEaten) {
+            color = 0xffffff; // White when eaten
+        }
+
+        const opacity = isEaten ? 0.4 : 1.0;
+
+        // Draw shape
+        this.graphics.fillStyle(color, opacity);
+
+        const points = this.getGhostShapePoints(this.state.ghostType, radius, x, y);
+
+        this.graphics.beginPath();
+        this.graphics.moveTo(points[0], points[1]);
+        for (let i = 1; i < points.length / 2; i++) {
+            this.graphics.lineTo(points[i * 2], points[i * 2 + 1]);
+        }
+        this.graphics.closePath();
+        this.graphics.fillPath();
+    }
+
+    /**
+	 * Get ghost shape points
+	 */
+    getGhostShapePoints(ghostType, radius, centerX, centerY) {
         const ghostTypeUpper = ghostType.toUpperCase();
+        const points = [];
 
         if (ghostTypeUpper === 'ALPHA') {
             // Alpha: DIAMOND (rotated square)
             for (let i = 0; i < 4; i++) {
                 const angle = (i * 90 + 45) * (Math.PI / 180);
-                points.push({
-                    x: radius * Math.cos(angle),
-                    y: radius * Math.sin(angle)
-                });
+                points.push(
+                    centerX + radius * Math.cos(angle),
+                    centerY + radius * Math.sin(angle)
+                );
             }
         } else if (ghostTypeUpper === 'BETA') {
             // Beta: TRIANGLE (3 equal sides)
             for (let i = 0; i < 3; i++) {
                 const angle = (i * 120 - 90) * (Math.PI / 180);
-                points.push({
-                    x: radius * Math.cos(angle),
-                    y: radius * Math.sin(angle)
-                });
+                points.push(
+                    centerX + radius * Math.cos(angle),
+                    centerY + radius * Math.sin(angle)
+                );
             }
         } else if (ghostTypeUpper === 'GAMMA') {
             // Gamma: STAR (5-pointed)
@@ -95,62 +149,32 @@ export class GhostRenderer {
             for (let i = 0; i < 10; i++) {
                 const r = i % 2 === 0 ? outerRadius : innerRadius;
                 const angle = (i * 36 - 90) * (Math.PI / 180);
-                points.push({
-                    x: r * Math.cos(angle),
-                    y: r * Math.sin(angle)
-                });
+                points.push(
+                    centerX + r * Math.cos(angle),
+                    centerY + r * Math.sin(angle)
+                );
             }
         } else if (ghostTypeUpper === 'DELTA') {
             // Delta: HEXAGON (6-sided)
             for (let i = 0; i < 6; i++) {
                 const angle = (i * 60 - 90) * (Math.PI / 180);
-                points.push({
-                    x: radius * Math.cos(angle),
-                    y: radius * Math.sin(angle)
-                });
+                points.push(
+                    centerX + radius * Math.cos(angle),
+                    centerY + radius * Math.sin(angle)
+                );
             }
         } else {
             // Default: Circle
             for (let i = 0; i < 32; i++) {
                 const angle = ((i * 360) / 32) * (Math.PI / 180);
-                points.push({
-                    x: radius * Math.cos(angle),
-                    y: radius * Math.sin(angle)
-                });
+                points.push(
+                    centerX + radius * Math.cos(angle),
+                    centerY + radius * Math.sin(angle)
+                );
             }
         }
 
-        return { points, color };
-    }
-
-    /**
-	 * Create an eye
-	 */
-    createEye(scene, offsetX, offsetY, radius) {
-        // Use scene.add.circle() instead of new Phaser.GameObjects.Arc()
-        const eye = scene.add.circle(
-            this.sprite.x + offsetX,
-            this.sprite.y + offsetY,
-            radius,
-            0xffffff
-        );
-        eye.setDepth(101);
-        return eye;
-    }
-
-    /**
-	 * Create a pupil
-	 */
-    createPupil(scene, offsetX, offsetY, radius) {
-        // Use scene.add.circle() instead of new Phaser.GameObjects.Arc()
-        const pupil = scene.add.circle(
-            this.sprite.x + offsetX,
-            this.sprite.y + offsetY,
-            radius,
-            0x0000ff
-        );
-        pupil.setDepth(102);
-        return pupil;
+        return points;
     }
 
     /**
@@ -158,66 +182,66 @@ export class GhostRenderer {
      * Model entity.x/y is already interpolated by TileCenterMovementStrategy
 	 */
     sync() {
-        const visualState = this.state.getVisualState();
+        // Handle both EnemyState instances and snapshot objects
+        const visualState = this.state.visual || (typeof this.state.getVisualState === 'function' ? this.state.getVisualState() : { color: this.state.color, opacity: 1, visible: true });
         const radius = gameConfig.tileSize * 0.4;
 
         // Model.x/y is always correctly interpolated by TileCenterMovementStrategy
-        // No need to recalculate interpolation in the view
-        this.sprite.x = this.state.x;
-        this.sprite.y = this.state.y;
+        // No need to recalculate interpolation in view
+        const x = this.state.x;
+        const y = this.state.y;
 
-        this.sprite.setFillStyle(visualState.color, visualState.opacity);
-
-        this.updateEyes(radius);
-
-        const visible = visualState.visible && this.state.visualState.visible;
-        this.sprite.setVisible(visible);
-        this.eyeLeft.setVisible(visible && !this.state.isFrightened);
-        this.eyeRight.setVisible(visible && !this.state.isFrightened);
-        this.pupilLeft.setVisible(visible && !this.state.isFrightened);
-        this.pupilRight.setVisible(visible && !this.state.isFrightened);
-    }
-
-    /**
-	 * Update eye positions based on direction
-	 */
-    updateEyes(radius) {
-        const eyeOffsetX = radius * 0.3;
-        const eyeOffsetY = -radius * 0.2;
-        const baseX = this.sprite.x;
-        const baseY = this.sprite.y;
-
-        this.eyeLeft.x = baseX - eyeOffsetX;
-        this.eyeLeft.y = baseY + eyeOffsetY;
-        this.eyeRight.x = baseX + eyeOffsetX;
-        this.eyeRight.y = baseY + eyeOffsetY;
-
-        let pupilOffsetX = 0;
-        let pupilOffsetY = 0;
-        const lookDistance = radius * 0.08;
-
-        const angle = this.state.direction?.angle ?? 0;
-        if (angle === 0) {
-            pupilOffsetX = lookDistance;
-        } else if (angle === 180) {
-            pupilOffsetX = -lookDistance;
-        } else if (angle === 270) {
-            pupilOffsetY = -lookDistance;
-        } else if (angle === 90) {
-            pupilOffsetY = lookDistance;
+        // Debug logging
+        if (!this._logged) {
+            console.log(`[GhostRenderer] ${this.state.ghostType} initial position:`, x, y);
+            this._logged = true;
         }
 
-        this.pupilLeft.x = baseX - eyeOffsetX + pupilOffsetX;
-        this.pupilLeft.y = baseY + eyeOffsetY + pupilOffsetY;
-        this.pupilRight.x = baseX + eyeOffsetX + pupilOffsetX;
-        this.pupilRight.y = baseY + eyeOffsetY + pupilOffsetY;
+        // Debug logging every 60 frames
+        this._frameCount = (this._frameCount || 0) + 1;
+        if (this._frameCount % 60 === 0) {
+            console.log(`[GhostRenderer] ${this.state.ghostType} frame ${this._frameCount}: (${x.toFixed(1)}, ${y.toFixed(1)})`);
+        }
+
+        // Update graphics
+        this.drawGhost(x, y);
+
+        // Update eyes
+        const isFrightened = this.state.isFrightened ?? false;
+        const isEaten = this.state.isEaten ?? false;
+
+        this.eyeLeft.x = x - radius * 0.3;
+        this.eyeLeft.y = y - radius * 0.2;
+        this.eyeRight.x = x + radius * 0.3;
+        this.eyeRight.y = y - radius * 0.2;
+
+        this.pupilLeft.x = x - radius * 0.3;
+        this.pupilLeft.y = y - radius * 0.2;
+        this.pupilRight.x = x + radius * 0.3;
+        this.pupilRight.y = y - radius * 0.2;
+
+        const visible = visualState.visible ?? true;
+
+        this.graphics.setVisible(visible);
+        this.eyeLeft.setVisible(visible && !isFrightened && !isEaten);
+        this.eyeRight.setVisible(visible && !isFrightened && !isEaten);
+        this.pupilLeft.setVisible(visible && !isFrightened && !isEaten);
+        this.pupilRight.setVisible(visible && !isFrightened && !isEaten);
     }
 
     /**
-	 * Destroy visual elements
+	 * Update mode animation
+	 */
+    updateModeAnimation(newMode, isFrightened) {
+        // Can be used to trigger mode-specific animations
+    }
+
+    /**
+	 * Clean up resources
 	 */
     destroy() {
-        this.sprite.destroy();
+        this.graphics.clear();
+        this.graphics.destroy();
         this.eyeLeft.destroy();
         this.eyeRight.destroy();
         this.pupilLeft.destroy();

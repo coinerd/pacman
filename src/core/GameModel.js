@@ -298,6 +298,11 @@ export default class GameModel {
             this.desiredDirection = inputDirection;
         }
 
+        // Apply player input direction to movement system
+        if (this.desiredDirection && this.pacman?.id) {
+            this.movementSystem.setDirection(this.pacman.id, this.desiredDirection);
+        }
+
         // Update via MovementSystem
         const movementEvents = this.movementSystem.update(deltaSeconds, {
             player: this.pacman,

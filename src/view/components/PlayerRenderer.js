@@ -15,45 +15,90 @@ export class PlayerRenderer {
         this.scene = scene;
         this.state = playerState;
 
+        // Create graphics object for drawing player
+        this.graphics = scene.add.graphics();
+        this.graphics.setDepth(100);
+        this.graphics.setAlpha(1);
+        this.graphics.setVisible(true);
+
         const radius = gameConfig.tileSize * 0.4;
         const cyanColor = 0x00ced1;
 
-        // Create hexagon points as array of objects (relative to center)
-        const hexagonPoints = [];
-        for (let i = 0; i < 6; i++) {
-            const angle = (i * 60 - 90) * (Math.PI / 180);
-            hexagonPoints.push({
-                x: radius * Math.cos(angle),
-                y: radius * Math.sin(angle)
-            });
-        }
+        console.log('[PlayerRenderer.constructor] Created graphics with depth:', this.graphics.depth);
 
-        // Create polygon at position (0, 0) with relative points
-        this.sprite = scene.add.polygon(0, 0, hexagonPoints, cyanColor);
-
-        // Set origin to center so points are relative to center
-        this.sprite.setOrigin(0.5, 0.5);
-        this.sprite.setDepth(100);
-
-        // Position sprite at actual player position
-        this.sprite.setPosition(playerState.x, playerState.y);
-        this.sprite.setRotation((playerState.direction.angle * Math.PI) / 180);
-
-        // Use scene.add.circle() instead of new Phaser.GameObjects.Arc()
+        // Use scene.add.circle() for eye
         this.eye = scene.add.circle(
-            this.sprite.x,
-            this.sprite.y - radius * 0.3,
+            playerState.x,
+            playerState.y - radius * 0.3,
             radius * 0.15,
             0x000000
         );
         this.eye.setDepth(101);
 
+        this.currentRadius = radius;
+        this.currentColor = cyanColor;
         this.pulsePhase = 0;
 
-        this.powerUpEffects = new Map();
-        this.shieldEffect = null;
-        this.speedTrail = [];
-        this.magnetField = null;
+        // Initial draw
+        this.drawPlayer(playerState.x, playerState.y, playerState.direction);
+    }
+
+    /**
+	 * Draw player hexagon with eye
+	 */
+    drawPlayer(x, y, direction) {
+        const radius = gameConfig.tileSize * 0.4;
+
+        // Debug logging
+        if (!this._drawLogged) {
+            console.log('[PlayerRenderer.drawPlayer] Position:', x, y, 'Radius:', radius, 'Color:', this.currentColor);
+            this._drawLogged = true;
+        }
+
+        // Clear previous frame
+        this.graphics.clear();
+
+        // Debug: verify graphics is still valid
+        if (!this.graphics || !this.graphics.scene) {
+            console.error('[PlayerRenderer.drawPlayer] Graphics object is invalid!');
+            return;
+        }
+
+        // Set fill style with explicit alpha
+        this.graphics.fillStyle(this.currentColor, 1);
+        this.graphics.lineStyle(3, this.currentColor, 1);
+
+        // Calculate hexagon points (centered at x, y)
+        const points = [];
+        for (let i = 0; i < 6; i++) {
+            const angle = (i * 60 - 90) * (Math.PI / 180);
+            const px = x + radius * Math.cos(angle);
+            const py = y + radius * Math.sin(angle);
+            points.push(px, py);
+        }
+
+        // Debug: log all points
+        if (!this._pointsLogged) {
+            console.log('[PlayerRenderer.drawPlayer] Hexagon points:', points);
+            this._pointsLogged = true;
+        }
+
+        // Draw path explicitly
+        this.graphics.beginPath();
+        this.graphics.moveTo(points[0], points[1]);
+        for (let i = 1; i < 6; i++) {
+            this.graphics.lineTo(points[i * 2], points[i * 2 + 1]);
+        }
+        this.graphics.closePath();
+
+        // Fill AND stroke for visibility
+        this.graphics.fillPath();
+        this.graphics.strokePath();
+
+        // Debug: verify graphics state
+        console.log('[PlayerRenderer.drawPlayer] Graphics visible:', this.graphics.visible,
+            'alpha:', this.graphics.alpha,
+            'depth:', this.graphics.depth);
     }
 
     /**
@@ -64,219 +109,98 @@ export class PlayerRenderer {
         const radius = gameConfig.tileSize * 0.4;
 
         // Model.x/y is always correctly interpolated by TileCenterMovementStrategy
-        // No need to recalculate interpolation in the view
-        this.sprite.x = this.state.x;
-        this.sprite.y = this.state.y;
+        // No need to recalculate interpolation in view
+
+        // Debug logging
+        if (!this._logged) {
+            console.log('[PlayerRenderer.sync] Initial position:', this.state.x, this.state.y,
+                'direction:', this.state.direction);
+            this._logged = true;
+        }
+
+        // Debug logging every 30 frames
+        this._frameCount = (this._frameCount || 0) + 1;
+        if (this._frameCount % 30 === 0) {
+            console.log(`[PlayerRenderer.sync] Frame ${this._frameCount}:`,
+                `pos (${this.state.x.toFixed(1)}, ${this.state.y.toFixed(1)})`);
+        }
 
         const rotation = (this.state.direction.angle * Math.PI) / 180;
-        this.sprite.setRotation(rotation);
 
         this.pulsePhase += 0.05;
         const pulseScale = 1 + Math.sin(this.pulsePhase) * 0.05;
-        this.sprite.setScale(pulseScale);
 
-        // Use sprite position for eye (syncs with interpolated movement)
+        // Use state position for eye (syncs with interpolated movement)
         const eyeOffset = radius * 0.3;
 
         const angle = this.state.direction.angle;
         if (angle === 0) {
-            this.eye.x = this.sprite.x + eyeOffset;
-            this.eye.y = this.sprite.y - eyeOffset;
+            this.eye.x = this.state.x + eyeOffset;
+            this.eye.y = this.state.y - eyeOffset;
         } else if (angle === 180) {
-            this.eye.x = this.sprite.x - eyeOffset;
-            this.eye.y = this.sprite.y - eyeOffset;
+            this.eye.x = this.state.x - eyeOffset;
+            this.eye.y = this.state.y - eyeOffset;
         } else if (angle === 270) {
-            this.eye.x = this.sprite.x;
-            this.eye.y = this.sprite.y - eyeOffset * 1.5;
+            this.eye.x = this.state.x;
+            this.eye.y = this.state.y - eyeOffset * 1.5;
         } else if (angle === 90) {
-            this.eye.x = this.sprite.x;
-            this.eye.y = this.sprite.y - eyeOffset * 0.5;
+            this.eye.x = this.state.x;
+            this.eye.y = this.state.y - eyeOffset * 0.5;
         } else {
-            this.eye.x = this.sprite.x + eyeOffset;
-            this.eye.y = this.sprite.y - eyeOffset;
+            this.eye.x = this.state.x + eyeOffset;
+            this.eye.y = this.state.y - eyeOffset;
         }
+
+        // Draw player hexagon
+        this.drawPlayer(this.state.x, this.state.y, this.state.direction);
 
         if (this.state.isDying) {
             const deathScale = 1 + (1 - this.state.mouthAngle / 30) * 0.5;
-            this.sprite.setScale(deathScale);
-            this.sprite.setAlpha(this.state.mouthAngle / 30);
+            this.graphics.setAlpha(this.state.mouthAngle / 30);
             this.eye.setVisible(false);
         } else {
+            this.graphics.setAlpha(1);
             this.eye.setVisible(true);
         }
 
-        this.sprite.setVisible(this.state.visualState.visible);
-        this.eye.setVisible(this.state.visualState.visible && !this.state.isDying);
-        this.sprite.setAlpha(
-            this.state.isDying
-                ? this.state.mouthAngle / 30
-                : this.state.visualState.opacity
-        );
-
-        this.updatePowerUpEffects();
-    }
-
-    updatePowerUpEffects() {
-        if (this.powerUpEffects.has('SPEED_BOOST')) {
-            this.createSpeedTrailEffect();
-        }
-
-        if (this.shieldEffect) {
-            this.shieldEffect.clear();
-            this.shieldEffect.lineStyle(3, 0x00ced1, 0.6);
-            const radius = gameConfig.tileSize * 0.5;
-            this.shieldEffect.strokeCircle(this.sprite.x, this.sprite.y, radius);
-        }
-
-        if (this.magnetField) {
-            this.magnetField.clear();
-            this.magnetField.lineStyle(1, 0x00ff7f, 0.4);
-            const radius = gameConfig.tileSize * 0.7;
-            for (let i = 0; i < 3; i++) {
-                this.magnetField.strokeCircle(
-                    this.sprite.x,
-                    this.sprite.y,
-                    radius * (i + 1) * 0.3
-                );
-            }
-        }
-    }
-
-    addPowerUpEffect(type) {
-        this.powerUpEffects.set(type, Date.now());
-
-        switch (type) {
-        case 'SHIELD':
-            this.createShieldEffect();
-            break;
-        case 'SPEED_BOOST':
-            this.createSpeedTrailEffect();
-            break;
-        case 'DATA_MAGNET':
-            this.createMagnetFieldEffect();
-            break;
-        }
-    }
-
-    removePowerUpEffect(type) {
-        this.powerUpEffects.delete(type);
-
-        switch (type) {
-        case 'SHIELD':
-            this.destroyShieldEffect();
-            break;
-        case 'SPEED_BOOST':
-            this.destroySpeedTrailEffect();
-            break;
-        case 'DATA_MAGNET':
-            this.destroyMagnetFieldEffect();
-            break;
-        }
-    }
-
-    createShieldEffect() {
-        if (this.shieldEffect) {return;}
-
-        const radius = gameConfig.tileSize * 0.5;
-        this.shieldEffect = this.scene.add.graphics();
-        this.shieldEffect.lineStyle(3, 0x00ced1, 0.6);
-        this.shieldEffect.strokeCircle(this.sprite.x, this.sprite.y, radius);
-        this.shieldEffect.setDepth(95);
-
-        this.scene.tweens.add({
-            targets: this.shieldEffect,
-            alpha: 0.3,
-            duration: 500,
-            yoyo: true,
-            repeat: -1
-        });
-    }
-
-    destroyShieldEffect() {
-        if (this.shieldEffect) {
-            this.shieldEffect.destroy();
-            this.shieldEffect = null;
-        }
-    }
-
-    createSpeedTrailEffect() {
-        if (this.speedTrail.length > 5) {
-            const oldest = this.speedTrail.shift();
-            oldest.destroy();
-        }
-
-        const trail = this.scene.add
-            .circle(
-                this.sprite.x,
-                this.sprite.y,
-                gameConfig.tileSize * 0.2,
-                0xffd700,
-                0.3
-            )
-            .setDepth(95);
-
-        this.speedTrail.push(trail);
-
-        this.scene.tweens.add({
-            targets: trail,
-            scale: 0,
-            alpha: 0,
-            duration: 300,
-            ease: 'Power2'
-        });
-    }
-
-    destroySpeedTrailEffect() {
-        for (const trail of this.speedTrail) {
-            trail.destroy();
-        }
-        this.speedTrail = [];
-    }
-
-    createMagnetFieldEffect() {
-        if (this.magnetField) {return;}
-
-        const radius = gameConfig.tileSize * 0.7;
-        this.magnetField = this.scene.add.graphics();
-        this.magnetField.lineStyle(1, 0x00ff7f, 0.4);
-
-        for (let i = 0; i < 3; i++) {
-            this.magnetField.strokeCircle(
-                this.sprite.x,
-                this.sprite.y,
-                radius * (i + 1) * 0.3
-            );
-        }
-
-        this.magnetField.setDepth(94);
-
-        this.scene.tweens.add({
-            targets: this.magnetField,
-            alpha: 0.2,
-            duration: 600,
-            yoyo: true,
-            repeat: -1
-        });
-    }
-
-    destroyMagnetFieldEffect() {
-        if (this.magnetField) {
-            this.magnetField.destroy();
-            this.magnetField = null;
-        }
+        this.graphics.setVisible(this.state.visualState.visible);
     }
 
     /**
-	 * Destroy visual elements
+	 * Update direction animation
+	 */
+    updateDirectionAnimation(newDirection) {
+        // Can be used to trigger direction-specific animations
+        this.pulsePhase = 0;
+    }
+
+    /**
+	 * Add power-up effect
+	 */
+    addPowerUpEffect(type) {
+        // Implement power-up visual effects
+    }
+
+    /**
+	 * Remove power-up effect
+	 */
+    removePowerUpEffect(type) {
+        // Remove power-up visual effects
+    }
+
+    /**
+	 * Show score for eating
+	 */
+    showScore(score, x, y) {
+        // Show score popup
+    }
+
+    /**
+	 * Clean up resources
 	 */
     destroy() {
-        this.sprite.destroy();
+        this.graphics.clear();
+        this.graphics.destroy();
         this.eye.destroy();
-
-        this.destroyShieldEffect();
-        this.destroySpeedTrailEffect();
-        this.destroyMagnetFieldEffect();
-
-        this.powerUpEffects.clear();
     }
 }

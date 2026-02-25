@@ -23,7 +23,7 @@ import { SoundManager } from '../managers/SoundManager.js';
 import { PelletPool } from '../pools/PelletPool.js';
 import { PowerPelletPool } from '../pools/PowerPelletPool.js';
 import { EffectManager } from '../scenes/systems/EffectManager.js';
-import { gridToPixel, PELLET_TYPES, TILE_TYPES } from '../utils/MazeLayout.js';
+import { gridToPixel, pixelToGrid, PELLET_TYPES, TILE_TYPES } from '../utils/MazeLayout.js';
 import { GhostRenderer } from '../view/components/GhostRenderer.js';
 import { FruitRenderer } from '../view/components/FruitRenderer.js';
 import { PlayerRenderer } from '../view/components/PlayerRenderer.js';
@@ -174,8 +174,12 @@ export default class ModelDrivenGameView {
     createMaze(mazeOverride = null) {
         const maze = mazeOverride || (this.lastSnapshot ? this.lastSnapshot.maze : this.gameModel?.maze);
         if (!maze) {
+            console.warn('[ModelDrivenGameView] createMaze: No maze data available');
+            console.log('[ModelDrivenGameView] this.lastSnapshot:', this.lastSnapshot);
+            console.log('[ModelDrivenGameView] this.gameModel:', this.gameModel);
             return;
         }
+        console.log('[ModelDrivenGameView] Creating maze with size:', maze.length, 'x', maze[0]?.length);
 
         const graphics = this.scene.make.graphics({ x: 0, y: 0, add: false });
 
@@ -323,28 +327,35 @@ export default class ModelDrivenGameView {
 
     /**
 	 * Create renderers for model entities
+	 * Note: In snapshot mode, renderers are created on first sync() call when snapshot is available
 	 */
     createEntityRenderers() {
-        // Get entity data from snapshot or model (backward compatibility)
-        const pacmanData = this.lastSnapshot?.pacman || this.gameModel?.pacman;
-        const ghostsData = this.lastSnapshot?.ghosts || this.gameModel?.ghosts;
-        const fruitData = this.lastSnapshot?.fruit || this.gameModel?.fruit;
+        // In snapshot mode (ViewContext), skip renderer creation here
+        // Renderers will be created on first sync() call when snapshot is available
+        if (this.useSnapshotMode) {
+            return;
+        }
+
+        // Legacy mode: Get entity data from model
+        const pacmanData = this.gameModel?.pacman;
+        const ghostsData = this.gameModel?.ghosts;
+        const fruitData = this.gameModel?.fruit;
 
         if (!pacmanData || !ghostsData || !fruitData) {
             console.warn('[ModelDrivenGameView] Cannot create entity renderers - missing data');
             return;
         }
 
-        // Create PlayerRenderer from snapshot data
+        // Create PlayerRenderer from model data
         this.playerRenderer = new PlayerRenderer(this.scene, pacmanData);
 
-        // Create GhostRenderer for each ghost from snapshot data
+        // Create GhostRenderer for each ghost from model data
         for (const ghostData of ghostsData) {
             const ghostRenderer = new GhostRenderer(this.scene, ghostData);
             this.ghostRenderers.set(ghostData.ghostType, ghostRenderer);
         }
 
-        // Create FruitRenderer from snapshot data
+        // Create FruitRenderer from model data
         this.fruitRenderer = new FruitRenderer(this.scene, fruitData);
     }
 
@@ -417,12 +428,20 @@ export default class ModelDrivenGameView {
 
             // Screen flash effect
             gameEvents.on(VIEW_EVENTS.SCREEN_FLASH, (data) => {
-                this.effectManager.createScreenFlash(data.color, data.duration);
+                try {
+                    this.effectManager?.createScreenFlash?.(data.color, data.duration);
+                } catch (e) {
+                    console.warn('[ModelDrivenGameView] Screen flash not available:', e.message);
+                }
             }),
 
             // Screen shake effect
             gameEvents.on(VIEW_EVENTS.SCREEN_SHAKE, (data) => {
-                this.effectManager.createScreenShake(data.intensity, data.duration);
+                try {
+                    this.effectManager?.createScreenShake?.(data.intensity, data.duration);
+                } catch (e) {
+                    console.warn('[ModelDrivenGameView] Screen shake not available:', e.message);
+                }
             }),
 
             // Entity moved - can be used for smooth interpolation
@@ -432,11 +451,10 @@ export default class ModelDrivenGameView {
             }),
 
             // Pacman direction changed
-            gameEvents.on(VIEW_EVENTS.PACMAN_DIRECTION_CHANGED, (data) => {
-                // Can be used to trigger direction-specific animations
-                if (this.playerRenderer) {
-                    this.playerRenderer.updateDirectionAnimation(data.newDirection);
-                }
+            // Note: Direction is already handled in PlayerRenderer.sync() via rotation
+            // This event can be used for additional direction-specific effects if needed
+            gameEvents.on(VIEW_EVENTS.PACMAN_DIRECTION_CHANGED, (_data) => {
+                // Direction animation is handled automatically in sync()
             }),
 
             // Ghost mode changed
@@ -456,7 +474,10 @@ export default class ModelDrivenGameView {
                 const score = this.lastSnapshot?.score ?? this.gameModel?.score ?? 0;
                 const level = this.lastSnapshot?.level ?? this.gameModel?.level ?? 1;
                 const highScore = this.lastSnapshot?.highScore ?? this.gameModel?.highScore ?? 0;
-                this.storageManager.saveHighScore(highScore);
+
+                // Save high score (use current score, not stored highScore)
+                this.storageManager.saveHighScore(score);
+
                 // Phase 2: Use SceneTransitionHandler instead of direct scene.start()
                 this.transitionHandler.requestSceneTransition('WinScene', {
                     score,
@@ -470,7 +491,10 @@ export default class ModelDrivenGameView {
                 // Use snapshot data instead of direct model access
                 const score = this.lastSnapshot?.score ?? this.gameModel?.score ?? 0;
                 const highScore = this.lastSnapshot?.highScore ?? this.gameModel?.highScore ?? 0;
-                this.storageManager.saveHighScore(highScore);
+
+                // Save high score (use current score, not stored highScore)
+                this.storageManager.saveHighScore(score);
+
                 // Phase 2: Use SceneTransitionHandler instead of direct scene.start()
                 this.transitionHandler.requestSceneTransition('GameOverScene', {
                     score,
@@ -642,8 +666,10 @@ export default class ModelDrivenGameView {
 	 */
     updateFromSnapshot(snapshot) {
         if (!snapshot) {
+            console.warn('[ModelDrivenGameView] updateFromSnapshot: No snapshot provided');
             return;
         }
+        console.log('[ModelDrivenGameView] updateFromSnapshot called with tick:', snapshot.tickCount);
 
         // Phase 4: Dirty-Tracking - Skip if snapshot hasn't changed
         if (this.lastSnapshot && this.snapshotEquals(this.lastSnapshot, snapshot)) {
@@ -658,14 +684,24 @@ export default class ModelDrivenGameView {
         if (!this.lastMazeSnapshot || !this.mazeEquals(this.lastMazeSnapshot.maze, snapshot.maze)) {
             this.createMaze(snapshot.maze);
             this.lastMazeSnapshot = { maze: snapshot.maze };
+            // Reset pellet pools before creating new ones for new level
+            this.pelletPool?.releaseAll();
+            this.powerPelletPool?.releaseAll();
             this.createPellets(snapshot.pelletGrid);
         }
 
         // Phase 4: Update pellets (no local state, direct from snapshot)
         this.updatePelletVisuals(snapshot.pelletGrid);
 
-        // Update entity renderers
+        // Create renderers on first snapshot if they don't exist
+        if (!this.playerRenderer && snapshot.pacman && snapshot.ghosts && snapshot.fruit) {
+            this.createRenderersFromSnapshot(snapshot);
+        }
+
+        // Update entity renderers with current snapshot data
+        // Important: Update the renderer's state reference to use the new snapshot
         if (this.playerRenderer && snapshot.pacman) {
+            this.playerRenderer.state = snapshot.pacman;
             this.playerRenderer.sync();
         }
 
@@ -673,12 +709,14 @@ export default class ModelDrivenGameView {
             for (const ghost of snapshot.ghosts) {
                 const ghostRenderer = this.ghostRenderers.get(ghost.ghostType);
                 if (ghostRenderer) {
+                    ghostRenderer.state = ghost;
                     ghostRenderer.sync();
                 }
             }
         }
 
         if (this.fruitRenderer && snapshot.fruit) {
+            this.fruitRenderer.state = snapshot.fruit;
             this.fruitRenderer.sync();
         }
 
@@ -878,9 +916,15 @@ export default class ModelDrivenGameView {
     /**
 	 * Sync all renderers to model state
 	 * Called each frame in the update loop
+	 * In snapshot mode, creates renderers on first call if they don't exist
 	 * @deprecated Use updateFromSnapshot(snapshot) instead for Phase 1 & 4
 	 */
     sync() {
+        // In snapshot mode: Create renderers on first sync if they don't exist
+        if (this.useSnapshotMode && this.lastSnapshot && !this.playerRenderer) {
+            this.createRenderersFromSnapshot(this.lastSnapshot);
+        }
+
         if (!this.playerRenderer || this.isDeathAnimating) {
             return;
         }
@@ -898,6 +942,29 @@ export default class ModelDrivenGameView {
             this.syncBossVisuals(this.lastSnapshot.boss);
             this.syncPowerUpVisuals(this.lastSnapshot.powerUps);
         }
+    }
+
+    /**
+	 * Create renderers from snapshot (called on first sync in snapshot mode)
+	 * @param {GameSnapshot} snapshot - Game state snapshot
+	 */
+    createRenderersFromSnapshot(snapshot) {
+        if (!snapshot.pacman || !snapshot.ghosts || !snapshot.fruit) {
+            console.warn('[ModelDrivenGameView] Cannot create renderers from snapshot - missing data');
+            return;
+        }
+
+        // Create PlayerRenderer from snapshot data
+        this.playerRenderer = new PlayerRenderer(this.scene, snapshot.pacman);
+
+        // Create GhostRenderer for each ghost from snapshot data
+        for (const ghostData of snapshot.ghosts) {
+            const ghostRenderer = new GhostRenderer(this.scene, ghostData);
+            this.ghostRenderers.set(ghostData.ghostType, ghostRenderer);
+        }
+
+        // Create FruitRenderer from snapshot data
+        this.fruitRenderer = new FruitRenderer(this.scene, snapshot.fruit);
     }
 
     /**
@@ -951,8 +1018,20 @@ export default class ModelDrivenGameView {
             return;
         }
 
+        // Phase 4: Handle both object format {spawnedPowerUps, activePowerUps} and array format
+        const spawnedPowerUps = Array.isArray(powerUps) ? powerUps : (powerUps.spawnedPowerUps || []);
+
+        if (!spawnedPowerUps.length) {
+            // Remove all existing power-up visuals if none are spawned
+            for (const [key, visual] of this.powerUpVisuals) {
+                this.removePowerUpVisual(visual);
+            }
+            return;
+        }
+
         // Phase 4: Build set of current power-up keys from snapshot
-        const currentKeys = new Set(powerUps.map(pu => `${pu.type}_${pu.gridX}_${pu.gridY}`));
+        // Note: power-ups use x,y (pixel coordinates) not gridX,gridY
+        const currentKeys = new Set(spawnedPowerUps.map(pu => `${pu.type}_${pu.x}_${pu.y}`));
 
         // Phase 4: Remove power-ups that are no longer in the snapshot
         for (const [key, visual] of this.powerUpVisuals) {
@@ -962,20 +1041,20 @@ export default class ModelDrivenGameView {
         }
 
         // Phase 4: Update or create power-ups from snapshot
-        for (const powerUp of powerUps) {
-            const key = `${powerUp.type}_${powerUp.gridX}_${powerUp.gridY}`;
+        for (const powerUp of spawnedPowerUps) {
+            const key = `${powerUp.type}_${powerUp.x}_${powerUp.y}`;
             let visual = this.powerUpVisuals.get(key);
 
             if (visual) {
-                // Update existing visual
-                const pixel = gridToPixel(powerUp.gridX, powerUp.gridY);
-                visual.sprite.x = pixel.x + gameConfig.tileSize * 0.35;
-                visual.sprite.y = pixel.y + gameConfig.tileSize * 0.35;
-                visual.text.x = pixel.x + gameConfig.tileSize * 0.35;
-                visual.text.y = pixel.y + gameConfig.tileSize * 0.35;
+                // Update existing visual - powerUps have pixel coordinates x,y
+                visual.sprite.x = powerUp.x + gameConfig.tileSize * 0.35;
+                visual.sprite.y = powerUp.y + gameConfig.tileSize * 0.35;
+                visual.text.x = powerUp.x + gameConfig.tileSize * 0.35;
+                visual.text.y = powerUp.y + gameConfig.tileSize * 0.35;
             } else {
-                // Create new visual from snapshot
-                this.createPowerUpVisual(powerUp.type, powerUp.gridX, powerUp.gridY);
+                // Create new visual from snapshot - convert pixel to grid coordinates
+                const gridPos = pixelToGrid(powerUp.x, powerUp.y);
+                this.createPowerUpVisual(powerUp.type, gridPos.x, gridPos.y);
             }
         }
     }
@@ -1085,11 +1164,19 @@ export default class ModelDrivenGameView {
             .rectangle(boss.x, boss.y - radius - 20, barWidth, barHeight, 0x333333, 1)
             .setDepth(110);
 
+        // Phase 4: Use snapshot data instead of direct model access
+        // Get max health from snapshot (new mode) or gameModel (legacy mode)
+        const bossSnapshot = this.lastSnapshot?.boss;
+        const maxHealth = bossSnapshot?.bossMaxHealth ||
+                         this.gameModel?.getBossMaxHealth() ||
+                         100; // fallback
+        const health = boss.health || bossSnapshot?.bossHealth || 0;
+
         const fill = this.scene.add
             .rectangle(
                 boss.x - barWidth / 2,
                 boss.y - radius - 20,
-                barWidth * (boss.health / this.gameModel.getBossMaxHealth()),
+                barWidth * (health / maxHealth),
                 barHeight,
                 0x00ff00,
                 1
