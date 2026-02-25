@@ -17,12 +17,14 @@ export class GameController {
      * @param {Object} options.gameModel - The game model
      * @param {Object} options.replaySystem - Optional replay system
      * @param {InputManager} options.inputManager - Optional input manager
+     * @param {Object} options.playerScoreFacade - Optional facade for player/score state
      */
-    constructor({ gameModel, replaySystem = null, inputManager = null } = {}) {
+    constructor({ gameModel, replaySystem = null, inputManager = null, playerScoreFacade = null } = {}) {
         this.gameModel = gameModel;
         this.replaySystem = replaySystem;
         this.inputManager = null;
         this.isActive = false;
+        this.playerScoreFacade = playerScoreFacade;
         this.unsubscribeInput = null;
 
         // Scene transition event handlers (Phase 2)
@@ -137,7 +139,8 @@ export class GameController {
             return;
         }
 
-        const state = this.gameModel.state || this.gameModel;
+        const facadeState = this.playerScoreFacade?.getPlayerState?.();
+        const state = facadeState || this.gameModel.state || this.gameModel;
 
         // Handle direction input
         if (input.type === INPUT_TYPES.DIRECTION && input.value) {
@@ -269,6 +272,7 @@ export class GameController {
         this.inputManager = null;
         this.gameModel = null;
         this.replaySystem = null;
+        this.playerScoreFacade = null;
     }
 }
 
