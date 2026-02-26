@@ -38,6 +38,9 @@ export class HighScoreWidget {
         this.panel.setAlpha(colors.panel.alpha);
         this.panel.setDepth(900);
         this.panel.setScrollFactor(0);
+        this.panel.setVisible(false); // Disable panel for visibility
+        
+        console.log('[HighScoreWidget.create] Panel DISABLED for visibility');
 
         this.corners = this.createCircuitCorners(scene, x, y, panelWidth, panelHeight, colors, circuit);
 
@@ -63,19 +66,28 @@ export class HighScoreWidget {
             y + panelHeight / 2,
             '0',
             {
-                fontFamily: scoreFont.family,
-                fontSize: scoreFont.size,
-                fontStyle: scoreFont.style,
-                fontWeight: scoreFont.weight,
-                letterSpacing: scoreFont.letterSpacing,
-                color: `#${colors.text.primary.toString(16).padStart(6, '0')}`
+                fontFamily: 'Courier New, monospace', // Same as ScoreBoard
+                fontSize: '32px', // Same as ScoreBoard
+                color: '#00ff00', // Bright green for visibility
+                backgroundColor: '#000000', // Black background
+                padding: { x: 5, y: 2 }
             }
         );
         this.highScoreText.setOrigin(0.5);
-        this.highScoreText.setDepth(1000);
+        this.highScoreText.setDepth(1001); // Same depth as ScoreBoard
         this.highScoreText.setScrollFactor(0);
         this.highScoreText.setVisible(true);
         this.highScoreText.setAlpha(1);
+        
+        console.log('[HighScoreWidget.create] highScoreText created with hardcoded values:', {
+            x: this.highScoreText.x,
+            y: this.highScoreText.y,
+            text: this.highScoreText.text,
+            visible: this.highScoreText.visible,
+            alpha: this.highScoreText.alpha,
+            depth: this.highScoreText.depth,
+            color: this.highScoreText.style.color
+        });
     }
 
     update(highScore) {
@@ -86,6 +98,12 @@ export class HighScoreWidget {
         const safeHighScore = Number.isFinite(Number(highScore)) ? Number(highScore) : 0;
         this.highScoreText.setText(`${safeHighScore}`);
         this.lastHighScore = safeHighScore;
+        
+        // Force visibility
+        this.highScoreText.setVisible(true);
+        this.highScoreText.setAlpha(1);
+        this.highScoreLabel.setVisible(true);
+        this.highScoreLabel.setAlpha(1);
     }
 
     highlightIfNewRecord() {

@@ -34,6 +34,9 @@ export class LivesWidget {
         this.panel.setAlpha(colors.panel.alpha);
         this.panel.setDepth(900);
         this.panel.setScrollFactor(0);
+        this.panel.setVisible(false); // Disable panel for visibility
+        
+        console.log('[LivesWidget.create] Panel DISABLED for visibility');
 
         this.corners = this.createCircuitCorners(scene, x, y, panelWidth, panelHeight, colors, circuit);
 
@@ -59,17 +62,44 @@ export class LivesWidget {
             y + panelHeight / 2,
             '3',
             {
-                fontFamily: scoreFont.family,
-                fontSize: scoreFont.size,
-                fontStyle: scoreFont.style,
-                fontWeight: scoreFont.weight,
-                letterSpacing: scoreFont.letterSpacing,
-                color: `#${colors.text.primary.toString(16).padStart(6, '0')}`
+                fontFamily: 'Courier New, monospace', // Same as ScoreBoard
+                fontSize: '32px', // Same as ScoreBoard
+                color: '#00ff00', // Bright green for visibility
+                backgroundColor: '#000000', // Black background
+                padding: { x: 5, y: 2 }
             }
         );
         this.livesText.setOrigin(0.5);
-        this.livesText.setDepth(1000);
+        this.livesText.setDepth(1001); // Same depth as ScoreBoard
         this.livesText.setScrollFactor(0);
+        this.livesText.setVisible(true);
+        this.livesText.setAlpha(1);
+        
+        console.log('[LivesWidget.create] livesText created with hardcoded values:', {
+            x: this.livesText.x,
+            y: this.livesText.y,
+            text: this.livesText.text,
+            visible: this.livesText.visible,
+            alpha: this.livesText.alpha,
+            depth: this.livesText.depth,
+            color: this.livesText.style.color
+        });
+        
+        console.log('[LivesWidget.create] livesText rendering check:', {
+            x: this.livesText.x,
+            y: this.livesText.y,
+            visible: this.livesText.visible,
+            alpha: this.livesText.alpha,
+            depth: this.livesText.depth,
+            worldAlpha: this.livesText.worldAlpha,
+            worldVisible: this.livesText.worldVisible,
+            worldX: this.livesText.worldPosition?.x,
+            worldY: this.livesText.worldPosition?.y,
+            fontSize: this.livesText.style.fontSize,
+            fontFamily: this.livesText.style.fontFamily,
+            color: this.livesText.style.color,
+            displayList: this.livesText.displayList
+        });
     }
 
     update(lives) {
@@ -78,6 +108,12 @@ export class LivesWidget {
         }
 
         this.livesText.setText(`${lives}`);
+        
+        // Force visibility
+        this.livesText.setVisible(true);
+        this.livesText.setAlpha(1);
+        this.livesLabel.setVisible(true);
+        this.livesLabel.setAlpha(1);
     }
 
     destroy() {

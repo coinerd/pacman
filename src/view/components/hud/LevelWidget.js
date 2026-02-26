@@ -34,6 +34,9 @@ export class LevelWidget {
         this.panel.setAlpha(colors.panel.alpha);
         this.panel.setDepth(900);
         this.panel.setScrollFactor(0);
+        this.panel.setVisible(false); // Disable panel for visibility
+        
+        console.log('[LevelWidget.create] Panel DISABLED for visibility');
 
         this.corners = this.createCircuitCorners(scene, x, y, panelWidth, panelHeight, colors, circuit);
 
@@ -59,17 +62,28 @@ export class LevelWidget {
             y + panelHeight / 2,
             '1',
             {
-                fontFamily: scoreFont.family,
-                fontSize: scoreFont.size,
-                fontStyle: scoreFont.style,
-                fontWeight: scoreFont.weight,
-                letterSpacing: scoreFont.letterSpacing,
-                color: `#${colors.text.primary.toString(16).padStart(6, '0')}`
+                fontFamily: 'Courier New, monospace', // Same as ScoreBoard
+                fontSize: '32px', // Same as ScoreBoard
+                color: '#00ff00', // Bright green for visibility
+                backgroundColor: '#000000', // Black background
+                padding: { x: 5, y: 2 }
             }
         );
         this.levelText.setOrigin(0.5);
-        this.levelText.setDepth(1000);
+        this.levelText.setDepth(1001); // Same depth as ScoreBoard
         this.levelText.setScrollFactor(0);
+        this.levelText.setVisible(true);
+        this.levelText.setAlpha(1);
+        
+        console.log('[LevelWidget.create] levelText created with hardcoded values:', {
+            x: this.levelText.x,
+            y: this.levelText.y,
+            text: this.levelText.text,
+            visible: this.levelText.visible,
+            alpha: this.levelText.alpha,
+            depth: this.levelText.depth,
+            color: this.levelText.style.color
+        });
     }
 
     update(level) {
@@ -78,6 +92,12 @@ export class LevelWidget {
         }
 
         this.levelText.setText(`${level}`);
+        
+        // Force visibility
+        this.levelText.setVisible(true);
+        this.levelText.setAlpha(1);
+        this.levelLabel.setVisible(true);
+        this.levelLabel.setAlpha(1);
     }
 
     destroy() {

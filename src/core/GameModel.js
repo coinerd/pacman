@@ -448,6 +448,7 @@ export default class GameModel {
      * @param {Object} event - Collision event
      */
     applyCollisionEffect(event) {
+        console.log('[GameModel.applyCollisionEffect] Event:', event);
         this.scoreModule.applyEvent(event);
 
         switch (event.type) {
@@ -1111,6 +1112,10 @@ export default class GameModel {
         const fruitEvent = this.checkFruitCollision();
         if (fruitEvent) {
             events.push(fruitEvent);
+        }
+
+        if (events.length > 0) {
+            console.log('[GameModel.checkAllCollisions] Collision events:', events);
         }
 
         return events;

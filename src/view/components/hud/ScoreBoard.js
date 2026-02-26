@@ -21,7 +21,7 @@ export class ScoreBoard {
         const panelHeight = 45;
         const padding = themeConfig.layout.spacing.md;
         const x = 10;
-        const y = 10;
+        const y = 10; // Reset to original position
         const labelWidth = 75;
         const valueWidth = 120;
         const panelWidth = labelWidth + valueWidth + padding * 2;
@@ -37,6 +37,20 @@ export class ScoreBoard {
         this.panel.setAlpha(colors.panel.alpha);
         this.panel.setDepth(900);
         this.panel.setScrollFactor(0);
+        this.panel.setVisible(false); // Permanently disable panel for visibility
+        
+        console.log('[ScoreBoard.create] Panel DISABLED for visibility');
+        
+        console.log('[ScoreBoard.create] Panel created:', {
+            x: this.panel.x,
+            y: this.panel.y,
+            width: panelWidth,
+            height: panelHeight,
+            alpha: this.panel.alpha,
+            depth: this.panel.depth,
+            zIndex: this.panel.z,
+            visible: this.panel.visible
+        });
 
         this.corners = this.createCircuitCorners(scene, x, y, panelWidth, panelHeight, colors, circuit);
 
@@ -62,28 +76,59 @@ export class ScoreBoard {
             y + panelHeight / 2,
             '0',
             {
-                fontFamily: scoreFont.family,
-                fontSize: scoreFont.size,
-                fontStyle: scoreFont.style,
-                fontWeight: scoreFont.weight,
-                letterSpacing: scoreFont.letterSpacing,
-                color: '#00ced1',
-                backgroundColor: '#000000',
-                padding: { x: 2, y: 2 }
+                fontFamily: 'Courier New, monospace', // Hardcoded font
+                fontSize: '32px', // Hardcoded size
+                color: '#00ff00', // Bright green color for visibility test
+                backgroundColor: '#000000', // Black background
+                padding: { x: 5, y: 2 }
             }
         );
         this.scoreText.setOrigin(0.5);
-        this.scoreText.setDepth(1000);
+        this.scoreText.setDepth(1001);
         this.scoreText.setScrollFactor(0);
+        this.scoreText.setVisible(true);
+        this.scoreText.setAlpha(1);
+        
+        console.log('[ScoreBoard.create] scoreText recreated with hardcoded values:', {
+            x: this.scoreText.x,
+            y: this.scoreText.y,
+            text: this.scoreText.text,
+            visible: this.scoreText.visible,
+            alpha: this.scoreText.alpha,
+            depth: this.scoreText.depth,
+            fontFamily: this.scoreText.style.fontFamily,
+            fontSize: this.scoreText.style.fontSize,
+            color: this.scoreText.style.color
+        });
     }
 
     update(score) {
+        console.log('[ScoreBoard.update] Called with score:', score, 'scoreText exists:', !!this.scoreText);
         if (!this.scoreText) {
+            console.warn('[ScoreBoard.update] scoreText is null, cannot update');
             return;
         }
 
         const safeScore = Number.isFinite(Number(score)) ? Number(score) : 0;
         this.scoreText.setText(`${safeScore}`);
+        
+        // Force visibility
+        this.scoreText.setVisible(true);
+        this.scoreText.setAlpha(1);
+        this.scoreLabel.setVisible(true);
+        this.scoreLabel.setAlpha(1);
+        if (this.panel) {
+            this.panel.setVisible(false); // Keep panel disabled
+        }
+        
+        console.log('[ScoreBoard.update] Score updated:', {
+            text: this.scoreText.text,
+            x: this.scoreText.x,
+            y: this.scoreText.y,
+            visible: this.scoreText.visible,
+            alpha: this.scoreText.alpha,
+            color: this.scoreText.style.color
+        });
     }
 
     destroy() {

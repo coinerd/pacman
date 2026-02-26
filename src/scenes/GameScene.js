@@ -84,6 +84,9 @@ export default class GameScene extends Phaser.Scene {
         this.uiController = new UIController(this, this.playerScoreFacade);
         this.uiController.create();
 
+        // Start game loop
+        this.start();
+
         this.inputManager = new InputManager();
         this.inputManager.registerAdapter('keyboard', new KeyboardAdapter(this.input));
 
@@ -103,6 +106,9 @@ export default class GameScene extends Phaser.Scene {
 
         // Phase 2: Bind scene transition events in controller
         this.gameController.bindSceneTransitionEvents();
+
+        // Start game
+        this.start();
 
         this.debugOverlay = new DebugOverlay(this);
         if (this.settings.showFps) {
@@ -128,6 +134,15 @@ export default class GameScene extends Phaser.Scene {
         gameEvents.emit(GAME_EVENTS.GAME_STARTED, {
             level: this.gameModel.level
         });
+    }
+
+    /**
+     * Start's game (unpause and begin game loop)
+     */
+    start() {
+        console.log('[GameScene.start] Starting game...');
+        this.gameModel.setPaused(false);
+        this.gameModel.isPaused = false;
     }
 
     countPellets(pelletGrid) {
