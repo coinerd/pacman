@@ -265,9 +265,9 @@ export class GhostRenderer {
     destroy() {
         this.graphics.clear();
         this.graphics.destroy();
-        if (this.eyeLeft) this.eyeLeft.destroy();
-        if (this.eyeRight) this.eyeRight.destroy();
-        if (this.pupilLeft) this.pupilLeft.destroy();
-        if (this.pupilRight) this.pupilRight.destroy();
+        if (this.eyeLeft) {this.eyeLeft.destroy();}
+        if (this.eyeRight) {this.eyeRight.destroy();}
+        if (this.pupilLeft) {this.pupilLeft.destroy();}
+        if (this.pupilRight) {this.pupilRight.destroy();}
     }
 }

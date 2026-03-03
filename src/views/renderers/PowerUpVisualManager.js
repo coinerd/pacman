@@ -82,10 +82,10 @@ export class PowerUpVisualManager {
      */
     getShapeForType(type) {
         switch (type) {
-            case 'SHIELD': return 'circle';
-            case 'SPEED_BOOST': return 'triangle';
-            case 'DATA_MAGNET': return 'square';
-            default: return 'circle';
+        case 'SHIELD': return 'circle';
+        case 'SPEED_BOOST': return 'triangle';
+        case 'DATA_MAGNET': return 'square';
+        default: return 'circle';
         }
     }
 

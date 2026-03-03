@@ -80,7 +80,8 @@ export class EntityRendererManager {
     updateFromSnapshot(snapshot) {
         // Update player renderer
         if (this.playerRenderer && snapshot.pacman) {
-            this.playerRenderer.update(snapshot.pacman);
+            this.playerRenderer.state = snapshot.pacman;
+            this.playerRenderer.sync();
         }
 
         // Update ghost renderers
@@ -88,7 +89,8 @@ export class EntityRendererManager {
             for (const ghostData of snapshot.ghosts) {
                 const ghostRenderer = this.ghostRenderers.get(ghostData.ghostType);
                 if (ghostRenderer) {
-                    ghostRenderer.update(ghostData);
+                    ghostRenderer.state = ghostData;
+                    ghostRenderer.sync();
                 } else {
                     // Create new ghost renderer if needed
                     const newRenderer = new GhostRenderer(this.scene, ghostData);
@@ -99,7 +101,8 @@ export class EntityRendererManager {
 
         // Update fruit renderer
         if (this.fruitRenderer && snapshot.fruit) {
-            this.fruitRenderer.update(snapshot.fruit);
+            this.fruitRenderer.state = snapshot.fruit;
+            this.fruitRenderer.sync();
         }
     }
 

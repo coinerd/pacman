@@ -5,19 +5,23 @@
  */
 
 import { GAME_EVENTS, gameEvents } from '../../core/EventBus.js';
-import { ViewContext, ViewState, GameSnapshot } from '../ViewInterface.js';
+import { ViewContext, ViewState } from '../ViewInterface.js';
 import { SceneTransitionHandler } from '../SceneTransitionHandler.js';
 import { VIEW_EVENTS } from '../ViewEvents.js';
 import { SoundManager } from '../../managers/SoundManager.js';
 import { EffectManager } from '../../scenes/systems/EffectManager.js';
 
+// Core coordinators
+import { RenderCoordinator } from './RenderCoordinator.js';
+import { EffectOrchestrator } from './EffectOrchestrator.js';
+
 // Renderer managers
-import { MazeRenderer } from './MazeRenderer.js';
-import { PelletRenderer } from './PelletRenderer.js';
-import { EntityRendererManager } from './EntityRendererManager.js';
-import { BossVisualManager } from './BossVisualManager.js';
-import { PowerUpVisualManager } from './PowerUpVisualManager.js';
-import { NarrativeManager } from './NarrativeManager.js';
+import { MazeRenderer } from '../renderers/MazeRenderer.js';
+import { PelletRenderer } from '../renderers/PelletRenderer.js';
+import { EntityRendererManager } from '../renderers/EntityRendererManager.js';
+import { BossVisualManager } from '../renderers/BossVisualManager.js';
+import { PowerUpVisualManager } from '../renderers/PowerUpVisualManager.js';
+import { NarrativeManager } from '../renderers/NarrativeManager.js';
 
 export class ViewManager {
     /**
@@ -50,12 +54,17 @@ export class ViewManager {
 
         // Latest snapshot (for snapshot-based rendering)
         this.lastSnapshot = null;
+        this.lastMazeSnapshot = null;
         this.frameCount = 0;
 
         // Scene Transition Handler
         this.transitionHandler = new SceneTransitionHandler({
             eventBus: this.eventBus
         });
+
+        // Core coordinators
+        this.renderCoordinator = new RenderCoordinator(this.scene);
+        this.effectOrchestrator = new EffectOrchestrator(this.scene);
 
         // Renderer managers
         this.mazeRenderer = new MazeRenderer(this.scene);
@@ -64,6 +73,9 @@ export class ViewManager {
         this.bossVisualManager = new BossVisualManager(this.scene);
         this.powerUpVisualManager = new PowerUpVisualManager(this.scene);
         this.narrativeManager = new NarrativeManager(this.scene);
+
+        // Register renderers with coordinator
+        this.registerRenderers();
 
         // Managers
         this.soundManager = new SoundManager(this.scene);
@@ -74,6 +86,44 @@ export class ViewManager {
 
         // Death animation state
         this.isDeathAnimating = false;
+    }
+
+    /**
+     * Register all renderers with the render coordinator
+     */
+    registerRenderers() {
+        const phases = this.renderCoordinator.renderPhases;
+
+        // Background phase
+        this.renderCoordinator.registerRenderer(phases.BACKGROUND, {
+            render: () => this.mazeRenderer.createBackground()
+        }, 0);
+
+        // World phase
+        this.renderCoordinator.registerRenderer(phases.WORLD, {
+            render: () => {
+                if (this.lastSnapshot) {
+                    this.mazeRenderer.createMaze(this.lastSnapshot.maze);
+                    this.pelletRenderer.updatePelletVisuals(this.lastSnapshot.pelletGrid);
+                }
+            }
+        }, 0);
+
+        // Entities phase
+        this.renderCoordinator.registerRenderer(phases.ENTITIES, {
+            render: () => {
+                if (this.lastSnapshot) {
+                    this.entityRendererManager.updateFromSnapshot(this.lastSnapshot);
+                    this.bossVisualManager.updateFromSnapshot(this.lastSnapshot.boss);
+                    this.powerUpVisualManager.updateFromSnapshot(this.lastSnapshot.powerUps);
+                }
+            }
+        }, 0);
+
+        // Effects phase
+        this.renderCoordinator.registerRenderer(phases.EFFECTS, {
+            render: (deltaTime) => this.effectOrchestrator.update?.(deltaTime)
+        }, 0);
     }
 
     /**
@@ -134,18 +184,27 @@ export class ViewManager {
      */
     bindModelEvents() {
         this.unsubscribers.push(
-            this.eventBus.on(VIEW_EVENTS.PELLET_EATEN, () => this.onPelletEaten()),
-            this.eventBus.on(VIEW_EVENTS.POWER_PELLET_EATEN, () => this.onPowerPelletEaten()),
+            this.eventBus.on(VIEW_EVENTS.PELLET_EATEN, (data) => this.onPelletEaten(data)),
             this.eventBus.on(VIEW_EVENTS.GHOST_EATEN, (data) => this.onGhostEaten(data)),
-            this.eventBus.on(VIEW_EVENTS.PLAYER_DEATH, () => this.startDeathAnimation()),
+            this.eventBus.on(VIEW_EVENTS.PACMAN_DEATH_STARTED, () => this.startDeathAnimation()),
+            this.eventBus.on(VIEW_EVENTS.FRUIT_EATEN, (data) => this.onFruitEaten(data)),
             this.eventBus.on(VIEW_EVENTS.POWER_UP_COLLECTED, (data) => this.onPowerUpCollected(data)),
-            this.eventBus.on(VIEW_EVENTS.BOSS_APPEARED, (data) => this.bossVisualManager.showBossWarning(data.bossType)),
+            this.eventBus.on(VIEW_EVENTS.BOSS_SPAWNED, (data) => this.bossVisualManager.showBossWarning(data.bossType)),
             this.eventBus.on(VIEW_EVENTS.BOSS_PHASE_CHANGED, (data) => this.bossVisualManager.updateBossVisualPhase(data.bossType, data.phase)),
             this.eventBus.on(VIEW_EVENTS.BOSS_DAMAGED, (data) => this.bossVisualManager.flashBossVisual(data.bossType)),
-            this.eventBus.on(VIEW_EVENTS.BOSS_DEFEATED, (data) => this.bossVisualManager.showBossDefeatMessage(data.scoreBonus)),
-            this.eventBus.on(VIEW_EVENTS.CHAPTER_COMPLETE, (data) => this.narrativeManager.showChapterCompleteMessage(data)),
-            this.eventBus.on(VIEW_EVENTS.STORY_NARRATIVE, (data) => this.narrativeManager.showStoryNarrative(data)),
-            this.eventBus.on(VIEW_EVENTS.ACHIEVEMENT_UNLOCKED, (data) => this.narrativeManager.showAchievementNotification(data))
+            this.eventBus.on(VIEW_EVENTS.BOSS_DEFEATED, (data) => this.onBossDefeated(data)),
+            this.eventBus.on(VIEW_EVENTS.STORY_CHAPTER_START, (data) => this.narrativeManager.showStoryNarrative(data)),
+            this.eventBus.on(VIEW_EVENTS.STORY_CHAPTER_COMPLETE, (data) => this.narrativeManager.showChapterCompleteMessage(data)),
+            this.eventBus.on(VIEW_EVENTS.ACHIEVEMENT_UNLOCKED, (data) => this.narrativeManager.showAchievementNotification(data)),
+            this.eventBus.on(VIEW_EVENTS.SCREEN_FLASH, (data) => this.effectOrchestrator.createScreenFlash(data.color, data.duration)),
+            this.eventBus.on(VIEW_EVENTS.SCREEN_SHAKE, (data) => this.effectOrchestrator.createScreenShake(data.intensity, data.duration))
+        );
+
+        // Game flow events
+        this.unsubscribers.push(
+            this.eventBus.on(GAME_EVENTS.LEVEL_COMPLETE, () => this.onLevelComplete()),
+            this.eventBus.on(GAME_EVENTS.GAME_OVER, () => this.onGameOver()),
+            this.eventBus.on(GAME_EVENTS.RESPAWN, () => this.endDeathAnimation())
         );
     }
 
@@ -153,28 +212,138 @@ export class ViewManager {
      * Bind to controller events
      */
     bindControllerEvents() {
-        // Controller events can be added here as needed
+        this.unsubscribers.push(
+            this.eventBus.on(GAME_EVENTS.PAUSE_REQUESTED, () => {
+                this.scene.scene.pause();
+                this.scene.scene.launch('PauseScene');
+            }),
+            this.eventBus.on(GAME_EVENTS.RESUME_REQUESTED, () => {
+                this.scene.scene.resume();
+                this.scene.scene.stop('PauseScene');
+            }),
+            this.eventBus.on(GAME_EVENTS.RETURN_TO_MENU_REQUESTED, () => {
+                this.scene.cleanup?.();
+                this.transitionHandler.requestSceneTransition('MenuScene');
+            })
+        );
     }
+
+    // === Event Handlers ===
+
+    onPelletEaten(data) {
+        if (data?.type === 'power_pellet') {
+            this.soundManager.playPowerPellet?.();
+            this.effectOrchestrator.play('powerPelletEaten',
+                data.x || data.gridX * 16 + 8,
+                data.y || data.gridY * 16 + 8
+            );
+        } else {
+            this.soundManager.playWakaWaka?.();
+        }
+
+        this.pelletRenderer.removePelletAt(data.gridX, data.gridY, data.type);
+    }
+
+    onGhostEaten(data) {
+        this.soundManager.playGhostEaten?.();
+        this.effectOrchestrator.play('ghostEaten', data.x, data.y);
+
+        const ghost = this.entityRendererManager.getGhostRenderer(data.ghostType);
+        if (ghost) {
+            const pos = ghost.getPosition?.() || { x: data.x, y: data.y };
+            this.effectManager.createGhostEatenEffect?.(pos.x, pos.y);
+        }
+    }
+
+    onFruitEaten(data) {
+        this.soundManager.playFruitEat?.();
+
+        const fruit = this.entityRendererManager.getFruitRenderer();
+        if (fruit) {
+            fruit.showScore?.(data.score);
+            const pos = fruit.getPosition?.() || { x: data.x, y: data.y };
+            this.effectOrchestrator.play('fruitEaten', pos.x, pos.y);
+        }
+    }
+
+    onPowerUpCollected(data) {
+        const visual = this.powerUpVisualManager.getPowerUpVisual(data.type, data.gridX, data.gridY);
+        if (visual) {
+            this.powerUpVisualManager.showPowerUpCollectionEffect(data.type, visual);
+            this.effectOrchestrator.play('powerUpCollected', visual.sprite.x, visual.sprite.y);
+        }
+    }
+
+    onBossDefeated(data) {
+        this.effectOrchestrator.play('bossDefeated',
+            this.scene.scale.width / 2,
+            this.scene.scale.height / 2
+        );
+        this.bossVisualManager.showBossDefeatMessage(data.scoreBonus);
+        this.effectManager.createExplosionEffect?.(
+            this.scene.scale.width / 2,
+            this.scene.scale.height / 2,
+            0xff0000
+        );
+    }
+
+    onLevelComplete() {
+        this.soundManager.playLevelComplete?.();
+
+        const score = this.lastSnapshot?.score ?? this.gameModel?.score ?? 0;
+        const level = this.lastSnapshot?.level ?? this.gameModel?.level ?? 1;
+        const highScore = this.lastSnapshot?.highScore ?? this.gameModel?.highScore ?? 0;
+
+        this.storageManager.saveHighScore(score);
+        this.transitionHandler.requestSceneTransition('WinScene', { score, level, highScore });
+    }
+
+    onGameOver() {
+        const score = this.lastSnapshot?.score ?? this.gameModel?.score ?? 0;
+        const highScore = this.lastSnapshot?.highScore ?? this.gameModel?.highScore ?? 0;
+
+        this.storageManager.saveHighScore(score);
+        this.transitionHandler.requestSceneTransition('GameOverScene', { score, highScore });
+    }
+
+    // === Update Methods ===
 
     /**
      * Update view from snapshot (Phase 1 & 4)
-     * @param {GameSnapshot} snapshot - Game snapshot
+     * @param {Object} snapshot - Game snapshot
      */
     updateFromSnapshot(snapshot) {
+        if (!snapshot) {
+            console.warn('[ViewManager] updateFromSnapshot: No snapshot provided');
+            return;
+        }
+
+        // Skip if snapshot hasn't changed (dirty tracking)
+        if (this.lastSnapshot && this.snapshotEquals(this.lastSnapshot, snapshot)) {
+            return;
+        }
+
+        // Store snapshot
         this.lastSnapshot = snapshot;
         this.frameCount++;
 
+        // Ensure pellet pools are initialized
+        if (!this.pelletRenderer.pelletPool) {
+            this.pelletRenderer.createPelletPools();
+        }
+
         // Check if maze changed
-        if (!this.mazeEquals(this.lastSnapshot.maze, snapshot.maze)) {
+        if (!this.mazeEquals(this.lastMazeSnapshot?.maze, snapshot.maze)) {
             this.mazeRenderer.createMaze(snapshot.maze);
+            this.pelletRenderer.clearAllPellets();
+            this.pelletRenderer.createPellets(snapshot.pelletGrid);
+            this.lastMazeSnapshot = { maze: snapshot.maze };
         }
 
         // Update pellet visuals
-        if (!this.pelletGridEquals(this.lastSnapshot.pelletGrid, snapshot.pelletGrid)) {
-            this.pelletRenderer.updatePelletVisuals(snapshot.pelletGrid);
-        }
+        this.pelletRenderer.updatePelletVisuals(snapshot.pelletGrid);
 
-        // Create entity renderers on first snapshot if they don't exist
+        // Create entity renderers on first snapshot
         if (!this.entityRendererManager.hasRenderers()) {
             this.entityRendererManager.createRenderersFromSnapshot(snapshot);
         }
@@ -187,6 +356,16 @@ export class ViewManager {
 
         // Update power-up visuals
         this.powerUpVisualManager.updateFromSnapshot(snapshot.powerUps);
+
+        // Handle death animation state
+        if (snapshot.isDying && !this.isDeathAnimating) {
+            this.startDeathAnimation();
+        } else if (!snapshot.isDying && this.isDeathAnimating) {
+            this.endDeathAnimation();
+        }
+
+        // Update render coordinator
+        this.renderCoordinator.render(16.67); // ~60fps
     }
 
     /**
@@ -199,92 +378,57 @@ export class ViewManager {
         }
     }
 
-    /**
-     * Compare maze grids
-     * @param {Array<Array<number>>} maze1 - First maze
-     * @param {Array<Array<number>>} maze2 - Second maze
-     * @returns {boolean}
-     */
+    // === Utility Methods ===
+
     mazeEquals(maze1, maze2) {
-        if (!maze1 || !maze2) return false;
-        if (maze1.length !== maze2.length) return false;
-        if (maze1[0]?.length !== maze2[0]?.length) return false;
+        if (!maze1 || !maze2) {return maze1 === maze2;}
+        if (maze1.length !== maze2.length) {return false;}
+        if (maze1[0]?.length !== maze2[0]?.length) {return false;}
 
         for (let y = 0; y < maze1.length; y++) {
             for (let x = 0; x < maze1[y].length; x++) {
-                if (maze1[y][x] !== maze2[y][x]) return false;
+                if (maze1[y][x] !== maze2[y][x]) {return false;}
             }
         }
 
         return true;
     }
 
-    /**
-     * Compare pellet grids
-     * @param {Array<Array<number>>} grid1 - First grid
-     * @param {Array<Array<number>>} grid2 - Second grid
-     * @returns {boolean}
-     */
     pelletGridEquals(grid1, grid2) {
-        if (!grid1 || !grid2) return false;
-        if (grid1.length !== grid2.length) return false;
-        if (grid1[0]?.length !== grid2[0]?.length) return false;
+        if (!grid1 || !grid2) {return grid1 === grid2;}
+        if (grid1.length !== grid2.length) {return false;}
+        if (grid1[0]?.length !== grid2[0]?.length) {return false;}
 
         for (let y = 0; y < grid1.length; y++) {
             for (let x = 0; x < grid1[y].length; x++) {
-                if (grid1[y][x] !== grid2[y][x]) return false;
+                if (grid1[y][x] !== grid2[y][x]) {return false;}
             }
         }
 
         return true;
     }
 
-    /**
-     * Compare snapshots
-     * @param {GameSnapshot} s1 - First snapshot
-     * @param {GameSnapshot} s2 - Second snapshot
-     * @returns {boolean}
-     */
     snapshotEquals(s1, s2) {
+        if (!s1 || !s2) {return s1 === s2;}
+        if (s1.tickCount !== s2.tickCount) {return false;}
+        if (s1.score !== s2.score) {return false;}
+        if (s1.lives !== s2.lives) {return false;}
         return this.mazeEquals(s1.maze, s2.maze) &&
                this.pelletGridEquals(s1.pelletGrid, s2.pelletGrid);
-    }
-
-    // === Event Handlers ===
-
-    onPelletEaten() {
-        this.soundManager.playSound('pellet');
-    }
-
-    onPowerPelletEaten() {
-        this.soundManager.playSound('powerPellet');
-    }
-
-    onGhostEaten(data) {
-        this.soundManager.playSound('ghostEaten');
-        this.effectManager.createGhostEatenEffect(data.x, data.y);
-    }
-
-    onPowerUpCollected(data) {
-        const visual = this.powerUpVisualManager.getPowerUpVisual(data.type, data.gridX, data.gridY);
-        if (visual) {
-            this.powerUpVisualManager.showPowerUpCollectionEffect(data.type, visual);
-        }
     }
 
     // === Death Animation ===
 
     startDeathAnimation() {
         this.isDeathAnimating = true;
-        this.soundManager.playSound('death');
-        // Death animation logic handled by entity renderer
+        this.soundManager.playDeath?.();
     }
 
     updateDeathAnimation() {
         if (this.isDeathAnimating) {
             const playerRenderer = this.entityRendererManager.getPlayerRenderer();
             if (playerRenderer) {
-                playerRenderer.updateDeathAnimation();
+                playerRenderer.sync();
             }
         }
     }
@@ -293,14 +437,14 @@ export class ViewManager {
         this.isDeathAnimating = false;
         const playerRenderer = this.entityRendererManager.getPlayerRenderer();
         if (playerRenderer) {
-            playerRenderer.resetAfterDeath();
+            // Reset player visual state
         }
     }
 
     // === Audio ===
 
     resumeAudio() {
-        this.soundManager.resume();
+        this.soundManager.resume?.();
     }
 
     // === Cleanup ===
@@ -308,9 +452,15 @@ export class ViewManager {
     cleanup() {
         // Unsubscribe from events
         this.unsubscribers.forEach((unsubscribe) => {
-            unsubscribe();
+            if (typeof unsubscribe === 'function') {
+                unsubscribe();
+            }
         });
         this.unsubscribers = [];
+
+        // Cleanup coordinators
+        this.renderCoordinator.cleanup();
+        this.effectOrchestrator.cleanup();
 
         // Cleanup renderer managers
         this.mazeRenderer.cleanup();
@@ -321,52 +471,24 @@ export class ViewManager {
         this.narrativeManager.cleanup();
 
         // Cleanup managers
-        this.soundManager.cleanup();
-        this.effectManager.cleanup();
+        this.soundManager.cleanup?.();
+        this.effectManager.cleanup?.();
     }
 
     // === Getters for Testing ===
 
-    getMazeRenderer() {
-        return this.mazeRenderer;
-    }
-
-    getPelletRenderer() {
-        return this.pelletRenderer;
-    }
-
-    getEntityRendererManager() {
-        return this.entityRendererManager;
-    }
-
-    getBossVisualManager() {
-        return this.bossVisualManager;
-    }
-
-    getPowerUpVisualManager() {
-        return this.powerUpVisualManager;
-    }
-
-    getNarrativeManager() {
-        return this.narrativeManager;
-    }
-
-    getSoundManager() {
-        return this.soundManager;
-    }
-
-    getEffectManager() {
-        return this.effectManager;
-    }
-
-    getLastSnapshot() {
-        return this.lastSnapshot;
-    }
-
-    getFrameCount() {
-        return this.frameCount;
-    }
+    getMazeRenderer() { return this.mazeRenderer; }
+    getPelletRenderer() { return this.pelletRenderer; }
+    getEntityRendererManager() { return this.entityRendererManager; }
+    getBossVisualManager() { return this.bossVisualManager; }
+    getPowerUpVisualManager() { return this.powerUpVisualManager; }
+    getNarrativeManager() { return this.narrativeManager; }
+    getSoundManager() { return this.soundManager; }
+    getEffectManager() { return this.effectManager; }
+    getRenderCoordinator() { return this.renderCoordinator; }
+    getEffectOrchestrator() { return this.effectOrchestrator; }
+    getLastSnapshot() { return this.lastSnapshot; }
+    getFrameCount() { return this.frameCount; }
 }
 
-// Export ViewManager as both default and named export for compatibility
-export { ViewManager };;
+export default ViewManager;

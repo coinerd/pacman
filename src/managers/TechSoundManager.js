@@ -74,7 +74,7 @@ export class TechSoundManager {
     // === Game Sound Methods ===
 
     playWakaWaka() {
-        if (!this.soundEngine.isEnabled()) return;
+        if (!this.soundEngine.isEnabled()) {return;}
         const config = this.soundBank.getSoundConfig('waka');
         this.soundBuilder.buildSound({
             type: 'tone',
@@ -83,7 +83,7 @@ export class TechSoundManager {
     }
 
     playEat() {
-        if (!this.soundEngine.isEnabled()) return;
+        if (!this.soundEngine.isEnabled()) {return;}
         const config = this.soundBank.getSoundConfig('eat');
         this.soundBuilder.buildSound({
             type: 'tone',
@@ -92,7 +92,7 @@ export class TechSoundManager {
     }
 
     playPowerPellet() {
-        if (!this.soundEngine.isEnabled()) return;
+        if (!this.soundEngine.isEnabled()) {return;}
         const config = this.soundBank.getSoundConfig('power');
         this.soundBuilder.buildSound({
             type: 'sweep',
@@ -101,7 +101,7 @@ export class TechSoundManager {
     }
 
     playGhostEaten() {
-        if (!this.soundEngine.isEnabled()) return;
+        if (!this.soundEngine.isEnabled()) {return;}
         const config = this.soundBank.getSoundConfig('ghostEaten');
         this.soundBuilder.buildSound({
             type: 'tone',
@@ -110,7 +110,7 @@ export class TechSoundManager {
     }
 
     playDeath() {
-        if (!this.soundEngine.isEnabled()) return;
+        if (!this.soundEngine.isEnabled()) {return;}
         const config = this.soundBank.getSoundConfig('death');
         this.soundBuilder.buildSound({
             type: 'sweep',
@@ -125,7 +125,7 @@ export class TechSoundManager {
     }
 
     playLevelComplete() {
-        if (!this.soundEngine.isEnabled()) return;
+        if (!this.soundEngine.isEnabled()) {return;}
         const config = this.soundBank.getSoundConfig('levelComplete');
         this.soundBuilder.buildSound({
             type: 'melody',
@@ -134,7 +134,7 @@ export class TechSoundManager {
     }
 
     playFruitEat() {
-        if (!this.soundEngine.isEnabled()) return;
+        if (!this.soundEngine.isEnabled()) {return;}
         const config = this.soundBank.getSoundConfig('fruit');
         this.soundBuilder.buildSound({
             type: 'tone',
@@ -146,7 +146,7 @@ export class TechSoundManager {
 
     startEnemyModeAudio(mode) {
         this.stopEnemyModeAudio();
-        if (!this.soundEngine.isEnabled()) return;
+        if (!this.soundEngine.isEnabled()) {return;}
 
         const config = this.soundBank.getEnemyModeConfig(mode);
         if (mode === 'encrypted') {
@@ -173,7 +173,7 @@ export class TechSoundManager {
 
     playDecryptedMode() {
         this.stopEnemyModeAudio();
-        if (!this.soundEngine.isEnabled()) return;
+        if (!this.soundEngine.isEnabled()) {return;}
         const config = this.soundBank.getEnemyModeConfig('win');
         this.soundBuilder.buildSound({
             type: 'melody',
@@ -184,7 +184,7 @@ export class TechSoundManager {
     // === Menu Sounds ===
 
     playMenuNav() {
-        if (!this.soundEngine.isEnabled()) return;
+        if (!this.soundEngine.isEnabled()) {return;}
         this.soundBuilder.buildSound({
             type: 'tone',
             params: {
@@ -197,7 +197,7 @@ export class TechSoundManager {
     }
 
     playMenuSelect() {
-        if (!this.soundEngine.isEnabled()) return;
+        if (!this.soundEngine.isEnabled()) {return;}
         this.soundBuilder.buildSound({
             type: 'tone',
             params: {
@@ -211,7 +211,7 @@ export class TechSoundManager {
     }
 
     playMenuConfirm() {
-        if (!this.soundEngine.isEnabled()) return;
+        if (!this.soundEngine.isEnabled()) {return;}
         this.soundBuilder.buildSound({
             type: 'melody',
             params: {
@@ -224,7 +224,7 @@ export class TechSoundManager {
     }
 
     playMenuBack() {
-        if (!this.soundEngine.isEnabled()) return;
+        if (!this.soundEngine.isEnabled()) {return;}
         this.soundBuilder.buildSound({
             type: 'tone',
             params: {
@@ -237,7 +237,7 @@ export class TechSoundManager {
     }
 
     playPause() {
-        if (!this.soundEngine.isEnabled()) return;
+        if (!this.soundEngine.isEnabled()) {return;}
         const config = this.soundBank.getEnemyModeConfig('pause');
         this.soundBuilder.buildSound({
             type: 'tone',
@@ -246,7 +246,7 @@ export class TechSoundManager {
     }
 
     playResume() {
-        if (!this.soundEngine.isEnabled()) return;
+        if (!this.soundEngine.isEnabled()) {return;}
         const config = this.soundBank.getEnemyModeConfig('resume');
         this.soundBuilder.buildSound({
             type: 'tone',
@@ -255,7 +255,7 @@ export class TechSoundManager {
     }
 
     playButtonHover() {
-        if (!this.soundEngine.isEnabled()) return;
+        if (!this.soundEngine.isEnabled()) {return;}
         this.soundBuilder.buildSound({
             type: 'tone',
             params: {
@@ -268,7 +268,7 @@ export class TechSoundManager {
     }
 
     playButtonClick() {
-        if (!this.soundEngine.isEnabled()) return;
+        if (!this.soundEngine.isEnabled()) {return;}
         this.soundBuilder.buildSound({
             type: 'tone',
             params: {
@@ -284,7 +284,7 @@ export class TechSoundManager {
     // === Notification Sounds ===
 
     playNotification() {
-        if (!this.soundEngine.isEnabled()) return;
+        if (!this.soundEngine.isEnabled()) {return;}
         this.soundBuilder.buildSound({
             type: 'melody',
             params: {
@@ -297,7 +297,7 @@ export class TechSoundManager {
     }
 
     playError() {
-        if (!this.soundEngine.isEnabled()) return;
+        if (!this.soundEngine.isEnabled()) {return;}
         this.soundBuilder.buildSound({
             type: 'glitch',
             params: {
@@ -307,7 +307,7 @@ export class TechSoundManager {
     }
 
     playSuccess() {
-        if (!this.soundEngine.isEnabled()) return;
+        if (!this.soundEngine.isEnabled()) {return;}
         this.soundBuilder.buildSound({
             type: 'melody',
             params: {
@@ -320,7 +320,7 @@ export class TechSoundManager {
     }
 
     playGameOver() {
-        if (!this.soundEngine.isEnabled()) return;
+        if (!this.soundEngine.isEnabled()) {return;}
         this.soundBuilder.buildSound({
             type: 'sweep',
             params: {
@@ -335,7 +335,7 @@ export class TechSoundManager {
     }
 
     playWin() {
-        if (!this.soundEngine.isEnabled()) return;
+        if (!this.soundEngine.isEnabled()) {return;}
         const config = this.soundBank.getEnemyModeConfig('win');
         this.soundBuilder.buildSound({
             type: 'melody',
@@ -346,7 +346,7 @@ export class TechSoundManager {
     // === Tech-Specific Sounds ===
 
     playCircuitHum(duration = 0.5, volume = 1.0) {
-        if (!this.soundEngine.isEnabled()) return;
+        if (!this.soundEngine.isEnabled()) {return;}
         const config = this.soundBank.getCircuitHumConfig();
         this.soundBuilder.buildSound({
             type: 'circuit',
@@ -359,7 +359,7 @@ export class TechSoundManager {
     }
 
     playDataStream(count = 3, interval = 0.05) {
-        if (!this.soundEngine.isEnabled()) return;
+        if (!this.soundEngine.isEnabled()) {return;}
         this.soundBuilder.buildSound({
             type: 'datastream',
             params: { count, interval }

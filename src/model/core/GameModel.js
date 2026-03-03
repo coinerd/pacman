@@ -1,7 +1,7 @@
 /**
  * GameModel (Refactored)
  * Facade Pattern - Delegates to specialized subsystems.
- * 
+ *
  * Phase 1 Refactoring:
  * - Reduced from 1,397 to ~200 lines
  * - Delegates to: GameState, EntityRegistry, CollisionHandler, LevelSystem, SpawningSystem
@@ -16,7 +16,7 @@ import { PlayerModule, ScoreModule, SessionModule } from './systems/index.js';
 import { LevelSystem } from './systems/LevelSystem.js';
 import { SpawningSystem } from './systems/SpawningSystem.js';
 import { MovementSystem } from '../movement/index.js';
-import { AdditionalPowerUpSystem } from '../../systems/AdditionalPowerUpSystem.js'
+import { AdditionalPowerUpSystem } from '../../systems/AdditionalPowerUpSystem.js';
 import BossBattleSystem from '../../systems/BossBattleSystem.js';
 import StoryMode from '../../systems/StoryMode.js';
 import { GAME_EVENTS, gameEvents } from '../core/EventBus.js';
@@ -33,7 +33,7 @@ export default class GameModel {
      */
     constructor(config = {}) {
         // === Core Systems ===
-        
+
         // State Management
         this.gameState = new GameState({
             level: config.level || 1,
@@ -49,7 +49,7 @@ export default class GameModel {
 
         // Spawning System
         this.spawningSystem = new SpawningSystem(this.levelSystem);
-        
+
         // Initialize Maze
         if (config.maze && config.pelletGrid) {
             this.spawningSystem.setMaze(config.maze, config.pelletGrid, config.spawnPoints);
@@ -117,7 +117,7 @@ export default class GameModel {
 
         const pacman = this.entityRegistry.getPacman();
         this.movementSystem.registerEntity(pacman, { type: 'player', speed: 100 });
-        
+
         for (const ghost of this.entityRegistry.getGhosts()) {
             this.movementSystem.registerEntity(ghost, { type: 'ghost', speed: 80 });
         }
@@ -152,11 +152,11 @@ export default class GameModel {
 
         // Update Movement
         const movementEvents = this.movementSystem.step(deltaSeconds);
-        
+
         // Update Entities
         const pacman = this.entityRegistry.getPacman();
         pacman.update(deltaSeconds, this.spawningSystem.getMaze());
-        
+
         for (const ghost of this.entityRegistry.getGhosts()) {
             ghost.update(deltaSeconds, this.spawningSystem.getMaze());
         }
@@ -241,21 +241,21 @@ export default class GameModel {
 
     applyCollisionEffect(event) {
         switch (event.type) {
-            case 'pelletEaten':
-                // Handled in handlePelletEaten
-                break;
-            case 'powerPelletEaten':
-                // Handled in handlePowerPelletEaten
-                break;
-            case 'ghostEaten':
-                // Handled in handleGhostEaten
-                break;
-            case 'pacmanDied':
-                this.onPacmanDeath();
-                break;
-            case 'fruitEaten':
-                // Handled in handleFruitEaten
-                break;
+        case 'pelletEaten':
+            // Handled in handlePelletEaten
+            break;
+        case 'powerPelletEaten':
+            // Handled in handlePowerPelletEaten
+            break;
+        case 'ghostEaten':
+            // Handled in handleGhostEaten
+            break;
+        case 'pacmanDied':
+            this.onPacmanDeath();
+            break;
+        case 'fruitEaten':
+            // Handled in handleFruitEaten
+            break;
         }
     }
 
@@ -352,7 +352,7 @@ export default class GameModel {
     // === State Management (Delegated) ===
 
     get level() { return this.gameState.level; }
-    set level(value) { 
+    set level(value) {
         this.gameState.level = value;
         this.levelSystem.setLevel(value);
     }

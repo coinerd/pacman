@@ -24,36 +24,36 @@ export class SoundBuilder {
         const { type, params = {} } = config;
 
         switch (type) {
-            case 'tone':
-                this.buildTone(params, volume);
-                break;
+        case 'tone':
+            this.buildTone(params, volume);
+            break;
 
-            case 'noise':
-                this.buildNoise(params, volume);
-                break;
+        case 'noise':
+            this.buildNoise(params, volume);
+            break;
 
-            case 'circuit':
-                this.buildCircuit(params, volume);
-                break;
+        case 'circuit':
+            this.buildCircuit(params, volume);
+            break;
 
-            case 'glitch':
-                this.buildGlitch(params, volume);
-                break;
+        case 'glitch':
+            this.buildGlitch(params, volume);
+            break;
 
-            case 'datastream':
-                this.buildDataStream(params, volume);
-                break;
+        case 'datastream':
+            this.buildDataStream(params, volume);
+            break;
 
-            case 'sweep':
-                this.buildSweep(params, volume);
-                break;
+        case 'sweep':
+            this.buildSweep(params, volume);
+            break;
 
-            case 'melody':
-                this.buildMelody(params, volume);
-                break;
+        case 'melody':
+            this.buildMelody(params, volume);
+            break;
 
-            default:
-                console.warn(`[SoundBuilder] Unknown sound type: ${type}`);
+        default:
+            console.warn(`[SoundBuilder] Unknown sound type: ${type}`);
         }
     }
 

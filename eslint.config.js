@@ -30,7 +30,8 @@ export default [
       'node_modules/**',
       'dist/**',
       'coverage/**',
-      '*.min.js'
+      '*.min.js',
+      'tests/.archived/**'
     ]
   }
 ];

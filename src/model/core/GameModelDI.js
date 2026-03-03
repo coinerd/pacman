@@ -1,7 +1,7 @@
 /**
  * GameModelDI (Phase 4 - DI Adaptation)
  * Facade Pattern with Dependency Injection
- * 
+ *
  * Refactored to use ServiceContainer for all service dependencies
  * - Loosely coupled through DI
  * - Easier to test (can inject mock services)
@@ -374,15 +374,15 @@ export default class GameModelDI {
 
     applyCollisionEffect(event) {
         switch (event.type) {
-            case 'pelletEaten':
-            case 'powerPelletEaten':
-            case 'ghostEaten':
-            case 'fruitEaten':
-                // Already handled in callbacks
-                break;
-            case 'pacmanDied':
-                this.onPacmanDeath();
-                break;
+        case 'pelletEaten':
+        case 'powerPelletEaten':
+        case 'ghostEaten':
+        case 'fruitEaten':
+            // Already handled in callbacks
+            break;
+        case 'pacmanDied':
+            this.onPacmanDeath();
+            break;
         }
     }
 

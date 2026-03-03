@@ -285,39 +285,39 @@ export default class ModelDrivenGameViewDI {
 	 * Handle game events
 	 */
     handleGameEvent(event) {
-        if (!event) return;
+        if (!event) {return;}
 
         switch (event.type) {
-            case GAME_EVENTS.PELLET_EATEN:
-                this.pelletRenderer.eatPellet(event.data.x, event.data.y);
-                this.soundManager.playPellet();
-                break;
+        case GAME_EVENTS.PELLET_EATEN:
+            this.pelletRenderer.eatPellet(event.data.x, event.data.y);
+            this.soundManager.playPellet();
+            break;
 
-            case GAME_EVENTS.POWER_PELLET_EATEN:
-                this.pelletRenderer.eatPellet(event.data.x, event.data.y);
-                this.soundManager.playPowerPellet();
-                this.effectManager.showPowerUpEffect();
-                break;
+        case GAME_EVENTS.POWER_PELLET_EATEN:
+            this.pelletRenderer.eatPellet(event.data.x, event.data.y);
+            this.soundManager.playPowerPellet();
+            this.effectManager.showPowerUpEffect();
+            break;
 
-            case GAME_EVENTS.GHOST_EATEN:
-                this.soundManager.playGhostEat();
-                this.effectManager.showScoreEffect(event.data.x, event.data.y, event.data.points);
-                break;
+        case GAME_EVENTS.GHOST_EATEN:
+            this.soundManager.playGhostEat();
+            this.effectManager.showScoreEffect(event.data.x, event.data.y, event.data.points);
+            break;
 
-            case GAME_EVENTS.PACMAN_DIED:
-                this.soundManager.playDeath();
-                this.startDeathAnimation();
-                break;
+        case GAME_EVENTS.PACMAN_DIED:
+            this.soundManager.playDeath();
+            this.startDeathAnimation();
+            break;
 
-            case GAME_EVENTS.LEVEL_CLEARED:
-                this.soundManager.playLevelClear();
-                this.showLevelCompleteOverlay();
-                break;
+        case GAME_EVENTS.LEVEL_CLEARED:
+            this.soundManager.playLevelClear();
+            this.showLevelCompleteOverlay();
+            break;
 
-            case GAME_EVENTS.GAME_OVER:
-                this.soundManager.playGameOver();
-                this.showGameOverOverlay();
-                break;
+        case GAME_EVENTS.GAME_OVER:
+            this.soundManager.playGameOver();
+            this.showGameOverOverlay();
+            break;
         }
     }
 

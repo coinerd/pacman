@@ -26,7 +26,7 @@ import SessionModule from '../model/systems/SessionModule.js';
 import { MovementSystem } from '../movement/MovementSystem.js';
 
 // Additional Systems
-import { AdditionalPowerUpSystem } from '../systems/AdditionalPowerUpSystem.js'
+import { AdditionalPowerUpSystem } from '../systems/AdditionalPowerUpSystem.js';
 import BossBattleSystem from '../systems/BossBattleSystem.js';
 
 // View Systems

@@ -1,7 +1,7 @@
 /**
  * @pacman/core - Unified Exports
  * Core game systems and utilities
- * 
+ *
  * This package provides core game systems:
  * - LevelSystem: Level progression and configuration
  * - SpawningSystem: Entity spawning and maze generation
@@ -43,41 +43,3 @@ export { SessionModule } from '../../model/systems/SessionModule.js';
 
 // Collision
 export { CollisionHandler } from '../../model/systems/CollisionHandler.js';
-
-// Default export (convenience)
-export default {
-    // Systems
-    LevelSystem,
-    SpawningSystem,
-    AchievementSystem,
-    ReplaySystem,
-
-    // Entities
-    PlayerState,
-    EnemyState,
-    FruitState,
-    EntityRegistry,
-
-    // Core
-    GameState,
-    GameModelDI,
-
-    // Dependency Injection
-    ServiceContainer,
-    globalContainer,
-    registerCoreServices,
-    registerFeatureSystems,
-
-    // Events
-    GAME_EVENTS,
-    gameEvents,
-    EventBus,
-
-    // Modules
-    PlayerModule,
-    ScoreModule,
-    SessionModule,
-
-    // Collision
-    CollisionHandler
-};

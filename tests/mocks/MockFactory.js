@@ -102,7 +102,7 @@ export function createMockScene() {
                     clear: jest.fn((destroy) => {
                         if (destroy) {
                             for (const child of containerChildren) {
-                                if (child.destroy) child.destroy();
+                                if (child.destroy) {child.destroy();}
                             }
                         }
                         containerChildren.length = 0;
@@ -220,7 +220,7 @@ export function createMockPlayerRenderer() {
     return {
         update: jest.fn(),
         playDeathAnimation: jest.fn((callback) => {
-            if (callback) setTimeout(callback, 100);
+            if (callback) {setTimeout(callback, 100);}
         }),
         setVisible: jest.fn(),
         destroy: jest.fn()

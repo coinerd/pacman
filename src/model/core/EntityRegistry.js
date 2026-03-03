@@ -85,9 +85,9 @@ export class EntityRegistry {
 
     getAllEntities() {
         const entities = [];
-        if (this.pacman) entities.push(this.pacman);
+        if (this.pacman) {entities.push(this.pacman);}
         entities.push(...this.ghosts);
-        if (this.fruit) entities.push(this.fruit);
+        if (this.fruit) {entities.push(this.fruit);}
         return entities;
     }
 
@@ -102,7 +102,7 @@ export class EntityRegistry {
     // === Entity-State Tracking ===
 
     trackPacmanDirectionChange() {
-        if (!this.pacman) return null;
+        if (!this.pacman) {return null;}
 
         const currentDirection = this.pacman.direction;
         if (this.lastPacmanDirection !== currentDirection) {
@@ -114,7 +114,7 @@ export class EntityRegistry {
     }
 
     trackGhostModeChange(ghost) {
-        if (!ghost) return null;
+        if (!ghost) {return null;}
 
         const ghostType = ghost.ghostType;
         const lastMode = this.lastGhostModes.get(ghostType);

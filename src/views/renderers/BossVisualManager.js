@@ -92,11 +92,11 @@ export class BossVisualManager {
      */
     getBossSides(bossType) {
         switch (bossType) {
-            case 'alpha': return 4;
-            case 'beta': return 3;
-            case 'gamma': return 5;
-            case 'delta': return 6;
-            default: return 6;
+        case 'alpha': return 4;
+        case 'beta': return 3;
+        case 'gamma': return 5;
+        case 'delta': return 6;
+        default: return 6;
         }
     }
 
@@ -190,8 +190,8 @@ export class BossVisualManager {
      * @returns {number} - Color value
      */
     getHealthColor(healthPercent) {
-        if (healthPercent > 0.5) return 0x00ff00;
-        if (healthPercent > 0.25) return 0xffff00;
+        if (healthPercent > 0.5) {return 0x00ff00;}
+        if (healthPercent > 0.25) {return 0xffff00;}
         return 0xff0000;
     }
 

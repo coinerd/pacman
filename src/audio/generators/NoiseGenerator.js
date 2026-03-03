@@ -35,34 +35,36 @@ export class NoiseGenerator {
      */
     generateNoiseSample(type, index) {
         switch (type) {
-            case 'white':
-                return Math.random() * 2 - 1;
+        case 'white':
+            return Math.random() * 2 - 1;
 
-            case 'pink':
-                // Pink noise using Paul Kellett's refined method
-                if (!this.pinkState) {
-                    this.pinkState = { b0: 0, b1: 0, b2: 0, b3: 0, b4: 0, b5: 0, b6: 0 };
-                }
-                const white = Math.random() * 2 - 1;
-                this.pinkState.b0 = 0.99886 * this.pinkState.b0 + white * 0.0555179;
-                this.pinkState.b1 = 0.99332 * this.pinkState.b1 + white * 0.0750759;
-                this.pinkState.b2 = 0.96900 * this.pinkState.b2 + white * 0.1538520;
-                this.pinkState.b3 = 0.86650 * this.pinkState.b3 + white * 0.3104856;
-                this.pinkState.b4 = 0.55000 * this.pinkState.b4 + white * 0.5329522;
-                this.pinkState.b5 = -0.7616 * this.pinkState.b5 - white * 0.0168980;
-                return this.pinkState.b0 + this.pinkState.b1 + this.pinkState.b2 + this.pinkState.b3 + this.pinkState.b4 + this.pinkState.b5 + this.pinkState.b6 + white * 0.5362;
+        case 'pink': {
+            // Pink noise using Paul Kellett's refined method
+            if (!this.pinkState) {
+                this.pinkState = { b0: 0, b1: 0, b2: 0, b3: 0, b4: 0, b5: 0, b6: 0 };
+            }
+            const white = Math.random() * 2 - 1;
+            this.pinkState.b0 = 0.99886 * this.pinkState.b0 + white * 0.0555179;
+            this.pinkState.b1 = 0.99332 * this.pinkState.b1 + white * 0.0750759;
+            this.pinkState.b2 = 0.96900 * this.pinkState.b2 + white * 0.1538520;
+            this.pinkState.b3 = 0.86650 * this.pinkState.b3 + white * 0.3104856;
+            this.pinkState.b4 = 0.55000 * this.pinkState.b4 + white * 0.5329522;
+            this.pinkState.b5 = -0.7616 * this.pinkState.b5 - white * 0.0168980;
+            return this.pinkState.b0 + this.pinkState.b1 + this.pinkState.b2 + this.pinkState.b3 + this.pinkState.b4 + this.pinkState.b5 + this.pinkState.b6 + white * 0.5362;
+        }
 
-            case 'brown':
-                // Brown noise using simple filter
-                if (!this.brownState) {
-                    this.brownState = { lastOut: 0 };
-                }
-                const brownWhite = Math.random() * 2 - 1;
-                this.brownState.lastOut = (this.brownState.lastOut + (0.02 * brownWhite)) / 1.02;
-                return this.brownState.lastOut * 3.5;
+        case 'brown': {
+            // Brown noise using simple filter
+            if (!this.brownState) {
+                this.brownState = { lastOut: 0 };
+            }
+            const brownWhite = Math.random() * 2 - 1;
+            this.brownState.lastOut = (this.brownState.lastOut + (0.02 * brownWhite)) / 1.02;
+            return this.brownState.lastOut * 3.5;
+        }
 
-            default:
-                return Math.random() * 2 - 1;
+        default:
+            return Math.random() * 2 - 1;
         }
     }
 
