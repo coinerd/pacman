@@ -5,18 +5,18 @@ import {
     storyConfig
 } from '../../src/config/gameConfig.js';
 import { GAME_EVENTS, gameEvents } from '../../src/core/EventBus.js';
-import GameModel from '../../src/core/GameModel.js';
+import GameModelDI from '../../src/model/core/GameModelDI.js';
 
 describe.skip('Phase 5 Integration Tests', () => {
     let gameModel;
 
     beforeEach(() => {
-        gameModel = new GameModel({ level: 1 });
+        gameModel = new GameModelDI({ level: 1 }, true); // PHASE 4: Use DI
     });
 
     describe('full game flow with boss battle', () => {
         it('should spawn boss at boss levels', () => {
-            gameModel = new GameModel({ level: 5 });
+            gameModel = new GameModelDI({ level: 5 }, true); // PHASE 4: Use DI
 
             const shouldSpawn = gameModel.shouldSpawnBoss();
 

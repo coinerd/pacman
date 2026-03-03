@@ -276,6 +276,4 @@ export class InputManager {
         this.globalListeners = [];
         this.inputHistory = [];
     }
-}
-
-export default InputManager;
+};

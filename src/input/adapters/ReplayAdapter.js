@@ -309,6 +309,4 @@ export class ReplayRecorder {
         this.frames = [];
         this.isRecording = false;
     }
-}
-
-export default ReplayAdapter;
+};

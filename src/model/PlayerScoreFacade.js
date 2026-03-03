@@ -118,6 +118,4 @@ export class PlayerScoreFacade {
         this.gameModel?.applyCollisionEffect?.({ type: 'pacman_died' });
         return this.getPlayerState();
     }
-}
-
-export default PlayerScoreFacade;
+};

@@ -13,7 +13,6 @@ export class HighScoreWidget {
     create(scene) {
         this.scene = scene;
 
-        const scoreFont = themeConfig.fonts.hud.score;
         const techSmall = themeConfig.fonts.tech.small;
         const colors = themeConfig.colors;
         const circuit = themeConfig.circuit;
@@ -39,7 +38,7 @@ export class HighScoreWidget {
         this.panel.setDepth(900);
         this.panel.setScrollFactor(0);
         this.panel.setVisible(false); // Disable panel for visibility
-        
+
         console.log('[HighScoreWidget.create] Panel DISABLED for visibility');
 
         this.corners = this.createCircuitCorners(scene, x, y, panelWidth, panelHeight, colors, circuit);
@@ -66,11 +65,12 @@ export class HighScoreWidget {
             y + panelHeight / 2,
             '0',
             {
-                fontFamily: 'Courier New, monospace', // Same as ScoreBoard
-                fontSize: '32px', // Same as ScoreBoard
-                color: '#00ff00', // Bright green for visibility
-                backgroundColor: '#000000', // Black background
-                padding: { x: 5, y: 2 }
+                fontFamily: techSmall.family,
+                fontSize: '22px',
+                fontStyle: techSmall.style,
+                fontWeight: techSmall.weight,
+                letterSpacing: techSmall.letterSpacing,
+                color: '#88ff88'
             }
         );
         this.highScoreText.setOrigin(0.5);
@@ -78,7 +78,7 @@ export class HighScoreWidget {
         this.highScoreText.setScrollFactor(0);
         this.highScoreText.setVisible(true);
         this.highScoreText.setAlpha(1);
-        
+
         console.log('[HighScoreWidget.create] highScoreText created with hardcoded values:', {
             x: this.highScoreText.x,
             y: this.highScoreText.y,
@@ -98,7 +98,7 @@ export class HighScoreWidget {
         const safeHighScore = Number.isFinite(Number(highScore)) ? Number(highScore) : 0;
         this.highScoreText.setText(`${safeHighScore}`);
         this.lastHighScore = safeHighScore;
-        
+
         // Force visibility
         this.highScoreText.setVisible(true);
         this.highScoreText.setAlpha(1);

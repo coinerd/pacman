@@ -170,6 +170,4 @@ export class InputEventNormalizer {
         if (!action) {return null;}
         return action.toLowerCase();
     }
-}
-
-export default InputAdapter;
+};

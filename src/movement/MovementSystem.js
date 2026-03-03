@@ -308,6 +308,9 @@ export class MovementSystem {
             const original = registryEntry.originalEntity;
 
             if (movement && original) {
+                // Debug: Log state before sync
+                // console.log(`[syncToEntities] ${entityId}: gridX=${movement.gridX}, targetGridX=${movement.targetGridX}, moveProgress=${movement.moveProgress}, isMoving=${movement.isMoving}`);
+
                 original.gridX = movement.gridX;
                 original.gridY = movement.gridY;
                 original.x = movement.x;

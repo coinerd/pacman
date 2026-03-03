@@ -1,0 +1,32 @@
+{
+  "name": "@pacman/movement",
+  "version": "1.0.0",
+  "description": "Generic movement system for tile-based games",
+  "main": "index.js",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./index.js"
+    }
+  },
+  "keywords": [
+    "movement",
+    "tile-based",
+    "game-engine",
+    "pacman"
+  ],
+  "author": "Pacman Team",
+  "license": "MIT",
+  "peerDependencies": {
+    "@pacman/utils": "^1.0.0"
+  },
+  "files": [
+    "index.js",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pacman/pacman-game.git",
+    "directory": "packages/movement"
+  }
+}

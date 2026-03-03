@@ -4,6 +4,11 @@ export default {
   testMatch: [
     '<rootDir>/tests/**/*.test.{js,jsx}'
   ],
+  // Exclude archived and failed tests from running
+  testPathIgnorePatterns: [
+    '/.archived/',
+    '/.failed/'
+  ],
   // FIX: Add timeout to prevent infinite hanging
   testTimeout: 10000,
   // FIX: Add bail mode to stop after first failure

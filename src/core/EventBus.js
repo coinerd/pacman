@@ -39,10 +39,16 @@ export const GAME_EVENTS = {
     LOAD_REPLAY_REQUESTED: 'controller:load-replay-requested',
     REPLAY_INPUT: 'replay:input',
     REPLAY_FINISHED: 'replay:finished',
+    // Power-Up Events
     POWER_UP_SPAWNED: 'power-up:spawned',
     POWER_UP_COLLECTED: 'power-up:collected',
     POWER_UP_EXPIRED: 'power-up:expired',
     POWER_UP_ACTIVATED: 'power-up:activated',
+
+    // PHASE 6: Pellet Magnet Event (AdditionalPowerUpSystem)
+    PELLET_MAGNET_EAT: 'pellet:magnet-eat',
+
+    // Chapter Events
     CHAPTER_STARTED: 'chapter:started',
     CHAPTER_COMPLETED: 'chapter:completed'
 };

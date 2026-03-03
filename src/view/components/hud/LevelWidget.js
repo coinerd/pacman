@@ -9,7 +9,6 @@ export class LevelWidget {
     }
 
     create(scene) {
-        const scoreFont = themeConfig.fonts.hud.score;
         const techSmall = themeConfig.fonts.tech.small;
         const colors = themeConfig.colors;
         const circuit = themeConfig.circuit;
@@ -35,7 +34,7 @@ export class LevelWidget {
         this.panel.setDepth(900);
         this.panel.setScrollFactor(0);
         this.panel.setVisible(false); // Disable panel for visibility
-        
+
         console.log('[LevelWidget.create] Panel DISABLED for visibility');
 
         this.corners = this.createCircuitCorners(scene, x, y, panelWidth, panelHeight, colors, circuit);
@@ -62,11 +61,12 @@ export class LevelWidget {
             y + panelHeight / 2,
             '1',
             {
-                fontFamily: 'Courier New, monospace', // Same as ScoreBoard
-                fontSize: '32px', // Same as ScoreBoard
-                color: '#00ff00', // Bright green for visibility
-                backgroundColor: '#000000', // Black background
-                padding: { x: 5, y: 2 }
+                fontFamily: techSmall.family,
+                fontSize: '22px',
+                fontStyle: techSmall.style,
+                fontWeight: techSmall.weight,
+                letterSpacing: techSmall.letterSpacing,
+                color: '#88ff88'
             }
         );
         this.levelText.setOrigin(0.5);
@@ -74,7 +74,7 @@ export class LevelWidget {
         this.levelText.setScrollFactor(0);
         this.levelText.setVisible(true);
         this.levelText.setAlpha(1);
-        
+
         console.log('[LevelWidget.create] levelText created with hardcoded values:', {
             x: this.levelText.x,
             y: this.levelText.y,
@@ -92,7 +92,7 @@ export class LevelWidget {
         }
 
         this.levelText.setText(`${level}`);
-        
+
         // Force visibility
         this.levelText.setVisible(true);
         this.levelText.setAlpha(1);

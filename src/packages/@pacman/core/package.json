@@ -1,0 +1,35 @@
+{
+  "name": "@pacman/core",
+  "version": "1.0.0",
+  "description": "Core game systems and utilities for Pacman",
+  "main": "index.js",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./index.js"
+    }
+  },
+  "keywords": [
+    "game-core",
+    "level-system",
+    "spawning-system",
+    "entity-registry",
+    "dependency-injection",
+    "pacman"
+  ],
+  "author": "Pacman Team",
+  "license": "MIT",
+  "dependencies": {
+    "@pacman/movement": "^1.0.0",
+    "@pacman/utils": "^1.0.0"
+  },
+  "files": [
+    "index.js",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pacman/pacman-game.git",
+    "directory": "packages/core"
+  }
+}

@@ -1,10 +1,14 @@
 import { bossConfig, virusCore } from '../config/gameConfig.js';
 import { GAME_EVENTS, gameEvents } from '../core/EventBus.js';
 
+/**
+ * BossBattleSystem
+ * Verwaltet Boss-Kämpfe ohne direkte GameModel-Abhängigkeit
+ * Kommuniziert nur über EventBus
+ */
 export default class BossBattleSystem {
-    constructor(gameModel) {
-        this.gameModel = gameModel;
-
+    constructor() {
+        // Keine gameModel-Abhängigkeit mehr!
         this.currentBoss = null;
         this.bossHealth = 0;
         this.bossMaxHealth = 0;
@@ -158,13 +162,14 @@ export default class BossBattleSystem {
         const config = bossConfig.bossTypes[this.bossType];
         const timeTaken = (Date.now() - this.bossStartTime) / 1000;
 
-        this.gameModel.score += config.scoreBonus;
-
+        // PHASE 6: Entferne direkten GameModel-Zugriff
+        // Vorher: this.gameModel.score += config.scoreBonus;
+        // Neu: Nur Event emitten (GameModel übernimmt)
         gameEvents.emit(GAME_EVENTS.BOSS_DEFEATED, {
             bossType: this.bossType,
             scoreBonus: config.scoreBonus,
-            timeTaken,
-            finalScore: this.gameModel.score
+            timeTaken
+            // finalScore entfernt - GameModel kennt seinen eigenen Score
         });
 
         this.reset();

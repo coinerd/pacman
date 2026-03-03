@@ -1,0 +1,150 @@
+{
+  "timestamp": "2026-03-03T07:41:04.877Z",
+  "summary": {
+    "totalFiles": 130,
+    "defaultExports": 36,
+    "namedExports": 110,
+    "bothExports": 18,
+    "noExports": 2
+  },
+  "issues": [
+    {
+      "type": "MIXED_EXPORTS",
+      "path": "audio/TechSoundManagerRefactored.js",
+      "severity": "HIGH",
+      "message": "Module has both default and named exports. Consider using only one pattern."
+    },
+    {
+      "type": "MIXED_EXPORTS",
+      "path": "config/themeConfig.js",
+      "severity": "HIGH",
+      "message": "Module has both default and named exports. Consider using only one pattern."
+    },
+    {
+      "type": "MIXED_EXPORTS",
+      "path": "controllers/GameController.js",
+      "severity": "HIGH",
+      "message": "Module has both default and named exports. Consider using only one pattern."
+    },
+    {
+      "type": "NO_EXPORTS",
+      "path": "core/ServiceRegistry.js",
+      "severity": "LOW",
+      "message": "Module has no exports. Is this intentional?"
+    },
+    {
+      "type": "MIXED_EXPORTS",
+      "path": "effects/ParticleEffectManager.js",
+      "severity": "HIGH",
+      "message": "Module has both default and named exports. Consider using only one pattern."
+    },
+    {
+      "type": "MIXED_EXPORTS",
+      "path": "input/InputAdapter.js",
+      "severity": "HIGH",
+      "message": "Module has both default and named exports. Consider using only one pattern."
+    },
+    {
+      "type": "MIXED_EXPORTS",
+      "path": "input/InputManager.js",
+      "severity": "HIGH",
+      "message": "Module has both default and named exports. Consider using only one pattern."
+    },
+    {
+      "type": "MIXED_EXPORTS",
+      "path": "input/adapters/AIInputAdapter.js",
+      "severity": "HIGH",
+      "message": "Module has both default and named exports. Consider using only one pattern."
+    },
+    {
+      "type": "MIXED_EXPORTS",
+      "path": "input/adapters/KeyboardAdapter.js",
+      "severity": "HIGH",
+      "message": "Module has both default and named exports. Consider using only one pattern."
+    },
+    {
+      "type": "MIXED_EXPORTS",
+      "path": "input/adapters/ReplayAdapter.js",
+      "severity": "HIGH",
+      "message": "Module has both default and named exports. Consider using only one pattern."
+    },
+    {
+      "type": "NO_EXPORTS",
+      "path": "main.js",
+      "severity": "LOW",
+      "message": "Module has no exports. Is this intentional?"
+    },
+    {
+      "type": "MIXED_EXPORTS",
+      "path": "managers/TechSoundManager.js",
+      "severity": "HIGH",
+      "message": "Module has both default and named exports. Consider using only one pattern."
+    },
+    {
+      "type": "MIXED_EXPORTS",
+      "path": "managers/TechSoundManager.legacy.js",
+      "severity": "HIGH",
+      "message": "Module has both default and named exports. Consider using only one pattern."
+    },
+    {
+      "type": "MIXED_EXPORTS",
+      "path": "model/PlayerScoreFacade.js",
+      "severity": "HIGH",
+      "message": "Module has both default and named exports. Consider using only one pattern."
+    },
+    {
+      "type": "CORE_DEFAULT_EXPORT",
+      "path": "model/core/GameModelDI.js",
+      "severity": "MEDIUM",
+      "message": "Core module uses default export. Consider named exports."
+    },
+    {
+      "type": "MIXED_EXPORTS",
+      "path": "packages/@pacman/core/index.js",
+      "severity": "HIGH",
+      "message": "Module has both default and named exports. Consider using only one pattern."
+    },
+    {
+      "type": "CORE_DEFAULT_EXPORT",
+      "path": "packages/@pacman/core/index.js",
+      "severity": "MEDIUM",
+      "message": "Core module uses default export. Consider named exports."
+    },
+    {
+      "type": "MIXED_EXPORTS",
+      "path": "packages/@pacman/movement/index.js",
+      "severity": "HIGH",
+      "message": "Module has both default and named exports. Consider using only one pattern."
+    },
+    {
+      "type": "MIXED_EXPORTS",
+      "path": "packages/@pacman/utils/index.js",
+      "severity": "HIGH",
+      "message": "Module has both default and named exports. Consider using only one pattern."
+    },
+    {
+      "type": "MIXED_EXPORTS",
+      "path": "systems/AdditionalPowerUpSystem.js",
+      "severity": "HIGH",
+      "message": "Module has both default and named exports. Consider using only one pattern."
+    },
+    {
+      "type": "MIXED_EXPORTS",
+      "path": "views/RefactoredViewExample.js",
+      "severity": "HIGH",
+      "message": "Module has both default and named exports. Consider using only one pattern."
+    },
+    {
+      "type": "MIXED_EXPORTS",
+      "path": "views/core/ViewManager.js",
+      "severity": "HIGH",
+      "message": "Module has both default and named exports. Consider using only one pattern."
+    },
+    {
+      "type": "CORE_DEFAULT_EXPORT",
+      "path": "views/core/ViewManager.js",
+      "severity": "MEDIUM",
+      "message": "Core module uses default export. Consider named exports."
+    }
+  ]
+}

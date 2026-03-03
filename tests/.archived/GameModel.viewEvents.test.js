@@ -4,7 +4,7 @@
  * Phase 3: View-Events Interface
  */
 
-import GameModel from '../../src/core/GameModel.js';
+import GameModelDI from '../../src/model/core/GameModelDI.js';
 import { GAME_EVENTS, gameEvents } from '../../src/core/EventBus.js';
 import { VIEW_EVENTS } from '../../src/views/ViewEvents.js';
 
@@ -13,16 +13,16 @@ describe('GameModel VIEW_EVENTS Emission', () => {
 
     beforeEach(() => {
         gameEvents.clear();
-        model = new GameModel({
+        model = new GameModelDI({
             level: 1,
             score: 0,
             lives: 3
-        });
-    });
+        }, true);
+    }, true);
 
     afterEach(() => {
         gameEvents.clear();
-    });
+    }, true);
 
     describe('Pellet events', () => {
         it('should emit both GAME_EVENTS.PELLET_EATEN and VIEW_EVENTS.PELLET_EATEN', () => {
@@ -50,7 +50,7 @@ describe('GameModel VIEW_EVENTS Emission', () => {
             expect(viewEventData.gridX).toBe(1);
             expect(viewEventData.gridY).toBe(1);
             expect(viewEventData.timestamp).toBeGreaterThan(0);
-        });
+        }, true);
 
         it('should emit PELLET_EATEN with power pellet type for power pellets', () => {
             const viewEventListener = jest.fn();
@@ -69,7 +69,7 @@ describe('GameModel VIEW_EVENTS Emission', () => {
             expect(viewEventData.type).toBe('power_pellet');
             expect(viewEventData.gridX).toBe(2);
             expect(viewEventData.gridY).toBe(3);
-        });
+        }, true);
 
         it('should emit SCREEN_FLASH for power pellet eaten', () => {
             const flashListener = jest.fn();
@@ -88,8 +88,8 @@ describe('GameModel VIEW_EVENTS Emission', () => {
             const flashData = flashListener.mock.calls[0][0];
             expect(flashData.color).toBe(0xffff00);
             expect(flashData.duration).toBe(200);
-        });
-    });
+        }, true);
+    }, true);
 
     describe('Ghost events', () => {
         it('should emit both GAME_EVENTS.GHOST_EATEN and VIEW_EVENTS.GHOST_EATEN', () => {
@@ -114,7 +114,7 @@ describe('GameModel VIEW_EVENTS Emission', () => {
             expect(viewEventData.score).toBe(200);
             expect(viewEventData.combo).toBe(1);
             expect(viewEventData.timestamp).toBeGreaterThan(0);
-        });
+        }, true);
 
         it('should emit GHOST_MODE_CHANGED when ghost mode changes', () => {
             const modeChangeListener = jest.fn();
@@ -131,8 +131,8 @@ describe('GameModel VIEW_EVENTS Emission', () => {
             const modeData = modeChangeListener.mock.calls[0][0];
             expect(modeData.ghostType).toBe(model.ghosts[0].ghostType);
             expect(modeData.newMode).toBe('frightened');
-        });
-    });
+        }, true);
+    }, true);
 
     describe('Fruit events', () => {
         it('should emit both GAME_EVENTS.FRUIT_EATEN and VIEW_EVENTS.FRUIT_EATEN', () => {
@@ -153,8 +153,8 @@ describe('GameModel VIEW_EVENTS Emission', () => {
             const viewEventData = viewEventListener.mock.calls[0][0];
             expect(viewEventData.score).toBe(100);
             expect(viewEventData.timestamp).toBeGreaterThan(0);
-        });
-    });
+        }, true);
+    }, true);
 
     describe('Pacman events', () => {
         it('should emit PACMAN_DEATH_STARTED when Pacman dies', () => {
@@ -169,7 +169,7 @@ describe('GameModel VIEW_EVENTS Emission', () => {
             expect(deathListener).toHaveBeenCalledTimes(1);
             const deathData = deathListener.mock.calls[0][0];
             expect(deathData.livesRemaining).toBe(2);
-        });
+        }, true);
 
         it('should emit PACMAN_DIRECTION_CHANGED when direction changes', () => {
             const directionChangeListener = jest.fn();
@@ -183,8 +183,8 @@ describe('GameModel VIEW_EVENTS Emission', () => {
 
             expect(directionChangeListener).toHaveBeenCalledTimes(1);
             const directionData = directionChangeListener.mock.calls[0][0];
-            expect(directionData.newDirection).toEqual({ x: 1, y: 0 });
-        });
+            expect(directionData.newDirection).toEqual({ x: 1, y: 0 }, true);
+        }, true);
 
         it('should not emit direction change if direction is same', () => {
             const directionChangeListener = jest.fn();
@@ -198,8 +198,8 @@ describe('GameModel VIEW_EVENTS Emission', () => {
             model.trackPacmanDirectionChange();
 
             expect(directionChangeListener).not.toHaveBeenCalled();
-        });
-    });
+        }, true);
+    }, true);
 
     describe('Effect events', () => {
         it('should emit SCREEN_FLASH for game over', () => {
@@ -214,7 +214,7 @@ describe('GameModel VIEW_EVENTS Emission', () => {
             const flashData = flashListener.mock.calls[0][0];
             expect(flashData.color).toBe(0xff0000);
             expect(flashData.duration).toBe(300);
-        });
+        }, true);
 
         it('should emit SCREEN_SHAKE for game over', () => {
             const shakeListener = jest.fn();
@@ -228,7 +228,7 @@ describe('GameModel VIEW_EVENTS Emission', () => {
             const shakeData = shakeListener.mock.calls[0][0];
             expect(shakeData.intensity).toBe(10);
             expect(shakeData.duration).toBe(500);
-        });
+        }, true);
 
         it('should emit EFFECT_CREATED for level complete', () => {
             const effectListener = jest.fn();
@@ -243,8 +243,8 @@ describe('GameModel VIEW_EVENTS Emission', () => {
             expect(effectListener).toHaveBeenCalledTimes(1);
             const effectData = effectListener.mock.calls[0][0];
             expect(effectData.effectType).toBe('level_complete');
-        });
-    });
+        }, true);
+    }, true);
 
     describe('Entity events', () => {
         it('should emit ENTITY_MOVED for movement events', () => {
@@ -262,10 +262,10 @@ describe('GameModel VIEW_EVENTS Emission', () => {
             expect(moveListener).toHaveBeenCalledTimes(1);
             const moveData = moveListener.mock.calls[0][0];
             expect(moveData.entityId).toBe('pacman');
-            expect(moveData.direction).toEqual({ x: 1, y: 0 });
-            expect(moveData.fromGrid).toEqual({ x: 5, y: 5 });
-            expect(moveData.toGrid).toEqual({ x: 6, y: 5 });
-        });
+            expect(moveData.direction).toEqual({ x: 1, y: 0 }, true);
+            expect(moveData.fromGrid).toEqual({ x: 5, y: 5 }, true);
+            expect(moveData.toGrid).toEqual({ x: 6, y: 5 }, true);
+        }, true);
 
         it('should not emit ENTITY_MOVED for movement_completed', () => {
             const moveListener = jest.fn();
@@ -279,8 +279,8 @@ describe('GameModel VIEW_EVENTS Emission', () => {
             }]);
 
             expect(moveListener).not.toHaveBeenCalled();
-        });
-    });
+        }, true);
+    }, true);
 
     describe('Event emission order', () => {
         it('should emit GAME_EVENTS before VIEW_EVENTS for the same event', () => {
@@ -292,12 +292,12 @@ describe('GameModel VIEW_EVENTS Emission', () => {
 
             gameEvents.on(GAME_EVENTS.PELLET_EATEN, () => {
                 gameEmitted = true;
-            });
+            }, true);
             gameEvents.on(VIEW_EVENTS.PELLET_EATEN, () => {
                 viewEmitted = true;
                 // Verify game event was emitted first
                 expect(gameEmitted).toBe(true);
-            });
+            }, true);
 
             model.emitEvents([{
                 type: 'pellet_eaten',
@@ -309,8 +309,8 @@ describe('GameModel VIEW_EVENTS Emission', () => {
 
             expect(gameEmitted).toBe(true);
             expect(viewEmitted).toBe(true);
-        });
-    });
+        }, true);
+    }, true);
 
     describe('Internal events', () => {
         it('should not emit view events for tile_center_reached', () => {
@@ -320,7 +320,7 @@ describe('GameModel VIEW_EVENTS Emission', () => {
             allViewEvents.forEach(event => {
                 listeners[event] = jest.fn();
                 gameEvents.on(event, listeners[event]);
-            });
+            }, true);
 
             model.emitEvents([{
                 type: 'tile_center_reached',
@@ -332,8 +332,8 @@ describe('GameModel VIEW_EVENTS Emission', () => {
             // No view event should have been emitted
             Object.values(listeners).forEach(listener => {
                 expect(listener).not.toHaveBeenCalled();
-            });
-        });
+            }, true);
+        }, true);
 
         it('should not emit view events for death_tick', () => {
             const allViewEvents = Object.values(VIEW_EVENTS);
@@ -342,7 +342,7 @@ describe('GameModel VIEW_EVENTS Emission', () => {
             allViewEvents.forEach(event => {
                 listeners[event] = jest.fn();
                 gameEvents.on(event, listeners[event]);
-            });
+            }, true);
 
             model.emitEvents([{
                 type: 'death_tick',
@@ -352,9 +352,9 @@ describe('GameModel VIEW_EVENTS Emission', () => {
             // No view event should have been emitted
             Object.values(listeners).forEach(listener => {
                 expect(listener).not.toHaveBeenCalled();
-            });
-        });
-    });
+            }, true);
+        }, true);
+    }, true);
 
     describe('Game flow events remain as GAME_EVENTS', () => {
         it('should emit LEVEL_COMPLETE as GAME_EVENT only', () => {
@@ -372,7 +372,7 @@ describe('GameModel VIEW_EVENTS Emission', () => {
 
             expect(gameEventListener).toHaveBeenCalledTimes(1);
             expect(viewEventListener).not.toHaveBeenCalled();
-        });
+        }, true);
 
         it('should emit GAME_OVER as GAME_EVENT only', () => {
             const gameEventListener = jest.fn();
@@ -387,7 +387,7 @@ describe('GameModel VIEW_EVENTS Emission', () => {
 
             expect(gameEventListener).toHaveBeenCalledTimes(1);
             expect(viewEventListener).not.toHaveBeenCalled();
-        });
+        }, true);
 
         it('should emit RESPAWN as GAME_EVENT only', () => {
             const gameEventListener = jest.fn();
@@ -403,6 +403,6 @@ describe('GameModel VIEW_EVENTS Emission', () => {
 
             expect(gameEventListener).toHaveBeenCalledTimes(1);
             expect(viewEventListener).not.toHaveBeenCalled();
-        });
-    });
-});
+        }, true);
+    }, true);
+}, true);

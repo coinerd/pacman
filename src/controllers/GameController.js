@@ -274,6 +274,4 @@ export class GameController {
         this.replaySystem = null;
         this.playerScoreFacade = null;
     }
-}
-
-export default GameController;
+};

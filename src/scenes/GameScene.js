@@ -14,7 +14,7 @@ import {
 import { themeConfig } from '../config/themeConfig.js';
 import { GameController } from '../controllers/GameController.js';
 import { GAME_EVENTS, gameEvents } from '../core/EventBus.js';
-import GameModel from '../core/GameModel.js';
+import GameModelDI from '../model/core/GameModelDI.js';
 import {
     AIInputAdapter,
     InputManager,
@@ -32,6 +32,8 @@ import { normalizeDeltaSeconds } from '../utils/Time.js';
 import GameView from '../views/ModelDrivenGameView.js';
 import { LevelManager } from './systems/LevelManager.js';
 import { UIController } from './systems/UIController.js';
+import { registerCoreServices } from '../core/ServiceRegistry.js';
+import { clearServices } from '../core/ServiceRegistry.js';
 
 export default class GameScene extends Phaser.Scene {
     constructor() {
@@ -41,7 +43,17 @@ export default class GameScene extends Phaser.Scene {
     init(data) {
         const levelData = createMazeData();
 
-        this.gameModel = new GameModel({
+        // Phase 4: Registriere DI-Services
+        registerCoreServices({
+            level: data.level || 1,
+            lives: data.lives || 3,
+            score: data.score || 0,
+            highScore: data.highScore || 0,
+            deathPauseDuration: animationConfig.deathPauseDuration
+        });
+
+        // Phase 4: Verwende GameModelDI mit DI
+        this.gameModel = new GameModelDI({
             score: data.score || 0,
             lives: data.lives ?? 3,
             level: data.level || 1,
@@ -49,7 +61,7 @@ export default class GameScene extends Phaser.Scene {
             deathPauseDuration: animationConfig.deathPauseDuration,
             maze: levelData.maze,
             pelletGrid: levelData.pelletGrid
-        });
+        }, true); // DI aktiviert
 
         this.storageManager = new StorageManager();
 
@@ -362,5 +374,8 @@ export default class GameScene extends Phaser.Scene {
         this.debugOverlay?.cleanup();
         this.achievementSystem?.save();
         this.replaySystem?.cleanup();
+
+        // Phase 4: Services freigeben
+        clearServices();
     }
 }

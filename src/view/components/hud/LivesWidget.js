@@ -9,7 +9,6 @@ export class LivesWidget {
     }
 
     create(scene) {
-        const scoreFont = themeConfig.fonts.hud.score;
         const techSmall = themeConfig.fonts.tech.small;
         const colors = themeConfig.colors;
         const circuit = themeConfig.circuit;
@@ -35,7 +34,7 @@ export class LivesWidget {
         this.panel.setDepth(900);
         this.panel.setScrollFactor(0);
         this.panel.setVisible(false); // Disable panel for visibility
-        
+
         console.log('[LivesWidget.create] Panel DISABLED for visibility');
 
         this.corners = this.createCircuitCorners(scene, x, y, panelWidth, panelHeight, colors, circuit);
@@ -62,11 +61,12 @@ export class LivesWidget {
             y + panelHeight / 2,
             '3',
             {
-                fontFamily: 'Courier New, monospace', // Same as ScoreBoard
-                fontSize: '32px', // Same as ScoreBoard
-                color: '#00ff00', // Bright green for visibility
-                backgroundColor: '#000000', // Black background
-                padding: { x: 5, y: 2 }
+                fontFamily: techSmall.family,
+                fontSize: '22px',
+                fontStyle: techSmall.style,
+                fontWeight: techSmall.weight,
+                letterSpacing: techSmall.letterSpacing,
+                color: '#88ff88'
             }
         );
         this.livesText.setOrigin(0.5);
@@ -74,7 +74,7 @@ export class LivesWidget {
         this.livesText.setScrollFactor(0);
         this.livesText.setVisible(true);
         this.livesText.setAlpha(1);
-        
+
         console.log('[LivesWidget.create] livesText created with hardcoded values:', {
             x: this.livesText.x,
             y: this.livesText.y,
@@ -84,7 +84,7 @@ export class LivesWidget {
             depth: this.livesText.depth,
             color: this.livesText.style.color
         });
-        
+
         console.log('[LivesWidget.create] livesText rendering check:', {
             x: this.livesText.x,
             y: this.livesText.y,
@@ -108,7 +108,7 @@ export class LivesWidget {
         }
 
         this.livesText.setText(`${lives}`);
-        
+
         // Force visibility
         this.livesText.setVisible(true);
         this.livesText.setAlpha(1);

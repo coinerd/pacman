@@ -3,7 +3,7 @@
  * GameModel -> PlayerScoreFacade -> UIController -> ScoreBoard
  */
 
-import GameModel from '../../src/core/GameModel.js';
+import GameModelDI from '../../src/model/core/GameModelDI.js';
 import { PlayerScoreFacade } from '../../src/model/PlayerScoreFacade.js';
 import { UIController } from '../../src/scenes/systems/UIController.js';
 
@@ -25,7 +25,7 @@ describe('Score Flow Integration', () => {
             setScale: jest.fn().mockReturnThis(),
             setText: jest.fn(function(newText) {
                 this.text = newText;
-                scoreUpdateLog.push({ method: 'setText', text: newText });
+                scoreUpdateLog.push({ method: 'setText', text: newText }, true);
                 return this;
             }),
             destroy: jest.fn()
@@ -64,16 +64,16 @@ describe('Score Flow Integration', () => {
         };
 
         // Create GameModel
-        gameModel = new GameModel({
+        gameModel = new GameModelDI({
             score: 0,
             lives: 3,
             level: 1,
             highScore: 0
-        });
+        }, true);
 
         // Create PlayerScoreFacade
         playerScoreFacade = new PlayerScoreFacade(gameModel);
-    });
+    }, true);
 
     describe('PlayerScoreFacade.toHudSnapshot()', () => {
         it('should return correct initial score', () => {
@@ -83,7 +83,7 @@ describe('Score Flow Integration', () => {
             expect(snapshot.highScore).toBe(0);
             expect(snapshot.lives).toBe(3);
             expect(snapshot.level).toBe(1);
-        });
+        }, true);
 
         it('should reflect score changes in GameModel', () => {
             // Manually set score
@@ -92,17 +92,17 @@ describe('Score Flow Integration', () => {
             const snapshot = playerScoreFacade.toHudSnapshot();
             console.log('After setting score to 100:', snapshot);
             expect(snapshot.score).toBe(100);
-        });
+        }, true);
 
         it('should reflect score changes via scoreModule', () => {
             // Apply a pellet score event
-            gameModel.scoreModule.applyEvent({ type: 'pellet_eaten', score: 10 });
+            gameModel.scoreModule.applyEvent({ type: 'pellet_eaten', score: 10 }, true);
 
             const snapshot = playerScoreFacade.toHudSnapshot();
             console.log('After pellet eaten:', snapshot);
             expect(snapshot.score).toBe(10);
-        });
-    });
+        }, true);
+    }, true);
 
     describe('UIController.updateFromSnapshot()', () => {
         let uiController;
@@ -110,7 +110,7 @@ describe('Score Flow Integration', () => {
         beforeEach(() => {
             uiController = new UIController(mockScene, playerScoreFacade);
             uiController.create();
-        });
+        }, true);
 
         it('should update score text when snapshot changes', () => {
             // Initial update
@@ -132,7 +132,7 @@ describe('Score Flow Integration', () => {
             // Find the last setText call for score
             const scoreUpdates = scoreUpdateLog.filter(log => log.text === '500');
             expect(scoreUpdates.length).toBeGreaterThan(0);
-        });
+        }, true);
 
         it('should propagate score changes from GameModel to ScoreBoard', () => {
             // Set up initial state
@@ -140,7 +140,7 @@ describe('Score Flow Integration', () => {
             uiController.updateFromSnapshot(initialSnapshot);
 
             // Simulate pellet eaten
-            gameModel.applyCollisionEffect({ type: 'pellet_eaten', score: 10 });
+            gameModel.applyCollisionEffect({ type: 'pellet_eaten', score: 10 }, true);
 
             // Get new snapshot
             const newSnapshot = playerScoreFacade.toHudSnapshot();
@@ -153,8 +153,8 @@ describe('Score Flow Integration', () => {
 
             // Verify score was updated
             expect(newSnapshot.score).toBe(10);
-        });
-    });
+        }, true);
+    }, true);
 
     describe('Complete flow: GameModel -> Facade -> UIController', () => {
         it('should correctly propagate score through the entire chain', () => {
@@ -173,7 +173,7 @@ describe('Score Flow Integration', () => {
             uiController.updateFromSnapshot(snapshot);
 
             // Apply score change
-            gameModel.scoreModule.applyEvent({ type: 'pellet_eaten', score: 10 });
+            gameModel.scoreModule.applyEvent({ type: 'pellet_eaten', score: 10 }, true);
 
             // Verify GameModel has new score
             expect(gameModel.score).toBe(10);
@@ -190,6 +190,6 @@ describe('Score Flow Integration', () => {
             const lastUpdate = scoreUpdateLog[scoreUpdateLog.length - 1];
             console.log('Last score update:', lastUpdate);
             expect(lastUpdate.text).toBe('10');
-        });
-    });
-});
+        }, true);
+    }, true);
+}, true);

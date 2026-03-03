@@ -723,6 +723,4 @@ export class ParticleEffectManager {
             effect.isPlaying = true;
         });
     }
-}
-
-export default ParticleEffectManager;
+};

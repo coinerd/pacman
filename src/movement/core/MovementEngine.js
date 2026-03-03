@@ -173,8 +173,11 @@ export class MovementEngine {
         if (movement.moveProgress === 0) {
             this.tryApplyBufferedDirection(movement);
             this.tryStartMovement(entityId, movement);
-        } else {
-            // Update laufendes Movement
+        }
+
+        // Update laufendes Movement (auch wenn gerade gestartet)
+        // Aber nur wenn dt > 0, um Probleme beim Start zu vermeiden
+        if (movement.moveProgress > 0 && dt > 0) {
             this.updateMovementProgress(entityId, movement, dt);
         }
     }
@@ -295,6 +298,9 @@ export class MovementEngine {
         // Reset Movement-State
         movement.moveProgress = 0;
         movement.isMoving = false;
+
+        // Debug log
+        // console.log(`[completeMovement] ${entityId}: gridX=${movement.gridX}, targetGridX=${movement.targetGridX}, x=${movement.x}, y=${movement.y}`);
 
         this.stats.movesCompleted++;
 

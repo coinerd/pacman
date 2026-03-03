@@ -18,7 +18,7 @@ import { FruitRenderer } from '../view/components/FruitRenderer.js';
  * - Nur Events und Snapshots
  * - Scene-Transitions über Handler
  */
-export default class DecoupledGameView {
+export class DecoupledGameView {
     /**
      * @param {ViewContext} context - ViewContext mit nötigen Abhängigkeiten
      */

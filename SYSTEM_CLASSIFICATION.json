@@ -1,0 +1,302 @@
+{
+  "systems": {
+    "SpawningSystem": {
+      "file": "src/model/systems/SpawningSystem.js",
+      "category": "CORE",
+      "responsibilities": [
+        "Maze-Generierung",
+        "Entity-Spawn",
+        "Pellet-Management"
+      ],
+      "dependencies": [
+        "MazeGenerator",
+        "createMazeData",
+        "countPellets",
+        "gameConfig"
+      ],
+      "reusability": "HIGH",
+      "exports": [
+        "getMaze()",
+        "getPelletGrid()",
+        "generateMazeForLevel()",
+        "spawnEntity()"
+      ]
+    },
+    "LevelSystem": {
+      "file": "src/model/systems/LevelSystem.js",
+      "category": "CORE",
+      "responsibilities": [
+        "Level-Progression",
+        "Schwierigkeitsstufen"
+      ],
+      "dependencies": [
+        "gameConfig",
+        "scoreValues"
+      ],
+      "reusability": "HIGH",
+      "exports": [
+        "getLevel()",
+        "setLevel()",
+        "getLevelConfig()",
+        "getFrightenedDuration()"
+      ]
+    },
+    "BossBattleSystem": {
+      "file": "src/systems/BossBattleSystem.js",
+      "category": "FEATURE",
+      "responsibilities": [
+        "Boss-Kämpfe",
+        "Boss-Verhalten"
+      ],
+      "dependencies": [
+        "GameModel",
+        "EventBus"
+      ],
+      "reusability": "LOW",
+      "exports": [
+        "startBossBattle()",
+        "update()",
+        "getSnapshot()"
+      ],
+      "circularDependency": true
+    },
+    "AdditionalPowerUpSystem": {
+      "file": "src/systems/AdditionalPowerUpSystem.js",
+      "category": "FEATURE",
+      "responsibilities": [
+        "Zusätzliche Power-Ups",
+        "Power-Up-Verhalten"
+      ],
+      "dependencies": [
+        "GameModel",
+        "EventBus"
+      ],
+      "reusability": "LOW",
+      "exports": [
+        "spawnPowerUp()",
+        "activatePowerUp()",
+        "update()",
+        "getSnapshot()"
+      ],
+      "circularDependency": true
+    },
+    "StoryMode": {
+      "file": "src/systems/StoryMode.js",
+      "category": "FEATURE",
+      "responsibilities": [
+        "Story-Modus",
+        "Dialoge"
+      ],
+      "dependencies": [
+        "GameModel",
+        "EventBus"
+      ],
+      "reusability": "LOW",
+      "exports": [
+        "startStory()",
+        "nextChapter()",
+        "getSnapshot()"
+      ],
+      "circularDependency": true
+    },
+    "AchievementSystem": {
+      "file": "src/systems/AchievementSystem.js",
+      "category": "FEATURE",
+      "responsibilities": [
+        "Achievements",
+        "Badges"
+      ],
+      "dependencies": [
+        "EventBus",
+        "StorageManager"
+      ],
+      "reusability": "HIGH",
+      "exports": [
+        "trackAchievement()",
+        "unlockAchievement()",
+        "getProgress()"
+      ]
+    },
+    "GhostAISystem": {
+      "file": "src/systems/GhostAISystem.js",
+      "category": "AI",
+      "responsibilities": [
+        "Ghost KI-Verhalten"
+      ],
+      "dependencies": [
+        "MovementSystem",
+        "Maze"
+      ],
+      "reusability": "MEDIUM",
+      "exports": [
+        "update()",
+        "setTarget()",
+        "getBehavior()"
+      ]
+    },
+    "EnemyAISystem": {
+      "file": "src/systems/EnemyAISystem.js",
+      "category": "AI",
+      "responsibilities": [
+        "Enemy KI-Verhalten"
+      ],
+      "dependencies": [
+        "MovementSystem",
+        "Maze"
+      ],
+      "reusability": "HIGH",
+      "exports": [
+        "update()",
+        "setTarget()",
+        "getBehavior()"
+      ]
+    },
+    "MovementSystem": {
+      "file": "src/movement/MovementSystem.js",
+      "category": "MOVEMENT",
+      "responsibilities": [
+        "Haupt-Fassade für Bewegungs-Systeme",
+        "Integriert Engine, AI und Collision"
+      ],
+      "dependencies": [
+        "MovementEngine",
+        "MovementComponent",
+        "AIController",
+        "MazeAdapter"
+      ],
+      "reusability": "HIGH",
+      "exports": [
+        "initialize()",
+        "moveEntity()",
+        "setDirection()",
+        "getValidDirections()"
+      ]
+    },
+    "MovementEngine": {
+      "file": "src/movement/core/MovementEngine.js",
+      "category": "MOVEMENT",
+      "responsibilities": [
+        "Kern-Movement-Logik"
+      ],
+      "dependencies": [],
+      "reusability": "HIGH",
+      "exports": [
+        "move()",
+        "interpolate()",
+        "wrapTunnel()"
+      ]
+    },
+    "MovementComponent": {
+      "file": "src/movement/core/MovementComponent.js",
+      "category": "MOVEMENT",
+      "responsibilities": [
+        "Bewegungs-Komponente für Entities"
+      ],
+      "dependencies": [],
+      "reusability": "HIGH",
+      "exports": [
+        "update()",
+        "move()",
+        "setSpeed()"
+      ]
+    },
+    "ReplaySystem": {
+      "file": "src/systems/ReplaySystem.js",
+      "category": "REPLAY",
+      "responsibilities": [
+        "Spiel-Aufnahme",
+        "Wiedergabe"
+      ],
+      "dependencies": [
+        "EventBus",
+        "StorageManager"
+      ],
+      "reusability": "HIGH",
+      "exports": [
+        "startRecording()",
+        "stopRecording()",
+        "playReplay()"
+      ]
+    }
+  },
+  "categories": {
+    "CORE": {
+      "description": "Essenziell für das Spiel, keine externen Abhängigkeiten",
+      "systems": [
+        "SpawningSystem",
+        "LevelSystem"
+      ]
+    },
+    "FEATURE": {
+      "description": "Erweiterte Game-Features",
+      "systems": [
+        "BossBattleSystem",
+        "AdditionalPowerUpSystem",
+        "StoryMode",
+        "AchievementSystem"
+      ]
+    },
+    "AI": {
+      "description": "KI-Logik",
+      "systems": [
+        "GhostAISystem",
+        "EnemyAISystem"
+      ]
+    },
+    "MOVEMENT": {
+      "description": "Bewegungslogik",
+      "systems": [
+        "MovementSystem",
+        "MovementEngine",
+        "MovementComponent"
+      ]
+    },
+    "REPLAY": {
+      "description": "Wiedergabe/Debugging",
+      "systems": [
+        "ReplaySystem"
+      ]
+    }
+  },
+  "reusability": {
+    "HIGH": {
+      "systems": [
+        "MovementEngine",
+        "MovementComponent",
+        "LevelSystem",
+        "AchievementSystem",
+        "ReplaySystem",
+        "EnemyAISystem",
+        "SpawningSystem",
+        "MovementSystem"
+      ],
+      "exportPattern": "unified"
+    },
+    "MEDIUM": {
+      "systems": [
+        "GhostAISystem"
+      ],
+      "exportPattern": "conditional"
+    },
+    "LOW": {
+      "systems": [
+        "BossBattleSystem",
+        "AdditionalPowerUpSystem",
+        "StoryMode"
+      ],
+      "exportPattern": "game-specific",
+      "notes": "Zirkuläre Abhängigkeit zu GameModel - muss gelöst werden"
+    }
+  },
+  "circularDependencies": [
+    {
+      "from": "GameModel",
+      "to": [
+        "BossBattleSystem",
+        "AdditionalPowerUpSystem",
+        "StoryMode"
+      ],
+      "action": "In Phase 6 lösen"
+    }
+  ]
+}

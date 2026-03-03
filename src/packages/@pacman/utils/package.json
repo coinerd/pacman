@@ -1,0 +1,30 @@
+{
+  "name": "@pacman/utils",
+  "version": "1.0.0",
+  "description": "Utility functions and helpers for Pacman",
+  "main": "index.js",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./index.js"
+    }
+  },
+  "keywords": [
+    "maze-generator",
+    "event-bus",
+    "utilities",
+    "helpers",
+    "pacman"
+  ],
+  "author": "Pacman Team",
+  "license": "MIT",
+  "files": [
+    "index.js",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pacman/pacman-game.git",
+    "directory": "packages/utils"
+  }
+}

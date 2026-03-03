@@ -2,12 +2,14 @@ import { storyConfig } from '../config/gameConfig.js';
 import { GAME_EVENTS, gameEvents } from '../core/EventBus.js';
 
 /**
- * StoryMode system for narrative progression
+ * StoryMode System for narrative progression
  * Tracks chapter progress and emits story events
+ * PHASE 6: Keine GameModel-Abhängigkeit mehr
  */
 export default class StoryMode {
-    constructor(gameModel) {
-        this.gameModel = gameModel;
+    constructor() {
+        // PHASE 6: Keine gameModel-Abhängigkeit mehr!
+        // this.gameModel = gameModel;
 
         this.currentChapter = null;
         this.completedChapters = new Set();
@@ -15,8 +17,8 @@ export default class StoryMode {
     }
 
     /**
-	 * Start level - check if level has story chapter
-	 */
+     * Start level - check if level has story chapter
+     */
     startLevel(level) {
         const chapter = this.findChapterForLevel(level);
 
@@ -38,8 +40,8 @@ export default class StoryMode {
     }
 
     /**
-	 * Find chapter configuration for level
-	 */
+     * Find chapter configuration for level
+     */
     findChapterForLevel(level) {
         return (
             storyConfig.chapters.find((chapter) => chapter.level === level) || null
@@ -47,8 +49,9 @@ export default class StoryMode {
     }
 
     /**
-	 * Complete chapter - apply bonus and mark complete
-	 */
+     * Complete chapter - apply bonus and mark complete
+     * PHASE 6: GameModel-Abhängigkeit entfernt
+     */
     completeChapter() {
         if (!this.currentChapter) {
             return null;
@@ -58,19 +61,21 @@ export default class StoryMode {
         const bonusPoints = storyConfig.chapterCompleteBonus;
 
         this.completedChapters.add(chapterName);
-        this.gameModel.score += bonusPoints;
 
+        // PHASE 6: Entferne direkten GameModel-Zugriff
+        // Vorher: this.gameModel.score += bonusPoints;
+        // Neu: Nur Event emitten (GameModel übernimmt)
         gameEvents.emit(GAME_EVENTS.CHAPTER_COMPLETED, {
             chapterName: this.currentChapter.name,
             bonusPoints,
-            level: this.gameModel.level,
-            score: this.gameModel.score
+            level: this.currentChapter.level
+            // score entfernt - GameModel kennt seinen eigenen Score
         });
 
         const result = {
             chapterName: this.currentChapter.name,
             bonusPoints,
-            score: this.gameModel.score
+            level: this.currentChapter.level
         };
 
         this.currentChapter = null;
@@ -80,15 +85,15 @@ export default class StoryMode {
     }
 
     /**
-	 * Get current chapter info
-	 */
+     * Get current chapter info
+     */
     getCurrentChapter() {
         return this.currentChapter;
     }
 
     /**
-	 * Get chapter progress info
-	 */
+     * Get chapter progress info
+     */
     getChapterProgress() {
         const totalChapters = storyConfig.chapters.length;
         const completedCount = this.completedChapters.size;
@@ -117,8 +122,8 @@ export default class StoryMode {
     }
 
     /**
-	 * Reset story progress (for new game)
-	 */
+     * Reset story progress (for new game)
+     */
     reset() {
         this.currentChapter = null;
         this.completedChapters.clear();
@@ -126,8 +131,8 @@ export default class StoryMode {
     }
 
     /**
-	 * Get story snapshot
-	 */
+     * Get story snapshot
+     */
     getSnapshot() {
         return {
             currentChapter: this.currentChapter,

@@ -22,7 +22,7 @@ describe('GameModel + FixedTimeStepLoop Integration', () => {
 
             return {
                 events,
-                snapshot: model.getStateSnapshot()
+                snapshot: model.getSnapshot() // PHASE 4: getSnapshot() statt getStateSnapshot()
             };
         };
 

@@ -20,13 +20,14 @@ import { ViewContext, ViewState, GameSnapshot } from './ViewInterface.js';
 import { SceneTransitionHandler } from './SceneTransitionHandler.js';
 import { VIEW_EVENTS } from './ViewEvents.js';
 import { SoundManager } from '../managers/SoundManager.js';
-import { PelletPool } from '../pools/PelletPool.js';
-import { PowerPelletPool } from '../pools/PowerPelletPool.js';
 import { EffectManager } from '../scenes/systems/EffectManager.js';
-import { gridToPixel, pixelToGrid, PELLET_TYPES, TILE_TYPES } from '../utils/MazeLayout.js';
+import { gridToPixel, pixelToGrid, TILE_TYPES } from '../utils/MazeLayout.js';
 import { GhostRenderer } from '../view/components/GhostRenderer.js';
 import { FruitRenderer } from '../view/components/FruitRenderer.js';
 import { PlayerRenderer } from '../view/components/PlayerRenderer.js';
+
+// Phase 2: New renderer modules
+import { PelletRenderer } from './renderers/PelletRenderer.js';
 
 export default class ModelDrivenGameView {
     /**
@@ -85,11 +86,13 @@ export default class ModelDrivenGameView {
         this.soundManager = new SoundManager(this.scene);
         this.effectManager = new EffectManager(this.scene);
 
-        // Pellet pools
-        this.pelletPool = null;
-        this.powerPelletPool = null;
+        // Pellet renderer (Phase 2: encapsulates pellet pools)
+        this.pelletRenderer = new PelletRenderer(this.scene);
 
-        // Phase 4: No pellet state tracking - pools maintain their own gridIndex
+        // Phase 4: No pellet state tracking - PelletRenderer handles this
+
+        // Initialize pellet pools immediately for backward compatibility
+        this.pelletRenderer.createPelletPools();
 
         // Event unsubscribers
         this.unsubscribers = [];
@@ -120,7 +123,6 @@ export default class ModelDrivenGameView {
     create() {
         this.createBackground();
         this.createMaze();
-        this.createPelletPools();
         this.createPellets();
         this.createEntityRenderers();
         this.bindModelEvents();
@@ -283,46 +285,31 @@ export default class ModelDrivenGameView {
     }
 
     /**
-	 * Create pellet pools
-	 */
-    createPelletPools() {
-        this.pelletPool = new PelletPool(this.scene);
-        this.powerPelletPool = new PowerPelletPool(this.scene);
-        this.pelletPool.init();
-        this.powerPelletPool.init(4);
-    }
-
-    /**
 	 * Create pellets from snapshot's pellet grid
-	 * Phase 4: Render directly from snapshot, no local state tracking
+	 * Phase 2: Delegates to PelletRenderer
 	 */
     createPellets(pelletGridOverride = null) {
         const pelletGrid = pelletGridOverride || (this.lastSnapshot ? this.lastSnapshot.pelletGrid : this.gameModel?.pelletGrid);
         if (!pelletGrid) {
             return;
         }
+        this.pelletRenderer.createPellets(pelletGrid);
+    }
 
-        for (let y = 0; y < pelletGrid.length; y++) {
-            for (let x = 0; x < pelletGrid[y].length; x++) {
-                const pelletType = pelletGrid[y][x];
+    /**
+     * Get pellet pool (for backward compatibility with tests)
+     * @returns {PelletPool}
+     */
+    getPelletPool() {
+        return this.pelletRenderer?.pelletPool || this.pelletPool;
+    }
 
-                if (pelletType === PELLET_TYPES.PELLET) {
-                    this.pelletPool.get(x, y);
-                } else if (pelletType === PELLET_TYPES.POWER_PELLET) {
-                    const powerPellet = this.powerPelletPool.get(x, y);
-                    // Add pulse animation
-                    this.scene.tweens.add({
-                        targets: powerPellet,
-                        scale: { from: 1, to: 1.5 },
-                        alpha: { from: 1, to: 0.7 },
-                        duration: 500,
-                        yoyo: true,
-                        repeat: -1,
-                        ease: 'Sine.easeInOut'
-                    });
-                }
-            }
-        }
+    /**
+     * Get power pellet pool (for backward compatibility with tests)
+     * @returns {PowerPelletPool}
+     */
+    getPowerPelletPool() {
+        return this.pelletRenderer?.powerPelletPool || this.powerPelletPool;
     }
 
     /**
@@ -379,19 +366,8 @@ export default class ModelDrivenGameView {
                     this.soundManager.playWakaWaka();
                 }
 
-                // Phase 4: Release pellet from pool (pools maintain their own gridIndex)
-                let pellet;
-                if (data.type === 'power_pellet') {
-                    pellet = this.powerPelletPool.getByGrid(data.gridX, data.gridY);
-                    if (pellet) {
-                        this.powerPelletPool.release(pellet);
-                    }
-                } else {
-                    pellet = this.pelletPool.getByGrid(data.gridX, data.gridY);
-                    if (pellet) {
-                        this.pelletPool.release(pellet);
-                    }
-                }
+                // Phase 2: Use PelletRenderer to remove pellet
+                this.pelletRenderer.removePelletAt(data.gridX, data.gridY, data.type);
             }),
 
             // Ghost eaten - play sound and create effect
@@ -680,18 +656,22 @@ export default class ModelDrivenGameView {
         this.lastSnapshot = snapshot;
         this.frameCount++;
 
+        // Ensure pellet pools are initialized
+        if (!this.pelletRenderer.pelletPool) {
+            this.pelletRenderer.createPelletPools();
+        }
+
         // Update maze if changed (first time or level change)
         if (!this.lastMazeSnapshot || !this.mazeEquals(this.lastMazeSnapshot.maze, snapshot.maze)) {
             this.createMaze(snapshot.maze);
             this.lastMazeSnapshot = { maze: snapshot.maze };
             // Reset pellet pools before creating new ones for new level
-            this.pelletPool?.releaseAll();
-            this.powerPelletPool?.releaseAll();
+            this.pelletRenderer.clearAllPellets();
             this.createPellets(snapshot.pelletGrid);
         }
 
-        // Phase 4: Update pellets (no local state, direct from snapshot)
-        this.updatePelletVisuals(snapshot.pelletGrid);
+        // Phase 2: Use PelletRenderer to update pellet visuals
+        this.pelletRenderer.updatePelletVisuals(snapshot.pelletGrid);
 
         // Create renderers on first snapshot if they don't exist
         if (!this.playerRenderer && snapshot.pacman && snapshot.ghosts && snapshot.fruit) {
@@ -838,79 +818,6 @@ export default class ModelDrivenGameView {
         }
 
         return true;
-    }
-
-    /**
-	 * Update pellet visuals based on snapshot
-	 * Phase 4: Render directly from snapshot, no local state tracking
-	 * Uses pools' gridIndex for efficient lookup
-	 */
-    updatePelletVisuals(pelletGrid) {
-        if (!pelletGrid) {
-            return;
-        }
-
-        // Phase 4: Remove pellets that are no longer in the grid
-        // Iterate through pool's active pellets and check against snapshot
-        const pelletsToRemove = [];
-
-        // Check regular pellets
-        for (const pellet of [...this.pelletPool.active]) {
-            const gridX = Math.floor(pellet.x / gameConfig.tileSize);
-            const gridY = Math.floor(pellet.y / gameConfig.tileSize);
-
-            if (gridY < 0 || gridY >= pelletGrid.length ||
-                gridX < 0 || gridX >= pelletGrid[0].length ||
-                pelletGrid[gridY][gridX] !== PELLET_TYPES.PELLET) {
-                pelletsToRemove.push({ pellet, pool: this.pelletPool });
-            }
-        }
-
-        // Check power pellets
-        for (const pellet of [...this.powerPelletPool.active]) {
-            const gridX = Math.floor(pellet.x / gameConfig.tileSize);
-            const gridY = Math.floor(pellet.y / gameConfig.tileSize);
-
-            if (gridY < 0 || gridY >= pelletGrid.length ||
-                gridX < 0 || gridX >= pelletGrid[0].length ||
-                pelletGrid[gridY][gridX] !== PELLET_TYPES.POWER_PELLET) {
-                pelletsToRemove.push({ pellet, pool: this.powerPelletPool });
-            }
-        }
-
-        // Remove outdated pellets
-        for (const { pellet, pool } of pelletsToRemove) {
-            pool.release(pellet);
-        }
-
-        // Phase 4: Add new pellets from snapshot
-        for (let y = 0; y < pelletGrid.length; y++) {
-            for (let x = 0; x < pelletGrid[y].length; x++) {
-                const pelletType = pelletGrid[y][x];
-
-                if (pelletType === PELLET_TYPES.PELLET) {
-                    // Check if pellet already exists in pool
-                    if (!this.pelletPool.getByGrid(x, y)) {
-                        this.pelletPool.get(x, y);
-                    }
-                } else if (pelletType === PELLET_TYPES.POWER_PELLET) {
-                    // Check if power pellet already exists in pool
-                    if (!this.powerPelletPool.getByGrid(x, y)) {
-                        const powerPellet = this.powerPelletPool.get(x, y);
-                        // Add pulse animation for new power pellets
-                        this.scene.tweens.add({
-                            targets: powerPellet,
-                            scale: { from: 1, to: 1.5 },
-                            alpha: { from: 1, to: 0.7 },
-                            duration: 500,
-                            yoyo: true,
-                            repeat: -1,
-                            ease: 'Sine.easeInOut'
-                        });
-                    }
-                }
-            }
-        }
     }
 
     /**
@@ -1666,14 +1573,8 @@ export default class ModelDrivenGameView {
             this.storyOverlay = null;
         }
 
-        // Destroy pellet pools
-        if (this.pelletPool) {
-            this.pelletPool.destroy();
-        }
-        if (this.powerPelletPool) {
-            this.powerPelletPool.destroy();
-        }
-        // Phase 4: No activePellets Map - pools maintain their own gridIndex
+        // Phase 2: Cleanup pellet renderer
+        this.pelletRenderer.cleanup();
 
         // Disable sound
         this.soundManager.setEnabled(false);

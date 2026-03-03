@@ -7,9 +7,20 @@ export const POWER_UP_TYPES = {
     DATA_MAGNET: 'DATA_MAGNET'
 };
 
-export default class AdditionalPowerUpSystem {
-    constructor(gameModel) {
-        this.gameModel = gameModel;
+/**
+ * AdditionalPowerUpSystem
+ * Verwaltet zusätzliche Power-Ups ohne direkte GameModel-Abhängigkeit
+ * PHASE 6: DI mit EntityRegistry und EventBus
+ */
+export class AdditionalPowerUpSystem {
+    constructor(entityRegistry, eventBus) {
+        // PHASE 6: Keine gameModel-Abhängigkeit mehr!
+        // this.gameModel = gameModel;
+
+        // DI: EntityRegistry und EventBus
+        this.entityRegistry = entityRegistry;
+        this.eventBus = eventBus || gameEvents;
+
         this.activePowerUps = new Map();
         this.powerUpTimers = new Map();
         this.spawnedPowerUps = [];
@@ -28,13 +39,13 @@ export default class AdditionalPowerUpSystem {
             type,
             x,
             y,
-            createdAt: 0,
+            createdAt: Date.now(),
             config: powerUpConfig.types[type]
         };
 
         this.spawnedPowerUps.push(powerUp);
 
-        gameEvents.emit(GAME_EVENTS.POWER_UP_SPAWNED, {
+        this.eventBus.emit(GAME_EVENTS.POWER_UP_SPAWNED, {
             type,
             x,
             y
@@ -53,9 +64,11 @@ export default class AdditionalPowerUpSystem {
 
         const result = this.activatePowerUp(powerUp.type, powerUp.config.duration);
 
-        gameEvents.emit(GAME_EVENTS.POWER_UP_COLLECTED, {
+        // PHASE 6: Entity-Registry verwenden
+        const pacman = this.entityRegistry.getEntity('pacman');
+        this.eventBus.emit(GAME_EVENTS.POWER_UP_COLLECTED, {
             type: powerUp.type,
-            player: this.gameModel.pacman
+            player: pacman
         });
 
         return result;
@@ -84,7 +97,7 @@ export default class AdditionalPowerUpSystem {
 
         this.powerUpTimers.set(type, startTime);
 
-        gameEvents.emit(GAME_EVENTS.POWER_UP_ACTIVATED, {
+        this.eventBus.emit(GAME_EVENTS.POWER_UP_ACTIVATED, {
             type,
             duration: actualDuration
         });
@@ -108,14 +121,15 @@ export default class AdditionalPowerUpSystem {
             powerUp.duration / 1000
         );
 
-        gameEvents.emit(GAME_EVENTS.POWER_UP_EXPIRED, {
+        this.eventBus.emit(GAME_EVENTS.POWER_UP_EXPIRED, {
             type,
             durationUsed
         });
     }
 
     applyPowerUpEffect(type) {
-        const pacman = this.gameModel.pacman;
+        // PHASE 6: Entity-Registry verwenden
+        const pacman = this.entityRegistry.getEntity('pacman');
         if (!pacman) {
             return;
         }
@@ -137,7 +151,8 @@ export default class AdditionalPowerUpSystem {
     }
 
     removePowerUpEffect(type) {
-        const pacman = this.gameModel.pacman;
+        // PHASE 6: Entity-Registry verwenden
+        const pacman = this.entityRegistry.getEntity('pacman');
         if (!pacman) {
             return;
         }
@@ -174,19 +189,26 @@ export default class AdditionalPowerUpSystem {
             }
         }
 
-        if (this.gameModel.pacman?.hasDataMagnet) {
+        // PHASE 6: Entity-Registry verwenden
+        const pacman = this.entityRegistry.getEntity('pacman');
+        if (pacman?.hasDataMagnet) {
             this.applyDataMagnetEffect();
         }
     }
 
     applyDataMagnetEffect() {
-        const pacman = this.gameModel.pacman;
+        const pacman = this.entityRegistry.getEntity('pacman');
         if (!pacman) {
             return;
         }
 
         const magnetRadius = powerUpConfig.spawnRadius;
-        const pelletGrid = this.gameModel.pelletGrid;
+
+        // PHASE 6: PelletGrid aus EntityRegistry
+        const pelletGrid = this.entityRegistry.getEntity('pelletGrid');
+        if (!pelletGrid) {
+            return;
+        }
 
         for (let y = 0; y < pelletGrid.length; y++) {
             for (let x = 0; x < pelletGrid[y].length; x++) {
@@ -199,16 +221,13 @@ export default class AdditionalPowerUpSystem {
                 );
 
                 if (distance <= magnetRadius) {
-                    const result = this.gameModel.eatPelletAt(x, y);
-                    if (result) {
-                        this.gameModel.score += 10;
-                        gameEvents.emit(GAME_EVENTS.PELLET_EATEN, {
-                            score: 10,
-                            pelletsRemaining: this.gameModel.pelletsRemaining,
-                            gridX: x,
-                            gridY: y
-                        });
-                    }
+                    // PHASE 6: Event emitten statt direkt eatPelletAt()
+                    // Vorher: this.gameModel.eatPelletAt(x, y);
+                    // Neu: Event emitten (GameModel übernimmt)
+                    this.eventBus.emit(GAME_EVENTS.PELLET_MAGNET_EAT, {
+                        x,
+                        y
+                    });
                 }
             }
         }
@@ -238,7 +257,9 @@ export default class AdditionalPowerUpSystem {
     }
 
     shouldSpawnPowerUp(_pelletsCollected) {
-        if (this.gameModel.isBossBattleActive()) {
+        // PHASE 6: Entity-Registry verwenden
+        const gameState = this.entityRegistry.getEntity('gameState');
+        if (gameState?.isBossBattleActive) {
             return false;
         }
 
@@ -280,14 +301,18 @@ export default class AdditionalPowerUpSystem {
             }
         }
 
+        // PHASE 6: Entity-Registry verwenden
+        const pacman = this.entityRegistry.getEntity('pacman');
         if (
-            this.gameModel.pacman.gridX === x &&
-			this.gameModel.pacman.gridY === y
+            pacman?.gridX === x &&
+            pacman?.gridY === y
         ) {
             return true;
         }
 
-        for (const ghost of this.gameModel.ghosts) {
+        // PHASE 6: Entity-Registry verwenden
+        const ghosts = this.entityRegistry.getEntities('ghost');
+        for (const ghost of ghosts) {
             if (ghost.gridX === x && ghost.gridY === y) {
                 return true;
             }

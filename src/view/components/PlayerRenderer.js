@@ -26,21 +26,28 @@ export class PlayerRenderer {
 
         console.log('[PlayerRenderer.constructor] Created graphics with depth:', this.graphics.depth);
 
-        // Use scene.add.circle() for eye
-        this.eye = scene.add.circle(
-            playerState.x,
-            playerState.y - radius * 0.3,
-            radius * 0.15,
-            0x000000
-        );
-        this.eye.setDepth(101);
+        // Use scene.add.circle() for eye (only if playerState exists)
+        if (playerState && playerState.x !== undefined && playerState.y !== undefined) {
+            this.eye = scene.add.circle(
+                playerState.x,
+                playerState.y - radius * 0.3,
+                radius * 0.15,
+                0x000000
+            );
+            this.eye.setDepth(101);
 
-        this.currentRadius = radius;
-        this.currentColor = cyanColor;
-        this.pulsePhase = 0;
+            this.currentRadius = radius;
+            this.currentColor = cyanColor;
+            this.pulsePhase = 0;
 
-        // Initial draw
-        this.drawPlayer(playerState.x, playerState.y, playerState.direction);
+            // Initial draw
+            this.drawPlayer(playerState.x, playerState.y, playerState.direction);
+        } else {
+            this.eye = null;
+            this.currentRadius = radius;
+            this.currentColor = cyanColor;
+            this.pulsePhase = 0;
+        }
     }
 
     /**
@@ -201,6 +208,8 @@ export class PlayerRenderer {
     destroy() {
         this.graphics.clear();
         this.graphics.destroy();
-        this.eye.destroy();
+        if (this.eye) {
+            this.eye.destroy();
+        }
     }
 }

@@ -12,11 +12,14 @@ const mockFn = () => ({});
 // Create a chainable mock that returns itself for all methods
 const createChainableMock = () => {
     const chainable = {
+        x: 0,
+        y: 0,
         setDepth: () => chainable,
         setVisible: () => chainable,
+        setActive: () => chainable,
         setAlpha: () => chainable,
-        setX: () => chainable,
-        setY: () => chainable,
+        setX: (x) => { chainable.x = x; return chainable; },
+        setY: (y) => { chainable.y = y; return chainable; },
         setOrigin: () => chainable,
         setScale: () => chainable,
         setText: () => chainable,
@@ -24,6 +27,7 @@ const createChainableMock = () => {
         on: () => chainable,
         setFillStyle: () => chainable,
         fillPath: () => chainable,
+        setPosition: (x, y) => { chainable.x = x; chainable.y = y; return chainable; },
         destroy: () => {}
     };
     return chainable;

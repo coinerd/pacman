@@ -246,6 +246,4 @@ export class KeyboardAdapter extends InputAdapter {
 
         super.destroy();
     }
-}
-
-export default KeyboardAdapter;
+};

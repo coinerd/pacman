@@ -12,7 +12,6 @@ export class ScoreBoard {
     create(scene) {
         this.scene = scene;
 
-        const scoreFont = themeConfig.fonts.hud.score;
         const techSmall = themeConfig.fonts.tech.small;
         const colors = themeConfig.colors;
         const circuit = themeConfig.circuit;
@@ -38,9 +37,9 @@ export class ScoreBoard {
         this.panel.setDepth(900);
         this.panel.setScrollFactor(0);
         this.panel.setVisible(false); // Permanently disable panel for visibility
-        
+
         console.log('[ScoreBoard.create] Panel DISABLED for visibility');
-        
+
         console.log('[ScoreBoard.create] Panel created:', {
             x: this.panel.x,
             y: this.panel.y,
@@ -76,11 +75,12 @@ export class ScoreBoard {
             y + panelHeight / 2,
             '0',
             {
-                fontFamily: 'Courier New, monospace', // Hardcoded font
-                fontSize: '32px', // Hardcoded size
-                color: '#00ff00', // Bright green color for visibility test
-                backgroundColor: '#000000', // Black background
-                padding: { x: 5, y: 2 }
+                fontFamily: techSmall.family,
+                fontSize: '22px',
+                fontStyle: techSmall.style,
+                fontWeight: techSmall.weight,
+                letterSpacing: techSmall.letterSpacing,
+                color: '#88ff88'
             }
         );
         this.scoreText.setOrigin(0.5);
@@ -88,7 +88,7 @@ export class ScoreBoard {
         this.scoreText.setScrollFactor(0);
         this.scoreText.setVisible(true);
         this.scoreText.setAlpha(1);
-        
+
         console.log('[ScoreBoard.create] scoreText recreated with hardcoded values:', {
             x: this.scoreText.x,
             y: this.scoreText.y,
@@ -111,7 +111,7 @@ export class ScoreBoard {
 
         const safeScore = Number.isFinite(Number(score)) ? Number(score) : 0;
         this.scoreText.setText(`${safeScore}`);
-        
+
         // Force visibility
         this.scoreText.setVisible(true);
         this.scoreText.setAlpha(1);
@@ -120,7 +120,7 @@ export class ScoreBoard {
         if (this.panel) {
             this.panel.setVisible(false); // Keep panel disabled
         }
-        
+
         console.log('[ScoreBoard.update] Score updated:', {
             text: this.scoreText.text,
             x: this.scoreText.x,

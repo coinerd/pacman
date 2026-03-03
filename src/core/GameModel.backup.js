@@ -26,7 +26,7 @@ import {
     ScoreModule,
     SessionModule
 } from '../model/systems/index.js';
-import AdditionalPowerUpSystem from '../systems/AdditionalPowerUpSystem.js';
+import { AdditionalPowerUpSystem } from '../systems/AdditionalPowerUpSystem.js'
 import BossBattleSystem from '../systems/BossBattleSystem.js';
 import StoryMode from '../systems/StoryMode.js';
 import MazeGenerator from '../utils/MazeGenerator.js';

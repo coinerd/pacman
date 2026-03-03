@@ -9,52 +9,75 @@ import { enemyColors, gameConfig } from '../../config/gameConfig.js';
 export class GhostRenderer {
     /**
 	 * @param {Phaser.Scene} scene - Phaser scene
-	 * @param {EnemyState} enemyState - Enemy model state
+	 * @param {EnemyState|string} enemyState - Enemy model state or ghost type string
 	 */
     constructor(scene, enemyState) {
         this.scene = scene;
-        this.state = enemyState;
+
+        // Handle both full enemyState and simple ghostType string
+        if (typeof enemyState === 'string') {
+            this.state = {
+                ghostType: enemyState,
+                x: 0,
+                y: 0,
+                direction: 0,
+                isFrightened: false,
+                isEaten: false,
+                inHouse: true
+            };
+        } else {
+            this.state = enemyState;
+        }
 
         // Create graphics object for drawing ghost
         this.graphics = scene.add.graphics();
         this.graphics.setDepth(100);
 
         const radius = gameConfig.tileSize * 0.4;
-        const color = enemyColors[enemyState.ghostType.toUpperCase()] || 0xffffff;
+        const color = enemyColors[this.state.ghostType.toUpperCase()] || 0xffffff;
 
-        // Create eyes using scene.add.circle()
-        this.eyeLeft = this.createEye(
-            scene,
-            enemyState.x - radius * 0.3,
-            enemyState.y - radius * 0.2,
-            radius * 0.25
-        );
-        this.eyeRight = this.createEye(
-            scene,
-            enemyState.x + radius * 0.3,
-            enemyState.y - radius * 0.2,
-            radius * 0.25
-        );
+        // Create eyes using scene.add.circle() (only if state has coordinates)
+        if (this.state.x !== undefined && this.state.y !== undefined) {
+            this.eyeLeft = this.createEye(
+                scene,
+                this.state.x - radius * 0.3,
+                this.state.y - radius * 0.2,
+                radius * 0.25
+            );
+            this.eyeRight = this.createEye(
+                scene,
+                this.state.x + radius * 0.3,
+                this.state.y - radius * 0.2,
+                radius * 0.25
+            );
 
-        // Pupils
-        this.pupilLeft = this.createPupil(
-            scene,
-            enemyState.x - radius * 0.3,
-            enemyState.y - radius * 0.2,
-            radius * 0.12
-        );
-        this.pupilRight = this.createPupil(
-            scene,
-            enemyState.x + radius * 0.3,
-            enemyState.y - radius * 0.2,
-            radius * 0.12
-        );
+            // Pupils
+            this.pupilLeft = this.createPupil(
+                scene,
+                this.state.x - radius * 0.3,
+                this.state.y - radius * 0.2,
+                radius * 0.12
+            );
+            this.pupilRight = this.createPupil(
+                scene,
+                this.state.x + radius * 0.3,
+                this.state.y - radius * 0.2,
+                radius * 0.12
+            );
+        } else {
+            this.eyeLeft = null;
+            this.eyeRight = null;
+            this.pupilLeft = null;
+            this.pupilRight = null;
+        }
 
         this.currentRadius = radius;
         this.currentColor = color;
 
-        // Initial draw
-        this.drawGhost(enemyState.x, enemyState.y);
+        // Initial draw (only if coordinates are available)
+        if (this.state.x !== undefined && this.state.y !== undefined) {
+            this.drawGhost(this.state.x, this.state.y);
+        }
     }
 
     /**
@@ -242,9 +265,9 @@ export class GhostRenderer {
     destroy() {
         this.graphics.clear();
         this.graphics.destroy();
-        this.eyeLeft.destroy();
-        this.eyeRight.destroy();
-        this.pupilLeft.destroy();
-        this.pupilRight.destroy();
+        if (this.eyeLeft) this.eyeLeft.destroy();
+        if (this.eyeRight) this.eyeRight.destroy();
+        if (this.pupilLeft) this.pupilLeft.destroy();
+        if (this.pupilRight) this.pupilRight.destroy();
     }
 }

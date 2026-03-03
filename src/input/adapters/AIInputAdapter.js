@@ -291,6 +291,4 @@ export class ScriptedAIAdapter extends InputAdapter {
         this.script = [];
         super.destroy();
     }
-}
-
-export default AIInputAdapter;
+};
