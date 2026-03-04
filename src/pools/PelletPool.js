@@ -35,6 +35,11 @@ export class PelletPool {
         };
         pellet.setPosition(pixel.x, pixel.y);
 
+        // Ensure pellet is at the correct depth (above maze, below entities)
+        if (pellet.setDepth) {
+            pellet.setDepth(5);
+        }
+
         this.active.push(pellet);
 
         const key = `${gridX},${gridY}`;

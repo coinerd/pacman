@@ -48,7 +48,6 @@ export class RenderCoordinator {
      */
     registerRenderer(phase, renderer, priority = 0) {
         if (!this.phaseRenderers.has(phase)) {
-            console.warn(`[RenderCoordinator] Unknown phase: ${phase}`);
             return;
         }
 

@@ -29,10 +29,8 @@ export default class ScoreModule {
     }
 
     applyPelletScore(score) {
-        const previousScore = this.score;
         this.score += this.normalizeScoreValue(score);
         this.pelletsEaten++;
-        console.log('[ScoreModule.applyPelletScore]', { previousScore, added: this.normalizeScoreValue(score), newScore: this.score });
         const isNewHighScore = this.checkHighScore();
         this.emitScoreChanged(isNewHighScore);
     }
@@ -71,7 +69,6 @@ export default class ScoreModule {
      * @param {Object} event
      */
     applyEvent(event) {
-        console.log('[ScoreModule.applyEvent] Event:', event);
         switch (event.type) {
         case 'pellet_eaten':
             this.applyPelletScore(event.score);

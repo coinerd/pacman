@@ -89,7 +89,6 @@ export class MovementEngine {
             Direction.isOpposite(direction, movement.direction)) {
             movement.direction = direction;
             movement.nextDirection = Direction.NONE;
-
             this.frameEvents.push({
                 type: 'direction_changed',
                 entityId,
@@ -218,7 +217,9 @@ export class MovementEngine {
      * @returns {boolean} - True wenn Movement gestartet
      */
     tryStartMovement(entityId, movement) {
-        if (movement.direction === Direction.NONE) {return false;}
+        if (movement.direction === Direction.NONE) {
+            return false;
+        }
 
         const targetX = movement.gridX + movement.direction.x;
         const targetY = movement.gridY + movement.direction.y;

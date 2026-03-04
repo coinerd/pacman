@@ -42,6 +42,9 @@ import StoryMode from '../systems/StoryMode.js';
  * Register all singleton services
  */
 function registerCoreServices(config = {}) {
+    // Clear existing services to ensure fresh instances (important for game restarts)
+    globalContainer.clear();
+
     // Event Bus (Singleton - first service)
     globalContainer.register('eventBus', (container) => new EventBus(), true);
 

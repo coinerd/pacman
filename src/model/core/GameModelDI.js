@@ -9,9 +9,10 @@
  */
 
 import { globalContainer } from '../../core/ServiceContainer.js';
-import { registerCoreServices, registerFeatureSystems } from '../../core/ServiceRegistry.js';
+import { registerFeatureSystems } from '../../core/ServiceRegistry.js';
 import { MovementSystem } from '../../movement/MovementSystem.js';
 import { GAME_EVENTS, gameEvents } from '../../core/EventBus.js';
+import { Direction } from '../../movement/core/Direction.js';
 
 export default class GameModelDI {
     /**
@@ -28,10 +29,8 @@ export default class GameModelDI {
         this.useDI = useDI;
 
         if (useDI) {
-            // Register core services in container
-            registerCoreServices(config);
-
-            // Get services from container
+            // Services are already registered by GameScene
+            // Just get them from container
             this.gameState = globalContainer.get('gameState');
             this.levelSystem = globalContainer.get('levelSystem');
             this.spawningSystem = globalContainer.get('spawningSystem');
@@ -90,6 +89,8 @@ export default class GameModelDI {
 
         // Profiling
         this.gameState.startProfiling();
+
+        // Initialization complete
     }
 
     /**
@@ -169,7 +170,12 @@ export default class GameModelDI {
         this.movementSystem.registerEntity(pacman, { type: 'player', speed: 100 });
 
         for (const ghost of this.entityRegistry.getGhosts()) {
-            this.movementSystem.registerEntity(ghost, { type: 'ghost', speed: 80 });
+            this.movementSystem.registerEntity(ghost, {
+                type: 'ghost',
+                speed: 80,
+                aiType: ghost.ghostType,
+                initialMode: 'SCATTER'
+            });
         }
 
         // PHASE 6: Setup feature system event listeners
@@ -280,13 +286,14 @@ export default class GameModelDI {
         }
 
         // Update Movement
+        const pacman = this.entityRegistry.getPacman();
         const movementEvents = this.movementSystem.update(deltaSeconds, {
-            pacman: this.entityRegistry.getPacman(),
+            player: pacman,
+            pacman: pacman,
             ghosts: this.entityRegistry.getGhosts()
         }) || [];
 
         // Update Entities
-        const pacman = this.entityRegistry.getPacman();
         pacman.update(deltaSeconds, this.spawningSystem.getMaze());
 
         for (const ghost of this.entityRegistry.getGhosts()) {
@@ -416,6 +423,22 @@ export default class GameModelDI {
         this.levelSystem.setLevelConfig(levelConfig);
     }
 
+    getSpeedMultiplier() {
+        return this.levelSystem.getSpeedMultiplier();
+    }
+
+    getFrightenedDuration() {
+        return this.levelSystem.getFrightenedDuration();
+    }
+
+    getGhostSpeedMultiplier() {
+        return this.levelSystem.getGhostSpeedMultiplier();
+    }
+
+    getScoreMultiplier() {
+        return this.levelSystem.getScoreMultiplier();
+    }
+
     startLevel(level) {
         this.level = level;
         const mazeData = this.spawningSystem.generateMazeForLevel(level);
@@ -437,6 +460,8 @@ export default class GameModelDI {
 
     setInputDirection(direction) {
         this.inputDirection = direction;
+        // Immediately update movement system with the new direction
+        this.setDesiredDirection(direction);
     }
 
     setDesiredDirection(direction) {
@@ -444,7 +469,26 @@ export default class GameModelDI {
         const pacman = this.entityRegistry.getPacman();
         if (pacman) {
             pacman.setDirection(direction);
+            // Also update movement system with converted direction
+            const movementDirection = this.convertToMovementDirection(direction);
+            if (movementDirection) {
+                this.movementSystem.setDirection(pacman.id, movementDirection);
+            }
         }
+    }
+
+    /**
+     * Convert gameConfig direction to MovementSystem Direction
+     * @param {Object} direction - gameConfig direction
+     * @returns {Object|null} MovementSystem Direction
+     */
+    convertToMovementDirection(direction) {
+        if (!direction) {return null;}
+        if (direction.x === 0 && direction.y === -1) {return Direction.UP;}
+        if (direction.x === 0 && direction.y === 1) {return Direction.DOWN;}
+        if (direction.x === -1 && direction.y === 0) {return Direction.LEFT;}
+        if (direction.x === 1 && direction.y === 0) {return Direction.RIGHT;}
+        return Direction.NONE;
     }
 
     // === Ghost Management ===
@@ -561,7 +605,10 @@ export default class GameModelDI {
     // === Snapshots & Serialization ===
 
     getSnapshot() {
+        const pelletGrid = this.pelletGrid;
+        const pacmanSnapshot = this.pacman?.getSnapshot();
         const snapshot = {
+            tickCount: this.tickCount,
             level: this.level,
             score: this.score,
             highScore: this.highScore,
@@ -575,8 +622,8 @@ export default class GameModelDI {
             levelComplete: this.levelComplete,
             isDying: this.isDying,
             maze: this.maze,
-            pelletGrid: this.pelletGrid,
-            pacman: this.pacman?.getSnapshot(),
+            pelletGrid: pelletGrid,
+            pacman: pacmanSnapshot,
             ghosts: this.ghosts.map(g => g.getSnapshot()),
             fruit: this.fruit?.getSnapshot(),
             boss: this.bossBattleSystem?.getSnapshot(),

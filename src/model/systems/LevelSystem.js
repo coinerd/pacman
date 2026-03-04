@@ -65,6 +65,16 @@ export class LevelSystem {
     }
 
     /**
+     * Setzt eine benutzerdefinierte Level-Konfiguration
+     * @param {Object} config - Die Level-Konfiguration
+     */
+    setLevelConfig(config) {
+        if (config) {
+            this.levelConfig = { ...this.levelConfig, ...config };
+        }
+    }
+
+    /**
      * Gibt die aktuelle Level-Konfiguration zurück
      * @returns {Object}
      */

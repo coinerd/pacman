@@ -96,7 +96,6 @@ export class EffectOrchestrator {
     play(presetName, x, y, options = {}) {
         const preset = this.presets[presetName];
         if (!preset) {
-            console.warn(`[EffectOrchestrator] Unknown preset: ${presetName}`);
             return null;
         }
 

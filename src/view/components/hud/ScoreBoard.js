@@ -38,19 +38,6 @@ export class ScoreBoard {
         this.panel.setScrollFactor(0);
         this.panel.setVisible(false); // Permanently disable panel for visibility
 
-        console.log('[ScoreBoard.create] Panel DISABLED for visibility');
-
-        console.log('[ScoreBoard.create] Panel created:', {
-            x: this.panel.x,
-            y: this.panel.y,
-            width: panelWidth,
-            height: panelHeight,
-            alpha: this.panel.alpha,
-            depth: this.panel.depth,
-            zIndex: this.panel.z,
-            visible: this.panel.visible
-        });
-
         this.corners = this.createCircuitCorners(scene, x, y, panelWidth, panelHeight, colors, circuit);
 
         this.scoreLabel = scene.add.text(
@@ -88,24 +75,11 @@ export class ScoreBoard {
         this.scoreText.setScrollFactor(0);
         this.scoreText.setVisible(true);
         this.scoreText.setAlpha(1);
-
-        console.log('[ScoreBoard.create] scoreText recreated with hardcoded values:', {
-            x: this.scoreText.x,
-            y: this.scoreText.y,
-            text: this.scoreText.text,
-            visible: this.scoreText.visible,
-            alpha: this.scoreText.alpha,
-            depth: this.scoreText.depth,
-            fontFamily: this.scoreText.style.fontFamily,
-            fontSize: this.scoreText.style.fontSize,
-            color: this.scoreText.style.color
-        });
     }
 
+
     update(score) {
-        console.log('[ScoreBoard.update] Called with score:', score, 'scoreText exists:', !!this.scoreText);
         if (!this.scoreText) {
-            console.warn('[ScoreBoard.update] scoreText is null, cannot update');
             return;
         }
 
@@ -120,16 +94,8 @@ export class ScoreBoard {
         if (this.panel) {
             this.panel.setVisible(false); // Keep panel disabled
         }
-
-        console.log('[ScoreBoard.update] Score updated:', {
-            text: this.scoreText.text,
-            x: this.scoreText.x,
-            y: this.scoreText.y,
-            visible: this.scoreText.visible,
-            alpha: this.scoreText.alpha,
-            color: this.scoreText.style.color
-        });
     }
+
 
     destroy() {
         if (this.scoreText) { this.scoreText.destroy(); }

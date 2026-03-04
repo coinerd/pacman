@@ -39,8 +39,6 @@ export class HighScoreWidget {
         this.panel.setScrollFactor(0);
         this.panel.setVisible(false); // Disable panel for visibility
 
-        console.log('[HighScoreWidget.create] Panel DISABLED for visibility');
-
         this.corners = this.createCircuitCorners(scene, x, y, panelWidth, panelHeight, colors, circuit);
 
         this.highScoreLabel = scene.add.text(
@@ -78,17 +76,8 @@ export class HighScoreWidget {
         this.highScoreText.setScrollFactor(0);
         this.highScoreText.setVisible(true);
         this.highScoreText.setAlpha(1);
-
-        console.log('[HighScoreWidget.create] highScoreText created with hardcoded values:', {
-            x: this.highScoreText.x,
-            y: this.highScoreText.y,
-            text: this.highScoreText.text,
-            visible: this.highScoreText.visible,
-            alpha: this.highScoreText.alpha,
-            depth: this.highScoreText.depth,
-            color: this.highScoreText.style.color
-        });
     }
+
 
     update(highScore) {
         if (!this.highScoreText) {

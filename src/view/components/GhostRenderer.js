@@ -201,10 +201,59 @@ export class GhostRenderer {
     }
 
     /**
+	 * Update ghost renderer with new state data
+	 * @param {Object} data - Ghost state data
+	 */
+    update(data) {
+        if (!data) {
+            return;
+        }
+
+        // Update internal state
+        this.state = { ...this.state, ...data };
+
+        // Create eyes if not exists and we have valid position
+        const radius = gameConfig.tileSize * 0.4;
+        if (!this.eyeLeft && data.x !== undefined && data.y !== undefined) {
+            this.eyeLeft = this.createEye(
+                this.scene,
+                data.x - radius * 0.3,
+                data.y - radius * 0.2,
+                radius * 0.25
+            );
+            this.eyeRight = this.createEye(
+                this.scene,
+                data.x + radius * 0.3,
+                data.y - radius * 0.2,
+                radius * 0.25
+            );
+            this.pupilLeft = this.createPupil(
+                this.scene,
+                data.x - radius * 0.3,
+                data.y - radius * 0.2,
+                radius * 0.12
+            );
+            this.pupilRight = this.createPupil(
+                this.scene,
+                data.x + radius * 0.3,
+                data.y - radius * 0.2,
+                radius * 0.12
+            );
+        }
+
+        // Sync visuals
+        this.sync();
+    }
+
+    /**
 	 * Sync visual to model state
      * Model entity.x/y is already interpolated by TileCenterMovementStrategy
 	 */
     sync() {
+        if (!this.state || !this.state.x || !this.state.y) {
+            return;
+        }
+
         // Handle both EnemyState instances and snapshot objects
         const visualState = this.state.visual || (typeof this.state.getVisualState === 'function' ? this.state.getVisualState() : { color: this.state.color, opacity: 1, visible: true });
         const radius = gameConfig.tileSize * 0.4;
@@ -214,42 +263,45 @@ export class GhostRenderer {
         const x = this.state.x;
         const y = this.state.y;
 
-        // Debug logging
-        if (!this._logged) {
-            console.log(`[GhostRenderer] ${this.state.ghostType} initial position:`, x, y);
-            this._logged = true;
-        }
-
-        // Debug logging every 60 frames
-        this._frameCount = (this._frameCount || 0) + 1;
-        if (this._frameCount % 60 === 0) {
-            console.log(`[GhostRenderer] ${this.state.ghostType} frame ${this._frameCount}: (${x.toFixed(1)}, ${y.toFixed(1)})`);
-        }
-
         // Update graphics
         this.drawGhost(x, y);
 
-        // Update eyes
+        // Update eyes if they exist
         const isFrightened = this.state.isFrightened ?? false;
         const isEaten = this.state.isEaten ?? false;
 
-        this.eyeLeft.x = x - radius * 0.3;
-        this.eyeLeft.y = y - radius * 0.2;
-        this.eyeRight.x = x + radius * 0.3;
-        this.eyeRight.y = y - radius * 0.2;
-
-        this.pupilLeft.x = x - radius * 0.3;
-        this.pupilLeft.y = y - radius * 0.2;
-        this.pupilRight.x = x + radius * 0.3;
-        this.pupilRight.y = y - radius * 0.2;
+        if (this.eyeLeft) {
+            this.eyeLeft.x = x - radius * 0.3;
+            this.eyeLeft.y = y - radius * 0.2;
+        }
+        if (this.eyeRight) {
+            this.eyeRight.x = x + radius * 0.3;
+            this.eyeRight.y = y - radius * 0.2;
+        }
+        if (this.pupilLeft) {
+            this.pupilLeft.x = x - radius * 0.3;
+            this.pupilLeft.y = y - radius * 0.2;
+        }
+        if (this.pupilRight) {
+            this.pupilRight.x = x + radius * 0.3;
+            this.pupilRight.y = y - radius * 0.2;
+        }
 
         const visible = visualState.visible ?? true;
 
         this.graphics.setVisible(visible);
-        this.eyeLeft.setVisible(visible && !isFrightened && !isEaten);
-        this.eyeRight.setVisible(visible && !isFrightened && !isEaten);
-        this.pupilLeft.setVisible(visible && !isFrightened && !isEaten);
-        this.pupilRight.setVisible(visible && !isFrightened && !isEaten);
+        if (this.eyeLeft) {
+            this.eyeLeft.setVisible(visible && !isFrightened && !isEaten);
+        }
+        if (this.eyeRight) {
+            this.eyeRight.setVisible(visible && !isFrightened && !isEaten);
+        }
+        if (this.pupilLeft) {
+            this.pupilLeft.setVisible(visible && !isFrightened && !isEaten);
+        }
+        if (this.pupilRight) {
+            this.pupilRight.setVisible(visible && !isFrightened && !isEaten);
+        }
     }
 
     /**

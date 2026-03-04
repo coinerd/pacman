@@ -62,11 +62,10 @@ export class MazeRenderer {
      */
     createMaze(maze) {
         if (!maze) {
-            console.warn('[MazeRenderer] createMaze: No maze data available');
             return;
         }
 
-        console.log('[MazeRenderer] Creating maze with size:', maze.length, 'x', maze[0]?.length);
+        // Maze created silently
 
         const graphics = this.scene.make.graphics({ x: 0, y: 0, add: false });
 

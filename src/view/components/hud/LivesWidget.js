@@ -35,8 +35,6 @@ export class LivesWidget {
         this.panel.setScrollFactor(0);
         this.panel.setVisible(false); // Disable panel for visibility
 
-        console.log('[LivesWidget.create] Panel DISABLED for visibility');
-
         this.corners = this.createCircuitCorners(scene, x, y, panelWidth, panelHeight, colors, circuit);
 
         this.livesLabel = scene.add.text(
@@ -74,33 +72,8 @@ export class LivesWidget {
         this.livesText.setScrollFactor(0);
         this.livesText.setVisible(true);
         this.livesText.setAlpha(1);
-
-        console.log('[LivesWidget.create] livesText created with hardcoded values:', {
-            x: this.livesText.x,
-            y: this.livesText.y,
-            text: this.livesText.text,
-            visible: this.livesText.visible,
-            alpha: this.livesText.alpha,
-            depth: this.livesText.depth,
-            color: this.livesText.style.color
-        });
-
-        console.log('[LivesWidget.create] livesText rendering check:', {
-            x: this.livesText.x,
-            y: this.livesText.y,
-            visible: this.livesText.visible,
-            alpha: this.livesText.alpha,
-            depth: this.livesText.depth,
-            worldAlpha: this.livesText.worldAlpha,
-            worldVisible: this.livesText.worldVisible,
-            worldX: this.livesText.worldPosition?.x,
-            worldY: this.livesText.worldPosition?.y,
-            fontSize: this.livesText.style.fontSize,
-            fontFamily: this.livesText.style.fontFamily,
-            color: this.livesText.style.color,
-            displayList: this.livesText.displayList
-        });
     }
+
 
     update(lives) {
         if (!this.livesText) {

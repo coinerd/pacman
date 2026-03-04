@@ -35,8 +35,6 @@ export class LevelWidget {
         this.panel.setScrollFactor(0);
         this.panel.setVisible(false); // Disable panel for visibility
 
-        console.log('[LevelWidget.create] Panel DISABLED for visibility');
-
         this.corners = this.createCircuitCorners(scene, x, y, panelWidth, panelHeight, colors, circuit);
 
         this.levelLabel = scene.add.text(
@@ -74,17 +72,8 @@ export class LevelWidget {
         this.levelText.setScrollFactor(0);
         this.levelText.setVisible(true);
         this.levelText.setAlpha(1);
-
-        console.log('[LevelWidget.create] levelText created with hardcoded values:', {
-            x: this.levelText.x,
-            y: this.levelText.y,
-            text: this.levelText.text,
-            visible: this.levelText.visible,
-            alpha: this.levelText.alpha,
-            depth: this.levelText.depth,
-            color: this.levelText.style.color
-        });
     }
+
 
     update(level) {
         if (!this.levelText) {

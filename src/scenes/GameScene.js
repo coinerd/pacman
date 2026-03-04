@@ -43,24 +43,25 @@ export default class GameScene extends Phaser.Scene {
     init(data) {
         const levelData = createMazeData();
 
-        // Phase 4: Registriere DI-Services
+        // Phase 4: Registriere DI-Services mit vollständigen Daten
         registerCoreServices({
             level: data.level || 1,
             lives: data.lives || 3,
             score: data.score || 0,
             highScore: data.highScore || 0,
-            deathPauseDuration: animationConfig.deathPauseDuration
+            deathPauseDuration: animationConfig.deathPauseDuration,
+            maze: levelData.maze,
+            pelletGrid: levelData.pelletGrid,
+            spawnPoints: levelData.spawnPoints
         });
 
-        // Phase 4: Verwende GameModelDI mit DI
+        // Phase 4: Verwende GameModelDI mit DI (keine Duplizierung nötig)
         this.gameModel = new GameModelDI({
             score: data.score || 0,
             lives: data.lives ?? 3,
             level: data.level || 1,
             highScore: data.highScore || 0,
-            deathPauseDuration: animationConfig.deathPauseDuration,
-            maze: levelData.maze,
-            pelletGrid: levelData.pelletGrid
+            deathPauseDuration: animationConfig.deathPauseDuration
         }, true); // DI aktiviert
 
         this.storageManager = new StorageManager();
@@ -152,7 +153,6 @@ export default class GameScene extends Phaser.Scene {
      * Start's game (unpause and begin game loop)
      */
     start() {
-        console.log('[GameScene.start] Starting game...');
         this.gameModel.setPaused(false);
         this.gameModel.isPaused = false;
     }
@@ -219,14 +219,6 @@ export default class GameScene extends Phaser.Scene {
         const snapshot = this.gameModel.getSnapshot();
         const hudSnapshot = this.playerScoreFacade.toHudSnapshot();
 
-        // Debug logging for UI updates
-        if (!this._uiLogFrames) {
-            this._uiLogFrames = 0;
-        }
-        this._uiLogFrames++;
-        if (this._uiLogFrames % 60 === 0) {
-            console.log(`[GameScene.update] Frame ${this._uiLogFrames}: Score=${hudSnapshot.score}, HighScore=${hudSnapshot.highScore}, Lives=${hudSnapshot.lives}, Level=${hudSnapshot.level}`);
-        }
 
         this.gameView.updateFromSnapshot(snapshot);
         this.uiController.updateFromSnapshot(hudSnapshot);
@@ -300,7 +292,6 @@ export default class GameScene extends Phaser.Scene {
         gameEvents.on('GAME_WIN', (eventData) => {
             // Handle both formats
             const data = eventData?.data || eventData;
-            console.log('[GameScene] GAME_WIN event received:', data);
             this.scene.start('WinScene', data);
         });
 
@@ -308,7 +299,6 @@ export default class GameScene extends Phaser.Scene {
             // Handle both formats: { score, highScore } from Model
             // and { sceneKey, data: { score, highScore }, timestamp } from View
             const data = eventData?.data || eventData;
-            console.log('[GameScene] GAME_OVER event received:', data);
             this.scene.start('GameOverScene', data);
         });
 

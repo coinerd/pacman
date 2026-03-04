@@ -172,10 +172,8 @@ export default class ModelDrivenGameViewDI {
     createMaze(mazeOverride = null) {
         const maze = mazeOverride || (this.lastSnapshot ? this.lastSnapshot.maze : null);
         if (!maze) {
-            console.warn('[ModelDrivenGameViewDI] createMaze: No maze data available');
             return;
         }
-        console.log('[ModelDrivenGameViewDI] Creating maze with size:', maze.length, 'x', maze[0]?.length);
 
         const graphics = this.scene.make.graphics({ x: 0, y: 0, add: false });
 
@@ -246,7 +244,6 @@ export default class ModelDrivenGameViewDI {
     createPellets(pelletOverride = null) {
         const pelletGrid = pelletOverride || (this.lastSnapshot ? this.lastSnapshot.pelletGrid : null);
         if (!pelletGrid) {
-            console.warn('[ModelDrivenGameViewDI] createPellets: No pellet grid available');
             return;
         }
 
@@ -326,7 +323,6 @@ export default class ModelDrivenGameViewDI {
 	 */
     updateFromSnapshot(snapshot) {
         if (!snapshot) {
-            console.warn('[ModelDrivenGameViewDI] updateFromSnapshot: No snapshot provided');
             return;
         }
 
@@ -343,26 +339,24 @@ export default class ModelDrivenGameViewDI {
             this.pelletRenderer.updatePelletVisuals(snapshot.pelletGrid);
         }
 
-        // Update player
+        // Update player - use interpolated pixel position from MovementSystem
         if (snapshot.pacman && this.playerRenderer && snapshot.pacman.x && snapshot.pacman.y) {
-            const pixelPos = gridToPixel(snapshot.pacman.gridX, snapshot.pacman.gridY);
             this.playerRenderer.update({
-                x: pixelPos.x,
-                y: pixelPos.y,
+                x: snapshot.pacman.x,
+                y: snapshot.pacman.y,
                 direction: snapshot.pacman.direction,
                 isMoving: snapshot.pacman.isMoving
             });
         }
 
-        // Update ghosts
+        // Update ghosts - use interpolated pixel position from MovementSystem
         if (snapshot.ghosts) {
             for (const ghost of snapshot.ghosts) {
                 const renderer = this.ghostRenderers.get(ghost.type);
                 if (renderer && ghost.x && ghost.y) {
-                    const pixelPos = gridToPixel(ghost.gridX, ghost.gridY);
                     renderer.update({
-                        x: pixelPos.x,
-                        y: pixelPos.y,
+                        x: ghost.x,
+                        y: ghost.y,
                         direction: ghost.direction,
                         isFrightened: ghost.isFrightened,
                         isEaten: ghost.isEaten,
@@ -372,12 +366,11 @@ export default class ModelDrivenGameViewDI {
             }
         }
 
-        // Update fruit
+        // Update fruit - use interpolated pixel position
         if (snapshot.fruit && this.fruitRenderer && snapshot.fruit.x && snapshot.fruit.y) {
-            const pixelPos = gridToPixel(snapshot.fruit.gridX, snapshot.fruit.gridY);
             this.fruitRenderer.update({
-                x: pixelPos.x,
-                y: pixelPos.y,
+                x: snapshot.fruit.x,
+                y: snapshot.fruit.y,
                 type: snapshot.fruit.type,
                 visible: snapshot.fruit.visible
             });

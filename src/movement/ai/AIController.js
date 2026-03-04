@@ -133,6 +133,8 @@ export class AIController {
 
         const decisions = [];
 
+
+
         for (const [entityId, aiConfig] of this.aiConfigs) {
             // Hole Entity-State aus dem Kontext
             const entity = context.getEntityState(entityId);
@@ -266,6 +268,8 @@ export class AIController {
      */
     calculateTargetForState(aiConfig, entity, state, context) {
         const { player, allEntities } = context;
+
+
 
         switch (state) {
         case 'eaten':

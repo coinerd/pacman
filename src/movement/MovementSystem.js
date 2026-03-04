@@ -100,6 +100,7 @@ export class MovementSystem {
         }
 
         const entityId = entity.id || `entity_${Date.now()}_${Math.random()}`;
+        // Register entity in movement system
 
         // Erstelle Movement-Component
         const movementComponent = MovementComponent.fromEntity(entity, {
@@ -108,6 +109,7 @@ export class MovementSystem {
 
         // Registriere bei Engine
         this.engine.registerEntity(entityId, movementComponent);
+
 
         // Registriere bei AI wenn AI-Typ angegeben
         if (options.aiType) {
@@ -149,6 +151,8 @@ export class MovementSystem {
         }
 
         this.stats.totalUpdates++;
+
+
 
         // 1. AI-Update (entscheidet Richtungen)
         const aiDecisions = this.aiController.update(deltaSeconds, {
@@ -308,8 +312,7 @@ export class MovementSystem {
             const original = registryEntry.originalEntity;
 
             if (movement && original) {
-                // Debug: Log state before sync
-                // console.log(`[syncToEntities] ${entityId}: gridX=${movement.gridX}, targetGridX=${movement.targetGridX}, moveProgress=${movement.moveProgress}, isMoving=${movement.isMoving}`);
+                // Sync entity position with movement state
 
                 original.gridX = movement.gridX;
                 original.gridY = movement.gridY;

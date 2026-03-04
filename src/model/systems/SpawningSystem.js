@@ -23,8 +23,6 @@ export class SpawningSystem {
      * @returns {Object} { maze, pelletGrid, spawnPoints }
      */
     generateMazeForLevel(level) {
-        console.log('[SpawningSystem] Generating maze for level:', level);
-
         const mazeGenerator = new MazeGenerator({
             width: 28,
             height: 31,

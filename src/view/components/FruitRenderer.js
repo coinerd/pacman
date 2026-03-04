@@ -33,9 +33,29 @@ export class FruitRenderer {
     }
 
     /**
+	 * Update fruit renderer with new state data
+	 * @param {Object} data - Fruit state data
+	 */
+    update(data) {
+        if (!data) {
+            return;
+        }
+
+        // Update internal state
+        this.state = { ...this.state, ...data };
+
+        // Sync visuals
+        this.sync();
+    }
+
+    /**
      * Sync visual to model state
      */
     sync() {
+        if (!this.state) {
+            return;
+        }
+
         // Handle both FruitState instances and snapshot objects
         const visualState = this.state.visual || (typeof this.state.getVisualState === 'function' ? this.state.getVisualState() : { active: this.state.active ?? false, bobOffset: 0 });
 

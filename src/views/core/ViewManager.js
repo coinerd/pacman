@@ -40,7 +40,6 @@ export class ViewManager {
             this.useSnapshotMode = true;
         } else {
             // Legacy signature: { scene, gameModel, storageManager }
-            console.warn('[DEPRECATED] ViewManager constructor with { scene, gameModel, storageManager } is deprecated. Use ViewContext instead.');
             this.scene = contextOrConfig.scene;
             this.gameModel = contextOrConfig.gameModel;
             this.storageManager = contextOrConfig.storageManager;
@@ -184,7 +183,8 @@ export class ViewManager {
      */
     bindModelEvents() {
         this.unsubscribers.push(
-            this.eventBus.on(VIEW_EVENTS.PELLET_EATEN, (data) => this.onPelletEaten(data)),
+            this.eventBus.on(GAME_EVENTS.PELLET_EATEN, (data) => this.onPelletEaten(data)),
+            this.eventBus.on(GAME_EVENTS.POWER_PELLET_EATEN, (data) => this.onPelletEaten(data)),
             this.eventBus.on(VIEW_EVENTS.GHOST_EATEN, (data) => this.onGhostEaten(data)),
             this.eventBus.on(VIEW_EVENTS.PACMAN_DEATH_STARTED, () => this.startDeathAnimation()),
             this.eventBus.on(VIEW_EVENTS.FRUIT_EATEN, (data) => this.onFruitEaten(data)),
@@ -231,7 +231,8 @@ export class ViewManager {
     // === Event Handlers ===
 
     onPelletEaten(data) {
-        if (data?.type === 'power_pellet') {
+        const type = data?.isPowerPellet ? 'power_pellet' : 'pellet';
+        if (data?.isPowerPellet) {
             this.soundManager.playPowerPellet?.();
             this.effectOrchestrator.play('powerPelletEaten',
                 data.x || data.gridX * 16 + 8,
@@ -241,7 +242,7 @@ export class ViewManager {
             this.soundManager.playWakaWaka?.();
         }
 
-        this.pelletRenderer.removePelletAt(data.gridX, data.gridY, data.type);
+        this.pelletRenderer.removePelletAt(data.gridX, data.gridY, type);
     }
 
     onGhostEaten(data) {
@@ -314,7 +315,6 @@ export class ViewManager {
      */
     updateFromSnapshot(snapshot) {
         if (!snapshot) {
-            console.warn('[ViewManager] updateFromSnapshot: No snapshot provided');
             return;
         }
 
@@ -333,7 +333,8 @@ export class ViewManager {
         }
 
         // Check if maze changed
-        if (!this.mazeEquals(this.lastMazeSnapshot?.maze, snapshot.maze)) {
+        const mazeChanged = !this.mazeEquals(this.lastMazeSnapshot?.maze, snapshot.maze);
+        if (mazeChanged) {
             this.mazeRenderer.createMaze(snapshot.maze);
             this.pelletRenderer.clearAllPellets();
             this.pelletRenderer.createPellets(snapshot.pelletGrid);
@@ -413,6 +414,21 @@ export class ViewManager {
         if (s1.tickCount !== s2.tickCount) {return false;}
         if (s1.score !== s2.score) {return false;}
         if (s1.lives !== s2.lives) {return false;}
+        // Check if pacman position changed
+        if (s1.pacman?.x !== s2.pacman?.x || s1.pacman?.y !== s2.pacman?.y) {
+            return false;
+        }
+        // Check if ghost positions changed
+        if (s1.ghosts && s2.ghosts) {
+            if (s1.ghosts.length !== s2.ghosts.length) {return false;}
+            for (let i = 0; i < s1.ghosts.length; i++) {
+                const g1 = s1.ghosts[i];
+                const g2 = s2.ghosts[i];
+                if (g1.x !== g2.x || g1.y !== g2.y || g1.gridX !== g2.gridX || g1.gridY !== g2.gridY) {
+                    return false;
+                }
+            }
+        }
         return this.mazeEquals(s1.maze, s2.maze) &&
                this.pelletGridEquals(s1.pelletGrid, s2.pelletGrid);
     }

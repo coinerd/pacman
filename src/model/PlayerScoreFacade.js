@@ -30,9 +30,6 @@ export class PlayerScoreFacade {
      */
     getScoreState() {
         const score = this.gameModel?.score ?? 0;
-        const scoreModuleScore = this.gameModel?.scoreModule?.score ?? 0;
-        console.log('[PlayerScoreFacade.getScoreState] gameModel.score:', this.gameModel?.score);
-        console.log('[PlayerScoreFacade.getScoreState] gameModel.scoreModule.score:', scoreModuleScore);
         return Object.freeze({
             score: score,
             highScore: this.gameModel?.highScore ?? 0,
@@ -48,10 +45,6 @@ export class PlayerScoreFacade {
     toHudSnapshot() {
         const scoreState = this.getScoreState();
         const playerState = this.getPlayerState();
-
-        console.log('[PlayerScoreFacade.toHudSnapshot] scoreState:', scoreState);
-        console.log('[PlayerScoreFacade.toHudSnapshot] playerState:', playerState);
-        console.log('[PlayerScoreFacade.toHudSnapshot] gameModel.score:', this.gameModel?.score);
 
         return Object.freeze({
             score: scoreState.score,

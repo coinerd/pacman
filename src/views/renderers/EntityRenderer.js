@@ -58,10 +58,6 @@ export class EntityRenderer {
     sync() {
         this._frameCount++;
 
-        if (this.debug && this._frameCount % 60 === 0) {
-            console.log(`[EntityRenderer] sync() called - frame ${this._frameCount}`);
-        }
-
         // Update visibility
         if (this.graphics) {
             const visible = this.getVisualState().visible ?? this.options.visible;

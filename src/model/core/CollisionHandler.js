@@ -6,6 +6,7 @@
 
 import { PELLET_TYPES } from '../../utils/MazeLayout.js';
 import { gameConfig } from '../../config/gameConfig.js';
+import { GAME_EVENTS } from '../../core/EventBus.js';
 
 export class CollisionHandler {
     /**
@@ -78,8 +79,10 @@ export class CollisionHandler {
             return null;
         }
 
-        const gridX = Math.round(pacman.x / gameConfig.tileSize);
-        const gridY = Math.round(pacman.y / gameConfig.tileSize);
+        // Berücksichtige den Offset, da Pellets in der Mitte des Tiles platziert werden
+        // Pellet-Position: gridX * tileSize + tileSize/2
+        const gridX = Math.floor(pacman.x / gameConfig.tileSize);
+        const gridY = Math.floor(pacman.y / gameConfig.tileSize);
 
         // Cache-Check: gleiche Position wie letztes Frame?
         if (gridX === this.lastPelletGrid.x && gridY === this.lastPelletGrid.y) {
@@ -103,20 +106,12 @@ export class CollisionHandler {
             return null;
         }
 
-        // Distanz-Check: muss nah genug am Tile-Zentrum sein
-        const pelletX = gridX * gameConfig.tileSize + gameConfig.tileSize / 2;
-        const pelletY = gridY * gameConfig.tileSize + gameConfig.tileSize / 2;
-        const dx = pacman.x - pelletX;
-        const dy = pacman.y - pelletY;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-
-        if (distance > gameConfig.tileSize * 0.5) {
-            return null;
-        }
+        // Kein Distanz-Check mehr - Pacman frisst Pellet wenn er im gleichen Grid-Tile ist
+        // Dies ist das Standard-Verhalten in Pacman
 
         // Ergebnis-Ermittlung
         let result;
-        if (pelletType === PELLET_TYPES.POWER) {
+        if (pelletType === PELLET_TYPES.POWER_PELLET) {
             result = this.eatPowerPelletAt(gridX, gridY, gameState);
         } else {
             result = this.eatPelletAt(gridX, gridY, gameState);
@@ -128,7 +123,7 @@ export class CollisionHandler {
 
         // Event zurückgeben
         return {
-            type: result.isPowerPellet ? 'powerPelletEaten' : 'pelletEaten',
+            type: result.isPowerPellet ? GAME_EVENTS.POWER_PELLET_EATEN : GAME_EVENTS.PELLET_EATEN,
             gridX,
             gridY,
             score: result.score,
@@ -143,8 +138,12 @@ export class CollisionHandler {
         gameState.pelletGrid[gridY][gridX] = PELLET_TYPES.NONE;
         gameState.pelletsRemaining--;
 
-        // Callback aufrufen
-        this.callbacks.onPelletEaten({ gridX, gridY });
+        // Callback aufrufen (unterstützt sowohl this.callbacks als auch direkte Property)
+        if (this.onPelletEaten) {
+            this.onPelletEaten({ gridX, gridY });
+        } else if (this.callbacks?.onPelletEaten) {
+            this.callbacks.onPelletEaten({ gridX, gridY });
+        }
 
         // Level-Complete prüfen
         const levelComplete = gameState.pelletsRemaining === 0;
@@ -162,8 +161,12 @@ export class CollisionHandler {
         gameState.pelletGrid[gridY][gridX] = PELLET_TYPES.NONE;
         gameState.pelletsRemaining--;
 
-        // Callback aufrufen
-        this.callbacks.onPowerPelletEaten({ gridX, gridY });
+        // Callback aufrufen (unterstützt sowohl this.callbacks als auch direkte Property)
+        if (this.onPowerPelletEaten) {
+            this.onPowerPelletEaten({ gridX, gridY });
+        } else if (this.callbacks?.onPowerPelletEaten) {
+            this.callbacks.onPowerPelletEaten({ gridX, gridY });
+        }
 
         // Level-Complete prüfen
         const levelComplete = gameState.pelletsRemaining === 0;
@@ -204,16 +207,24 @@ export class CollisionHandler {
 
     handleGhostCollision(ghost) {
         if (ghost.isFrightened) {
-            // Ghost essen
-            this.callbacks.onGhostEaten({ ghostType: ghost.ghostType });
+            // Ghost essen (unterstützt sowohl this.callbacks als auch direkte Property)
+            if (this.onGhostEaten) {
+                this.onGhostEaten({ ghostType: ghost.ghostType });
+            } else if (this.callbacks?.onGhostEaten) {
+                this.callbacks.onGhostEaten({ ghostType: ghost.ghostType });
+            }
             return {
                 type: 'ghostEaten',
                 ghostType: ghost.ghostType,
                 score: this.getGhostScore(ghost)
             };
         } else {
-            // Pacman stirbt
-            this.callbacks.onPacmanDied({ ghostType: ghost.ghostType });
+            // Pacman stirbt (unterstützt sowohl this.callbacks als auch direkte Property)
+            if (this.onPacmanDied) {
+                this.onPacmanDied({ ghostType: ghost.ghostType });
+            } else if (this.callbacks?.onPacmanDied) {
+                this.callbacks.onPacmanDied({ ghostType: ghost.ghostType });
+            }
             return {
                 type: 'pacmanDied',
                 ghostType: ghost.ghostType
@@ -238,7 +249,12 @@ export class CollisionHandler {
         const distance = Math.sqrt(dx * dx + dy * dy);
 
         if (distance <= gameConfig.tileSize * 0.5) {
-            this.callbacks.onFruitEaten({ fruitType: fruit.fruitType });
+            // Callback aufrufen (unterstützt sowohl this.callbacks als auch direkte Property)
+            if (this.onFruitEaten) {
+                this.onFruitEaten({ fruitType: fruit.fruitType });
+            } else if (this.callbacks?.onFruitEaten) {
+                this.callbacks.onFruitEaten({ fruitType: fruit.fruitType });
+            }
             return {
                 type: 'fruitEaten',
                 fruitType: fruit.fruitType,

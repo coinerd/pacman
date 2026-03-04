@@ -91,7 +91,18 @@ export function createMazeData() {
         pelletGrid.push(pelletRow);
     }
 
-    return { maze, pelletGrid };
+    // Standard Spawn-Punkte
+    const spawnPoints = {
+        player: { x: 13, y: 27 },
+        ghosts: {
+            alpha: { x: 1, y: 1 },
+            beta: { x: 26, y: 1 },
+            gamma: { x: 1, y: 26 },
+            delta: { x: 26, y: 26 }
+        }
+    };
+
+    return { maze, pelletGrid, spawnPoints };
 }
 
 export function getTileType(maze, gridX, gridY) {

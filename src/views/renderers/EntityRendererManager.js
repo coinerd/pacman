@@ -24,7 +24,6 @@ export class EntityRendererManager {
      */
     createRenderersFromSnapshot(snapshot) {
         if (!snapshot.pacman || !snapshot.ghosts || !snapshot.fruit) {
-            console.warn('[EntityRendererManager] Cannot create renderers from snapshot - missing data');
             return false;
         }
 
@@ -54,7 +53,6 @@ export class EntityRendererManager {
         const fruitData = gameModel?.fruit;
 
         if (!pacmanData || !ghostsData || !fruitData) {
-            console.warn('[EntityRendererManager] Cannot create renderers from model - missing data');
             return false;
         }
 
@@ -78,19 +76,17 @@ export class EntityRendererManager {
      * @param {Object} snapshot - Game snapshot with entity data
      */
     updateFromSnapshot(snapshot) {
-        // Update player renderer
+        // Update player renderer using update() method
         if (this.playerRenderer && snapshot.pacman) {
-            this.playerRenderer.state = snapshot.pacman;
-            this.playerRenderer.sync();
+            this.playerRenderer.update(snapshot.pacman);
         }
 
-        // Update ghost renderers
+        // Update ghost renderers using update() method
         if (snapshot.ghosts) {
             for (const ghostData of snapshot.ghosts) {
                 const ghostRenderer = this.ghostRenderers.get(ghostData.ghostType);
                 if (ghostRenderer) {
-                    ghostRenderer.state = ghostData;
-                    ghostRenderer.sync();
+                    ghostRenderer.update(ghostData);
                 } else {
                     // Create new ghost renderer if needed
                     const newRenderer = new GhostRenderer(this.scene, ghostData);
@@ -99,10 +95,9 @@ export class EntityRendererManager {
             }
         }
 
-        // Update fruit renderer
+        // Update fruit renderer using update() method
         if (this.fruitRenderer && snapshot.fruit) {
-            this.fruitRenderer.state = snapshot.fruit;
-            this.fruitRenderer.sync();
+            this.fruitRenderer.update(snapshot.fruit);
         }
     }
 

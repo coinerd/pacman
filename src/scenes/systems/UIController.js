@@ -50,15 +50,12 @@ export class UIController {
         const fallbackScoreState = this.playerScoreFacade?.getScoreState?.() || {};
         const fallbackPlayerState = this.playerScoreFacade?.getPlayerState?.() || {};
 
-        console.log('[UIController.update] fallbackScoreState:', fallbackScoreState);
-        console.log('[UIController.update] snapshot:', this.snapshot);
 
         const score = this.getHudValue('score', fallbackScoreState.score ?? 0);
         const highScore = this.getHudValue('highScore', fallbackScoreState.highScore ?? 0);
         const lives = this.getHudValue('lives', fallbackPlayerState.lives ?? 3);
         const level = this.getHudValue('level', fallbackPlayerState.level ?? 1);
 
-        console.log('[UIController.update] Final values - score:', score, 'highScore:', highScore, 'lives:', lives, 'level:', level);
 
         this.scoreBoard.update(score);
         this.highScoreWidget.update(highScore);
