@@ -41,11 +41,14 @@ export class LevelManager {
 	 * @returns {Object} - Maze data
 	 */
     generateMazeForLevel(level) {
+        const adaptiveProfile = this.scene.adaptiveDifficultySystem?.getActiveProfile?.();
+        const complexity = adaptiveProfile?.mazeComplexity || 1;
+
         const mazeData = MazeGenerator.generate({
             width: 25,
             height: 33,
-            pathDensity: 0.6 + level * 0.05,
-            deadEndFactor: 0.4 - level * 0.02,
+            pathDensity: Math.max(0.45, Math.min(0.9, (0.6 + level * 0.05) * complexity)),
+            deadEndFactor: Math.max(0.15, Math.min(0.55, (0.4 - level * 0.02) * complexity)),
             symmetry: level % 2 === 0 ? 'horizontal' : 'vertical',
             cellularAutomataIterations: 0,
             seed: Date.now() + level * 1000

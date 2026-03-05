@@ -32,6 +32,7 @@ import { normalizeDeltaSeconds } from '../utils/Time.js';
 import GameView from '../views/ModelDrivenGameView.js';
 import { LevelManager } from './systems/LevelManager.js';
 import { UIController } from './systems/UIController.js';
+import { AdaptiveDifficultySystem } from './systems/AdaptiveDifficultySystem.js';
 import { registerCoreServices } from '../core/ServiceRegistry.js';
 import { clearServices } from '../core/ServiceRegistry.js';
 
@@ -69,6 +70,7 @@ export default class GameScene extends Phaser.Scene {
         this.playerScoreFacade = new PlayerScoreFacade(this.gameModel);
 
         this.levelManager = new LevelManager(this, this.gameModel);
+        this.adaptiveDifficultySystem = new AdaptiveDifficultySystem(this);
         this.achievementSystem = new AchievementSystem(this);
         this.achievementSystem.init();
 
@@ -140,6 +142,7 @@ export default class GameScene extends Phaser.Scene {
 
         // Get initial snapshot for view and UI
         const initialSnapshot = this.gameModel.getSnapshot();
+        this.adaptiveDifficultySystem.resetForRound(initialSnapshot);
         const initialHudSnapshot = this.playerScoreFacade.toHudSnapshot();
         this.gameView.updateFromSnapshot(initialSnapshot);
         this.uiController.updateFromSnapshot(initialHudSnapshot);
@@ -243,6 +246,7 @@ export default class GameScene extends Phaser.Scene {
     fixedUpdate() {
         const deltaSeconds = physicsConfig.FIXED_DT;
         const events = this.gameModel.step(deltaSeconds);
+        const snapshot = this.gameModel.getSnapshot();
 
         for (const event of events) {
             this.achievementSystem.check(this.gameModel);
@@ -261,6 +265,8 @@ export default class GameScene extends Phaser.Scene {
                 this.gameView.endDeathAnimation();
             }
         }
+
+        this.adaptiveDifficultySystem.update(deltaSeconds, snapshot, events);
 
         this.replaySystem.update(deltaSeconds);
     }

@@ -169,6 +169,23 @@ export const enemyAICaps = {
     minScatterSeconds: 4
 };
 
+export const adaptiveDifficultyConfig = {
+    emaAlpha: 0.22,
+    sectionPelletThresholds: [0.25, 0.5, 0.75, 1],
+    clamps: {
+        enemySpeedBand: { min: 0.85, max: 1.25 },
+        scatterDuration: { min: 4, max: 9 },
+        randomness: { min: 0.03, max: 0.38 },
+        mazeComplexity: { min: 0.85, max: 1.15 }
+    },
+    defaults: {
+        enemySpeedBand: 1,
+        scatterDuration: 7,
+        randomness: 0.12,
+        mazeComplexity: 1
+    }
+};
+
 export const aiWeights = {
     targetDistance: 2.4,
     playerDistance: 1.1,
