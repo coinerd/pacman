@@ -14,6 +14,7 @@ import {
     TILE_TYPES
 } from './MazeLayout.js';
 import { findNearestValidSpawn, validateSpawnPoint } from './SpawnValidator.js';
+import { createSeededRandomFn } from './SeededRandom.js';
 
 const DEFAULT_CONFIG = {
     width: 25,
@@ -79,11 +80,7 @@ export default class MazeGenerator {
     }
 
     createSeededRNG(seed) {
-        let s = seed;
-        return () => {
-            s = (s * 1103515245 + 12345) & 0x7fffffff;
-            return s / 0x7fffffff;
-        };
+        return createSeededRandomFn(seed);
     }
 
     generate() {

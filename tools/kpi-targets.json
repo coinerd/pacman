@@ -1,0 +1,97 @@
+{
+  "difficulties": {
+    "easy": {
+      "seedStart": 1000,
+      "seedCount": 30,
+      "runsPerSeed": 12,
+      "enemySeedOffset": 9001,
+      "baseSurvivalSeconds": 140,
+      "baseWinChance": 0.72,
+      "enemyPressure": 0.18,
+      "enemyVariance": 0.1,
+      "deadEndWeight": 0.9,
+      "maze": {
+        "pathDensity": 0.75,
+        "deadEndFactor": 0.18
+      },
+      "kpiCorridors": {
+        "survivalSeconds": {
+          "min": 95,
+          "max": 170
+        },
+        "winRate": {
+          "min": 0.52,
+          "max": 0.88
+        },
+        "deadEndEncounterRate": {
+          "min": 0.08,
+          "max": 0.38
+        }
+      },
+      "deadEndEncounterBase": 0.1,
+      "maxOutlierRate": 0.4
+    },
+    "normal": {
+      "seedStart": 2000,
+      "seedCount": 30,
+      "runsPerSeed": 12,
+      "enemySeedOffset": 9001,
+      "baseSurvivalSeconds": 110,
+      "baseWinChance": 0.55,
+      "enemyPressure": 0.3,
+      "enemyVariance": 0.12,
+      "deadEndWeight": 1.2,
+      "maze": {
+        "pathDensity": 0.7,
+        "deadEndFactor": 0.28
+      },
+      "kpiCorridors": {
+        "survivalSeconds": {
+          "min": 65,
+          "max": 130
+        },
+        "winRate": {
+          "min": 0.3,
+          "max": 0.7
+        },
+        "deadEndEncounterRate": {
+          "min": 0.14,
+          "max": 0.5
+        }
+      },
+      "deadEndEncounterBase": 0.18,
+      "maxOutlierRate": 0.6
+    },
+    "hard": {
+      "seedStart": 3000,
+      "seedCount": 30,
+      "runsPerSeed": 12,
+      "enemySeedOffset": 9001,
+      "baseSurvivalSeconds": 85,
+      "baseWinChance": 0.42,
+      "enemyPressure": 0.38,
+      "enemyVariance": 0.16,
+      "deadEndWeight": 1.45,
+      "maze": {
+        "pathDensity": 0.64,
+        "deadEndFactor": 0.38
+      },
+      "kpiCorridors": {
+        "survivalSeconds": {
+          "min": 40,
+          "max": 105
+        },
+        "winRate": {
+          "min": 0.12,
+          "max": 0.48
+        },
+        "deadEndEncounterRate": {
+          "min": 0.22,
+          "max": 0.65
+        }
+      },
+      "deadEndEncounterBase": 0.27,
+      "maxOutlierRate": 0.9
+    }
+  }
+}

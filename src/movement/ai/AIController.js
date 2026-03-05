@@ -12,6 +12,7 @@ import {
     calculateTarget,
     getDistance
 } from '../core/AIStrategies.js';
+import { createSeededRandomFn } from '../../utils/SeededRandom.js';
 
 /**
  * Standard-Mode-Durations (in Sekunden)
@@ -78,6 +79,8 @@ export class AIController {
             eatenSpeedMultiplier: config.eatenSpeedMultiplier || 2.0,
             blinkStartTime: config.blinkStartTime || 2 // Blinken beginnt 2 Sekunden vor Ende
         };
+
+        this.randomFn = config.randomFn || createSeededRandomFn(config.randomSeed || Date.now());
 
         // Map: entityId -> AIConfig
         this.aiConfigs = new Map();
@@ -218,8 +221,8 @@ export class AIController {
             return null;
         }
 
-        if (Math.random() < this.config.randomnessFactor) {
-            const randomIndex = Math.floor(Math.random() * validDirections.length);
+        if (this.randomFn() < this.config.randomnessFactor) {
+            const randomIndex = Math.floor(this.randomFn() * validDirections.length);
             return validDirections[randomIndex];
         }
 
@@ -545,6 +548,11 @@ export class AIController {
     setRandomnessFactor(factor) {
         this.config.randomnessFactor = Math.max(0, Math.min(1, factor));
     }
+
+    setRandomSeed(seed) {
+        this.randomFn = createSeededRandomFn(seed);
+    }
+
 
     /**
      * Gibt die Anzahl registrierter Entities zurück
