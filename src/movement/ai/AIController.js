@@ -73,6 +73,7 @@ export class AIController {
             virusCoreCenter: config.virusCoreCenter || { x: 13, y: 14 },
             virusCoreEntrance: config.virusCoreEntrance || { x: 13, y: 11 },
             frightenedDuration: config.frightenedDuration || 8,
+            randomnessFactor: config.randomnessFactor || 0,
             frightenedSpeedMultiplier: config.frightenedSpeedMultiplier || 0.5,
             eatenSpeedMultiplier: config.eatenSpeedMultiplier || 2.0,
             blinkStartTime: config.blinkStartTime || 2 // Blinken beginnt 2 Sekunden vor Ende
@@ -193,11 +194,10 @@ export class AIController {
         }
 
         // Wähle beste Richtung
-        const direction = chooseDirectionToTarget(
+        const direction = this.chooseDirectionWithRandomness(
             entity,
             target,
-            validDirections,
-            (x1, y1, x2, y2) => this.mazeAdapter.getDistance(x1, y1, x2, y2)
+            validDirections
         );
 
         if (!direction) {
@@ -211,6 +211,24 @@ export class AIController {
             aiType: aiConfig.aiType,
             target
         };
+    }
+
+    chooseDirectionWithRandomness(entity, target, validDirections) {
+        if (validDirections.length === 0) {
+            return null;
+        }
+
+        if (Math.random() < this.config.randomnessFactor) {
+            const randomIndex = Math.floor(Math.random() * validDirections.length);
+            return validDirections[randomIndex];
+        }
+
+        return chooseDirectionToTarget(
+            entity,
+            target,
+            validDirections,
+            (x1, y1, x2, y2) => this.mazeAdapter.getDistance(x1, y1, x2, y2)
+        );
     }
 
     /**
@@ -513,6 +531,19 @@ export class AIController {
      */
     getCurrentMode() {
         return this.currentGlobalMode;
+    }
+
+    setModeDurations(modeDurations) {
+        if (!Array.isArray(modeDurations) || modeDurations.length === 0) {
+            return;
+        }
+
+        this.config.modeDurations = modeDurations.map((entry) => ({ ...entry }));
+        this.modeIndex = Math.min(this.modeIndex, this.config.modeDurations.length - 1);
+    }
+
+    setRandomnessFactor(factor) {
+        this.config.randomnessFactor = Math.max(0, Math.min(1, factor));
     }
 
     /**
