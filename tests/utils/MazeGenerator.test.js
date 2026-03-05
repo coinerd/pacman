@@ -411,6 +411,49 @@ describe('MazeGenerator', () => {
             expect(result.maze[0].length).toBe(35);
         });
     });
+
+    describe('Constraint Enforcement', () => {
+        test('should expose successful validation result and retry metadata', () => {
+            const generator = new MazeGenerator({ width: 21, height: 21, seed: 42 });
+            const result = generator.generate();
+
+            expect(result.validationResult).toBeDefined();
+            expect(typeof result.validationResult.isValid).toBe('boolean');
+            expect(result.stats.retries).toBeGreaterThanOrEqual(0);
+            expect(result.stats.finalSeed).toBeDefined();
+            expect(typeof result.stats.fallbackUsed).toBe('boolean');
+        });
+
+        test('should use fallback seed when all retries fail', () => {
+            const generator = new MazeGenerator({
+                width: 21,
+                height: 21,
+                seed: 10,
+                maxRetries: 2,
+                fallbackSeedOffset: 999
+            });
+
+            generator.generateSingleAttempt = jest.fn(() => ({
+                maze: generator.maze,
+                pelletGrid: generator.pelletGrid,
+                spawnPoints: generator.spawnPoints,
+                stats: { deadEnds: 0, pathTiles: 0, wallTiles: 0 },
+                validationResult: { isValid: false, message: 'forced' }
+            }));
+
+            generator.fixConnectivity = jest.fn();
+            generator.placePellets = jest.fn();
+            generator.calculateStats = jest.fn();
+            generator.validateMaze = jest.fn(() => ({ isValid: false, message: 'forced' }));
+
+            const result = generator.generate();
+
+            expect(generator.generateSingleAttempt).toHaveBeenCalledTimes(3);
+            expect(result.stats.fallbackUsed).toBe(true);
+            expect(result.stats.finalSeed).toBe(1009);
+        });
+    });
+
 });
 
 /**
