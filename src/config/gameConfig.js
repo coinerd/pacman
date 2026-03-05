@@ -145,6 +145,25 @@ export const levelConfig = {
     frightenedDecreasePerLevel: 0.5
 };
 
+export const enemyAIConfig = {
+    stateCycle: [
+        { state: ghostModes.SCATTER, duration: 7 },
+        { state: ghostModes.CHASE, duration: 20 },
+        { state: ghostModes.SCATTER, duration: 7 },
+        { state: ghostModes.CHASE, duration: 20 },
+        { state: ghostModes.SCATTER, duration: 5 },
+        { state: ghostModes.CHASE, duration: 20 },
+        { state: ghostModes.SCATTER, duration: 5 },
+        { state: ghostModes.CHASE, duration: Infinity }
+    ],
+    recoverThresholdSeconds: 2,
+    modeSwitchTelegraphSeconds: 0.35,
+    eliminatedHouseDurationSeconds: 2,
+    deltaChaseDistanceThreshold: 8,
+    betaLookAheadTiles: 4,
+    gammaPivotLookAheadTiles: 2
+};
+
 export const enemyStartPositions = {
     alpha: { x: 2, y: 1 },
     beta: { x: 22, y: 1 },

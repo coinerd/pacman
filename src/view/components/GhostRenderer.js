@@ -124,7 +124,12 @@ export class GhostRenderer {
             color = 0xffffff; // White when eaten
         }
 
-        const opacity = isEaten ? 0.4 : 1.0;
+        const isModeSwitching = (this.state.modeTransitionTimer || 0) > 0;
+        if (isModeSwitching && !isFrightened && !isEaten) {
+            color = 0xffffff;
+        }
+
+        const opacity = isEaten ? 0.4 : (isModeSwitching ? 0.85 : 1.0);
 
         // Draw shape
         this.graphics.fillStyle(color, opacity);
