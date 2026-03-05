@@ -10,7 +10,8 @@ import {
     ghostHouse,
     ghostModes,
     scatterTargets,
-    gameConfig
+    gameConfig,
+    enemyAIConfig
 } from '../../config/gameConfig.js';
 import { getDistance, getValidDirections } from '../../utils/MazeLayout.js';
 
@@ -19,16 +20,10 @@ export class EnemyAIAdapter {
         this.gameModel = gameModel;
         this.modeTimer = 0;
         this.currentMode = ghostModes.SCATTER;
-        this.modeDurations = [
-            { mode: ghostModes.SCATTER, duration: 7 }, // 7 seconds
-            { mode: ghostModes.CHASE, duration: 20 }, // 20 seconds
-            { mode: ghostModes.SCATTER, duration: 7 },
-            { mode: ghostModes.CHASE, duration: 20 },
-            { mode: ghostModes.SCATTER, duration: 5 },
-            { mode: ghostModes.CHASE, duration: 20 },
-            { mode: ghostModes.SCATTER, duration: 5 },
-            { mode: ghostModes.CHASE, duration: Infinity }
-        ];
+        this.modeDurations = enemyAIConfig.stateCycle.map((cycle) => ({
+            mode: cycle.state,
+            duration: cycle.duration
+        }));
         this.modeIndex = 0;
     }
 
@@ -53,19 +48,23 @@ export class EnemyAIAdapter {
             return;
         }
 
-        this.modeTimer += deltaSeconds;
         const currentModeConfig = this.modeDurations[this.modeIndex];
+        if (currentModeConfig.duration === Infinity) {
+            return;
+        }
+
+        this.modeTimer += deltaSeconds;
 
         if (this.modeTimer >= currentModeConfig.duration) {
             this.modeTimer = 0;
             this.modeIndex++;
             this.currentMode =
-				this.modeDurations[this.modeIndex]?.mode || ghostModes.CHASE;
+                this.modeDurations[this.modeIndex]?.mode || ghostModes.CHASE;
 
-            // Reverse all enemies on mode change
             for (const enemy of this.gameModel.ghosts) {
                 if (!enemy.isFrightened && !enemy.isEaten) {
                     this.reverseEnemy(enemy);
+                    this.telegraphStateChange(enemy);
                 }
             }
         }
@@ -77,35 +76,117 @@ export class EnemyAIAdapter {
 	 * @param {number} deltaSeconds - Time delta
 	 */
     updateEnemyAI(enemy, deltaSeconds) {
-        // Skip AI for eaten enemies (they have special logic)
         if (enemy.isEaten) {
             this.updateEliminatedEnemy(enemy, deltaSeconds);
+            enemy.aiState = ghostModes.EATEN;
             return;
         }
 
-        // Update frightened timer
         if (enemy.isFrightened) {
             enemy.updateFrightened(deltaSeconds);
         }
 
-        // Set enemy mode
-        if (!enemy.isFrightened && !enemy.isEaten) {
-            enemy.mode = this.currentMode;
-        }
+        const previousState = enemy.aiState || enemy.mode || ghostModes.SCATTER;
+        const nextState = this.resolveAIState(enemy);
+        this.applyState(enemy, nextState, previousState);
 
-        // AI chooses direction at tile center
-        // With new movement system: only change direction when moveProgress === 0 (at tile center)
-        // Check if we're at tile center (ready for new decision)
         const isAtDecisionPoint = enemy.moveProgress === 0;
-
         if (!isAtDecisionPoint) {
             return;
         }
 
-        // Choose direction based on AI
-        const direction = this.chooseDirection(enemy);
+        const direction = this.chooseDirectionForState(enemy, nextState);
         if (direction) {
             enemy.setDirection(direction);
+        }
+    }
+
+    resolveAIState(enemy) {
+        if (enemy.isEaten) {
+            return ghostModes.EATEN;
+        }
+
+        if (!enemy.isFrightened) {
+            return this.currentMode;
+        }
+
+        if (enemy.frightenedTimer <= enemyAIConfig.recoverThresholdSeconds) {
+            return 'RECOVER';
+        }
+
+        return ghostModes.FRIGHTENED;
+    }
+
+    applyState(enemy, nextState, previousState) {
+        enemy.aiState = nextState;
+
+        if (nextState === ghostModes.FRIGHTENED || nextState === 'RECOVER') {
+            enemy.mode = ghostModes.FRIGHTENED;
+        } else {
+            enemy.mode = nextState;
+        }
+
+        if (previousState !== nextState) {
+            this.telegraphStateChange(enemy);
+        }
+    }
+
+    telegraphStateChange(enemy) {
+        enemy.modeTransitionTimer = enemyAIConfig.modeSwitchTelegraphSeconds;
+    }
+
+    chooseDirectionForState(enemy, state) {
+        if (state === ghostModes.FRIGHTENED) {
+            return this.chooseRandomDirection(enemy);
+        }
+
+        if (state === 'RECOVER') {
+            return this.chooseRecoverDirection(enemy);
+        }
+
+        const target = this.getTargetForState(enemy, state);
+        return this.chooseDirectionToTarget(enemy, target.x, target.y);
+    }
+
+    chooseRecoverDirection(enemy) {
+        const target = scatterTargets[enemy.ghostType] || scatterTargets.alpha;
+        return this.chooseDirectionToTarget(enemy, target.x, target.y);
+    }
+
+    chooseRandomDirection(enemy) {
+        const filteredDirs = this.getCandidateDirections(enemy);
+        if (filteredDirs.length === 0) {
+            return null;
+        }
+        return filteredDirs[Math.floor(Math.random() * filteredDirs.length)];
+    }
+
+    getTargetForState(enemy, state) {
+        if (state === ghostModes.SCATTER) {
+            return this.getScatterTarget(enemy);
+        }
+
+        return this.getChaseTarget(enemy);
+    }
+
+    getScatterTarget(enemy) {
+        return scatterTargets[enemy.ghostType] || scatterTargets.alpha;
+    }
+
+    getChaseTarget(enemy) {
+        const player = this.gameModel.pacman;
+
+        switch (enemy.ghostType) {
+        case 'alpha':
+            return this.getAlphaChaseTarget(player);
+        case 'beta':
+            return this.getBetaChaseTarget(player);
+        case 'gamma':
+            return this.getGammaChaseTarget(player);
+        case 'delta':
+            return this.getDeltaChaseTarget(player, enemy);
+        default:
+            return { x: player.gridX, y: player.gridY };
         }
     }
 
@@ -120,7 +201,6 @@ export class EnemyAIAdapter {
         const centerX = ghostHouse.center?.x || 13;
         const centerY = ghostHouse.center?.y || 14;
 
-        // Check if in ghost house
         if (enemy.inGhostHouse) {
             enemy.houseTimer -= deltaSeconds;
             if (enemy.houseTimer <= 0) {
@@ -130,27 +210,20 @@ export class EnemyAIAdapter {
             return;
         }
 
-        // Check if reached ghost house center
         if (enemy.gridX === centerX && enemy.gridY === centerY) {
             enemy.inGhostHouse = true;
-            enemy.houseTimer = 2; // 2 seconds in house
+            enemy.houseTimer = enemyAIConfig.eliminatedHouseDurationSeconds;
             enemy.direction = directions.NONE;
             return;
         }
 
-        // Move toward ghost house entrance
         const direction = this.chooseDirectionToTarget(enemy, entranceX, entranceY);
         if (direction) {
             enemy.setDirection(direction);
         }
     }
 
-    /**
-	 * Choose direction for enemy based on its AI personality
-	 * @param {GhostState} enemy - Enemy to choose direction for
-	 * @returns {Object|null} - Chosen direction
-	 */
-    chooseDirection(enemy) {
+    getCandidateDirections(enemy) {
         const validDirs = getValidDirections(
             this.gameModel.maze,
             enemy.gridX,
@@ -158,48 +231,23 @@ export class EnemyAIAdapter {
         );
 
         if (validDirs.length === 0) {
-            return null;
+            return [];
         }
 
-        // Filter out reverse direction (enemies can't reverse)
-        let filteredDirs = validDirs;
-        if (enemy.direction && enemy.direction !== directions.NONE) {
-            const opposite = getOpposite(enemy.direction);
-            if (opposite && opposite !== directions.NONE) {
-                filteredDirs = validDirs.filter(
-                    (d) => !(d.x === opposite.x && d.y === opposite.y)
-                );
-            }
+        if (!enemy.direction || enemy.direction === directions.NONE) {
+            return validDirs;
         }
 
-        if (filteredDirs.length === 0) {
-            filteredDirs = validDirs;
+        const opposite = getOpposite(enemy.direction);
+        if (!opposite || opposite === directions.NONE) {
+            return validDirs;
         }
 
-        // Frightened: random direction
-        if (enemy.isFrightened) {
-            return filteredDirs[Math.floor(Math.random() * filteredDirs.length)];
-        }
+        const filteredDirs = validDirs.filter(
+            (d) => !(d.x === opposite.x && d.y === opposite.y)
+        );
 
-        // Calculate target
-        const target = this.getTargetForEnemy(enemy);
-
-        // Choose direction that minimizes distance to target
-        let bestDir = filteredDirs[0];
-        let bestDist = Infinity;
-
-        for (const dir of filteredDirs) {
-            const newX = enemy.gridX + dir.x;
-            const newY = enemy.gridY + dir.y;
-            const dist = getDistance(newX, newY, target.x, target.y);
-
-            if (dist < bestDist) {
-                bestDist = dist;
-                bestDir = dir;
-            }
-        }
-
-        return bestDir;
+        return filteredDirs.length > 0 ? filteredDirs : validDirs;
     }
 
     /**
@@ -210,32 +258,11 @@ export class EnemyAIAdapter {
 	 * @returns {Object|null} - Chosen direction
 	 */
     chooseDirectionToTarget(enemy, targetX, targetY) {
-        const validDirs = getValidDirections(
-            this.gameModel.maze,
-            enemy.gridX,
-            enemy.gridY
-        );
-
-        if (validDirs.length === 0) {
+        const filteredDirs = this.getCandidateDirections(enemy);
+        if (filteredDirs.length === 0) {
             return null;
         }
 
-        // Filter out reverse direction
-        let filteredDirs = validDirs;
-        if (enemy.direction && enemy.direction !== directions.NONE) {
-            const opposite = getOpposite(enemy.direction);
-            if (opposite && opposite !== directions.NONE) {
-                filteredDirs = validDirs.filter(
-                    (d) => !(d.x === opposite.x && d.y === opposite.y)
-                );
-            }
-        }
-
-        if (filteredDirs.length === 0) {
-            filteredDirs = validDirs;
-        }
-
-        // Choose direction that minimizes distance to target
         let bestDir = filteredDirs[0];
         let bestDist = Infinity;
 
@@ -259,62 +286,28 @@ export class EnemyAIAdapter {
 	 * @returns {Object} - Target {x, y}
 	 */
     getTargetForEnemy(enemy) {
-        const player = this.gameModel.pacman;
-
-        switch (enemy.ghostType) {
-        case 'alpha':
-            return this.getAlphaTarget(player, enemy);
-        case 'beta':
-            return this.getBetaTarget(player, enemy);
-        case 'gamma':
-            return this.getGammaTarget(player, enemy);
-        case 'delta':
-            return this.getDeltaTarget(player, enemy);
-        default:
-            return { x: player.gridX, y: player.gridY };
-        }
+        return this.getTargetForState(enemy, enemy.mode || this.currentMode);
     }
 
-    /**
-	 * Alpha: Direct chase
-	 */
-    getAlphaTarget(player, enemy) {
-        if (enemy.mode === ghostModes.SCATTER) {
-            return scatterTargets.alpha;
-        }
+    getAlphaChaseTarget(player) {
         return { x: player.gridX, y: player.gridY };
     }
 
-    /**
-	 * Beta: 4 tiles ahead of Player
-	 */
-    getBetaTarget(player, enemy) {
-        if (enemy.mode === ghostModes.SCATTER) {
-            return scatterTargets.beta;
-        }
+    getBetaChaseTarget(player) {
+        let targetX = player.gridX + player.direction.x * enemyAIConfig.betaLookAheadTiles;
+        const targetY = player.gridY + player.direction.y * enemyAIConfig.betaLookAheadTiles;
 
-        let targetX = player.gridX + player.direction.x * 4;
-        const targetY = player.gridY + player.direction.y * 4;
-
-        // Arcade bug: Up also moves target left
         if (player.direction.y === -1) {
-            targetX -= 4;
+            targetX -= enemyAIConfig.betaLookAheadTiles;
         }
 
         return { x: targetX, y: targetY };
     }
 
-    /**
-	 * Gamma: Vector from Alpha through 2 tiles ahead of Player
-	 */
-    getGammaTarget(player, enemy) {
-        if (enemy.mode === ghostModes.SCATTER) {
-            return scatterTargets.gamma;
-        }
-
-        const alpha = this.gameModel.getGhostByType('alpha');
-        const pivotX = player.gridX + player.direction.x * 2;
-        const pivotY = player.gridY + player.direction.y * 2;
+    getGammaChaseTarget(player) {
+        const alpha = this.gameModel.getGhostByType?.('alpha');
+        const pivotX = player.gridX + player.direction.x * enemyAIConfig.gammaPivotLookAheadTiles;
+        const pivotY = player.gridY + player.direction.y * enemyAIConfig.gammaPivotLookAheadTiles;
 
         if (alpha) {
             return {
@@ -325,27 +318,14 @@ export class EnemyAIAdapter {
         return { x: pivotX, y: pivotY };
     }
 
-    /**
-	 * Delta: Chase if far, scatter if close
-	 */
-    getDeltaTarget(player, enemy) {
-        if (enemy.mode === ghostModes.SCATTER) {
-            return scatterTargets.delta;
-        }
+    getDeltaChaseTarget(player, enemy) {
+        const dist = getDistance(enemy.gridX, enemy.gridY, player.gridX, player.gridY);
 
-        const dist = getDistance(
-            enemy.gridX,
-            enemy.gridY,
-            player.gridX,
-            player.gridY
-        );
-
-        if (dist > 8) {
+        if (dist > enemyAIConfig.deltaChaseDistanceThreshold) {
             return { x: player.gridX, y: player.gridY };
-        } else {
-            // Return to scatter corner if too close
-            return scatterTargets.delta;
         }
+
+        return scatterTargets.delta;
     }
 
     /**
@@ -366,11 +346,15 @@ export class EnemyAIAdapter {
 	 * @returns {Object} - Center position {x, y}
 	 */
     getTileCenter(gridX, gridY) {
-        const tileSize = 20; // From gameConfig
+        const tileSize = gameConfig.tileSize;
         return {
             x: gridX * tileSize + tileSize / 2,
             y: gridY * tileSize + tileSize / 2
         };
+    }
+
+    chooseDirection(enemy) {
+        return this.chooseDirectionForState(enemy, this.resolveAIState(enemy));
     }
 
     /**

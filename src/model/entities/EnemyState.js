@@ -53,8 +53,10 @@ export class EnemyState extends ModelEntity {
 
         // AI state
         this.mode = ghostModes.SCATTER;
+        this.aiState = ghostModes.SCATTER;
         this.targetX = 0;
         this.targetY = 0;
+        this.modeTransitionTimer = 0;
 
         // State flags
         this.isEaten = false;
@@ -112,6 +114,13 @@ export class EnemyState extends ModelEntity {
         }
 
         this.isMoving = this.direction !== directions.NONE;
+
+        if (this.modeTransitionTimer > 0) {
+            this.modeTransitionTimer = Math.max(
+                0,
+                this.modeTransitionTimer - deltaSeconds
+            );
+        }
 
         return events;
     }
@@ -376,6 +385,8 @@ export class EnemyState extends ModelEntity {
         this.inGhostHouse = false;
         this.houseTimer = 0;
         this.mode = ghostModes.SCATTER;
+        this.aiState = ghostModes.SCATTER;
+        this.modeTransitionTimer = 0;
         this.speedMultiplier = 1.0;
         this.speedModifier = 1.0;
 
@@ -434,6 +445,7 @@ export class EnemyState extends ModelEntity {
             ...super.getSnapshot(),
             ghostType: this.ghostType,
             mode: this.mode,
+            aiState: this.aiState,
             isFrightened: this.isFrightened,
             isEaten: this.isEaten,
             visual: this.getVisualState()
