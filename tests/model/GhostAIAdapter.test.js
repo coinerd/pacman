@@ -2,7 +2,7 @@
  * Tests for EnemyAIAdapter
  */
 
-import { directions, ghostModes } from '../../src/config/gameConfig.js';
+import { directions, ghostModes, gameConfig } from '../../src/config/gameConfig.js';
 import { EnemyAIAdapter } from '../../src/model/adapters/EnemyAIAdapter.js';
 
 // Mock GameModel
@@ -43,7 +43,8 @@ function createMockGhost(type, gridX, gridY) {
         setDirection: jest.fn(function (dir) {
             this.nextDirection = dir;
         }),
-        updateFrightened: jest.fn()
+        updateFrightened: jest.fn(),
+        id: `${type}-${gridX}-${gridY}`
     };
 }
 
@@ -228,6 +229,50 @@ describe('EnemyAIAdapter', () => {
             adapter.updateEnemyAI(ghost, 0.1);
 
             expect(ghost.setDirection).not.toHaveBeenCalled();
+        });
+    });
+
+
+    describe('weighted direction scoring', () => {
+        test('considers anti-cluster pressure to avoid same direction crowding', () => {
+            const ghost = createMockGhost('alpha', 3, 1);
+            const otherGhostA = createMockGhost('beta', 2, 1);
+            const otherGhostB = createMockGhost('gamma', 4, 1);
+            otherGhostA.direction = directions.RIGHT;
+            otherGhostB.direction = directions.RIGHT;
+            mockGameModel.ghosts = [ghost, otherGhostA, otherGhostB];
+
+            const scoreRight = adapter.evaluateDirection(
+                ghost,
+                directions.RIGHT,
+                { targetX: 6, targetY: 1, playerX: 3, playerY: 2 },
+                { playerDistanceBias: -1, randomnessMultiplier: 0, bottleneckBias: 0, diversityOffset: 0 }
+            );
+            const scoreDown = adapter.evaluateDirection(
+                ghost,
+                directions.DOWN,
+                { targetX: 6, targetY: 1, playerX: 3, playerY: 2 },
+                { playerDistanceBias: -1, randomnessMultiplier: 0, bottleneckBias: 0, diversityOffset: 0 }
+            );
+
+            expect(scoreRight.contributions.antiCluster).toBeLessThan(scoreDown.contributions.antiCluster);
+        });
+
+        test('emits debug logs with scores in debug mode', () => {
+            const ghost = createMockGhost('alpha', 3, 1);
+            mockGameModel.ghosts = [ghost];
+            const debugSpy = jest.spyOn(console, 'debug').mockImplementation(() => {});
+            const randomSpy = jest.spyOn(Math, 'random').mockReturnValue(0.5);
+            const originalDebug = gameConfig.debug;
+            gameConfig.debug = true;
+
+            adapter.chooseDirectionToTarget(ghost, 6, 1);
+
+            expect(debugSpy).toHaveBeenCalled();
+
+            gameConfig.debug = originalDebug;
+            randomSpy.mockRestore();
+            debugSpy.mockRestore();
         });
     });
 

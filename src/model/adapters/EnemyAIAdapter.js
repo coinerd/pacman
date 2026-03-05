@@ -11,7 +11,9 @@ import {
     ghostModes,
     scatterTargets,
     gameConfig,
-    enemyAIConfig
+    enemyAIConfig,
+    aiWeights,
+    enemyProfiles
 } from '../../config/gameConfig.js';
 import { getDistance, getValidDirections } from '../../utils/MazeLayout.js';
 
@@ -154,11 +156,13 @@ export class EnemyAIAdapter {
     }
 
     chooseRandomDirection(enemy) {
-        const filteredDirs = this.getCandidateDirections(enemy);
-        if (filteredDirs.length === 0) {
-            return null;
-        }
-        return filteredDirs[Math.floor(Math.random() * filteredDirs.length)];
+        const player = this.gameModel.pacman;
+        return this.chooseWeightedDirection(enemy, {
+            targetX: enemy.gridX,
+            targetY: enemy.gridY,
+            playerX: player?.gridX,
+            playerY: player?.gridY
+        });
     }
 
     getTargetForState(enemy, state) {
@@ -258,26 +262,101 @@ export class EnemyAIAdapter {
 	 * @returns {Object|null} - Chosen direction
 	 */
     chooseDirectionToTarget(enemy, targetX, targetY) {
+        const player = this.gameModel.pacman;
+        return this.chooseWeightedDirection(enemy, {
+            targetX,
+            targetY,
+            playerX: player?.gridX,
+            playerY: player?.gridY
+        });
+    }
+
+    chooseWeightedDirection(enemy, context) {
         const filteredDirs = this.getCandidateDirections(enemy);
         if (filteredDirs.length === 0) {
             return null;
         }
 
-        let bestDir = filteredDirs[0];
-        let bestDist = Infinity;
+        const profile = enemyProfiles[enemy.ghostType] || enemyProfiles.default;
+        const scoredMoves = filteredDirs.map((dir) =>
+            this.evaluateDirection(enemy, dir, context, profile)
+        );
 
-        for (const dir of filteredDirs) {
-            const newX = enemy.gridX + dir.x;
-            const newY = enemy.gridY + dir.y;
-            const dist = getDistance(newX, newY, targetX, targetY);
+        scoredMoves.sort((a, b) => b.score - a.score);
+        const selectedMove = scoredMoves[0];
 
-            if (dist < bestDist) {
-                bestDist = dist;
-                bestDir = dir;
-            }
+        if (gameConfig.debug) {
+            const debugSummary = scoredMoves.map((move) => ({
+                direction: this.getDirectionName(move.direction),
+                score: Number(move.score.toFixed(3)),
+                contributions: Object.fromEntries(
+                    Object.entries(move.contributions).map(([key, value]) => [
+                        key,
+                        Number(value.toFixed(3))
+                    ])
+                )
+            }));
+            console.debug(`[EnemyAI] ${enemy.ghostType} selected ${this.getDirectionName(selectedMove.direction)}`, debugSummary);
         }
 
-        return bestDir;
+        return selectedMove.direction;
+    }
+
+    evaluateDirection(enemy, dir, context, profile) {
+        const nextX = enemy.gridX + dir.x;
+        const nextY = enemy.gridY + dir.y;
+        const opposite = getOpposite(enemy.direction);
+        const targetDist = getDistance(nextX, nextY, context.targetX, context.targetY);
+        const playerDist =
+            Number.isFinite(context.playerX) && Number.isFinite(context.playerY)
+                ? getDistance(nextX, nextY, context.playerX, context.playerY)
+                : 0;
+        const exits = getValidDirections(this.gameModel.maze, nextX, nextY).length;
+        const sameDirectionEnemies = this.gameModel.ghosts.filter(
+            (ghost) => ghost !== enemy && ghost.direction && ghost.direction.x === dir.x && ghost.direction.y === dir.y
+        ).length;
+
+        const contributions = {
+            targetDistance: aiWeights.targetDistance * -targetDist,
+            playerDistance:
+                aiWeights.playerDistance * profile.playerDistanceBias * playerDist,
+            reverse:
+                opposite && dir.x === opposite.x && dir.y === opposite.y
+                    ? aiWeights.reversePenalty
+                    : 0,
+            randomness:
+                (Math.random() - 0.5) * aiWeights.randomness * profile.randomnessMultiplier,
+            bottleneck:
+                exits <= 2
+                    ? aiWeights.bottleneckPenalty * (1 + profile.bottleneckBias)
+                    : aiWeights.corridorBonus * (1 - profile.bottleneckBias),
+            antiCluster: aiWeights.antiClusterPenalty * sameDirectionEnemies,
+            diversity: aiWeights.diversityFactor * this.getDirectionalDiversity(enemy, dir, profile)
+        };
+
+        const score = Object.values(contributions).reduce((sum, value) => sum + value, 0);
+
+        return {
+            direction: dir,
+            score,
+            contributions
+        };
+    }
+
+    getDirectionalDiversity(enemy, dir, profile) {
+        const enemyId = enemy.id || enemy.ghostType || 'default';
+        const seed = Array.from(enemyId).reduce((acc, char) => acc + char.charCodeAt(0), 0);
+        const directionalHash = seed + dir.x * 13 + dir.y * 17;
+        const normalized = ((directionalHash % 11) - 5) / 5;
+        return normalized + profile.diversityOffset;
+    }
+
+    getDirectionName(dir) {
+        if (dir === directions.UP) {return 'UP';}
+        if (dir === directions.DOWN) {return 'DOWN';}
+        if (dir === directions.LEFT) {return 'LEFT';}
+        if (dir === directions.RIGHT) {return 'RIGHT';}
+        return 'NONE';
     }
 
     /**
