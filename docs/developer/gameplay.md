@@ -8,6 +8,19 @@ This document explains how the Pac-Man mechanics are implemented, including scor
 - Tile types include walls, pellets, power pellets, empty, ghost house, and door tiles.
 - Helper functions convert between grid and pixel coordinates, validate movement, and count pellets.
 
+### Maze Generation Fairness Rules
+
+The procedural generator in `src/utils/MazeGenerator.js` now validates each generated maze against gameplay fairness constraints before accepting it:
+
+- **Connectivity coverage** (`minConnectivityCoverage`): all walkable areas must remain reachable.
+- **Alternative path requirement** (`minAlternativePaths`): critical targets (enemy spawns + power pellets) require multiple disjoint path options.
+- **Dead-end density cap** (`deadEndDensityThreshold`): avoids maps that overproduce trap-heavy dead ends.
+- **Straight-corridor cap** (`maxStraightCorridorLength`): limits overly long one-dimensional chases.
+- **Spawn safety checks** (`spawnSafetyRadius`, `spawnSafetyMinFreedomSteps`): guarantees early mobility around player spawn.
+- **Retry + fallback seed flow** (`maxRetries`, `fallbackSeedOffset`): invalid mazes are re-sampled deterministically.
+
+This ensures generated maps are not only valid but also consistently playable under pressure.
+
 ## 2. Movement Model
 
 - **Grid-based movement** is handled by `GridMovement` and `TileMovement`.
@@ -54,15 +67,59 @@ The `DirectionBuffer` allows immediate reversals (for responsiveness) and queued
   - Pellets are removed from the pool and maze count updated.
 - Power pellets activate **frightened mode** for ghosts and reset ghost combo tracking.
 
-## 6. Ghost AI
+## 6. Ghost / Enemy AI
 
 ### Modes
 
-Ghosts alternate between:
+Enemies alternate between:
 - **Scatter**: Targets fixed corner tiles.
 - **Chase**: Targets Pacman (with unique ghost behavior).
 - **Frightened**: Moves unpredictably and can be eaten.
 - **Eaten**: Returns to the ghost house before rejoining play.
+
+The state cycle and transition tuning is centrally configurable in `src/config/gameConfig.js` (`enemyAIConfig`, `enemyAICaps`).
+
+### Weighted Direction Heuristics
+
+At intersections, direction selection uses weighted scoring rather than simple shortest-path or random picks:
+
+- target distance pressure
+- player-distance bias
+- reverse-direction penalty
+- controlled randomness
+- bottleneck and corridor shaping
+- anti-cluster diversification between enemies
+
+The balancing keys are exposed in `aiWeights` / `ai_weights` within `src/config/gameConfig.js`.
+
+### Enemy Profiles
+
+Enemy roles are now profile-driven (`enemyProfiles`):
+
+- `alpha`: direct hunter (high pressure, low randomness)
+- `beta`: predictive interceptor
+- `gamma`: flank pressure / pincer support
+- `delta`: area-control behavior
+
+Each profile has configurable aggressiveness, prediction horizon, reaction time, and bias multipliers.
+
+### Mode Telegraphing
+
+Mode transitions are telegraphed visually (see `GhostRenderer` state handling) so behavior changes are readable and not perceived as unfair spikes.
+
+## 6.1 Adaptive Difficulty (DDA)
+
+`AdaptiveDifficultySystem` provides bounded dynamic balancing between rounds/sections:
+
+- telemetry window: survival time, enemy kills, player deaths, travelled distance, section success
+- smoothed score via EMA (`adaptiveDifficultyConfig.emaAlpha`)
+- bounded profile outputs:
+  - enemy speed band
+  - scatter duration
+  - AI randomness
+  - maze complexity coefficient
+
+Important: profiles are applied at boundaries (e.g. section/life/round), not in arbitrary mid-chase moments.
 
 ### Personality Targets
 
@@ -102,6 +159,16 @@ Achievement notifications are emitted via the `EventBus` and displayed as UI pop
 - **Demo Mode**: If the query string includes `?demo`, `AIInputAdapter` takes control
   - Uses `PacmanAI` for autonomous gameplay
   - Swappable input system enables easy switching between keyboard/replay/AI
+
+## 10.1 Seeded KPI Gate for Balancing
+
+Balancing changes to AI + maze generation are validated with reproducible seed simulations.
+
+- Workflow and KPI corridors are documented in `docs/seed-kpi-gate.md`.
+- Use:
+  - `npm run simulate:seeds`
+  - `npm run kpi:gate`
+- Outlier seeds are written to `tests/regression/seed-outliers.json` and can be reused for regression checks.
 
 ## 11. Audio
 
