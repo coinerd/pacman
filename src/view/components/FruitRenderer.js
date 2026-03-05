@@ -53,14 +53,15 @@ export class FruitRenderer {
      */
     sync() {
         if (!this.state) {
-            console.log('[FruitRenderer] No state');
             return;
         }
 
         // Handle both FruitState instances and snapshot objects
         const visualState = this.state.visual || (typeof this.state.getVisualState === 'function' ? this.state.getVisualState() : { active: this.state.active ?? false, bobOffset: 0 });
 
-        if (!visualState.active || !this.state.active) {
+        // Check if fruit is active (use visualState.active or fallback to state.active)
+        const isActive = visualState.active ?? this.state.active ?? false;
+        if (!isActive) {
             this.graphics.clear();
             this.scoreText.setVisible(false);
             return;

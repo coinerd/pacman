@@ -277,6 +277,8 @@ export default class GameModel {
                 this.lives--;
                 this.resetPositions();
                 this.isDying = false;
+                gameEvents.emit(GAME_EVENTS.RESPAWN);
+                return [{ type: 'respawn' }];
             }
         }
 
