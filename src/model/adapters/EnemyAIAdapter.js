@@ -17,6 +17,7 @@ import {
     enemyProfiles
 } from '../../config/gameConfig.js';
 import { getDistance, getValidDirections } from '../../utils/MazeLayout.js';
+import { createSeededRandomFn } from '../../utils/SeededRandom.js';
 
 export class EnemyAIAdapter {
     constructor(gameModel) {
@@ -29,6 +30,7 @@ export class EnemyAIAdapter {
         }));
         this.modeIndex = 0;
         this.reactionCooldowns = new Map();
+        this.randomFn = createSeededRandomFn(gameModel?.config?.enemyDecisionSeed || gameModel?.config?.seed || Date.now());
     }
 
     applyPhaseCaps(mode, duration) {
@@ -370,7 +372,7 @@ export class EnemyAIAdapter {
                     ? aiWeights.reversePenalty
                     : 0,
             randomness:
-                (Math.random() - 0.5) * aiWeights.randomness * (profile.randomness ?? profile.randomnessMultiplier ?? 1),
+                (this.randomFn() - 0.5) * aiWeights.randomness * (profile.randomness ?? profile.randomnessMultiplier ?? 1),
             bottleneck:
                 exits <= 2
                     ? aiWeights.bottleneckPenalty * (1 + profile.bottleneckBias)
@@ -498,5 +500,9 @@ export class EnemyAIAdapter {
         this.modeIndex = 0;
         this.currentMode = ghostModes.SCATTER;
         this.reactionCooldowns.clear();
+    }
+
+    setRandomSeed(seed) {
+        this.randomFn = createSeededRandomFn(seed);
     }
 }

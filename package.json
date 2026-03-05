@@ -14,7 +14,9 @@
     "test:ci": "jest --ci --coverage --maxWorkers=2",
     "lint": "eslint src tests --ignore-pattern 'tests/.archived/**'",
     "lint:fix": "eslint src tests --fix",
-    "prepare": "husky"
+    "prepare": "husky",
+    "simulate:seeds": "node tools/seed-kpi-gate.js --no-fail",
+    "kpi:gate": "node tools/seed-kpi-gate.js"
   },
   "dependencies": {
     "oxlint": "^1.39.0",

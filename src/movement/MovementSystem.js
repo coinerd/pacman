@@ -80,7 +80,9 @@ export class MovementSystem {
             virusCoreCenter: this.config.virusCoreCenter,
             virusCoreEntrance: this.config.virusCoreEntrance,
             modeDurations: options.modeDurations,
-            frightenedDuration: options.frightenedDuration
+            frightenedDuration: options.frightenedDuration,
+            randomSeed: options.enemyDecisionSeed ?? this.config.enemyDecisionSeed,
+            randomFn: options.enemyDecisionRandomFn
         });
 
         this.isInitialized = true;

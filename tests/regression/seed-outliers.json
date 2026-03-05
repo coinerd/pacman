@@ -1,0 +1,430 @@
+{
+  "generatedAt": "2026-03-05T11:04:25.755Z",
+  "targetConfig": "tools/kpi-targets.json",
+  "outliers": [
+    {
+      "difficulty": "easy",
+      "seed": 1003,
+      "survivalSeconds": 128.5595183221856,
+      "winRate": 0.4166666666666667,
+      "deadEndEncounterRate": 0.21491013838948372,
+      "deadEndDensity": 0.03571428571428571
+    },
+    {
+      "difficulty": "easy",
+      "seed": 1005,
+      "survivalSeconds": 119.7415504033198,
+      "winRate": 0.5,
+      "deadEndEncounterRate": 0.27119559305367574,
+      "deadEndDensity": 0.06341463414634146
+    },
+    {
+      "difficulty": "easy",
+      "seed": 1006,
+      "survivalSeconds": 120.0759451180583,
+      "winRate": 0.3333333333333333,
+      "deadEndEncounterRate": 0.2583714984416722,
+      "deadEndDensity": 0.06971153846153846
+    },
+    {
+      "difficulty": "easy",
+      "seed": 1011,
+      "survivalSeconds": 119.2791846036669,
+      "winRate": 0.5,
+      "deadEndEncounterRate": 0.2315237112191374,
+      "deadEndDensity": 0.05134474327628362
+    },
+    {
+      "difficulty": "easy",
+      "seed": 1012,
+      "survivalSeconds": 116.65541242217826,
+      "winRate": 0.4166666666666667,
+      "deadEndEncounterRate": 0.2356593611064943,
+      "deadEndDensity": 0.057971014492753624
+    },
+    {
+      "difficulty": "easy",
+      "seed": 1013,
+      "survivalSeconds": 122.42637269260662,
+      "winRate": 0.4166666666666667,
+      "deadEndEncounterRate": 0.22908169388546915,
+      "deadEndDensity": 0.0535279805352798
+    },
+    {
+      "difficulty": "easy",
+      "seed": 1014,
+      "survivalSeconds": 117.16102173908483,
+      "winRate": 0.3333333333333333,
+      "deadEndEncounterRate": 0.24634386868356697,
+      "deadEndDensity": 0.057971014492753624
+    },
+    {
+      "difficulty": "easy",
+      "seed": 1021,
+      "survivalSeconds": 121.89672533818664,
+      "winRate": 0.5,
+      "deadEndEncounterRate": 0.2327427406920796,
+      "deadEndDensity": 0.04600484261501211
+    },
+    {
+      "difficulty": "easy",
+      "seed": 1026,
+      "survivalSeconds": 117.93235879994465,
+      "winRate": 0.5,
+      "deadEndEncounterRate": 0.2622498828189758,
+      "deadEndDensity": 0.06666666666666667
+    },
+    {
+      "difficulty": "easy",
+      "seed": 1027,
+      "survivalSeconds": 111.33445724370866,
+      "winRate": 0.5,
+      "deadEndEncounterRate": 0.27035298886689185,
+      "deadEndDensity": 0.06779661016949153
+    },
+    {
+      "difficulty": "easy",
+      "seed": 1028,
+      "survivalSeconds": 115.92620341096888,
+      "winRate": 0.5,
+      "deadEndEncounterRate": 0.26325494491910634,
+      "deadEndDensity": 0.058823529411764705
+    },
+    {
+      "difficulty": "normal",
+      "seed": 2000,
+      "survivalSeconds": 74.3511074879199,
+      "winRate": 0.25,
+      "deadEndEncounterRate": 0.3366568417334075,
+      "deadEndDensity": 0.05378973105134474
+    },
+    {
+      "difficulty": "normal",
+      "seed": 2001,
+      "survivalSeconds": 78.95318657354062,
+      "winRate": 0.25,
+      "deadEndEncounterRate": 0.35560974401954587,
+      "deadEndDensity": 0.06779661016949153
+    },
+    {
+      "difficulty": "normal",
+      "seed": 2002,
+      "survivalSeconds": 77.23363294408034,
+      "winRate": 0.25,
+      "deadEndEncounterRate": 0.3287072248729092,
+      "deadEndDensity": 0.043583535108958835
+    },
+    {
+      "difficulty": "normal",
+      "seed": 2003,
+      "survivalSeconds": 80.02504508166273,
+      "winRate": 0.25,
+      "deadEndEncounterRate": 0.2909460160325706,
+      "deadEndDensity": 0.036585365853658534
+    },
+    {
+      "difficulty": "normal",
+      "seed": 2004,
+      "survivalSeconds": 75.37765822713898,
+      "winRate": 0.25,
+      "deadEndEncounterRate": 0.3281547383773822,
+      "deadEndDensity": 0.05121951219512195
+    },
+    {
+      "difficulty": "normal",
+      "seed": 2005,
+      "survivalSeconds": 72.26498328495174,
+      "winRate": 0.25,
+      "deadEndEncounterRate": 0.31122247469486614,
+      "deadEndDensity": 0.04589371980676329
+    },
+    {
+      "difficulty": "normal",
+      "seed": 2008,
+      "survivalSeconds": 83.64820632748683,
+      "winRate": 0.25,
+      "deadEndEncounterRate": 0.32920720984118995,
+      "deadEndDensity": 0.054187192118226604
+    },
+    {
+      "difficulty": "normal",
+      "seed": 2011,
+      "survivalSeconds": 79.85149612236002,
+      "winRate": 0.25,
+      "deadEndEncounterRate": 0.3280276677860612,
+      "deadEndDensity": 0.047619047619047616
+    },
+    {
+      "difficulty": "normal",
+      "seed": 2013,
+      "survivalSeconds": 77.72409457641639,
+      "winRate": 0.25,
+      "deadEndEncounterRate": 0.35791814988543286,
+      "deadEndDensity": 0.06633906633906633
+    },
+    {
+      "difficulty": "normal",
+      "seed": 2016,
+      "survivalSeconds": 73.76836556634984,
+      "winRate": 0.25,
+      "deadEndEncounterRate": 0.3423339702359143,
+      "deadEndDensity": 0.06097560975609756
+    },
+    {
+      "difficulty": "normal",
+      "seed": 2017,
+      "survivalSeconds": 74.04362337944926,
+      "winRate": 0.08333333333333333,
+      "deadEndEncounterRate": 0.31974158423224597,
+      "deadEndDensity": 0.056372549019607844
+    },
+    {
+      "difficulty": "normal",
+      "seed": 2020,
+      "survivalSeconds": 78.09313890599442,
+      "winRate": 0.08333333333333333,
+      "deadEndEncounterRate": 0.3424136471930755,
+      "deadEndDensity": 0.059113300492610835
+    },
+    {
+      "difficulty": "normal",
+      "seed": 2021,
+      "survivalSeconds": 75.41110609047905,
+      "winRate": 0.25,
+      "deadEndEncounterRate": 0.331105570046447,
+      "deadEndDensity": 0.05121951219512195
+    },
+    {
+      "difficulty": "normal",
+      "seed": 2022,
+      "survivalSeconds": 78.30354328200598,
+      "winRate": 0.25,
+      "deadEndEncounterRate": 0.3368017517726409,
+      "deadEndDensity": 0.051094890510948905
+    },
+    {
+      "difficulty": "normal",
+      "seed": 2023,
+      "survivalSeconds": 73.94119124799086,
+      "winRate": 0.25,
+      "deadEndEncounterRate": 0.36099870807601114,
+      "deadEndDensity": 0.06356968215158924
+    },
+    {
+      "difficulty": "normal",
+      "seed": 2028,
+      "survivalSeconds": 81.59315215894496,
+      "winRate": 0.25,
+      "deadEndEncounterRate": 0.3193814714201127,
+      "deadEndDensity": 0.05134474327628362
+    },
+    {
+      "difficulty": "hard",
+      "seed": 3000,
+      "survivalSeconds": 46.57396530740932,
+      "winRate": 0,
+      "deadEndEncounterRate": 0.48413323554040993,
+      "deadEndDensity": 0.0705596107055961
+    },
+    {
+      "difficulty": "hard",
+      "seed": 3002,
+      "survivalSeconds": 49.36474535003196,
+      "winRate": 0,
+      "deadEndEncounterRate": 0.4124036560819697,
+      "deadEndDensity": 0.044226044226044224
+    },
+    {
+      "difficulty": "hard",
+      "seed": 3003,
+      "survivalSeconds": 47.94235595456752,
+      "winRate": 0.08333333333333333,
+      "deadEndEncounterRate": 0.4334738791435866,
+      "deadEndDensity": 0.05392156862745098
+    },
+    {
+      "difficulty": "hard",
+      "seed": 3004,
+      "survivalSeconds": 48.73857132843776,
+      "winRate": 0.08333333333333333,
+      "deadEndEncounterRate": 0.4329339375637003,
+      "deadEndDensity": 0.05596107055961071
+    },
+    {
+      "difficulty": "hard",
+      "seed": 3005,
+      "survivalSeconds": 48.91483415960849,
+      "winRate": 0,
+      "deadEndEncounterRate": 0.4528162840081505,
+      "deadEndDensity": 0.06188118811881188
+    },
+    {
+      "difficulty": "hard",
+      "seed": 3006,
+      "survivalSeconds": 49.08129336160371,
+      "winRate": 0.08333333333333333,
+      "deadEndEncounterRate": 0.43819714539531684,
+      "deadEndDensity": 0.05868544600938967
+    },
+    {
+      "difficulty": "hard",
+      "seed": 3007,
+      "survivalSeconds": 51.73566809307945,
+      "winRate": 0.08333333333333333,
+      "deadEndEncounterRate": 0.44157966316369107,
+      "deadEndDensity": 0.06403940886699508
+    },
+    {
+      "difficulty": "hard",
+      "seed": 3009,
+      "survivalSeconds": 46.09754660880787,
+      "winRate": 0,
+      "deadEndEncounterRate": 0.4350385431294485,
+      "deadEndDensity": 0.05896805896805897
+    },
+    {
+      "difficulty": "hard",
+      "seed": 3010,
+      "survivalSeconds": 47.763849660731516,
+      "winRate": 0.08333333333333333,
+      "deadEndEncounterRate": 0.4500659904639002,
+      "deadEndDensity": 0.057971014492753624
+    },
+    {
+      "difficulty": "hard",
+      "seed": 3011,
+      "survivalSeconds": 51.054384298327555,
+      "winRate": 0.08333333333333333,
+      "deadEndEncounterRate": 0.40391887009365335,
+      "deadEndDensity": 0.043795620437956206
+    },
+    {
+      "difficulty": "hard",
+      "seed": 3012,
+      "survivalSeconds": 47.39273653498449,
+      "winRate": 0,
+      "deadEndEncounterRate": 0.42731860698043106,
+      "deadEndDensity": 0.053268765133171914
+    },
+    {
+      "difficulty": "hard",
+      "seed": 3014,
+      "survivalSeconds": 54.81875600214199,
+      "winRate": 0,
+      "deadEndEncounterRate": 0.4395405497234001,
+      "deadEndDensity": 0.046798029556650245
+    },
+    {
+      "difficulty": "hard",
+      "seed": 3015,
+      "survivalSeconds": 50.8053353433902,
+      "winRate": 0,
+      "deadEndEncounterRate": 0.42768869814862365,
+      "deadEndDensity": 0.04878048780487805
+    },
+    {
+      "difficulty": "hard",
+      "seed": 3016,
+      "survivalSeconds": 45.15559064282653,
+      "winRate": 0.08333333333333333,
+      "deadEndEncounterRate": 0.46061543932283605,
+      "deadEndDensity": 0.06403940886699508
+    },
+    {
+      "difficulty": "hard",
+      "seed": 3017,
+      "survivalSeconds": 49.04876518792603,
+      "winRate": 0,
+      "deadEndEncounterRate": 0.464791880308795,
+      "deadEndDensity": 0.07371007371007371
+    },
+    {
+      "difficulty": "hard",
+      "seed": 3019,
+      "survivalSeconds": 48.142524115088634,
+      "winRate": 0,
+      "deadEndEncounterRate": 0.47696106745045336,
+      "deadEndDensity": 0.07334963325183375
+    },
+    {
+      "difficulty": "hard",
+      "seed": 3020,
+      "survivalSeconds": 51.29904943420251,
+      "winRate": 0.08333333333333333,
+      "deadEndEncounterRate": 0.42699523602856404,
+      "deadEndDensity": 0.04589371980676329
+    },
+    {
+      "difficulty": "hard",
+      "seed": 3021,
+      "survivalSeconds": 50.67047265899996,
+      "winRate": 0,
+      "deadEndEncounterRate": 0.43863163366652996,
+      "deadEndDensity": 0.05432098765432099
+    },
+    {
+      "difficulty": "hard",
+      "seed": 3022,
+      "survivalSeconds": 48.43233978559618,
+      "winRate": 0,
+      "deadEndEncounterRate": 0.41420869057932924,
+      "deadEndDensity": 0.051094890510948905
+    },
+    {
+      "difficulty": "hard",
+      "seed": 3023,
+      "survivalSeconds": 48.15028569474622,
+      "winRate": 0,
+      "deadEndEncounterRate": 0.48377256057570617,
+      "deadEndDensity": 0.07107843137254902
+    },
+    {
+      "difficulty": "hard",
+      "seed": 3024,
+      "survivalSeconds": 52.74786968175516,
+      "winRate": 0,
+      "deadEndEncounterRate": 0.44384661548985527,
+      "deadEndDensity": 0.051470588235294115
+    },
+    {
+      "difficulty": "hard",
+      "seed": 3025,
+      "survivalSeconds": 47.06655614085341,
+      "winRate": 0.08333333333333333,
+      "deadEndEncounterRate": 0.4609620812797119,
+      "deadEndDensity": 0.06698564593301436
+    },
+    {
+      "difficulty": "hard",
+      "seed": 3026,
+      "survivalSeconds": 49.782620989106356,
+      "winRate": 0,
+      "deadEndEncounterRate": 0.46723977108108294,
+      "deadEndDensity": 0.06666666666666667
+    },
+    {
+      "difficulty": "hard",
+      "seed": 3027,
+      "survivalSeconds": 49.01168187380507,
+      "winRate": 0.08333333333333333,
+      "deadEndEncounterRate": 0.4509293559369349,
+      "deadEndDensity": 0.06188118811881188
+    },
+    {
+      "difficulty": "hard",
+      "seed": 3028,
+      "survivalSeconds": 48.69647828351258,
+      "winRate": 0.08333333333333333,
+      "deadEndEncounterRate": 0.4432063079012248,
+      "deadEndDensity": 0.05339805825242718
+    },
+    {
+      "difficulty": "hard",
+      "seed": 3029,
+      "survivalSeconds": 49.91675713092413,
+      "winRate": 0,
+      "deadEndEncounterRate": 0.42861242031227365,
+      "deadEndDensity": 0.05084745762711865
+    }
+  ]
+}
