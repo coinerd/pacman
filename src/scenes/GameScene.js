@@ -251,11 +251,11 @@ export default class GameScene extends Phaser.Scene {
         for (const event of events) {
             this.achievementSystem.check(this.gameModel);
 
-            if (event.type === 'pellet_eaten' || event.type === 'power_pellet_eaten') {
+            if (event.type === 'pellet_eaten' || event.type === 'power_pellet_eaten' || event.type === 'pelletEaten' || event.type === 'powerPelletEaten') {
                 this.checkFruitSpawn();
             }
 
-            if (event.type === 'pacman_died') {
+            if (event.type === 'pacman_died' || event.type === 'pacmanDied') {
                 this.isDeathSequence = true;
                 this.gameView.startDeathAnimation();
             }
