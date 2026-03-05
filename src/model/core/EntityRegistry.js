@@ -44,9 +44,10 @@ export class EntityRegistry {
     createGhosts() {
         const ghostTypes = ['alpha', 'beta', 'gamma', 'delta'];
         const ghosts = [];
+        const ghostSpawns = this.spawnPoints?.ghosts || {};
 
         for (const enemyType of ghostTypes) {
-            const pos = enemyStartPositions[enemyType];
+            const pos = ghostSpawns[enemyType] || enemyStartPositions[enemyType];
             if (pos) {
                 const ghost = new EnemyState(pos.x, pos.y, enemyType, this.level);
                 ghosts.push(ghost);
@@ -133,8 +134,9 @@ export class EntityRegistry {
         const playerSpawn = this.spawnPoints?.player || playerStartPosition;
         this.pacman?.reset(playerSpawn.x, playerSpawn.y);
 
+        const ghostSpawns = this.spawnPoints?.ghosts || {};
         for (const ghost of this.ghosts) {
-            const pos = enemyStartPositions[ghost.ghostType];
+            const pos = ghostSpawns[ghost.ghostType] || enemyStartPositions[ghost.ghostType];
             if (pos) {
                 ghost.reset(pos.x, pos.y);
             }

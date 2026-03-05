@@ -12,6 +12,7 @@ import {
     scatterTargets,
     gameConfig,
     enemyAIConfig,
+    enemyAICaps,
     aiWeights,
     enemyProfiles
 } from '../../config/gameConfig.js';
@@ -24,9 +25,26 @@ export class EnemyAIAdapter {
         this.currentMode = ghostModes.SCATTER;
         this.modeDurations = enemyAIConfig.stateCycle.map((cycle) => ({
             mode: cycle.state,
-            duration: cycle.duration
+            duration: this.applyPhaseCaps(cycle.state, cycle.duration)
         }));
         this.modeIndex = 0;
+        this.reactionCooldowns = new Map();
+    }
+
+    applyPhaseCaps(mode, duration) {
+        if (duration === Infinity) {
+            return duration;
+        }
+
+        if (mode === ghostModes.CHASE) {
+            return Math.min(duration, enemyAICaps.maxPursuitSeconds);
+        }
+
+        if (mode === ghostModes.SCATTER) {
+            return Math.max(duration, enemyAICaps.minScatterSeconds);
+        }
+
+        return duration;
     }
 
     /**
@@ -88,19 +106,46 @@ export class EnemyAIAdapter {
             enemy.updateFrightened(deltaSeconds);
         }
 
+        this.tickReactionCooldown(enemy, deltaSeconds);
+
         const previousState = enemy.aiState || enemy.mode || ghostModes.SCATTER;
         const nextState = this.resolveAIState(enemy);
         this.applyState(enemy, nextState, previousState);
 
         const isAtDecisionPoint = enemy.moveProgress === 0;
-        if (!isAtDecisionPoint) {
+        if (!isAtDecisionPoint || !this.canReact(enemy)) {
             return;
         }
 
         const direction = this.chooseDirectionForState(enemy, nextState);
         if (direction) {
             enemy.setDirection(direction);
+            this.resetReactionCooldown(enemy);
         }
+    }
+
+    getProfile(enemy) {
+        return enemyProfiles[enemy.ghostType] || enemyProfiles.default;
+    }
+
+    getEnemyKey(enemy) {
+        return enemy.id || `${enemy.ghostType}-${enemy.startGridX}-${enemy.startGridY}`;
+    }
+
+    tickReactionCooldown(enemy, deltaSeconds) {
+        const key = this.getEnemyKey(enemy);
+        const cooldown = this.reactionCooldowns.get(key) || 0;
+        this.reactionCooldowns.set(key, Math.max(0, cooldown - deltaSeconds));
+    }
+
+    canReact(enemy) {
+        const key = this.getEnemyKey(enemy);
+        return (this.reactionCooldowns.get(key) || 0) <= 0;
+    }
+
+    resetReactionCooldown(enemy) {
+        const profile = this.getProfile(enemy);
+        this.reactionCooldowns.set(this.getEnemyKey(enemy), profile.reactionTime ?? 0);
     }
 
     resolveAIState(enemy) {
@@ -184,9 +229,9 @@ export class EnemyAIAdapter {
         case 'alpha':
             return this.getAlphaChaseTarget(player);
         case 'beta':
-            return this.getBetaChaseTarget(player);
+            return this.getBetaChaseTarget(player, enemy);
         case 'gamma':
-            return this.getGammaChaseTarget(player);
+            return this.getGammaChaseTarget(player, enemy);
         case 'delta':
             return this.getDeltaChaseTarget(player, enemy);
         default:
@@ -277,7 +322,7 @@ export class EnemyAIAdapter {
             return null;
         }
 
-        const profile = enemyProfiles[enemy.ghostType] || enemyProfiles.default;
+        const profile = this.getProfile(enemy);
         const scoredMoves = filteredDirs.map((dir) =>
             this.evaluateDirection(enemy, dir, context, profile)
         );
@@ -317,7 +362,7 @@ export class EnemyAIAdapter {
         ).length;
 
         const contributions = {
-            targetDistance: aiWeights.targetDistance * -targetDist,
+            targetDistance: aiWeights.targetDistance * -targetDist * (profile.aggressiveness ?? 1),
             playerDistance:
                 aiWeights.playerDistance * profile.playerDistanceBias * playerDist,
             reverse:
@@ -325,7 +370,7 @@ export class EnemyAIAdapter {
                     ? aiWeights.reversePenalty
                     : 0,
             randomness:
-                (Math.random() - 0.5) * aiWeights.randomness * profile.randomnessMultiplier,
+                (Math.random() - 0.5) * aiWeights.randomness * (profile.randomness ?? profile.randomnessMultiplier ?? 1),
             bottleneck:
                 exits <= 2
                     ? aiWeights.bottleneckPenalty * (1 + profile.bottleneckBias)
@@ -372,36 +417,45 @@ export class EnemyAIAdapter {
         return { x: player.gridX, y: player.gridY };
     }
 
-    getBetaChaseTarget(player) {
-        let targetX = player.gridX + player.direction.x * enemyAIConfig.betaLookAheadTiles;
-        const targetY = player.gridY + player.direction.y * enemyAIConfig.betaLookAheadTiles;
+    getBetaChaseTarget(player, enemy) {
+        const profile = this.getProfile(enemy);
+        const lookAhead = Math.max(1, Math.round(profile.predictionHorizon || enemyAIConfig.betaLookAheadTiles));
+        let targetX = player.gridX + player.direction.x * lookAhead;
+        const targetY = player.gridY + player.direction.y * lookAhead;
 
         if (player.direction.y === -1) {
-            targetX -= enemyAIConfig.betaLookAheadTiles;
+            targetX -= lookAhead;
         }
 
         return { x: targetX, y: targetY };
     }
 
-    getGammaChaseTarget(player) {
-        const alpha = this.gameModel.getGhostByType?.('alpha');
-        const pivotX = player.gridX + player.direction.x * enemyAIConfig.gammaPivotLookAheadTiles;
-        const pivotY = player.gridY + player.direction.y * enemyAIConfig.gammaPivotLookAheadTiles;
+    getGammaChaseTarget(player, enemy) {
+        const profile = this.getProfile(enemy);
+        const lookAhead = Math.max(1, Math.round(profile.predictionHorizon || enemyAIConfig.gammaPivotLookAheadTiles));
+        const pivotX = player.gridX + player.direction.x * lookAhead;
+        const pivotY = player.gridY + player.direction.y * lookAhead;
 
-        if (alpha) {
-            return {
-                x: pivotX + (pivotX - alpha.gridX),
-                y: pivotY + (pivotY - alpha.gridY)
-            };
+        const alpha = this.gameModel.getGhostByType?.('alpha') || this.gameModel.ghosts?.find((ghost) => ghost.ghostType === 'alpha');
+        if (!alpha) {
+            return { x: pivotX, y: pivotY };
         }
-        return { x: pivotX, y: pivotY };
+
+        return {
+            x: pivotX + (pivotX - alpha.gridX),
+            y: pivotY + (pivotY - alpha.gridY)
+        };
     }
 
     getDeltaChaseTarget(player, enemy) {
+        const profile = this.getProfile(enemy);
+        const controlRadius = Math.max(3, Math.round(enemyAIConfig.deltaChaseDistanceThreshold * profile.aggressiveness));
         const dist = getDistance(enemy.gridX, enemy.gridY, player.gridX, player.gridY);
 
-        if (dist > enemyAIConfig.deltaChaseDistanceThreshold) {
-            return { x: player.gridX, y: player.gridY };
+        if (dist > controlRadius) {
+            const flankX = player.gridX + player.direction.x * (profile.predictionHorizon || 2);
+            const flankY = player.gridY + player.direction.y * (profile.predictionHorizon || 2);
+            return { x: flankX, y: flankY };
         }
 
         return scatterTargets.delta;
@@ -443,5 +497,6 @@ export class EnemyAIAdapter {
         this.modeTimer = 0;
         this.modeIndex = 0;
         this.currentMode = ghostModes.SCATTER;
+        this.reactionCooldowns.clear();
     }
 }

@@ -164,6 +164,11 @@ export const enemyAIConfig = {
     gammaPivotLookAheadTiles: 2
 };
 
+export const enemyAICaps = {
+    maxPursuitSeconds: 14,
+    minScatterSeconds: 4
+};
+
 export const aiWeights = {
     targetDistance: 2.4,
     playerDistance: 1.1,
@@ -179,31 +184,55 @@ export const aiWeights = {
 export const ai_weights = aiWeights;
 
 export const enemyProfiles = {
+    // Design Intent: Alpha soll als klarer, lesbarer "Jäger" dienen und Druck über direkte Verfolgung aufbauen.
     alpha: {
+        aggressiveness: 1.0,
+        predictionHorizon: 0,
+        randomness: 0.1,
+        reactionTime: 0.05,
         playerDistanceBias: -1.0,
         randomnessMultiplier: 0.7,
         bottleneckBias: 0.5,
         diversityOffset: 0.1
     },
+    // Design Intent: Beta bestraft lineares Ausweichen mit Vorhaltepunkt-Logik, bleibt aber noch kalkulierbar.
     beta: {
+        aggressiveness: 0.9,
+        predictionHorizon: 4,
+        randomness: 0.2,
+        reactionTime: 0.12,
         playerDistanceBias: -0.85,
         randomnessMultiplier: 1.0,
         bottleneckBias: 0.0,
         diversityOffset: -0.25
     },
+    // Design Intent: Gamma erzeugt Flankendruck statt purem Hinterherlaufen und fördert Zangen-Situationen.
     gamma: {
+        aggressiveness: 0.95,
+        predictionHorizon: 2,
+        randomness: 0.25,
+        reactionTime: 0.16,
         playerDistanceBias: -0.95,
         randomnessMultiplier: 1.15,
         bottleneckBias: -0.35,
         diversityOffset: 0.35
     },
+    // Design Intent: Delta kontrolliert Räume und Ausgänge, um sichere Zonen für den Spieler bewusst zu verkleinern.
     delta: {
+        aggressiveness: 0.75,
+        predictionHorizon: 3,
+        randomness: 0.35,
+        reactionTime: 0.24,
         playerDistanceBias: -0.65,
         randomnessMultiplier: 1.3,
         bottleneckBias: -0.6,
         diversityOffset: -0.5
     },
     default: {
+        aggressiveness: 0.8,
+        predictionHorizon: 2,
+        randomness: 0.25,
+        reactionTime: 0.15,
         playerDistanceBias: -0.8,
         randomnessMultiplier: 1.0,
         bottleneckBias: 0,
