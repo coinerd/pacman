@@ -6,6 +6,7 @@ Welcome to the developer documentation for the ADA-Woman project. This folder is
 
 - **Architecture Overview:** `docs/developer/architecture.md`
 - **Gameplay & Systems Deep Dive:** `docs/developer/gameplay.md`
+- **Gameplay Finetuning Guide:** `docs/developer/gameplay-finetuning.md`
 - **Comprehensive File Map:** `docs/developer/file-map.md`
 - **Testing & Tooling:** `docs/developer/testing.md`
 - **Test Utilities:** `docs/developer/test-utilities.md`
