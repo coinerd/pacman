@@ -40,7 +40,15 @@ const DEFAULT_CONFIG = {
         entrance: { x: 12, y: 15 },
         center: { x: 12, y: 13 }
     },
-    tunnelRow: 15
+    tunnelRow: 15,
+    minConnectivityCoverage: 1,
+    minAlternativePaths: 1,
+    deadEndDensityThreshold: 0.2,
+    maxStraightCorridorLength: 8,
+    spawnSafetyRadius: 2,
+    spawnSafetyMinFreedomSteps: 12,
+    maxRetries: 20,
+    fallbackSeedOffset: 1000003
 };
 
 export default class MazeGenerator {
@@ -79,8 +87,49 @@ export default class MazeGenerator {
     }
 
     generate() {
+        return this.generateWithRetries();
+    }
+
+    generateWithRetries() {
         const startTime = performance.now();
 
+        let lastResult = null;
+        const maxRetries = Math.max(1, this.config.maxRetries);
+
+        for (let attempt = 0; attempt < maxRetries; attempt++) {
+            const candidateSeed = this.seed + attempt;
+            this.rng = this.createSeededRNG(candidateSeed);
+            lastResult = this.generateSingleAttempt();
+
+            if (lastResult.validationResult.isValid) {
+                lastResult.stats.generatedTime = performance.now() - startTime;
+                lastResult.stats.retries = attempt;
+                lastResult.stats.finalSeed = candidateSeed;
+                lastResult.stats.fallbackUsed = false;
+                return lastResult;
+            }
+        }
+
+        const fallbackSeed = this.seed + this.config.fallbackSeedOffset;
+        this.rng = this.createSeededRNG(fallbackSeed);
+        lastResult = this.generateSingleAttempt();
+        if (!lastResult.validationResult.isValid) {
+            console.warn(`Maze fallback warning: ${lastResult.validationResult.message}`);
+            this.fixConnectivity();
+            this.placePellets();
+            this.calculateStats();
+        }
+
+        lastResult.validationResult = this.validateMaze();
+        lastResult.stats.generatedTime = performance.now() - startTime;
+        lastResult.stats.retries = maxRetries;
+        lastResult.stats.finalSeed = fallbackSeed;
+        lastResult.stats.fallbackUsed = true;
+
+        return lastResult;
+    }
+
+    generateSingleAttempt() {
         this.initializeMaze();
         this.generateVirusCore();
 
@@ -101,21 +150,17 @@ export default class MazeGenerator {
         this.adjustSpawnPoints();
         this.placePowerPellets();
 
-        const validationResult = this.validateMaze();
-        if (!validationResult.isValid) {
-            console.warn(`Maze generation warning: ${validationResult.message}`);
-            this.fixConnectivity();
-        }
-
         this.placePellets();
         this.calculateStats();
-        this.stats.generatedTime = performance.now() - startTime;
+
+        const validationResult = this.validateMaze();
 
         return {
             maze: this.maze,
             pelletGrid: this.pelletGrid,
             spawnPoints: this.spawnPoints,
-            stats: this.stats
+            stats: { ...this.stats },
+            validationResult
         };
     }
 
@@ -531,8 +576,29 @@ export default class MazeGenerator {
             }
         }
 
-        if (!this.checkConnectivity()) {
+        const connectivity = this.checkConnectivity();
+        if (!connectivity.isValid) {
             return { isValid: false, message: 'Not all areas are connected' };
+        }
+
+        const alternativePathValidation = this.validateAlternativePaths();
+        if (!alternativePathValidation.isValid) {
+            return alternativePathValidation;
+        }
+
+        const deadEndValidation = this.validateDeadEndDensity();
+        if (!deadEndValidation.isValid) {
+            return deadEndValidation;
+        }
+
+        const corridorValidation = this.validateCorridorLength();
+        if (!corridorValidation.isValid) {
+            return corridorValidation;
+        }
+
+        const spawnSafetyValidation = this.validateSpawnSafetyZone();
+        if (!spawnSafetyValidation.isValid) {
+            return spawnSafetyValidation;
         }
 
         return { isValid: true, message: 'Maze is valid' };
@@ -568,7 +634,298 @@ export default class MazeGenerator {
             }
         }
 
-        return visitedWalkable >= totalWalkable * 0.95;
+        const coverage = totalWalkable > 0 ? visitedWalkable / totalWalkable : 0;
+        return {
+            isValid: coverage >= this.config.minConnectivityCoverage,
+            coverage
+        };
+    }
+
+    validateAlternativePaths() {
+        const keyTargets = [
+            ...Object.values(this.spawnPoints.ghosts),
+            ...this.spawnPoints.powerPellets
+        ];
+
+        const requiredPaths = this.config.minAlternativePaths + 1;
+        for (const target of keyTargets) {
+            const pathCount = this.countEdgeDisjointPaths(
+                this.spawnPoints.player,
+                target,
+                requiredPaths
+            );
+
+            if (pathCount < requiredPaths) {
+                return {
+                    isValid: false,
+                    message: `Not enough alternative paths to ${target.x},${target.y} (required=${requiredPaths}, got=${pathCount})`
+                };
+            }
+        }
+
+        return { isValid: true };
+    }
+
+    validateDeadEndDensity() {
+        const walkableTiles = this.countWalkableTiles();
+        const deadEndDensity = walkableTiles > 0 ? this.stats.deadEnds / walkableTiles : 1;
+
+        if (deadEndDensity > this.config.deadEndDensityThreshold) {
+            return {
+                isValid: false,
+                message: `Dead-end density too high (${deadEndDensity.toFixed(3)})`
+            };
+        }
+
+        return { isValid: true };
+    }
+
+    validateCorridorLength() {
+        const maxLen = this.findMaxStraightCorridorLength();
+        if (maxLen > this.config.maxStraightCorridorLength) {
+            return {
+                isValid: false,
+                message: `Straight corridor too long (${maxLen})`
+            };
+        }
+
+        return { isValid: true };
+    }
+
+    validateSpawnSafetyZone() {
+        const player = this.spawnPoints.player;
+        const radius = this.config.spawnSafetyRadius;
+        let freeTiles = 0;
+
+        for (let y = player.y - radius; y <= player.y + radius; y++) {
+            for (let x = player.x - radius; x <= player.x + radius; x++) {
+                if (x < 0 || y < 0 || x >= this.width || y >= this.height) {
+                    continue;
+                }
+
+                if (Math.abs(x - player.x) + Math.abs(y - player.y) > radius) {
+                    continue;
+                }
+
+                if (isWalkableTile(this.maze, x, y)) {
+                    freeTiles++;
+                }
+            }
+        }
+
+        const reachableSteps = this.countReachableTilesWithinSteps(
+            player,
+            this.config.spawnSafetyMinFreedomSteps
+        );
+
+        if (freeTiles < 5) {
+            return {
+                isValid: false,
+                message: `Spawn safety zone too tight (walkable in radius=${freeTiles})`
+            };
+        }
+
+        if (reachableSteps < this.config.spawnSafetyMinFreedomSteps) {
+            return {
+                isValid: false,
+                message: `Insufficient early freedom near spawn (${reachableSteps}/${this.config.spawnSafetyMinFreedomSteps})`
+            };
+        }
+
+        return { isValid: true };
+    }
+
+    countWalkableTiles() {
+        let count = 0;
+        for (let y = 0; y < this.height; y++) {
+            for (let x = 0; x < this.width; x++) {
+                if (isWalkableTile(this.maze, x, y)) {
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
+
+    countEdgeDisjointPaths(start, end, maxPaths) {
+        const blockedEdges = new Set();
+        let pathCount = 0;
+
+        for (let i = 0; i < maxPaths; i++) {
+            const path = this.findShortestPath(start, end, blockedEdges);
+            if (!path) {
+                break;
+            }
+
+            pathCount++;
+            for (let idx = 0; idx < path.length - 1; idx++) {
+                const a = path[idx];
+                const b = path[idx + 1];
+                blockedEdges.add(this.edgeKey(a, b));
+                blockedEdges.add(this.edgeKey(b, a));
+            }
+        }
+
+        return pathCount;
+    }
+
+    findShortestPath(start, end, blockedEdges = new Set()) {
+        const queue = [start];
+        const visited = new Set([`${start.x},${start.y}`]);
+        const parents = new Map();
+        const directions = [
+            { x: 1, y: 0 },
+            { x: -1, y: 0 },
+            { x: 0, y: 1 },
+            { x: 0, y: -1 }
+        ];
+
+        while (queue.length > 0) {
+            const current = queue.shift();
+            if (current.x === end.x && current.y === end.y) {
+                return this.reconstructPath(parents, start, end);
+            }
+
+            for (const dir of directions) {
+                const nx = current.x + dir.x;
+                const ny = current.y + dir.y;
+                const key = `${nx},${ny}`;
+
+                if (nx < 0 || ny < 0 || nx >= this.width || ny >= this.height) {
+                    continue;
+                }
+
+                if (!isWalkableTile(this.maze, nx, ny) || visited.has(key)) {
+                    continue;
+                }
+
+                if (blockedEdges.has(this.edgeKey(current, { x: nx, y: ny }))) {
+                    continue;
+                }
+
+                visited.add(key);
+                parents.set(key, current);
+                queue.push({ x: nx, y: ny });
+            }
+        }
+
+        return null;
+    }
+
+    reconstructPath(parents, start, end) {
+        const path = [{ x: end.x, y: end.y }];
+        let cursor = { x: end.x, y: end.y };
+
+        while (!(cursor.x === start.x && cursor.y === start.y)) {
+            const parent = parents.get(`${cursor.x},${cursor.y}`);
+            if (!parent) {
+                return null;
+            }
+            path.push({ x: parent.x, y: parent.y });
+            cursor = parent;
+        }
+
+        return path.reverse();
+    }
+
+    edgeKey(a, b) {
+        return `${a.x},${a.y}->${b.x},${b.y}`;
+    }
+
+    countReachableTilesWithinSteps(start, maxSteps) {
+        const queue = [{ ...start, steps: 0 }];
+        const visited = new Set([`${start.x},${start.y}`]);
+        let reachable = 0;
+        const directions = [
+            { x: 1, y: 0 },
+            { x: -1, y: 0 },
+            { x: 0, y: 1 },
+            { x: 0, y: -1 }
+        ];
+
+        while (queue.length > 0) {
+            const current = queue.shift();
+            reachable++;
+
+            if (current.steps >= maxSteps) {
+                continue;
+            }
+
+            for (const dir of directions) {
+                const nx = current.x + dir.x;
+                const ny = current.y + dir.y;
+                const key = `${nx},${ny}`;
+
+                if (nx < 0 || ny < 0 || nx >= this.width || ny >= this.height) {
+                    continue;
+                }
+
+                if (visited.has(key) || !isWalkableTile(this.maze, nx, ny)) {
+                    continue;
+                }
+
+                visited.add(key);
+                queue.push({ x: nx, y: ny, steps: current.steps + 1 });
+            }
+        }
+
+        return reachable;
+    }
+
+    findMaxStraightCorridorLength() {
+        let maxLength = 0;
+
+        for (let y = 1; y < this.height - 1; y++) {
+            let run = 0;
+            for (let x = 1; x < this.width - 1; x++) {
+                if (this.isHorizontalCorridorTile(x, y)) {
+                    run++;
+                    maxLength = Math.max(maxLength, run);
+                } else {
+                    run = 0;
+                }
+            }
+        }
+
+        for (let x = 1; x < this.width - 1; x++) {
+            let run = 0;
+            for (let y = 1; y < this.height - 1; y++) {
+                if (this.isVerticalCorridorTile(x, y)) {
+                    run++;
+                    maxLength = Math.max(maxLength, run);
+                } else {
+                    run = 0;
+                }
+            }
+        }
+
+        return maxLength;
+    }
+
+    isHorizontalCorridorTile(x, y) {
+        if (!isWalkableTile(this.maze, x, y)) {
+            return false;
+        }
+
+        return (
+            isWalkableTile(this.maze, x - 1, y) &&
+            isWalkableTile(this.maze, x + 1, y) &&
+            !isWalkableTile(this.maze, x, y - 1) &&
+            !isWalkableTile(this.maze, x, y + 1)
+        );
+    }
+
+    isVerticalCorridorTile(x, y) {
+        if (!isWalkableTile(this.maze, x, y)) {
+            return false;
+        }
+
+        return (
+            isWalkableTile(this.maze, x, y - 1) &&
+            isWalkableTile(this.maze, x, y + 1) &&
+            !isWalkableTile(this.maze, x - 1, y) &&
+            !isWalkableTile(this.maze, x + 1, y)
+        );
     }
 
     floodFill(startX, startY, visited) {
