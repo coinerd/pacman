@@ -190,7 +190,7 @@ export const aiWeights = {
     targetDistance: 2.4,
     playerDistance: 1.1,
     reversePenalty: -3.5,
-    randomness: 0.35,
+    randomness: 0.42,
     bottleneckPenalty: -0.7,
     corridorBonus: 0.45,
     antiClusterPenalty: -0.9,
@@ -203,47 +203,47 @@ export const ai_weights = aiWeights;
 export const enemyProfiles = {
     // Design Intent: Alpha soll als klarer, lesbarer "Jäger" dienen und Druck über direkte Verfolgung aufbauen.
     alpha: {
-        aggressiveness: 1.0,
+        aggressiveness: 0.92,
         predictionHorizon: 0,
-        randomness: 0.1,
-        reactionTime: 0.05,
-        playerDistanceBias: -1.0,
-        randomnessMultiplier: 0.7,
-        bottleneckBias: 0.5,
-        diversityOffset: 0.1
+        randomness: 0.12,
+        reactionTime: 0.06,
+        playerDistanceBias: -0.92,
+        randomnessMultiplier: 0.75,
+        bottleneckBias: 0.45,
+        diversityOffset: 0.12
     },
     // Design Intent: Beta bestraft lineares Ausweichen mit Vorhaltepunkt-Logik, bleibt aber noch kalkulierbar.
     beta: {
-        aggressiveness: 0.9,
+        aggressiveness: 0.82,
         predictionHorizon: 4,
-        randomness: 0.2,
-        reactionTime: 0.12,
-        playerDistanceBias: -0.85,
-        randomnessMultiplier: 1.0,
-        bottleneckBias: 0.0,
-        diversityOffset: -0.25
+        randomness: 0.24,
+        reactionTime: 0.14,
+        playerDistanceBias: -0.78,
+        randomnessMultiplier: 1.08,
+        bottleneckBias: -0.05,
+        diversityOffset: -0.22
     },
     // Design Intent: Gamma erzeugt Flankendruck statt purem Hinterherlaufen und fördert Zangen-Situationen.
     gamma: {
-        aggressiveness: 0.95,
+        aggressiveness: 0.88,
         predictionHorizon: 2,
-        randomness: 0.25,
-        reactionTime: 0.16,
-        playerDistanceBias: -0.95,
-        randomnessMultiplier: 1.15,
-        bottleneckBias: -0.35,
-        diversityOffset: 0.35
+        randomness: 0.28,
+        reactionTime: 0.18,
+        playerDistanceBias: -0.88,
+        randomnessMultiplier: 1.22,
+        bottleneckBias: -0.42,
+        diversityOffset: 0.38
     },
     // Design Intent: Delta kontrolliert Räume und Ausgänge, um sichere Zonen für den Spieler bewusst zu verkleinern.
     delta: {
-        aggressiveness: 0.75,
+        aggressiveness: 0.70,
         predictionHorizon: 3,
-        randomness: 0.35,
-        reactionTime: 0.24,
-        playerDistanceBias: -0.65,
-        randomnessMultiplier: 1.3,
-        bottleneckBias: -0.6,
-        diversityOffset: -0.5
+        randomness: 0.40,
+        reactionTime: 0.28,
+        playerDistanceBias: -0.60,
+        randomnessMultiplier: 1.38,
+        bottleneckBias: -0.68,
+        diversityOffset: -0.45
     },
     default: {
         aggressiveness: 0.8,

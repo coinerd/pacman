@@ -67,11 +67,11 @@
       "seedCount": 30,
       "runsPerSeed": 12,
       "enemySeedOffset": 9001,
-      "baseSurvivalSeconds": 85,
-      "baseWinChance": 0.42,
-      "enemyPressure": 0.38,
+      "baseSurvivalSeconds": 92,
+      "baseWinChance": 0.48,
+      "enemyPressure": 0.34,
       "enemyVariance": 0.16,
-      "deadEndWeight": 1.45,
+      "deadEndWeight": 1.25,
       "maze": {
         "pathDensity": 0.64,
         "deadEndFactor": 0.38

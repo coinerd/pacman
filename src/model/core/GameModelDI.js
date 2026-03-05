@@ -439,6 +439,10 @@ export default class GameModelDI {
         return this.levelSystem.getScoreMultiplier();
     }
 
+    shouldSpawnFruit() {
+        return this.levelSystem.shouldSpawnFruit(this.pelletsEaten, this.totalPellets);
+    }
+
     startLevel(level) {
         this.level = level;
         const mazeData = this.spawningSystem.generateMazeForLevel(level);

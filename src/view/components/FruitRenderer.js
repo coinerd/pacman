@@ -53,6 +53,7 @@ export class FruitRenderer {
      */
     sync() {
         if (!this.state) {
+            console.log('[FruitRenderer] No state');
             return;
         }
 
@@ -94,34 +95,48 @@ export class FruitRenderer {
     drawFruit(x, y, fruitType) {
         const radius = gameConfig.tileSize * 0.6;
 
-        switch (fruitType.name) {
+        // Map new tech-themed names to classic fruit drawing methods
+        const drawMethodMap = {
+            'dataFragment': 'cherry',
+            'powerCore': 'strawberry',
+            'algorithm': 'orange',
+            'firewall': 'apple',
+            'encryption': 'melon',
+            'network': 'galaxian',
+            'kernel': 'bell',
+            'quantum': 'key'
+        };
+
+        const mappedName = drawMethodMap[fruitType.name] || fruitType.name;
+
+        switch (mappedName) {
         case 'cherry':
-            this.drawCherry(x, y, radius);
+            this.drawCherry(x, y, radius, fruitType.color);
             break;
         case 'strawberry':
-            this.drawStrawberry(x, y, radius);
+            this.drawStrawberry(x, y, radius, fruitType.color);
             break;
         case 'orange':
-            this.drawOrange(x, y, radius);
+            this.drawOrange(x, y, radius, fruitType.color);
             break;
         case 'apple':
-            this.drawApple(x, y, radius);
+            this.drawApple(x, y, radius, fruitType.color);
             break;
         case 'melon':
-            this.drawMelon(x, y, radius);
+            this.drawMelon(x, y, radius, fruitType.color);
             break;
         case 'galaxian':
-            this.drawGalaxian(x, y, radius);
+            this.drawGalaxian(x, y, radius, fruitType.color);
             break;
         case 'bell':
-            this.drawBell(x, y, radius);
+            this.drawBell(x, y, radius, fruitType.color);
             break;
         case 'key':
-            this.drawKey(x, y, radius);
+            this.drawKey(x, y, radius, fruitType.color);
             break;
         default:
-            // Default circle
-            this.graphics.fillStyle(fruitType.color, 1);
+            // Default circle with fruit color
+            this.graphics.fillStyle(fruitType.color || 0x00ced1, 1);
             this.graphics.fillCircle(x, y, radius * 0.5);
         }
     }
@@ -129,8 +144,8 @@ export class FruitRenderer {
     /**
      * Draw cherry (two circles + stem)
      */
-    drawCherry(x, y, radius) {
-        const color = fruitConfig.types[0].color;
+    drawCherry(x, y, radius, color) {
+        const fruitColor = color || fruitConfig.types[0].color;
 
         // Stem
         this.graphics.lineStyle(2, 0x00FF00, 1);
@@ -140,7 +155,7 @@ export class FruitRenderer {
         this.graphics.strokePath();
 
         // Two cherries
-        this.graphics.fillStyle(color, 1);
+        this.graphics.fillStyle(fruitColor, 1);
         this.graphics.fillCircle(x - radius * 0.3, y + radius * 0.2, radius * 0.35);
         this.graphics.fillCircle(x + radius * 0.3, y + radius * 0.2, radius * 0.35);
     }
@@ -148,8 +163,8 @@ export class FruitRenderer {
     /**
      * Draw strawberry
      */
-    drawStrawberry(x, y, radius) {
-        const color = fruitConfig.types[1].color;
+    drawStrawberry(x, y, radius, color) {
+        const fruitColor = color || fruitConfig.types[1].color;
 
         this.graphics.fillStyle(color, 1);
 
@@ -172,11 +187,11 @@ export class FruitRenderer {
     /**
      * Draw orange
      */
-    drawOrange(x, y, radius) {
-        const color = fruitConfig.types[2].color;
+    drawOrange(x, y, radius, color) {
+        const fruitColor = color || fruitConfig.types[2].color;
 
         // Main circle
-        this.graphics.fillStyle(color, 1);
+        this.graphics.fillStyle(fruitColor, 1);
         this.graphics.fillCircle(x, y, radius * 0.5);
 
         // Stem
@@ -193,10 +208,10 @@ export class FruitRenderer {
     /**
      * Draw apple
      */
-    drawApple(x, y, radius) {
-        const color = fruitConfig.types[3].color;
+    drawApple(x, y, radius, color) {
+        const fruitColor = color || fruitConfig.types[3].color;
 
-        this.graphics.fillStyle(color, 1);
+        this.graphics.fillStyle(fruitColor, 1);
         this.graphics.fillCircle(x, y + radius * 0.1, radius * 0.45);
         this.graphics.fillCircle(x - radius * 0.25, y - radius * 0.2, radius * 0.35);
         this.graphics.fillCircle(x + radius * 0.25, y - radius * 0.2, radius * 0.35);
@@ -212,11 +227,11 @@ export class FruitRenderer {
     /**
      * Draw melon
      */
-    drawMelon(x, y, radius) {
-        const color = fruitConfig.types[4].color;
+    drawMelon(x, y, radius, color) {
+        const fruitColor = color || fruitConfig.types[4].color;
 
         // Main body
-        this.graphics.fillStyle(color, 1);
+        this.graphics.fillStyle(fruitColor, 1);
         this.graphics.fillEllipse(x, y, radius, radius * 1.2);
 
         // Stripes
@@ -228,11 +243,11 @@ export class FruitRenderer {
     /**
      * Draw Galaxian flagship
      */
-    drawGalaxian(x, y, radius) {
-        const color = fruitConfig.types[5].color;
+    drawGalaxian(x, y, radius, color) {
+        const fruitColor = color || fruitConfig.types[5].color;
 
         // Main body (triangle)
-        this.graphics.fillStyle(color, 1);
+        this.graphics.fillStyle(fruitColor, 1);
         this.graphics.beginPath();
         this.graphics.moveTo(x, y - radius * 0.6);
         this.graphics.lineTo(x + radius * 0.5, y + radius * 0.3);
@@ -248,11 +263,11 @@ export class FruitRenderer {
     /**
      * Draw bell
      */
-    drawBell(x, y, radius) {
-        const color = fruitConfig.types[6].color;
+    drawBell(x, y, radius, color) {
+        const fruitColor = color || fruitConfig.types[6].color;
 
         // Bell body
-        this.graphics.fillStyle(color, 1);
+        this.graphics.fillStyle(fruitColor, 1);
         this.graphics.beginPath();
         this.graphics.moveTo(x - radius * 0.4, y - radius * 0.3);
         this.graphics.lineTo(x + radius * 0.4, y - radius * 0.3);
@@ -269,11 +284,11 @@ export class FruitRenderer {
     /**
      * Draw key
      */
-    drawKey(x, y, radius) {
-        const color = fruitConfig.types[7].color;
+    drawKey(x, y, radius, color) {
+        const fruitColor = color || fruitConfig.types[7].color;
 
         // Key head (circle)
-        this.graphics.lineStyle(3, color, 1);
+        this.graphics.lineStyle(3, fruitColor, 1);
         this.graphics.strokeCircle(x, y - radius * 0.2, radius * 0.25);
 
         // Key shaft

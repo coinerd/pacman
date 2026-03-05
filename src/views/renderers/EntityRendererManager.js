@@ -23,7 +23,7 @@ export class EntityRendererManager {
      * @returns {boolean} - True if successful
      */
     createRenderersFromSnapshot(snapshot) {
-        if (!snapshot.pacman || !snapshot.ghosts || !snapshot.fruit) {
+        if (!snapshot.pacman || !snapshot.ghosts) {
             return false;
         }
 
@@ -36,8 +36,10 @@ export class EntityRendererManager {
             this.ghostRenderers.set(ghostData.ghostType, ghostRenderer);
         }
 
-        // Create FruitRenderer from snapshot data
-        this.fruitRenderer = new FruitRenderer(this.scene, snapshot.fruit);
+        // Create FruitRenderer from snapshot data (only if fruit exists)
+        if (snapshot.fruit) {
+            this.fruitRenderer = new FruitRenderer(this.scene, snapshot.fruit);
+        }
 
         return true;
     }
@@ -52,7 +54,7 @@ export class EntityRendererManager {
         const ghostsData = gameModel?.ghosts;
         const fruitData = gameModel?.fruit;
 
-        if (!pacmanData || !ghostsData || !fruitData) {
+        if (!pacmanData || !ghostsData) {
             return false;
         }
 
@@ -65,8 +67,10 @@ export class EntityRendererManager {
             this.ghostRenderers.set(ghostData.ghostType, ghostRenderer);
         }
 
-        // Create FruitRenderer from model data
-        this.fruitRenderer = new FruitRenderer(this.scene, fruitData);
+        // Create FruitRenderer from model data (only if fruit exists)
+        if (fruitData) {
+            this.fruitRenderer = new FruitRenderer(this.scene, fruitData);
+        }
 
         return true;
     }
@@ -96,8 +100,13 @@ export class EntityRendererManager {
         }
 
         // Update fruit renderer using update() method
-        if (this.fruitRenderer && snapshot.fruit) {
-            this.fruitRenderer.update(snapshot.fruit);
+        if (snapshot.fruit) {
+            if (this.fruitRenderer) {
+                this.fruitRenderer.update(snapshot.fruit);
+            } else {
+                // Create fruit renderer if needed
+                this.fruitRenderer = new FruitRenderer(this.scene, snapshot.fruit);
+            }
         }
     }
 
@@ -140,8 +149,7 @@ export class EntityRendererManager {
      */
     hasRenderers() {
         return this.playerRenderer !== null &&
-               this.ghostRenderers.size > 0 &&
-               this.fruitRenderer !== null;
+               this.ghostRenderers.size > 0;
     }
 
     /**

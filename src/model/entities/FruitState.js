@@ -88,6 +88,14 @@ export class FruitState extends ModelEntity {
         this.fruitTypeIndex = Math.min(level - 1, fruitConfig.types.length - 1);
         const fruitType = fruitConfig.types[this.fruitTypeIndex];
 
+        // Set position from fruitConfig
+        const position = fruitConfig.positions[0] || { x: 13, y: 27 };
+        this.gridX = position.x;
+        this.gridY = position.y;
+        const pixel = getCenterPixel(position.x, position.y);
+        this.x = pixel.x;
+        this.y = pixel.y;
+
         this.score = fruitType.score;
         this.active = true;
         this.timer = this.duration;
