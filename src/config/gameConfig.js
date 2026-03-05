@@ -164,6 +164,53 @@ export const enemyAIConfig = {
     gammaPivotLookAheadTiles: 2
 };
 
+export const aiWeights = {
+    targetDistance: 2.4,
+    playerDistance: 1.1,
+    reversePenalty: -3.5,
+    randomness: 0.35,
+    bottleneckPenalty: -0.7,
+    corridorBonus: 0.45,
+    antiClusterPenalty: -0.9,
+    diversityFactor: 0.4
+};
+
+// Backward compatibility / explicit balancing key requested by design docs
+export const ai_weights = aiWeights;
+
+export const enemyProfiles = {
+    alpha: {
+        playerDistanceBias: -1.0,
+        randomnessMultiplier: 0.7,
+        bottleneckBias: 0.5,
+        diversityOffset: 0.1
+    },
+    beta: {
+        playerDistanceBias: -0.85,
+        randomnessMultiplier: 1.0,
+        bottleneckBias: 0.0,
+        diversityOffset: -0.25
+    },
+    gamma: {
+        playerDistanceBias: -0.95,
+        randomnessMultiplier: 1.15,
+        bottleneckBias: -0.35,
+        diversityOffset: 0.35
+    },
+    delta: {
+        playerDistanceBias: -0.65,
+        randomnessMultiplier: 1.3,
+        bottleneckBias: -0.6,
+        diversityOffset: -0.5
+    },
+    default: {
+        playerDistanceBias: -0.8,
+        randomnessMultiplier: 1.0,
+        bottleneckBias: 0,
+        diversityOffset: 0
+    }
+};
+
 export const enemyStartPositions = {
     alpha: { x: 2, y: 1 },
     beta: { x: 22, y: 1 },

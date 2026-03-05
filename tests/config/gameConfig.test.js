@@ -1,11 +1,14 @@
 import {
     additionalPowerUpConfig,
+    aiWeights,
+    ai_weights,
     bossConfig,
     enemyColors,
     gameConfig,
     ghostColors,
     ghostModes,
     powerPacketPositions,
+    enemyProfiles,
     powerPelletPositions,
     scoreValues,
     storyConfig,
@@ -163,6 +166,23 @@ describe('gameConfig', () => {
 
         it('should have chapter complete bonus', () => {
             expect(storyConfig.chapterCompleteBonus).toBe(5000);
+        });
+    });
+
+
+    describe('enemy AI balancing configuration', () => {
+        it('should expose aiWeights and ai_weights alias', () => {
+            expect(aiWeights).toBeDefined();
+            expect(ai_weights).toBe(aiWeights);
+            expect(aiWeights.targetDistance).toBeGreaterThan(0);
+        });
+
+        it('should expose per-enemy profiles for tuning', () => {
+            expect(enemyProfiles.alpha).toBeDefined();
+            expect(enemyProfiles.beta).toBeDefined();
+            expect(enemyProfiles.gamma).toBeDefined();
+            expect(enemyProfiles.delta).toBeDefined();
+            expect(enemyProfiles.default).toBeDefined();
         });
     });
 
