@@ -7,7 +7,7 @@
 import {
     gameConfig
 } from '../config/gameConfig.js';
-import { directions } from '../movement/core/Direction.js';
+import { Direction } from '../movement/core/Direction.js';
 import {
     getCenterPixel,
     isWalkableTile
@@ -51,8 +51,8 @@ export class ModelEntity {
 
         // Movement
         this.speed = config.speed || gameConfig.defaultSpeed;
-        this.direction = directions.NONE;
-        this.nextDirection = directions.NONE;
+        this.direction = Direction.NONE;
+        this.nextDirection = Direction.NONE;
         this.moveProgress = 0;
         this.isMoving = false;
         this.speedMultiplier = 1.0;
@@ -91,7 +91,7 @@ export class ModelEntity {
 	 */
     clearDirectionBuffer() {
         this.directionBuffer.clear();
-        this.nextDirection = directions.NONE;
+        this.nextDirection = Direction.NONE;
     }
 
     /**
@@ -164,7 +164,7 @@ export class ModelEntity {
 	 * @returns {boolean} - True if can move
 	 */
     canMove(direction, maze) {
-        if (!direction || direction === directions.NONE) {
+        if (!direction || direction === Direction.NONE) {
             return false;
         }
         const nextX = this.gridX + direction.x;
@@ -186,7 +186,7 @@ export class ModelEntity {
         this.targetGridY = gridY;
         this.moveProgress = 0;
         this.directionBuffer.reset();
-        this.direction = directions.NONE;
+        this.direction = Direction.NONE;
         this.isMoving = false;
 
         const pixel = getCenterPixel(gridX, gridY);
