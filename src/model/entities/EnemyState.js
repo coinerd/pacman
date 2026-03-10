@@ -438,21 +438,17 @@ export class EnemyState extends ModelEntity {
 
     /**
      * Get state snapshot
-     * OPTIMIZED: Reuse snapshot object to reduce GC pressure
      * @returns {Object}
      */
     getSnapshot() {
-        // Get base snapshot from parent (which is now pooled)
-        const baseSnap = super.getSnapshot();
-
-        // Add ghost-specific properties
-        baseSnap.ghostType = this.ghostType;
-        baseSnap.mode = this.mode;
-        baseSnap.aiState = this.aiState;
-        baseSnap.isFrightened = this.isFrightened;
-        baseSnap.isEaten = this.isEaten;
-        baseSnap.visual = this.getVisualState();
-
-        return baseSnap;
+        return {
+            ...super.getSnapshot(),
+            ghostType: this.ghostType,
+            mode: this.mode,
+            aiState: this.aiState,
+            isFrightened: this.isFrightened,
+            isEaten: this.isEaten,
+            visual: this.getVisualState()
+        };
     }
 }

@@ -32,111 +32,60 @@ export default class GameModelDI {
             player: null,
             ghosts: {}
         };
-
-        // OPTIMIZATION: Snapshot pooling to reduce GC pressure
-        this._snapshotPool = null;
-        this._ghostsSnapshotPool = null;
-        this._lastSnapshotTime = 0;
-        this._cachedSnapshot = null;
-
-        if (useDI) {
-            // Services are already registered by GameScene
-            // Just get them from container
-            this.gameState = globalContainer.get('gameState');
-            this.levelSystem = globalContainer.get('levelSystem');
-            this.spawningSystem = globalContainer.get('spawningSystem');
-            this.entityRegistry = globalContainer.get('entityRegistry');
-            this.collisionHandler = globalContainer.get('collisionHandler');
-            this.movementSystem = globalContainer.get('movementSystem');
-            this.playerModule = globalContainer.get('playerModule');
-            this.scoreModule = globalContainer.get('scoreModule');
-            this.sessionModule = globalContainer.get('sessionModule');
-        } else {
-            // Legacy initialization (backward compatibility)
-            this.initializeLegacy(config);
-        }
-
-        // Register feature systems (PHASE 6: no longer depend on GameModel)
-        if (useDI) {
-            registerFeatureSystems(globalContainer);
-            this.bossBattleSystem = globalContainer.get('bossBattleSystem');
-            this.additionalPowerUpSystem = globalContainer.get('additionalPowerUpSystem');
-            this.storyMode = globalContainer.get('storyMode');
-        } else {
-            this.bossBattleSystem = new (require('../../systems/BossBattleSystem.js').default)();
-            this.additionalPowerUpSystem = new (require('../../systems/AdditionalPowerUpSystem.js').default)(this.entityRegistry, gameEvents);
-            this.storyMode = new (require('../../systems/StoryMode.js').default)();
-        }
-
-        // Initialize collision callbacks
-        this.setupCollisionCallbacks();
-
-        // Register entities in movement system
-        this.registerMovementEntities();
-
-        // Calculate pellet counts from spawning system
-        if (this.spawningSystem) {
-            const pelletGrid = this.spawningSystem.getPelletGrid();
-            if (pelletGrid) {
-                this.totalPellets = 0;
-                for (const row of pelletGrid) {
-                    for (const cell of row) {
-                        if (cell > 0) {
-                            this.totalPellets++;
-                        }
-                    }
-                }
-                this.pelletsRemaining = this.totalPellets;
-            }
-        }
-
-        // Input buffer
-        this.inputDirection = null;
-        this.desiredDirection = null;
-
-        // Tick counter (for testing)
-        this.tickCount = 0;
-        this.tick = 0;
-
-        // Profiling
-        this.gameState.startProfiling();
-
-        // Initialization complete
     }
 
-    /**
-     * Legacy initialization (backward compatibility)
-     */
-    initializeLegacy(config) {
-        const GameStateModule = require('./GameState.js');
-        const GameState = GameStateModule.default;
-        const EntityRegistryModule = require('./EntityRegistry.js');
-        const EntityRegistry = EntityRegistryModule.default;
-        const CollisionHandlerModule = require('./CollisionHandler.js');
-        const CollisionHandler = CollisionHandlerModule.default;
-        const LevelSystem = require('../systems/LevelSystem.js').LevelSystem;
-        const SpawningSystem = require('../systems/SpawningSystem.js').SpawningSystem;
-        const PlayerModule = require('../systems/PlayerModule.js').default;
-        const ScoreModule = require('../systems/ScoreModule.js').default;
-        const SessionModule = require('../systems/SessionModule.js').default;
+    init(config = {}) {
+        if (this.useDI) {
+            this.initializeWithDI(config);
+        } else {
+            this.initializeLegacy(config);
+        }
+    }
 
-        this.gameState = new GameState({
-            level: config.level || 1,
-            lives: config.lives || 3,
-            score: config.score || 0,
-            highScore: config.highScore || 0,
-            deathPauseDuration: config.deathPauseDuration
-        });
+    initializeWithDI(config) {
+        // Services are already registered by GameScene
+        // Just get them from container
+        this.gameState = globalContainer.get('gameState');
+        this.levelSystem = globalContainer.get('levelSystem');
+        this.spawningSystem = globalContainer.get('spawningSystem');
+        this.entityRegistry = globalContainer.get('entityRegistry');
+        this.collisionHandler = globalContainer.get('collisionHandler');
+        this.movementSystem = globalContainer.get('movementSystem');
+        this.playerModule = globalContainer.get('playerModule');
+        this.scoreModule = globalContainer.get('scoreModule');
+        this.sessionModule = globalContainer.get('sessionModule');
+
+        this.levelSystem.setLevel(config.level || 1);
+
+        this.initializeMovementSystem();
+        this.registerMovementEntities();
+        this.setupCollisionCallbacks();
+    }
+
+    initializeLegacy(config) {
+        // Legacy initialization (backward compatibility)
+        const { SpawningSystem } = require('../systems/SpawningSystem.js');
+        const { EntityRegistry } = require('./EntityRegistry.js');
+        const { CollisionHandler } = require('./CollisionHandler.js');
+        const { GameState } = require('./GameState.js');
+        const { LevelSystem } = require('../systems/LevelSystem.js');
 
         this.levelSystem = new LevelSystem();
         this.levelSystem.setLevel(config.level || 1);
 
-        this.spawningSystem = new SpawningSystem(this.levelSystem);
-        if (config.maze && config.pelletGrid) {
-            this.spawningSystem.setMaze(config.maze, config.pelletGrid, config.spawnPoints);
-        } else {
-            this.spawningSystem.generateMazeForLevel(config.level || 1);
-        }
+        this.spawningSystem = new SpawningSystem({
+            level: config.level || 1
+        });
+
+        const mazeData = this.spawningSystem.generateMazeForLevel(config.level || 1);
+
+        this.gameState = new GameState({
+            level: config.level || 1,
+            lives: config.lives ?? 3,
+            score: config.score || 0,
+            highScore: config.highScore || 0,
+            deathPauseDuration: config.deathPauseDuration
+        });
 
         this.entityRegistry = new EntityRegistry({
             level: config.level || 1,
@@ -152,21 +101,25 @@ export default class GameModelDI {
         });
 
         this.initializeMovementSystem();
-
-        this.playerModule = new PlayerModule();
-        this.scoreModule = new ScoreModule();
-        this.sessionModule = new SessionModule();
+        this.registerMovementEntities();
     }
 
     /**
-     * Setup collision callbacks
+     * Initialize movement system
      */
-    setupCollisionCallbacks() {
-        this.collisionHandler.onPelletEaten = this.handlePelletEaten.bind(this);
-        this.collisionHandler.onPowerPelletEaten = this.handlePowerPelletEaten.bind(this);
-        this.collisionHandler.onGhostEaten = this.handleGhostEaten.bind(this);
-        this.collisionHandler.onPacmanDied = this.handlePacmanDied.bind(this);
-        this.collisionHandler.onFruitEaten = this.handleFruitEaten.bind(this);
+    initializeMovementSystem() {
+        this.movementSystem = new MovementSystem({
+            tileSize: 20,
+            tunnelRow: 15,
+            virusCoreCenter: { x: 13, y: 14 },
+            virusCoreEntrance: { x: 13, y: 11 }
+        });
+
+        this.movementSystem.initialize(this.spawningSystem.getMaze(), {
+            tileConfig: { wall: 1, pellet: 2, empty: 0 },
+            modeDurations: this.levelSystem.getModeDurations(),
+            frightenedDuration: this.levelSystem.getFrightenedDuration()
+        });
     }
 
     /**
@@ -242,52 +195,19 @@ export default class GameModelDI {
     }
 
     /**
-     * Initialize movement system (legacy path)
+     * Setup collision callbacks
      */
-    initializeMovementSystem() {
-        // Get maze and pellet grid from spawning system
-        // Note: This is only called in legacy path, DI path uses spawningSystem directly
-
-        this.movementSystem = new MovementSystem({
-            tileSize: 20,
-            tunnelRow: 15,
-            virusCoreCenter: { x: 13, y: 14 },
-            virusCoreEntrance: { x: 13, y: 11 }
-        });
-
-        const scatterDuration = this.levelSystem.getLevelConfig().scatterDuration || 7;
-        const chaseDuration = this.levelSystem.getLevelConfig().chaseDuration || 20;
-
-        this.movementSystem.initialize(
-            this.maze || (this.spawningSystem?.getMaze() || []),
-            {
-                tileSize: 20,
-                modeDurations: [
-                    { mode: 'SCATTER', duration: scatterDuration },
-                    { mode: 'CHASE', duration: chaseDuration },
-                    { mode: 'SCATTER', duration: scatterDuration },
-                    { mode: 'CHASE', duration: chaseDuration },
-                    { mode: 'SCATTER', duration:5 },
-                    { mode: 'CHASE', duration: chaseDuration },
-                    { mode: 'SCATTER', duration: 5 },
-                    { mode: 'CHASE', duration: Infinity }
-                ],
-                frightenedDuration: this.levelSystem.getFrightenedDuration() || 8
-            }
-        );
+    setupCollisionCallbacks() {
+        this.collisionHandler.onPelletEaten = this.handlePelletEaten.bind(this);
+        this.collisionHandler.onPowerPelletEaten = this.handlePowerPelletEaten.bind(this);
+        this.collisionHandler.onGhostEaten = this.handleGhostEaten.bind(this);
+        this.collisionHandler.onPacmanDied = this.handlePacmanDied.bind(this);
+        this.collisionHandler.onFruitEaten = this.handleFruitEaten.bind(this);
     }
 
-    // === Main Update Loop ===
+    // === Main Game Loop ===
 
-    /**
-     * Haupt-Update-Funktion
-     * @param {number} deltaSeconds - Zeit seit letztem Update in Sekunden
-     * @param {Object} input - Optional input
-     * @returns {Array} Event-Liste für View
-     */
     step(deltaSeconds, input = null) {
-        this.gameState.updateProfiling();
-
         // Pause/GameOver Check
         if (this.isPaused || this.isGameOver) {
             return [];
@@ -299,9 +219,8 @@ export default class GameModelDI {
         }
 
         // Input Handling
-        const inputDirection = input?.direction;
-        if (inputDirection && inputDirection !== 0) {
-            this.setDesiredDirection(inputDirection);
+        if (input?.direction) {
+            this.setDesiredDirection(input.direction);
         }
 
         // Update Movement
@@ -319,11 +238,12 @@ export default class GameModelDI {
             ghost.update(deltaSeconds, this.spawningSystem.getMaze());
         }
 
+        // Update Fruit
         this.entityRegistry.getFruit()?.update(deltaSeconds);
 
-        // Check Collisions
+        // Collision Detection
         const entities = {
-            pacman: this.entityRegistry.getPacman(),
+            pacman: pacman,
             ghosts: this.entityRegistry.getGhosts(),
             fruit: this.entityRegistry.getFruit()
         };
@@ -338,23 +258,8 @@ export default class GameModelDI {
             this.applyCollisionEffect(event);
         }
 
-        // Debug: Log pelletsRemaining alle 100 frames
-        if (this.tickCount % 100 === 0) {
-            console.log('pelletsRemaining:', this.pelletsRemaining, 'totalPellets:', this.totalPellets);
-        }
-
-        // Prüfe auf Level-Complete (nur wenn nicht bereits complete)
-        // Wichtig: Prüfe direkt am SpawningSystem, nicht am Event!
-        if (!this.levelComplete && this.pelletsRemaining === 0 && this.totalPellets > 0) {
-            console.log('Level Complete detected! pelletsRemaining is 0');
-            this.levelComplete = true;
-            // Emit LEVEL_COMPLETE Event nur EINMAL
-            gameEvents.emit(GAME_EVENTS.LEVEL_COMPLETE, {
-                level: this.level,
-                score: this.score,
-                highScore: this.highScore
-            });
-        }
+        // Sync Movement to Entities
+        this.movementSystem.syncToEntities();
 
         // Emit Events
         const events = [...movementEvents, ...collisionEvents];
@@ -365,6 +270,30 @@ export default class GameModelDI {
         this.tickCount = this.gameState.tick;
 
         return events;
+    }
+
+    updateDeathSequence(deltaSeconds) {
+        this.gameState.updateDeathTimer(deltaSeconds);
+
+        if (this.gameState.isDeathComplete()) {
+            if (this.lives <= 1) {
+                // Last life lost - game over
+                this.setGameOver(true);
+                gameEvents.emit(GAME_EVENTS.GAME_OVER, {
+                    score: this.score,
+                    highScore: this.highScore,
+                    level: this.level
+                });
+            } else {
+                this.lives--;
+                this.resetPositions();
+                this.isDying = false;
+                gameEvents.emit(GAME_EVENTS.RESPAWN);
+                return [{ type: 'respawn' }];
+            }
+        }
+
+        return [];
     }
 
     // === Collision Event Handlers ===
@@ -388,8 +317,6 @@ export default class GameModelDI {
         const ghost = this.entityRegistry.getGhostByType(data.ghostType);
         if (ghost) {
             ghost.eat();
-
-            // Sichere Berechnung des Scores
             const eatenCount = ghost.eatenCount ?? 0;
             const baseScore = [200, 400, 800, 1600][eatenCount % 4] ?? 200;
             const multiplier = this.levelSystem.getScoreMultiplier() ?? 1;
@@ -444,55 +371,7 @@ export default class GameModelDI {
         this.levelDeaths++;
     }
 
-    updateDeathSequence(deltaSeconds) {
-        this.gameState.updateDeathTimer(deltaSeconds);
-
-        if (this.gameState.isDeathComplete()) {
-            if (this.lives <= 1) {
-                // Last life lost - game over
-                this.setGameOver(true);
-                gameEvents.emit(GAME_EVENTS.GAME_OVER, {
-                    score: this.score,
-                    highScore: this.highScore,
-                    level: this.level
-                });
-            } else {
-                this.lives--;
-                this.resetPositions();
-                this.isDying = false;
-                gameEvents.emit(GAME_EVENTS.RESPAWN);
-                return [{ type: 'respawn' }];
-            }
-        }
-
-        return [];
-    }
-
     // === Level Management ===
-
-    setLevelConfig(levelConfig) {
-        this.levelSystem.setLevelConfig(levelConfig);
-    }
-
-    getSpeedMultiplier() {
-        return this.levelSystem.getSpeedMultiplier();
-    }
-
-    getFrightenedDuration() {
-        return this.levelSystem.getFrightenedDuration();
-    }
-
-    getGhostSpeedMultiplier() {
-        return this.levelSystem.getGhostSpeedMultiplier();
-    }
-
-    getScoreMultiplier() {
-        return this.levelSystem.getScoreMultiplier();
-    }
-
-    shouldSpawnFruit() {
-        return this.levelSystem.shouldSpawnFruit(this.pelletsEaten, this.totalPellets);
-    }
 
     startLevel(level) {
         this.level = level;
@@ -511,39 +390,17 @@ export default class GameModelDI {
         this.startLevel(next);
     }
 
+    shouldSpawnFruit() {
+        return this.levelSystem.shouldSpawnFruit(this.pelletsEaten, this.totalPellets);
+    }
+
     // === Input Handling ===
 
-    setInputDirection(direction) {
-        this.inputDirection = direction;
-        // Immediately update movement system with the new direction
-        this.setDesiredDirection(direction);
-    }
-
     setDesiredDirection(direction) {
-        this.desiredDirection = direction;
         const pacman = this.entityRegistry.getPacman();
         if (pacman) {
-            pacman.setDirection(direction);
-            // Also update movement system with converted direction
-            const movementDirection = this.convertToMovementDirection(direction);
-            if (movementDirection) {
-                this.movementSystem.setDirection(pacman.id, movementDirection);
-            }
+            pacman.setDesiredDirection(direction);
         }
-    }
-
-    /**
-     * Convert gameConfig direction to MovementSystem Direction
-     * @param {Object} direction - gameConfig direction
-     * @returns {Object|null} MovementSystem Direction
-     */
-    convertToMovementDirection(direction) {
-        if (!direction) {return null;}
-        if (direction.x === 0 && direction.y === -1) {return Direction.UP;}
-        if (direction.x === 0 && direction.y === 1) {return Direction.DOWN;}
-        if (direction.x === -1 && direction.y === 0) {return Direction.LEFT;}
-        if (direction.x === 1 && direction.y === 0) {return Direction.RIGHT;}
-        return Direction.NONE;
     }
 
     // === Ghost Management ===
@@ -594,166 +451,43 @@ export default class GameModelDI {
         }
     }
 
-    // === State Management (Delegated) ===
+    // === Utility Methods ===
 
-    get level() { return this.gameState.level; }
-    set level(value) {
-        this.gameState.level = value;
-        this.levelSystem.setLevel(value);
-    }
-
-    get score() { return this.gameState.score; }
-    set score(value) { this.gameState.score = value; }
-
-    get highScore() { return this.gameState.highScore; }
-    set highScore(value) { this.gameState.highScore = value; }
-
-    get lives() { return this.gameState.lives; }
-    set lives(value) { this.gameState.lives = value; }
-
-    get pelletsEaten() { return this.scoreModule.pelletsEaten; }
-    set pelletsEaten(value) { this.scoreModule.pelletsEaten = value; }
-
-    get ghostsEaten() { return this.scoreModule.ghostsEaten; }
-    set ghostsEaten(value) { this.scoreModule.ghostsEaten = value; }
-
-    get currentComboGhosts() { return this.scoreModule.currentComboGhosts; }
-    set currentComboGhosts(value) { this.scoreModule.currentComboGhosts = value; }
-
-    get maxComboGhosts() { return this.gameState.maxComboGhosts; }
-    set maxComboGhosts(value) { this.gameState.maxComboGhosts = value; }
-
-    get isPaused() { return this.gameState.isPaused; }
-    set isPaused(value) { this.gameState.isPaused = value; }
-
-    get isGameOver() { return this.gameState.isGameOver; }
-    set isGameOver(value) { this.gameState.isGameOver = value; }
-
-    get levelComplete() { return this.gameState.levelComplete; }
-    set levelComplete(value) { this.gameState.levelComplete = value; }
-
-    get levelDeaths() { return this.gameState.levelDeaths; }
-    set levelDeaths(value) { this.gameState.levelDeaths = value; }
-
-    get isDying() { return this.gameState.isDying; }
-    set isDying(value) { this.gameState.isDying = value; }
-
-    get pelletsRemaining() { return this.spawningSystem.getPelletsRemaining(); }
-    set pelletsRemaining(value) { this.spawningSystem.setPelletsRemaining(value); }
-
-    get totalPellets() { return this.spawningSystem.getTotalPellets(); }
-    set totalPellets(value) { this.spawningSystem.totalPellets = value; }
-
-    // === Entity Access ===
-
-    get pacman() { return this.entityRegistry.getPacman(); }
-    get ghosts() { return this.entityRegistry.getGhosts(); }
-    get fruit() { return this.entityRegistry.getFruit(); }
-
-    get maze() { return this.spawningSystem.getMaze(); }
-    get pelletGrid() { return this.spawningSystem.getPelletGrid(); }
-
-    getGhostByType(ghostType) {
-        return this.entityRegistry.getGhostByType(ghostType);
-    }
-
-    // === Control Methods ===
-
-    setPaused(paused) {
-        this.isPaused = paused;
-        if (paused) {
-            this.movementSystem?.pause();
-        } else {
-            this.movementSystem?.resume();
-        }
-    }
-
-    togglePaused() {
-        this.setPaused(!this.isPaused);
-    }
-
-    setGameOver(isGameOver) {
-        this.isGameOver = isGameOver;
+    eatPelletAt(x, y) {
+        return this.spawningSystem.removePelletAt(x, y);
     }
 
     // === Snapshots & Serialization ===
 
     getSnapshot() {
-        // OPTIMIZED: Reuse snapshot object to reduce GC pressure
-        // Only update changed values instead of creating new objects
-
-        if (!this._cachedSnapshot) {
-            this._cachedSnapshot = this._createSnapshot();
+        const ghostsSnapshot = new Array(this.ghosts.length);
+        for (let i = 0; i < this.ghosts.length; i++) {
+            ghostsSnapshot[i] = this.ghosts[i].getSnapshot();
         }
 
-        // Update mutable properties in place
-        const snap = this._cachedSnapshot;
-        snap.tickCount = this.tickCount;
-        snap.level = this.level;
-        snap.score = this.score;
-        snap.highScore = this.highScore;
-        snap.lives = this.lives;
-        snap.pelletsEaten = this.pelletsEaten;
-        snap.ghostsEaten = this.ghostsEaten;
-        snap.pelletsRemaining = this.pelletsRemaining;
-        snap.totalPellets = this.totalPellets;
-        snap.isPaused = this.isPaused;
-        snap.isGameOver = this.isGameOver;
-        snap.levelComplete = this.levelComplete;
-        snap.isDying = this.isDying;
-
-        // References (static during level)
-        snap.maze = this.maze;
-        snap.pelletGrid = this.pelletGrid;
-        snap.levelInfo = this.levelSystem.getLevelInfo();
-
-        // Update entity snapshots in place
-        snap.pacman = this.pacman?.getSnapshot();
-
-        // Reuse ghosts array
-        if (!snap.ghosts) {
-            snap.ghosts = [];
-        }
-        const ghosts = this.ghosts;
-        for (let i = 0; i < ghosts.length; i++) {
-            snap.ghosts[i] = ghosts[i].getSnapshot();
-        }
-        snap.ghosts.length = ghosts.length; // Trim if needed
-
-        snap.fruit = this.fruit?.getSnapshot();
-        snap.boss = this.bossBattleSystem?.getSnapshot();
-        const powerUpSnap = this.additionalPowerUpSystem?.getSnapshot();
-        snap.powerUps = powerUpSnap?.spawnedPowerUps || [];
-        snap.story = this.storyMode?.getSnapshot();
-
-        return snap;
-    }
-
-    _createSnapshot() {
-        // Initial creation - only called once
         return {
-            tickCount: 0,
-            level: 1,
-            score: 0,
-            highScore: 0,
-            lives: 3,
-            pelletsEaten: 0,
-            ghostsEaten: 0,
-            pelletsRemaining: 0,
-            totalPellets: 0,
-            isPaused: false,
-            isGameOver: false,
-            levelComplete: false,
-            isDying: false,
-            maze: null,
-            pelletGrid: null,
-            pacman: null,
-            ghosts: [],
-            fruit: null,
-            boss: null,
-            powerUps: [],
-            story: null,
-            levelInfo: null
+            tickCount: this.tickCount,
+            level: this.level,
+            score: this.score,
+            highScore: this.highScore,
+            lives: this.lives,
+            pelletsEaten: this.pelletsEaten,
+            ghostsEaten: this.ghostsEaten,
+            pelletsRemaining: this.pelletsRemaining,
+            totalPellets: this.totalPellets,
+            isPaused: this.isPaused,
+            isGameOver: this.isGameOver,
+            levelComplete: this.levelComplete,
+            isDying: this.isDying,
+            maze: this.maze,
+            pelletGrid: this.pelletGrid,
+            pacman: this.pacman?.getSnapshot(),
+            ghosts: ghostsSnapshot,
+            fruit: this.fruit?.getSnapshot(),
+            boss: this.bossBattleSystem?.getSnapshot(),
+            powerUps: this.additionalPowerUpSystem?.getSnapshot()?.spawnedPowerUps || [],
+            story: this.storyMode?.getSnapshot(),
+            levelInfo: this.levelSystem.getLevelInfo()
         };
     }
 
@@ -795,5 +529,79 @@ export default class GameModelDI {
     destroy() {
         this.eventUnsubscribers.forEach(unsubscribe => unsubscribe());
         this.eventUnsubscribers = [];
+    }
+
+    // === Property Getters/Setters ===
+
+    get tickCount() { return this.gameState.tick; }
+    set tickCount(value) { this.gameState.tick = value; }
+
+    get level() { return this.gameState.level; }
+    set level(value) { this.gameState.level = value; }
+
+    get score() { return this.gameState.score; }
+    set score(value) { this.gameState.score = value; }
+
+    get highScore() { return this.gameState.highScore; }
+    set highScore(value) { this.gameState.highScore = value; }
+
+    get lives() { return this.gameState.lives; }
+    set lives(value) { this.gameState.lives = value; }
+
+    get pelletsEaten() { return this.scoreModule.pelletsEaten; }
+    set pelletsEaten(value) { this.scoreModule.pelletsEaten = value; }
+
+    get ghostsEaten() { return this.scoreModule.ghostsEaten; }
+    set ghostsEaten(value) { this.scoreModule.ghostsEaten = value; }
+
+    get pelletsRemaining() { return this.spawningSystem.getPelletsRemaining(); }
+    set pelletsRemaining(value) { this.spawningSystem.setPelletsRemaining(value); }
+
+    get totalPellets() { return this.spawningSystem.getTotalPellets(); }
+    set totalPellets(value) { this.spawningSystem.setTotalPellets(value); }
+
+    get isPaused() { return this.gameState.isPaused; }
+    set isPaused(value) { this.gameState.isPaused = value; }
+
+    get isGameOver() { return this.gameState.isGameOver; }
+    set isGameOver(value) { this.gameState.isGameOver = value; }
+
+    get levelComplete() { return this.gameState.levelComplete; }
+    set levelComplete(value) { this.gameState.levelComplete = value; }
+
+    get isDying() { return this.gameState.isDying; }
+    set isDying(value) { this.gameState.isDying = value; }
+
+    get levelDeaths() { return this.gameState.levelDeaths; }
+    set levelDeaths(value) { this.gameState.levelDeaths = value; }
+
+    get pacman() { return this.entityRegistry.getPacman(); }
+    get ghosts() { return this.entityRegistry.getGhosts(); }
+    get fruit() { return this.entityRegistry.getFruit(); }
+
+    get maze() { return this.spawningSystem.getMaze(); }
+    get pelletGrid() { return this.spawningSystem.getPelletGrid(); }
+
+    getGhostByType(ghostType) {
+        return this.entityRegistry.getGhostByType(ghostType);
+    }
+
+    // === Control Methods ===
+
+    setPaused(paused) {
+        this.isPaused = paused;
+        if (paused) {
+            this.movementSystem?.pause();
+        } else {
+            this.movementSystem?.resume();
+        }
+    }
+
+    togglePaused() {
+        this.setPaused(!this.isPaused);
+    }
+
+    setGameOver(isGameOver) {
+        this.isGameOver = isGameOver;
     }
 }

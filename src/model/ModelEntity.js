@@ -1,10 +1,13 @@
 /**
  * ModelEntity
- * Base class for pure data entities in the game model.
- * NO Phaser dependencies - can run in headless mode.
+ * Base class for all game entities (player, enemies, etc.)
+ * Pure data representation with no Phaser dependencies
  */
 
-import { directions, gameConfig } from '../config/gameConfig.js';
+import {
+    gameConfig
+} from '../config/gameConfig.js';
+import { directions } from '../movement/core/Direction.js';
 import {
     getCenterPixel,
     isWalkableTile
@@ -32,108 +35,165 @@ export class ModelEntity {
         // Grid position (logical)
         this.gridX = gridX;
         this.gridY = gridY;
-
-        // Previous grid position (for interpolation)
         this.prevGridX = gridX;
         this.prevGridY = gridY;
 
-        // Target grid position (for movement progress)
+        // Target position (for smooth movement)
         this.targetGridX = gridX;
         this.targetGridY = gridY;
 
-        // Pixel position (for collision and sync) - always derived from grid position
+        // Pixel position (for rendering)
         const pixel = getCenterPixel(gridX, gridY);
         this.x = pixel.x;
         this.y = pixel.y;
         this.prevX = this.x;
         this.prevY = this.y;
 
-        // Movement progress (0.0 = at current tile, 1.0 = at target tile)
-        this.moveProgress = 0.0;
-
         // Movement
-        this.speed = config.speed || 100;
-        this.directionBuffer = new DirectionBuffer();
-        this.directionBuffer.apply(directions.NONE);
-        this.isMoving = false;
-
-        // Current direction (direct value, not buffered)
+        this.speed = config.speed || gameConfig.defaultSpeed;
         this.direction = directions.NONE;
+        this.nextDirection = directions.NONE;
+        this.moveProgress = 0;
+        this.isMoving = false;
+        this.speedMultiplier = 1.0;
 
-        // Visual state (data only, no rendering)
+        // Visual state
         this.visualState = {
-            visible: true,
-            opacity: 1.0,
-            scale: 1.0
+            scaleX: 1,
+            scaleY: 1,
+            alpha: 1,
+            visible: true
+        };
+
+        // Direction buffer for input queuing
+        this.directionBuffer = new DirectionBuffer();
+    }
+
+    /**
+	 * Set the desired direction (handles input queuing)
+	 * @param {Object} direction - Direction to move
+	 */
+    setDesiredDirection(direction) {
+        this.directionBuffer.set(direction);
+        this.nextDirection = direction;
+    }
+
+    /**
+	 * Get the buffered direction
+	 * @returns {Object} - Buffered direction or NONE
+	 */
+    getBufferedDirection() {
+        return this.directionBuffer.get();
+    }
+
+    /**
+	 * Clear the direction buffer
+	 */
+    clearDirectionBuffer() {
+        this.directionBuffer.clear();
+        this.nextDirection = directions.NONE;
+    }
+
+    /**
+	 * Set speed multiplier (for power-ups, etc.)
+	 * @param {number} multiplier - Speed multiplier
+	 */
+    setSpeedMultiplier(multiplier) {
+        this.speedMultiplier = multiplier;
+    }
+
+    /**
+	 * Get effective speed
+	 * @returns {number} - Effective speed in pixels per second
+	 */
+    getEffectiveSpeed() {
+        return this.speed * this.speedMultiplier;
+    }
+
+    /**
+	 * Get grid position
+	 * @returns {{x: number, y: number}}
+	 */
+    getGridPosition() {
+        return { x: this.gridX, y: this.gridY };
+    }
+
+    /**
+	 * Get pixel position
+	 * @returns {{x: number, y: number}}
+	 */
+    getPixelPosition() {
+        return { x: this.x, y: this.y };
+    }
+
+    /**
+	 * Get state snapshot for serialization
+	 * @returns {Object}
+	 */
+    getSnapshot() {
+        return {
+            id: this.id,
+            type: this.type,
+            gridX: this.gridX,
+            gridY: this.gridY,
+            x: this.x,
+            y: this.y,
+            direction: this.direction,
+            isMoving: this.isMoving,
+            speed: this.speed,
+            moveProgress: this.moveProgress,
+            targetGridX: this.targetGridX,
+            targetGridY: this.targetGridY,
+            visualState: { ...this.visualState }
         };
     }
 
     /**
-	 * Get current direction from buffer
+	 * Update entity (to be overridden by subclasses)
+	 * @param {number} _deltaSeconds - Time since last frame
+	 * @param {Array<Array<number>>} _maze - Maze grid
 	 */
-    get direction() {
-        return this.directionBuffer.getCurrent();
-    }
-
-    set direction(value) {
-        this.directionBuffer.apply(value);
-        // No direct assignment - use the buffer's getCurrent() via getter
+    update(_deltaSeconds, _maze) {
+        // Override in subclasses
     }
 
     /**
-	 * Get next/buffered direction
-	 */
-    get nextDirection() {
-        return this.directionBuffer.getBuffered();
-    }
-
-    set nextDirection(value) {
-        this.directionBuffer.queue(value);
-    }
-
-    /**
-	 * Queue a direction change
-	 * @param {Object} direction - Direction to queue
-	 */
-    setDirection(direction) {
-        this.directionBuffer.queue(direction);
-    }
-
-    /**
-	 * Check if entity can move in a direction
+	 * Check if entity can move in given direction
 	 * @param {Object} direction - Direction to check
 	 * @param {Array<Array<number>>} maze - Maze grid
-	 * @returns {boolean}
+	 * @returns {boolean} - True if can move
 	 */
-    canMoveInDirection(direction, maze) {
+    canMove(direction, maze) {
         if (!direction || direction === directions.NONE) {
             return false;
         }
-
-        const nextGridX = this.gridX + direction.x;
-        const nextGridY = this.gridY + direction.y;
-
-        return this.isValidPosition(nextGridX, nextGridY, maze);
+        const nextX = this.gridX + direction.x;
+        const nextY = this.gridY + direction.y;
+        return isWalkableTile(nextX, nextY, maze);
     }
 
     /**
-	 * Check if a grid position is valid (walkable)
-	 * @param {number} gridX - Grid X position
-	 * @param {number} gridY - Grid Y position
-	 * @param {Array<Array<number>>} maze - Maze grid
-	 * @returns {boolean}
+	 * Reset entity to starting position
+	 * @param {number} gridX - Reset X position
+	 * @param {number} gridY - Reset Y position
 	 */
-    isValidPosition(gridX, gridY, maze) {
-        if (!maze || gridY < 0 || gridY >= maze.length) {
-            return false;
-        }
+    resetPosition(gridX, gridY) {
+        this.gridX = gridX;
+        this.gridY = gridY;
+        this.prevGridX = gridX;
+        this.prevGridY = gridY;
+        this.targetGridX = gridX;
+        this.targetGridY = gridY;
+        this.moveProgress = 0;
+        this.directionBuffer.reset();
+        this.direction = directions.NONE;
+        this.isMoving = false;
 
-        if (gridX < 0 || gridX >= maze[0].length) {
-            // Allow tunnel wrapping on horizontal edges
-            return true;
-        }
-
-        return isWalkableTile(maze, gridX, gridY);
+        const pixel = getCenterPixel(gridX, gridY);
+        this.x = pixel.x;
+        this.y = pixel.y;
+        this.prevX = this.x;
+        this.prevY = this.y;
     }
 
     /**
@@ -190,135 +250,27 @@ export class ModelEntity {
     }
 
     /**
-	 * Update movement progress
-	 * @param {number} deltaTime - Time since last frame in seconds
+	 * Complete movement to target
 	 */
-    updateMovement(deltaTime) {
-        if (this.moveProgress > 0) {
-            const tileSize = gameConfig.tileSize;
-            const tilesPerSecond = this.speed / tileSize;
-            this.moveProgress += tilesPerSecond * deltaTime;
-
-            if (this.moveProgress >= 1.0) {
-                // Arrived at target tile
-                this.gridX = this.targetGridX;
-                this.gridY = this.targetGridY;
-
-                // Update pixel position from new grid position
-                const pixel = getCenterPixel(this.gridX, this.gridY);
-                this.x = pixel.x;
-                this.y = pixel.y;
-
-                this.moveProgress = 0;
-                this.isMoving = false;
-
-                return true; // Movement completed
-            }
-        }
-        return false; // Still moving
-    }
-
-    /**
-	 * Reset entity to a position
-	 * @param {number} gridX - New grid X
-	 * @param {number} gridY - New grid Y
-	 */
-    resetPosition(gridX, gridY) {
-        this.gridX = gridX;
-        this.gridY = gridY;
-        this.prevGridX = gridX;
-        this.prevGridY = gridY;
-        this.targetGridX = gridX;
-        this.targetGridY = gridY;
+    completeMove() {
+        this.gridX = this.targetGridX;
+        this.gridY = this.targetGridY;
         this.moveProgress = 0;
-        this.directionBuffer.reset();
-        this.direction = directions.NONE;
         this.isMoving = false;
 
-        const pixel = getCenterPixel(gridX, gridY);
+        const pixel = getCenterPixel(this.gridX, this.gridY);
         this.x = pixel.x;
         this.y = pixel.y;
-        this.prevX = this.x;
-        this.prevY = this.y;
     }
 
     /**
-	 * Get grid position
-	 * @returns {{x: number, y: number}}
+	 * Update pixel position based on move progress
 	 */
-    getGridPosition() {
-        return { x: this.gridX, y: this.gridY };
-    }
+    updatePixelPosition() {
+        const fromPixel = getCenterPixel(this.prevGridX, this.prevGridY);
+        const toPixel = getCenterPixel(this.targetGridX, this.targetGridY);
 
-    /**
-	 * Get pixel position
-	 * @returns {{x: number, y: number}}
-	 */
-    getPixelPosition() {
-        return { x: this.x, y: this.y };
-    }
-
-    /**
-	 * Get state snapshot for serialization
-	 * OPTIMIZED: Reuse snapshot object to reduce GC pressure
-	 * @returns {Object}
-	 */
-    getSnapshot() {
-        if (!this._cachedSnapshot) {
-            this._cachedSnapshot = this._createSnapshot();
-        }
-
-        const snap = this._cachedSnapshot;
-        snap.id = this.id;
-        snap.type = this.type;
-        snap.gridX = this.gridX;
-        snap.gridY = this.gridY;
-        snap.x = this.x;
-        snap.y = this.y;
-        snap.direction = this.direction;
-        snap.isMoving = this.isMoving;
-        snap.speed = this.speed;
-        snap.moveProgress = this.moveProgress;
-        snap.targetGridX = this.targetGridX;
-        snap.targetGridY = this.targetGridY;
-
-        // Copy visualState properties instead of spreading
-        const vs = this.visualState;
-        const vSnap = snap.visualState;
-        vSnap.scaleX = vs.scaleX;
-        vSnap.scaleY = vs.scaleY;
-        vSnap.alpha = vs.alpha;
-        vSnap.visible = vs.visible;
-
-        return snap;
-    }
-
-    _createSnapshot() {
-        return {
-            id: null,
-            type: null,
-            gridX: 0,
-            gridY: 0,
-            x: 0,
-            y: 0,
-            direction: null,
-            isMoving: false,
-            speed: 0,
-            moveProgress: 0,
-            targetGridX: 0,
-            targetGridY: 0,
-            visualState: { scaleX: 1, scaleY: 1, alpha: 1, visible: true }
-        };
-    }
-
-    /**
-	 * Update entity (to be overridden by subclasses)
-	 * @param {number} _deltaSeconds - Time since last frame
-	 * @param {Array<Array<number>>} _maze - Maze grid
-	 * @returns {Array<Object>} - Events generated during update
-	 */
-    update(_deltaSeconds, _maze) {
-        // Base implementation - subclasses override
-        return [];
+        this.x = fromPixel.x + (toPixel.x - fromPixel.x) * this.moveProgress;
+        this.y = fromPixel.y + (toPixel.y - fromPixel.y) * this.moveProgress;
     }
 }
