@@ -1,21 +1,22 @@
 /**
  * PelletRenderer
  * Handles pellet and power pellet rendering with pooling
+ *
+ * OPTIMIZED: Pellets werden nur einmal beim Level-Start erstellt
+ * und nur bei Events entfernt - nie bei jedem Frame das Grid scannen!
  */
 
 import { PelletPool } from '../../pools/PelletPool.js';
 import { PowerPelletPool } from '../../pools/PowerPelletPool.js';
 import { PELLET_TYPES } from '../../utils/MazeLayout.js';
-import { gameConfig } from '../../config/gameConfig.js';
+import { GAME_EVENTS, gameEvents } from '../../core/EventBus.js';
 
 export class PelletRenderer {
     constructor(scene) {
         this.scene = scene;
         this.pelletPool = null;
         this.powerPelletPool = null;
-        // Cache für Grid-Hash um unnötige Updates zu vermeiden
-        this.lastPelletGridHash = null;
-        this.pelletCount = 0;
+        this.eventUnsubscribers = [];
     }
 
     /**
@@ -29,7 +30,7 @@ export class PelletRenderer {
     }
 
     /**
-     * Create pellets from pellet grid
+     * Create pellets from pellet grid - WIRD NUR EINMAL BEIM LEVEL-START AUFGERUFEN
      * @param {Array<Array<number>>} pelletGrid - 2D pellet grid
      */
     createPellets(pelletGrid) {
@@ -37,6 +38,7 @@ export class PelletRenderer {
             return;
         }
 
+        // Erstelle alle Pellets einmalig beim Start
         for (let y = 0; y < pelletGrid.length; y++) {
             for (let x = 0; x < pelletGrid[y].length; x++) {
                 const pelletType = pelletGrid[y][x];
@@ -48,6 +50,32 @@ export class PelletRenderer {
                 }
             }
         }
+
+        // Setup Event Listener für Pellet-Essen
+        this.setupEventListeners();
+    }
+
+    /**
+     * Setup event listeners for pellet removal
+     */
+    setupEventListeners() {
+        // PELLET_EATEN Event - entferne das gefressene Pellet
+        this.eventUnsubscribers.push(
+            gameEvents.on(GAME_EVENTS.PELLET_EATEN, (data) => {
+                if (data && data.gridX !== undefined && data.gridY !== undefined) {
+                    this.removePelletAt(data.gridX, data.gridY, 'pellet');
+                }
+            })
+        );
+
+        // POWER_PELLET_EATEN Event - entferne das gefressene Power-Pellet
+        this.eventUnsubscribers.push(
+            gameEvents.on(GAME_EVENTS.POWER_PELLET_EATEN, (data) => {
+                if (data && data.gridX !== undefined && data.gridY !== undefined) {
+                    this.removePelletAt(data.gridX, data.gridY, 'power_pellet');
+                }
+            })
+        );
     }
 
     /**
@@ -71,138 +99,25 @@ export class PelletRenderer {
     }
 
     /**
-     * OPTIMIZED: Update pellet visuals based on current pellet grid
-     * Uses hash comparison to avoid processing unchanged grids
-     * @param {Array<Array<number>>} pelletGrid - Current pellet grid
+     * DEPRECATED: Wird nicht mehr bei jedem Frame aufgerufen!
+     * Pellets werden nur via Events entfernt.
+     * Diese Methode bleibt für Kompatibilität aber macht nichts mehr.
      */
     updatePelletVisuals(pelletGrid) {
-        if (!pelletGrid) {
-            return;
-        }
-
-        // OPTIMIZATION: Quick count check first
-        let currentPelletCount = 0;
-        let powerPelletCount = 0;
-        for (let y = 0; y < pelletGrid.length; y++) {
-            for (let x = 0; x < pelletGrid[y].length; x++) {
-                const type = pelletGrid[y][x];
-                if (type === PELLET_TYPES.PELLET) {currentPelletCount++;}
-                else if (type === PELLET_TYPES.POWER_PELLET) {powerPelletCount++;}
-            }
-        }
-
-        // If counts match, grid likely hasn't changed - skip expensive update
-        const activePellets = this.pelletPool.active.length;
-        const activePowerPellets = this.powerPelletPool.active.length;
-
-        if (currentPelletCount === activePellets && powerPelletCount === activePowerPellets) {
-            return; // Nothing changed, skip update
-        }
-
-        // Remove pellets that are no longer in the grid
-        const pelletsToRemove = this.findPelletsToRemove(pelletGrid);
-
-        // Remove outdated pellets
-        for (const { pellet, pool } of pelletsToRemove) {
-            pool.release(pellet);
-        }
-
-        // Add new pellets from grid
-        this.addNewPellets(pelletGrid);
-    }
-
-    /**
-     * Find pellets that should be removed
-     * @param {Array<Array<number>>} pelletGrid - Current pellet grid
-     * @returns {Array<{pellet: Object, pool: Object}>}
-     */
-    findPelletsToRemove(pelletGrid) {
-        const pelletsToRemove = [];
-
-        // Check regular pellets
-        for (const pellet of [...this.pelletPool.active]) {
-            const gridX = Math.floor(pellet.x / gameConfig.tileSize);
-            const gridY = Math.floor(pellet.y / gameConfig.tileSize);
-
-            if (!this.pelletExistsAt(gridX, gridY, pelletGrid, PELLET_TYPES.PELLET)) {
-                pelletsToRemove.push({ pellet, pool: this.pelletPool });
-            }
-        }
-
-        // Check power pellets
-        for (const pellet of [...this.powerPelletPool.active]) {
-            const gridX = Math.floor(pellet.x / gameConfig.tileSize);
-            const gridY = Math.floor(pellet.y / gameConfig.tileSize);
-
-            if (!this.pelletExistsAt(gridX, gridY, pelletGrid, PELLET_TYPES.POWER_PELLET)) {
-                pelletsToRemove.push({ pellet, pool: this.powerPelletPool });
-            }
-        }
-
-        return pelletsToRemove;
-    }
-
-    /**
-     * Check if a pellet of the specified type exists at the given grid position
-     * @param {number} gridX - Grid X position
-     * @param {number} gridY - Grid Y position
-     * @param {Array<Array<number>>} pelletGrid - Pellet grid
-     * @param {number} pelletType - Expected pellet type
-     * @returns {boolean}
-     */
-    pelletExistsAt(gridX, gridY, pelletGrid, pelletType) {
-        if (gridY < 0 || gridY >= pelletGrid.length ||
-            gridX < 0 || gridX >= pelletGrid[0].length) {
-            return false;
-        }
-        return pelletGrid[gridY][gridX] === pelletType;
-    }
-
-    /**
-     * Add new pellets from the grid that don't exist yet
-     * @param {Array<Array<number>>} pelletGrid - Current pellet grid
-     */
-    addNewPellets(pelletGrid) {
-        for (let y = 0; y < pelletGrid.length; y++) {
-            for (let x = 0; x < pelletGrid[y].length; x++) {
-                const pelletType = pelletGrid[y][x];
-
-                if (pelletType === PELLET_TYPES.PELLET) {
-                    // Check if pellet already exists in pool
-                    if (!this.pelletPool.getByGrid(x, y)) {
-                        this.pelletPool.get(x, y);
-                    }
-                } else if (pelletType === PELLET_TYPES.POWER_PELLET) {
-                    // Check if power pellet already exists in pool
-                    if (!this.powerPelletPool.getByGrid(x, y)) {
-                        this.createPowerPellet(x, y);
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Clear all pellets
-     */
-    clearAllPellets() {
-        if (this.pelletPool) {
-            this.pelletPool.releaseAll?.();
-        }
-        if (this.powerPelletPool) {
-            this.powerPelletPool.releaseAll?.();
-        }
+        // NOP - Pellets werden nur einmal erstellt und via Events entfernt
+        // Kein Grid-Scanning mehr bei jedem Frame!
     }
 
     /**
      * Remove a pellet at the specified grid position
+     * Wird aufgerufen wenn ein Pellet gefressen wurde (via Event)
      * @param {number} gridX - Grid X position
      * @param {number} gridY - Grid Y position
      * @param {string} type - Pellet type ('pellet' or 'power_pellet')
      * @returns {boolean} True if pellet was removed
      */
     removePelletAt(gridX, gridY, type) {
-        if (type === 'power_pellet') {
+        if (type === 'power_pellet' || type === 'powerPellet') {
             const pellet = this.powerPelletPool?.getByGrid(gridX, gridY);
             if (pellet) {
                 this.powerPelletPool.release(pellet);
@@ -219,6 +134,18 @@ export class PelletRenderer {
     }
 
     /**
+     * Clear all pellets
+     */
+    clearAllPellets() {
+        if (this.pelletPool) {
+            this.pelletPool.releaseAll?.();
+        }
+        if (this.powerPelletPool) {
+            this.powerPelletPool.releaseAll?.();
+        }
+    }
+
+    /**
      * Release all pellets (alias for clearAllPellets for compatibility)
      */
     releaseAll() {
@@ -229,6 +156,10 @@ export class PelletRenderer {
      * Clean up renderer resources
      */
     cleanup() {
+        // Unsubscribe event listeners
+        this.eventUnsubscribers.forEach(unsubscribe => unsubscribe());
+        this.eventUnsubscribers = [];
+
         this.clearAllPellets();
         if (this.pelletPool) {
             this.pelletPool.destroy?.();
