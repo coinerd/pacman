@@ -93,9 +93,11 @@ export class ViewManager {
     registerRenderers() {
         const phases = this.renderCoordinator.renderPhases;
 
-        // Background phase
+        // Background phase - createBackground() is called once in create(), not every frame
         this.renderCoordinator.registerRenderer(phases.BACKGROUND, {
-            render: () => this.mazeRenderer.createBackground()
+            render: () => {
+                // Background is created once in create(), no need to recreate every frame
+            }
         }, 0);
 
         // World phase - pellets are updated via events, not by scanning the grid
