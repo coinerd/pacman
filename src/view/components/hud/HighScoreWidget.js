@@ -11,6 +11,7 @@ export class HighScoreWidget {
         this.highScoreLabel = null;
         this.crownIcon = null;
         this.currentDisplayHighScore = 0;
+        this.activeTweens = [];
     }
 
     create(scene, x, y) {
@@ -72,7 +73,7 @@ export class HighScoreWidget {
     }
 
     update(highScore) {
-        if (!this.highScoreText || !this.scene) return;
+        if (!this.highScoreText || !this.scene) {return;}
 
         // Robuste Konvertierung des High Score-Werts
         let safeHighScore;
@@ -101,9 +102,12 @@ export class HighScoreWidget {
     }
 
     highlightIfNewRecord() {
-        if (!this.scene) return;
+        if (!this.scene) {return;}
 
-        this.scene.tweens.add({
+        // Kill existing tweens before creating new ones
+        this.scene.tweens.killTweensOf([this.highScoreText, this.crownIcon]);
+
+        const tween = this.scene.tweens.add({
             targets: [this.highScoreText, this.crownIcon],
             scale: { from: 1, to: 1.2 },
             duration: 200,
@@ -111,9 +115,23 @@ export class HighScoreWidget {
             repeat: 3,
             ease: 'Sine.easeOut'
         });
+        this.activeTweens.push(tween);
     }
 
     destroy() {
+        // Stop all active tweens
+        this.activeTweens.forEach(tween => {
+            if (tween && tween.stop) {
+                tween.stop();
+            }
+        });
+        this.activeTweens = [];
+
+        // Kill tweens on elements
+        if (this.scene && this.scene.tweens) {
+            this.scene.tweens.killTweensOf([this.highScoreText, this.crownIcon]);
+        }
+
         if (this.container) {
             this.container.destroy();
             this.container = null;

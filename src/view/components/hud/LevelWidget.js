@@ -10,6 +10,7 @@ export class LevelWidget {
         this.levelText = null;
         this.badgeBg = null;
         this.lastLevel = 1;
+        this.activeTweens = [];
     }
 
     create(scene, x, y) {
@@ -53,29 +54,29 @@ export class LevelWidget {
     }
 
     update(level) {
-        if (!this.levelText) return;
+        if (!this.levelText) {return;}
 
         const safeLevel = Math.max(1, Number.isFinite(Number(level)) ? Number(level) : 1);
-        
+
         if (safeLevel > this.lastLevel && this.scene) {
             this.animateLevelUp(safeLevel);
         } else {
             this.levelText.setText(`${safeLevel}`);
         }
-        
+
         this.updateBadgeColor(safeLevel);
         this.lastLevel = safeLevel;
     }
 
     updateBadgeColor(level) {
-        if (!this.badgeBg || !this.levelText) return;
+        if (!this.badgeBg || !this.levelText) {return;}
 
         const colors = [
             { bg: 0x00aaff, text: '#00ddff', border: 0x00aaff },
             { bg: 0x00ffaa, text: '#00ffaa', border: 0x00ffaa },
             { bg: 0xffaa00, text: '#ffcc00', border: 0xffaa00 },
             { bg: 0xff6666, text: '#ff8888', border: 0xff6666 },
-            { bg: 0xff00ff, text: '#ff66ff', border: 0xff00ff },
+            { bg: 0xff00ff, text: '#ff66ff', border: 0xff00ff }
         ];
 
         const colorIndex = Math.min(level - 1, colors.length - 1);
@@ -88,14 +89,18 @@ export class LevelWidget {
     }
 
     animateLevelUp(newLevel) {
-        if (!this.scene) return;
+        if (!this.scene) {return;}
 
-        this.scene.tweens.add({
+        // Kill existing tweens before creating new ones
+        this.scene.tweens.killTweensOf([this.levelText, this.badgeBg]);
+
+        const tween = this.scene.tweens.add({
             targets: [this.levelText, this.badgeBg],
             scale: { from: 1.5, to: 1 },
             duration: 400,
             ease: 'Back.easeOut'
         });
+        this.activeTweens.push(tween);
 
         this.levelText.setText(`${newLevel}`);
 
@@ -106,6 +111,19 @@ export class LevelWidget {
     }
 
     destroy() {
+        // Stop all active tweens
+        this.activeTweens.forEach(tween => {
+            if (tween && tween.stop) {
+                tween.stop();
+            }
+        });
+        this.activeTweens = [];
+
+        // Kill tweens on elements
+        if (this.scene && this.scene.tweens) {
+            this.scene.tweens.killTweensOf([this.levelText, this.badgeBg]);
+        }
+
         if (this.container) {
             this.container.destroy();
             this.container = null;

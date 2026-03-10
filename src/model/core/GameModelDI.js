@@ -27,6 +27,7 @@ export default class GameModelDI {
      */
     constructor(config = {}, useDI = true) {
         this.useDI = useDI;
+        this.eventUnsubscribers = [];
 
         if (useDI) {
             // Services are already registered by GameScene
@@ -188,30 +189,36 @@ export default class GameModelDI {
      */
     setupFeatureSystemEventListeners() {
         // BOSS_DEFEATED - Add bonus score when boss is defeated
-        gameEvents.on(GAME_EVENTS.BOSS_DEFEATED, (data) => {
-            this.score += data.scoreBonus;
-            this.checkHighScore();
-        });
+        this.eventUnsubscribers.push(
+            gameEvents.on(GAME_EVENTS.BOSS_DEFEATED, (data) => {
+                this.score += data.scoreBonus;
+                this.checkHighScore();
+            })
+        );
 
         // CHAPTER_COMPLETED - Add bonus score when chapter is completed
-        gameEvents.on(GAME_EVENTS.CHAPTER_COMPLETED, (data) => {
-            this.score += data.bonusPoints;
-            this.checkHighScore();
-        });
+        this.eventUnsubscribers.push(
+            gameEvents.on(GAME_EVENTS.CHAPTER_COMPLETED, (data) => {
+                this.score += data.bonusPoints;
+                this.checkHighScore();
+            })
+        );
 
         // PELLET_MAGNET_EAT - Data Magnet Power-Up effect
-        gameEvents.on(GAME_EVENTS.PELLET_MAGNET_EAT, (data) => {
-            const result = this.eatPelletAt(data.x, data.y);
-            if (result) {
-                this.score += 10;
-                gameEvents.emit(GAME_EVENTS.PELLET_EATEN, {
-                    score: 10,
-                    pelletsRemaining: this.pelletsRemaining,
-                    gridX: data.x,
-                    gridY: data.y
-                });
-            }
-        });
+        this.eventUnsubscribers.push(
+            gameEvents.on(GAME_EVENTS.PELLET_MAGNET_EAT, (data) => {
+                const result = this.eatPelletAt(data.x, data.y);
+                if (result) {
+                    this.score += 10;
+                    gameEvents.emit(GAME_EVENTS.PELLET_EATEN, {
+                        score: 10,
+                        pelletsRemaining: this.pelletsRemaining,
+                        gridX: data.x,
+                        gridY: data.y
+                    });
+                }
+            })
+        );
 
         // Register gameState in entityRegistry (for BossBattleSystem check)
         this.entityRegistry.registerEntity('gameState', {
@@ -336,7 +343,7 @@ export default class GameModelDI {
                 highScore: this.highScore
             });
         }
-        
+
         // Emit Events
         const events = [...movementEvents, ...collisionEvents];
         this.emitEvents(events);
@@ -369,13 +376,13 @@ export default class GameModelDI {
         const ghost = this.entityRegistry.getGhostByType(data.ghostType);
         if (ghost) {
             ghost.eat();
-            
+
             // Sichere Berechnung des Scores
             const eatenCount = ghost.eatenCount ?? 0;
             const baseScore = [200, 400, 800, 1600][eatenCount % 4] ?? 200;
             const multiplier = this.levelSystem.getScoreMultiplier() ?? 1;
             const score = baseScore * multiplier;
-            
+
             this.scoreModule.currentComboGhosts++;
             this.gameState.score += score;
             this.gameState.ghostsEaten++;
@@ -722,5 +729,13 @@ export default class GameModelDI {
             serviceStats: globalContainer.getServiceNames(),
             instantiatedStats: globalContainer.getInstanceNames()
         };
+    }
+
+    /**
+     * Cleanup - unsubscribe all event listeners
+     */
+    destroy() {
+        this.eventUnsubscribers.forEach(unsubscribe => unsubscribe());
+        this.eventUnsubscribers = [];
     }
 }

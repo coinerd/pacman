@@ -15,9 +15,9 @@ export class PlayerScoreFacade {
      */
     toValidNumber(value, fallback = 0) {
         // NaN check (NaN !== NaN)
-        if (value !== value) return fallback;
-        if (value === undefined || value === null) return fallback;
-        if (typeof value === 'number') return Number.isFinite(value) ? value : fallback;
+        if (value !== value) {return fallback;}
+        if (value === undefined || value === null) {return fallback;}
+        if (typeof value === 'number') {return Number.isFinite(value) ? value : fallback;}
         return fallback;
     }
 
@@ -43,7 +43,7 @@ export class PlayerScoreFacade {
         const rawScore = this.gameModel?.score;
         const rawHighScore = this.gameModel?.highScore;
         const rawLives = this.gameModel?.lives;
-        
+
 
         return Object.freeze({
             score: this.toValidNumber(rawScore, 0),

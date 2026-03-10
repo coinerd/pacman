@@ -26,11 +26,12 @@ export class UIController {
         // Speichere die letzten bekannten Werte für Animationen
         this.lastScore = 0;
         this.lastHighScore = 0;
-        
+
         this.hudContainer = null;
         this.panelBg = null;
         this.panelBorder = null;
         this.cornerDecorations = [];
+        this.activeTweens = [];
     }
 
     create() {
@@ -41,7 +42,7 @@ export class UIController {
     createHUDPanel() {
         const scene = this.scene;
         const colors = themeConfig.colors;
-        
+
         const panelWidth = 480;
         const panelHeight = 60;
         const x = 20;
@@ -69,14 +70,14 @@ export class UIController {
         this.createCornerDecorations(panelWidth, panelHeight);
 
         this.hudContainer.add([this.panelBg, this.panelBorder, ...this.cornerDecorations]);
-        
+
         this.startPanelGlow();
     }
 
     createCornerDecorations(width, height) {
         const colors = themeConfig.colors;
         const cornerSize = 10;
-        
+
         const positions = [
             { x: 0, y: 0, h: [1, 0], v: [0, 1] },
             { x: width, y: 0, h: [-1, 0], v: [0, 1] },
@@ -87,25 +88,25 @@ export class UIController {
         positions.forEach(pos => {
             const graphics = this.scene.add.graphics();
             graphics.lineStyle(2, colors.circuit.trace, 0.6);
-            
+
             graphics.beginPath();
             graphics.moveTo(pos.x + pos.h[0] * cornerSize, pos.y + pos.h[1] * cornerSize);
             graphics.lineTo(pos.x, pos.y);
             graphics.lineTo(pos.x + pos.v[0] * cornerSize, pos.y + pos.v[1] * cornerSize);
             graphics.strokePath();
-            
+
             graphics.fillStyle(colors.circuit.node, 0.8);
             graphics.fillCircle(pos.x, pos.y, 3);
-            
+
             graphics.setDepth(902);
             this.cornerDecorations.push(graphics);
         });
     }
 
     startPanelGlow() {
-        if (!this.scene || !this.panelBorder) return;
+        if (!this.scene || !this.panelBorder) {return;}
 
-        this.scene.tweens.add({
+        const tween = this.scene.tweens.add({
             targets: this.panelBorder,
             alpha: { from: 0.6, to: 1 },
             duration: 2000,
@@ -113,12 +114,13 @@ export class UIController {
             repeat: -1,
             ease: 'Sine.easeInOut'
         });
+        this.activeTweens.push(tween);
     }
 
     createWidgets() {
         // Layout: [SCORE] [HIGH♔] [♥♥♥] [1]
         const startY = 18;
-        
+
         this.scoreBoard.create(this.scene, 35, startY);
         this.highScoreWidget.create(this.scene, 155, startY);
         this.livesWidget.create(this.scene, 295, startY);
@@ -131,9 +133,9 @@ export class UIController {
      */
     toValidNumber(value, fallback = 0) {
         // Prüfe auf NaN explizit (NaN !== NaN!)
-        if (value !== value) return fallback; // NaN check
-        if (value === undefined || value === null) return fallback;
-        if (typeof value === 'number') return Number.isFinite(value) ? value : fallback;
+        if (value !== value) {return fallback;} // NaN check
+        if (value === undefined || value === null) {return fallback;}
+        if (typeof value === 'number') {return Number.isFinite(value) ? value : fallback;}
         if (typeof value === 'string') {
             const parsed = parseInt(value, 10);
             return Number.isNaN(parsed) ? fallback : parsed;
@@ -159,13 +161,13 @@ export class UIController {
         this.scoreBoard.update(score);
         this.highScoreWidget.update(highScore);
         this.livesWidget.update(lives);
-        this.levelWidget.update(level)
+        this.levelWidget.update(level);
 
         // High Score Animation
         if (highScore > this.lastHighScore && this.lastHighScore > 0) {
             this.highScoreWidget.highlightIfNewRecord();
         }
-        
+
         this.lastScore = score;
         this.lastHighScore = highScore;
     }
@@ -315,7 +317,7 @@ export class UIController {
     }
 
     addPulseGlowEffect(textObject) {
-        this.scene.tweens.add({
+        const tween = this.scene.tweens.add({
             targets: textObject,
             alpha: { from: 1, to: 0.7 },
             duration: 500,
@@ -323,17 +325,32 @@ export class UIController {
             repeat: -1,
             ease: 'Sine.easeInOut'
         });
+        this.activeTweens.push(tween);
     }
 
     destroy() {
+        // Stop all active tweens
+        this.activeTweens.forEach(tween => {
+            if (tween && tween.stop) {
+                tween.stop();
+            }
+        });
+        this.activeTweens = [];
+
+        // Kill all tweens on HUD elements
+        if (this.scene && this.scene.tweens) {
+            this.scene.tweens.killTweensOf(this.hudContainer);
+            this.scene.tweens.killTweensOf(this.panelBorder);
+        }
+
         this.scoreBoard.destroy();
         this.highScoreWidget.destroy();
         this.livesWidget.destroy();
         this.levelWidget.destroy();
-        
+
         this.cornerDecorations.forEach(decoration => decoration.destroy());
         this.cornerDecorations = [];
-        
+
         if (this.panelBg) {
             this.panelBg.destroy();
             this.panelBg = null;

@@ -39,6 +39,7 @@ import { clearServices } from '../core/ServiceRegistry.js';
 export default class GameScene extends Phaser.Scene {
     constructor() {
         super({ key: 'GameScene' });
+        this.eventUnsubscribers = [];
     }
 
     init(data) {
@@ -279,78 +280,99 @@ export default class GameScene extends Phaser.Scene {
 
     setupEventListeners() {
         // Handle pause/resume requests from controller
-        gameEvents.on(GAME_EVENTS.PAUSE_REQUESTED, () => {
-            this.scene.pause();
-            this.scene.launch('PauseScene');
-        });
+        this.eventUnsubscribers.push(
+            gameEvents.on(GAME_EVENTS.PAUSE_REQUESTED, () => {
+                this.scene.pause();
+                this.scene.launch('PauseScene');
+            })
+        );
 
-        gameEvents.on(GAME_EVENTS.RESUME_REQUESTED, () => {
-            this.gameModel.setPaused(false);
-            this.gameView.resumeAudio();
-        });
+        this.eventUnsubscribers.push(
+            gameEvents.on(GAME_EVENTS.RESUME_REQUESTED, () => {
+                this.gameModel.setPaused(false);
+                this.gameView.resumeAudio();
+            })
+        );
 
-        gameEvents.on(GAME_EVENTS.RETURN_TO_MENU_REQUESTED, () => {
-            this.cleanup();
-            this.scene.start('MenuScene');
-        });
+        this.eventUnsubscribers.push(
+            gameEvents.on(GAME_EVENTS.RETURN_TO_MENU_REQUESTED, () => {
+                this.cleanup();
+                this.scene.start('MenuScene');
+            })
+        );
 
         // Phase 2: Handle scene transition events from SceneTransitionHandler
-        gameEvents.on('GAME_WIN', (eventData) => {
-            // Handle both formats
-            const data = eventData?.data || eventData;
-            this.scene.start('WinScene', data);
-        });
+        this.eventUnsubscribers.push(
+            gameEvents.on('GAME_WIN', (eventData) => {
+                const data = eventData?.data || eventData;
+                this.scene.start('WinScene', data);
+            })
+        );
 
-        gameEvents.on('GAME_OVER', (eventData) => {
-            // Handle both formats: { score, highScore } from Model
-            // and { sceneKey, data: { score, highScore }, timestamp } from View
-            const data = eventData?.data || eventData;
-            this.scene.start('GameOverScene', data);
-        });
+        this.eventUnsubscribers.push(
+            gameEvents.on('GAME_OVER', (eventData) => {
+                const data = eventData?.data || eventData;
+                this.scene.start('GameOverScene', data);
+            })
+        );
 
-        gameEvents.on('RETURN_TO_MENU', (data) => {
-            this.cleanup();
-            this.scene.start('MenuScene', data);
-        });
+        this.eventUnsubscribers.push(
+            gameEvents.on('RETURN_TO_MENU', (data) => {
+                this.cleanup();
+                this.scene.start('MenuScene', data);
+            })
+        );
 
         // Handle restart level requests
-        gameEvents.on(GAME_EVENTS.RESTART_LEVEL_REQUESTED, (data) => {
-            this.scene.restart(data);
-        });
+        this.eventUnsubscribers.push(
+            gameEvents.on(GAME_EVENTS.RESTART_LEVEL_REQUESTED, (data) => {
+                this.scene.restart(data);
+            })
+        );
 
-        gameEvents.on(GAME_EVENTS.ACHIEVEMENT_UNLOCKED, (achievement) => {
-            this.gameView.showAchievementNotification(achievement);
-        });
+        this.eventUnsubscribers.push(
+            gameEvents.on(GAME_EVENTS.ACHIEVEMENT_UNLOCKED, (achievement) => {
+                this.gameView.showAchievementNotification(achievement);
+            })
+        );
 
-        gameEvents.on(GAME_EVENTS.LEVEL_COMPLETE, () => {
-            // Phase 2: Level complete event is now handled by View's SceneTransitionHandler
-            // The View will emit 'GAME_WIN' event which is handled above
-            // Kept for backward compatibility during migration
-        });
+        this.eventUnsubscribers.push(
+            gameEvents.on(GAME_EVENTS.LEVEL_COMPLETE, () => {
+                // Phase 2: Level complete event is now handled by View's SceneTransitionHandler
+            })
+        );
 
         if (this.replaySystem && !this.replaySystem.isReplaying) {
-            gameEvents.on(GAME_EVENTS.DIRECTION_CHANGED, (data) => {
-                if (this.replaySystem.isRecording) {
-                    this.replaySystem.recordInput({ type: 'direction', data });
-                }
-            });
+            this.eventUnsubscribers.push(
+                gameEvents.on(GAME_EVENTS.DIRECTION_CHANGED, (data) => {
+                    if (this.replaySystem.isRecording) {
+                        this.replaySystem.recordInput({ type: 'direction', data });
+                    }
+                })
+            );
 
-            gameEvents.on(GAME_EVENTS.SCORE_CHANGED, (data) => {
-                if (this.replaySystem.isRecording) {
-                    this.replaySystem.recordScore(data.score);
-                    this.replaySystem.recordLevel(data.level);
-                }
-            });
+            this.eventUnsubscribers.push(
+                gameEvents.on(GAME_EVENTS.SCORE_CHANGED, (data) => {
+                    if (this.replaySystem.isRecording) {
+                        this.replaySystem.recordScore(data.score);
+                        this.replaySystem.recordLevel(data.level);
+                    }
+                })
+            );
 
-            gameEvents.on(GAME_EVENTS.GAME_STARTED, () => {
-                this.replaySystem.startRecording();
-            });
+            this.eventUnsubscribers.push(
+                gameEvents.on(GAME_EVENTS.GAME_STARTED, () => {
+                    this.replaySystem.startRecording();
+                })
+            );
 
-            gameEvents.on(GAME_EVENTS.GAME_OVER, () => {
-                if (this.replaySystem.isRecording) {
-                    this.replaySystem.stopRecording();
-                }
-            });
+            this.eventUnsubscribers.push(
+                gameEvents.on(GAME_EVENTS.GAME_OVER, () => {
+                    if (this.replaySystem.isRecording) {
+                        this.replaySystem.stopRecording();
+                    }
+                })
+            );
         }
     }
 
@@ -363,6 +385,10 @@ export default class GameScene extends Phaser.Scene {
         // Phase 2: Unbind scene transition events before destroying controller
         this.gameController?.unbindSceneTransitionEvents();
 
+        // Unsubscribe all event listeners
+        this.eventUnsubscribers.forEach(unsubscribe => unsubscribe());
+        this.eventUnsubscribers = [];
+
         this.uiController?.cleanup();
         this.inputManager?.destroy();
         this.gameController?.destroy();
@@ -370,6 +396,9 @@ export default class GameScene extends Phaser.Scene {
         this.debugOverlay?.cleanup();
         this.achievementSystem?.save();
         this.replaySystem?.cleanup();
+
+        // Destroy game model to unsubscribe event listeners
+        this.gameModel?.destroy();
 
         // Phase 4: Services freigeben
         clearServices();

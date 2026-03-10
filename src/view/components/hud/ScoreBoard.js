@@ -58,11 +58,11 @@ export class ScoreBoard {
     }
 
     update(score) {
-        if (!this.scoreText || !this.scene) return;
+        if (!this.scoreText || !this.scene) {return;}
 
         // Robuste Konvertierung des Score-Werts
         let safeScore;
-        
+
         // Prüfe auf NaN (NaN !== NaN)
         if (score !== score) {
             safeScore = this.currentDisplayScore;
@@ -81,7 +81,7 @@ export class ScoreBoard {
         if (safeScore !== this.currentDisplayScore) {
             this.animateScoreChange(safeScore);
         }
-        
+
         this.currentDisplayScore = safeScore;
     }
 
@@ -92,12 +92,12 @@ export class ScoreBoard {
     animateScoreChange(newScore) {
         // Aktualisiere den Text sofort
         this.scoreText.setText(this.formatScore(newScore));
-        
-        if (!this.scene) return;
-        
+
+        if (!this.scene) {return;}
+
         // Scale-Animation bei Score-Anstieg
         this.scene.tweens.killTweensOf(this.scoreText);
-        
+
         this.scene.tweens.add({
             targets: this.scoreText,
             scale: { from: 1.3, to: 1 },
@@ -108,7 +108,7 @@ export class ScoreBoard {
         // Farb-Flash
         this.scoreText.setColor('#ffffff');
         this.scoreText.setShadow(0, 0, '#ffffff', 10, false, true);
-        
+
         this.scene.time.delayedCall(100, () => {
             if (this.scoreText) {
                 this.scoreText.setColor('#00ffaa');
@@ -118,6 +118,11 @@ export class ScoreBoard {
     }
 
     destroy() {
+        // Kill tweens on score elements
+        if (this.scene && this.scene.tweens) {
+            this.scene.tweens.killTweensOf([this.scoreText, this.scoreLabel]);
+        }
+
         if (this.container) {
             this.container.destroy();
             this.container = null;
