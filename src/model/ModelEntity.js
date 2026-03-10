@@ -260,23 +260,54 @@ export class ModelEntity {
 
     /**
 	 * Get state snapshot for serialization
+	 * OPTIMIZED: Reuse snapshot object to reduce GC pressure
 	 * @returns {Object}
 	 */
     getSnapshot() {
+        if (!this._cachedSnapshot) {
+            this._cachedSnapshot = this._createSnapshot();
+        }
+
+        const snap = this._cachedSnapshot;
+        snap.id = this.id;
+        snap.type = this.type;
+        snap.gridX = this.gridX;
+        snap.gridY = this.gridY;
+        snap.x = this.x;
+        snap.y = this.y;
+        snap.direction = this.direction;
+        snap.isMoving = this.isMoving;
+        snap.speed = this.speed;
+        snap.moveProgress = this.moveProgress;
+        snap.targetGridX = this.targetGridX;
+        snap.targetGridY = this.targetGridY;
+
+        // Copy visualState properties instead of spreading
+        const vs = this.visualState;
+        const vSnap = snap.visualState;
+        vSnap.scaleX = vs.scaleX;
+        vSnap.scaleY = vs.scaleY;
+        vSnap.alpha = vs.alpha;
+        vSnap.visible = vs.visible;
+
+        return snap;
+    }
+
+    _createSnapshot() {
         return {
-            id: this.id,
-            type: this.type,
-            gridX: this.gridX,
-            gridY: this.gridY,
-            x: this.x,
-            y: this.y,
-            direction: this.direction,
-            isMoving: this.isMoving,
-            speed: this.speed,
-            moveProgress: this.moveProgress,
-            targetGridX: this.targetGridX,
-            targetGridY: this.targetGridY,
-            visualState: { ...this.visualState }
+            id: null,
+            type: null,
+            gridX: 0,
+            gridY: 0,
+            x: 0,
+            y: 0,
+            direction: null,
+            isMoving: false,
+            speed: 0,
+            moveProgress: 0,
+            targetGridX: 0,
+            targetGridY: 0,
+            visualState: { scaleX: 1, scaleY: 1, alpha: 1, visible: true }
         };
     }
 
