@@ -401,6 +401,14 @@ export default class GameModelDI {
         if (pacman) {
             pacman.setDesiredDirection(direction);
         }
+        // Also update movement system with the new direction
+        if (this.movementSystem && this.movementEntityIds.player) {
+            this.movementSystem.setDirection(this.movementEntityIds.player, direction);
+        }
+    }
+
+    setInputDirection(direction) {
+        this.setDesiredDirection(direction);
     }
 
     // === Ghost Management ===
@@ -558,7 +566,7 @@ export default class GameModelDI {
     set pelletsRemaining(value) { this.spawningSystem.setPelletsRemaining(value); }
 
     get totalPellets() { return this.spawningSystem.getTotalPellets(); }
-    set totalPellets(value) { this.spawningSystem.setTotalPellets(value); }
+    // totalPellets is read-only, calculated from pelletGrid
 
     get isPaused() { return this.gameState.isPaused; }
     set isPaused(value) { this.gameState.isPaused = value; }
@@ -584,6 +592,20 @@ export default class GameModelDI {
 
     getGhostByType(ghostType) {
         return this.entityRegistry.getGhostByType(ghostType);
+    }
+
+    // === Level Config ===
+
+    setLevelConfig(config) {
+        this.levelSystem.setLevelConfig(config);
+    }
+
+    getSpeedMultiplier() {
+        return this.levelSystem.getSpeedMultiplier();
+    }
+
+    getFrightenedDuration() {
+        return this.levelSystem.getFrightenedDuration();
     }
 
     // === Control Methods ===

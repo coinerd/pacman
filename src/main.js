@@ -42,8 +42,8 @@ const config = {
     },
     fps: {
         target: gameConfig.targetFPS,
-        forceSetTimeOut: true,
-        smoothStep: true
+        forceSetTimeOut: false,
+        smoothStep: false
     },
     scene: [MenuScene, GameScene, PauseScene, GameOverScene, WinScene, SettingsScene]
 };

@@ -115,6 +115,27 @@ export class LevelSystem {
     }
 
     /**
+     * Gibt die Ghost-Mode-Durations zurück
+     * Format wie im Original Pacman: Array von {mode, duration} Objekten
+     * @returns {Array} Mode-Durations in Sekunden
+     */
+    getModeDurations() {
+        const scatter = this.levelConfig?.scatterDuration || 7;
+        const chase = this.levelConfig?.chaseDuration || 20;
+
+        return [
+            { mode: 'SCATTER', duration: scatter },
+            { mode: 'CHASE', duration: chase },
+            { mode: 'SCATTER', duration: scatter },
+            { mode: 'CHASE', duration: chase },
+            { mode: 'SCATTER', duration: Math.max(3, scatter - 2) },
+            { mode: 'CHASE', duration: chase },
+            { mode: 'SCATTER', duration: Math.max(3, scatter - 2) },
+            { mode: 'CHASE', duration: Infinity }
+        ];
+    }
+
+    /**
      * Prüft ob Fruit gespawnt werden soll
      * @param {number} pelletsEaten - Anzahl gefressener Pellets
      * @param {number} totalPellets - Gesamtanzahl Pellets

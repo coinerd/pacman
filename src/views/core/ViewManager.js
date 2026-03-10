@@ -98,13 +98,11 @@ export class ViewManager {
             render: () => this.mazeRenderer.createBackground()
         }, 0);
 
-        // World phase
+        // World phase - pellets are updated via events, not by scanning the grid
         this.renderCoordinator.registerRenderer(phases.WORLD, {
             render: () => {
-                if (this.lastSnapshot) {
-                    this.mazeRenderer.createMaze(this.lastSnapshot.maze);
-                    this.pelletRenderer.updatePelletVisuals(this.lastSnapshot.pelletGrid);
-                }
+                // Maze is created once in create() and updateFromSnapshot() when it changes
+                // Pellets are updated via PELLET_EATEN events, not by scanning the grid every frame
             }
         }, 0);
 
@@ -147,9 +145,9 @@ export class ViewManager {
      */
     create() {
         this.mazeRenderer.createBackground();
-        this.mazeRenderer.createMaze(this.getMazeData());
+        // Note: Maze will be created in updateFromSnapshot() when first snapshot arrives
+        // because in snapshot mode, maze data comes from the model via snapshots
         this.pelletRenderer.createPelletPools();
-        this.pelletRenderer.createPellets(this.getPelletGridData());
 
         if (this.useSnapshotMode) {
             // In snapshot mode, entity renderers created on first updateFromSnapshot()
@@ -332,13 +330,15 @@ export class ViewManager {
             this.pelletRenderer.createPelletPools();
         }
 
-        // Check if maze changed
-        const mazeChanged = !this.mazeEquals(this.lastMazeSnapshot?.maze, snapshot.maze);
-        if (mazeChanged) {
-            this.mazeRenderer.createMaze(snapshot.maze);
-            this.pelletRenderer.clearAllPellets();
-            this.pelletRenderer.createPellets(snapshot.pelletGrid);
-            this.lastMazeSnapshot = { maze: snapshot.maze };
+        // Check if maze changed (or first snapshot) - only if we have maze data
+        if (snapshot.maze) {
+            const mazeChanged = !this.lastMazeSnapshot || !this.mazeEquals(this.lastMazeSnapshot.maze, snapshot.maze);
+            if (mazeChanged) {
+                this.mazeRenderer.createMaze(snapshot.maze);
+                this.pelletRenderer.clearAllPellets();
+                this.pelletRenderer.createPellets(snapshot.pelletGrid);
+                this.lastMazeSnapshot = { maze: snapshot.maze };
+            }
         }
 
         // Update pellet visuals
@@ -382,14 +382,24 @@ export class ViewManager {
     // === Utility Methods ===
 
     mazeEquals(maze1, maze2) {
-        if (!maze1 || !maze2) {return maze1 === maze2;}
+        if (!maze1 || !maze2) {
+            // If both are null/undefined, they are equal
+            // If only one is null/undefined, they are not equal
+            return (!maze1 && !maze2);
+        }
+        // Fast path: same reference means equal
+        if (maze1 === maze2) {return true;}
         if (maze1.length !== maze2.length) {return false;}
         if (maze1[0]?.length !== maze2[0]?.length) {return false;}
 
-        for (let y = 0; y < maze1.length; y++) {
-            for (let x = 0; x < maze1[y].length; x++) {
-                if (maze1[y][x] !== maze2[y][x]) {return false;}
-            }
+        // Check first and last row for performance
+        // Maze changes only happen on level change
+        for (let x = 0; x < maze1[0].length; x++) {
+            if (maze1[0][x] !== maze2[0][x]) {return false;}
+        }
+        const lastRow = maze1.length - 1;
+        for (let x = 0; x < maze1[lastRow].length; x++) {
+            if (maze1[lastRow][x] !== maze2[lastRow][x]) {return false;}
         }
 
         return true;
@@ -411,9 +421,12 @@ export class ViewManager {
 
     snapshotEquals(s1, s2) {
         if (!s1 || !s2) {return s1 === s2;}
+        // Quick check: tickCount is unique per frame - if different, snapshots are different
         if (s1.tickCount !== s2.tickCount) {return false;}
+        // If tickCount is the same, check other properties that might change
         if (s1.score !== s2.score) {return false;}
         if (s1.lives !== s2.lives) {return false;}
+        if (s1.pelletsRemaining !== s2.pelletsRemaining) {return false;}
         // Check if pacman position changed
         if (s1.pacman?.x !== s2.pacman?.x || s1.pacman?.y !== s2.pacman?.y) {
             return false;
@@ -429,8 +442,8 @@ export class ViewManager {
                 }
             }
         }
-        return this.mazeEquals(s1.maze, s2.maze) &&
-               this.pelletGridEquals(s1.pelletGrid, s2.pelletGrid);
+        // Don't compare full maze/pelletGrid - they rarely change and are expensive to compare
+        return true;
     }
 
     // === Death Animation ===

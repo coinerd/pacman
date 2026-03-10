@@ -41,6 +41,7 @@ export default class GameScene extends Phaser.Scene {
         super({ key: 'GameScene' });
         this.eventUnsubscribers = [];
         this.lastSnapshot = null;
+        this.pendingEvents = [];
     }
 
     init(data) {
@@ -66,6 +67,7 @@ export default class GameScene extends Phaser.Scene {
             highScore: data.highScore || 0,
             deathPauseDuration: animationConfig.deathPauseDuration
         }, true); // DI aktiviert
+        this.gameModel.init();
 
         this.storageManager = new StorageManager();
 
@@ -84,7 +86,7 @@ export default class GameScene extends Phaser.Scene {
     create() {
         this.cameras.main.setBackgroundColor(themeConfig.colors.background);
 
-        this.gameModel.totalPellets = this.countPellets(this.gameModel.pelletGrid);
+        // totalPellets is calculated by SpawningSystem, just sync pelletsRemaining
         this.gameModel.pelletsRemaining = this.gameModel.totalPellets;
 
         const viewContext = new ViewContext({
@@ -205,7 +207,36 @@ export default class GameScene extends Phaser.Scene {
         }
 
         const deltaInSeconds = normalizeDeltaSeconds(delta);
+        this.pendingEvents = [];
         this.fixedTimeStepLoop.update(deltaInSeconds);
+
+        // Store events for adaptive difficulty system before clearing
+        // Events were added by fixedUpdate() calls during fixedTimeStepLoop.update()
+        const allEvents = this.pendingEvents;
+
+        // Process all events from fixed updates
+        for (const event of allEvents) {
+            this.achievementSystem.check(this.gameModel);
+
+            if (event.type === 'pellet_eaten' || event.type === 'power_pellet_eaten' || event.type === 'pelletEaten' || event.type === 'powerPelletEaten') {
+                this.checkFruitSpawn();
+            }
+
+            if (event.type === 'pacman_died' || event.type === 'pacmanDied') {
+                this.isDeathSequence = true;
+                this.gameView.startDeathAnimation();
+            }
+
+            if (event.type === 'respawn') {
+                this.isDeathSequence = false;
+                this.gameView.endDeathAnimation();
+            }
+
+            if (event.type === 'level_complete' || event.type === 'levelComplete') {
+                this.handleLevelComplete();
+            }
+        }
+        this.pendingEvents = [];
 
         if (this.isDeathSequence) {
             this.gameView.updateDeathAnimation(deltaInSeconds);
@@ -217,11 +248,15 @@ export default class GameScene extends Phaser.Scene {
 
         this.inputManager.update(deltaInSeconds * 1000);
 
-        // OPTIMIZED: Use cached snapshot from fixedUpdate instead of creating new one
-        // The snapshot is updated in fixedUpdate which runs at fixed timestep
-        if (this.lastSnapshot) {
-            this.gameView.updateFromSnapshot(this.lastSnapshot);
-        }
+        // OPTIMIZED: Create snapshot only once per frame in update(), not in fixedUpdate
+        // This avoids creating multiple snapshots when fixedUpdate runs multiple times
+        this.lastSnapshot = this.gameModel.getSnapshot();
+        this.gameView.updateFromSnapshot(this.lastSnapshot);
+
+        // Update adaptive difficulty and replay systems (moved from fixedUpdate)
+        const deltaSeconds = deltaInSeconds;
+        this.adaptiveDifficultySystem.update(deltaSeconds, this.lastSnapshot, allEvents);
+        this.replaySystem.update(deltaSeconds);
 
         // OPTIMIZED: UI updates directly without expensive snapshot creation
         this.uiController.update();
@@ -245,32 +280,11 @@ export default class GameScene extends Phaser.Scene {
 
     fixedUpdate() {
         const deltaSeconds = physicsConfig.FIXED_DT;
+        // Collect events from this step - we'll process them after all fixed updates in update()
         const events = this.gameModel.step(deltaSeconds);
 
-        // Cache snapshot for reuse in update() - avoid creating it twice per frame
-        this.lastSnapshot = this.gameModel.getSnapshot();
-
-        for (const event of events) {
-            this.achievementSystem.check(this.gameModel);
-
-            if (event.type === 'pellet_eaten' || event.type === 'power_pellet_eaten' || event.type === 'pelletEaten' || event.type === 'powerPelletEaten') {
-                this.checkFruitSpawn();
-            }
-
-            if (event.type === 'pacman_died' || event.type === 'pacmanDied') {
-                this.isDeathSequence = true;
-                this.gameView.startDeathAnimation();
-            }
-
-            if (event.type === 'respawn') {
-                this.isDeathSequence = false;
-                this.gameView.endDeathAnimation();
-            }
-        }
-
-        this.adaptiveDifficultySystem.update(deltaSeconds, this.lastSnapshot, events);
-
-        this.replaySystem.update(deltaSeconds);
+        // Store events to process after all fixed updates are done
+        this.pendingEvents.push(...events);
     }
 
     checkFruitSpawn() {

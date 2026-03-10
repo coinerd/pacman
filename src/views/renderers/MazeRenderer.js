@@ -11,6 +11,7 @@ export class MazeRenderer {
         this.scene = scene;
         this.mazeTexture = null;
         this.backgroundTexture = null;
+        this.mazeImage = null;
     }
 
     /**
@@ -80,10 +81,21 @@ export class MazeRenderer {
         const mazeWidth = maze[0].length * gameConfig.tileSize;
         const mazeHeight = maze.length * gameConfig.tileSize;
 
+        // Remove old texture if exists to prevent memory leak
+        if (this.scene.textures.exists('mazeWalls')) {
+            this.scene.textures.remove('mazeWalls');
+        }
+
         this.mazeTexture = graphics.generateTexture('mazeWalls', mazeWidth, mazeHeight);
         graphics.destroy();
 
-        this.scene.add.image(mazeWidth / 2, mazeHeight / 2, 'mazeWalls');
+        // Remove old maze image if exists
+        if (this.mazeImage) {
+            this.mazeImage.destroy();
+        }
+
+        this.mazeImage = this.scene.add.image(mazeWidth / 2, mazeHeight / 2, 'mazeWalls');
+        this.mazeImage.setDepth(1); // Ensure walls are above background
     }
 
     /**
@@ -188,6 +200,11 @@ export class MazeRenderer {
      * Clean up renderer resources
      */
     cleanup() {
+        if (this.mazeImage) {
+            this.mazeImage.destroy();
+            this.mazeImage = null;
+        }
+
         if (this.backgroundTexture) {
             const texture = this.scene.textures.get('backgroundGrid');
             if (texture) {

@@ -48,10 +48,17 @@ export class FixedTimeStepLoop {
         const clampedDt = realDt > clampThreshold ? physicsConfig.MAX_DT : realDt;
         this.accumulator += clampedDt;
 
-        while (this.accumulator >= physicsConfig.FIXED_DT) {
+        // Spiral of Death protection: limit max steps per frame
+        const MAX_STEPS_PER_FRAME = 3;
+        while (this.accumulator >= physicsConfig.FIXED_DT && this.lastStepCount < MAX_STEPS_PER_FRAME) {
             this.callback();
             this.accumulator -= physicsConfig.FIXED_DT;
             this.lastStepCount += 1;
+        }
+
+        // If we hit the limit, consume the remaining accumulator to prevent buildup
+        if (this.lastStepCount >= MAX_STEPS_PER_FRAME && this.accumulator >= physicsConfig.FIXED_DT) {
+            this.accumulator = this.accumulator % physicsConfig.FIXED_DT;
         }
 
         if (this.lastStepCount === 0) {

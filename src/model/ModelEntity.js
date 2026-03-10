@@ -74,7 +74,7 @@ export class ModelEntity {
 	 * @param {Object} direction - Direction to move
 	 */
     setDesiredDirection(direction) {
-        this.directionBuffer.set(direction);
+        this.directionBuffer.queue(direction);
         this.nextDirection = direction;
     }
 
@@ -83,7 +83,7 @@ export class ModelEntity {
 	 * @returns {Object} - Buffered direction or NONE
 	 */
     getBufferedDirection() {
-        return this.directionBuffer.get();
+        return this.directionBuffer.getBuffered();
     }
 
     /**
