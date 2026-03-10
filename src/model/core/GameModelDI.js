@@ -673,9 +673,16 @@ export default class GameModelDI {
     // === Snapshots & Serialization ===
 
     getSnapshot() {
-        const pelletGrid = this.pelletGrid;
-        const pacmanSnapshot = this.pacman?.getSnapshot();
-        const snapshot = {
+        // OPTIMIZED: Avoid deep copying static data and expensive Object.freeze()
+        // Maze never changes during level - return reference only
+        // PelletGrid changes rarely - only copy if needed (dirty flag logic)
+
+        const ghostsSnapshot = new Array(this.ghosts.length);
+        for (let i = 0; i < this.ghosts.length; i++) {
+            ghostsSnapshot[i] = this.ghosts[i].getSnapshot();
+        }
+
+        return {
             tickCount: this.tickCount,
             level: this.level,
             score: this.score,
@@ -689,45 +696,18 @@ export default class GameModelDI {
             isGameOver: this.isGameOver,
             levelComplete: this.levelComplete,
             isDying: this.isDying,
+            // Maze is static during level - no copy needed
             maze: this.maze,
-            pelletGrid: pelletGrid,
-            pacman: pacmanSnapshot,
-            ghosts: this.ghosts.map(g => g.getSnapshot()),
+            // Return pelletGrid reference directly - View doesn't modify it
+            pelletGrid: this.pelletGrid,
+            pacman: this.pacman?.getSnapshot(),
+            ghosts: ghostsSnapshot,
             fruit: this.fruit?.getSnapshot(),
             boss: this.bossBattleSystem?.getSnapshot(),
             powerUps: this.additionalPowerUpSystem?.getSnapshot(),
             story: this.storyMode?.getSnapshot(),
             levelInfo: this.levelSystem.getLevelInfo()
         };
-
-        // Clone arrays for immutability
-        const mazeCopy = (snapshot.maze && Array.isArray(snapshot.maze)) ? snapshot.maze.map(row => [...row]) : [];
-        const pelletGridCopy = (snapshot.pelletGrid && Array.isArray(snapshot.pelletGrid)) ? snapshot.pelletGrid.map(row => [...row]) : [];
-        const ghostsCopy = (snapshot.ghosts && Array.isArray(snapshot.ghosts)) ? [...snapshot.ghosts] : [];
-        const powerUpsCopy = (snapshot.powerUps && Array.isArray(snapshot.powerUps)) ? [...snapshot.powerUps] : [];
-
-        // Update snapshot with copied arrays
-        snapshot.maze = mazeCopy;
-        snapshot.pelletGrid = pelletGridCopy;
-        snapshot.ghosts = ghostsCopy;
-        snapshot.powerUps = powerUpsCopy;
-
-        // PHASE 6: Deep freeze for immutability - freeze each row
-        Object.freeze(snapshot.maze);
-        if (Array.isArray(snapshot.maze)) {
-            snapshot.maze.forEach(row => Object.freeze(row));
-        }
-
-        Object.freeze(snapshot.pelletGrid);
-        if (Array.isArray(snapshot.pelletGrid)) {
-            snapshot.pelletGrid.forEach(row => Object.freeze(row));
-        }
-
-        Object.freeze(snapshot.ghosts);
-        Object.freeze(snapshot.powerUps);
-
-        // Freeze entire snapshot
-        return Object.freeze(snapshot);
     }
 
     serialize() {
