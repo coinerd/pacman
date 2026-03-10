@@ -77,11 +77,13 @@ export class ScoreBoard {
             safeScore = this.currentDisplayScore;
         }
 
-        // Animation bei Score-Änderung
-        if (safeScore !== this.currentDisplayScore) {
-            this.animateScoreChange(safeScore);
+        // Skip if score hasn't changed
+        if (safeScore === this.currentDisplayScore) {
+            return;
         }
 
+        // Animation bei Score-Änderung
+        this.animateScoreChange(safeScore);
         this.currentDisplayScore = safeScore;
     }
 
