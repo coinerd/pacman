@@ -1,130 +1,128 @@
 import { themeConfig } from '../../../config/themeConfig.js';
 
+/**
+ * ScoreBoard - Zeigt den aktuellen Score an
+ */
 export class ScoreBoard {
     constructor() {
         this.scene = null;
-        this.panel = null;
+        this.container = null;
         this.scoreText = null;
         this.scoreLabel = null;
-        this.corners = [];
+        this.currentDisplayScore = 0;
     }
 
-    create(scene) {
+    create(scene, x, y) {
         this.scene = scene;
 
-        const techSmall = themeConfig.fonts.tech.small;
-        const colors = themeConfig.colors;
-        const circuit = themeConfig.circuit;
-        const borderStyle = circuit.border;
+        // Container für das gesamte Widget
+        this.container = scene.add.container(x, y);
+        this.container.setDepth(1100);
+        this.container.setScrollFactor(0);
 
-        const panelHeight = 45;
-        const padding = themeConfig.layout.spacing.md;
-        const x = 10;
-        const y = 10; // Reset to original position
-        const labelWidth = 75;
-        const valueWidth = 120;
-        const panelWidth = labelWidth + valueWidth + padding * 2;
-
-        this.panel = scene.add.rectangle(
-            x + panelWidth / 2,
-            y + panelHeight / 2,
-            panelWidth,
-            panelHeight,
-            colors.panel.background
-        );
-        this.panel.setStrokeStyle(borderStyle.thickness || borderStyle.width || 2, borderStyle.color, borderStyle.alpha || 1);
-        this.panel.setAlpha(colors.panel.alpha);
-        this.panel.setDepth(900);
-        this.panel.setScrollFactor(0);
-        this.panel.setVisible(false); // Permanently disable panel for visibility
-
-        this.corners = this.createCircuitCorners(scene, x, y, panelWidth, panelHeight, colors, circuit);
-
+        // Label - "SCORE"
         this.scoreLabel = scene.add.text(
-            x + padding + labelWidth / 2,
-            y + panelHeight / 2,
+            0,
+            0,
             'SCORE',
             {
-                fontFamily: techSmall.family,
-                fontSize: techSmall.size,
-                fontStyle: techSmall.style,
-                fontWeight: techSmall.weight,
-                letterSpacing: techSmall.letterSpacing,
-                color: `#${colors.accent.toString(16).padStart(6, '0')}`
+                fontFamily: 'Arial, sans-serif',
+                fontSize: '11px',
+                fontStyle: 'bold',
+                color: '#00aaaa'
             }
         );
-        this.scoreLabel.setOrigin(0.5);
-        this.scoreLabel.setDepth(950);
-        this.scoreLabel.setScrollFactor(0);
+        this.scoreLabel.setOrigin(0, 0);
+        this.scoreLabel.setDepth(1101);
 
+        // Score Value
         this.scoreText = scene.add.text(
-            x + padding + labelWidth + valueWidth / 2,
-            y + panelHeight / 2,
-            '0',
+            0,
+            14,
+            '000000',
             {
-                fontFamily: techSmall.family,
+                fontFamily: 'Courier New, monospace',
                 fontSize: '22px',
-                fontStyle: techSmall.style,
-                fontWeight: techSmall.weight,
-                letterSpacing: techSmall.letterSpacing,
-                color: '#88ff88'
+                fontStyle: 'bold',
+                color: '#00ffaa'
             }
         );
-        this.scoreText.setOrigin(0.5);
-        this.scoreText.setDepth(1001);
-        this.scoreText.setScrollFactor(0);
-        this.scoreText.setVisible(true);
-        this.scoreText.setAlpha(1);
-    }
+        this.scoreText.setOrigin(0, 0);
+        this.scoreText.setDepth(1101);
 
+        // Glow-Effekt
+        this.scoreText.setShadow(0, 0, '#00ffaa', 6, false, true);
+
+        this.container.add([this.scoreLabel, this.scoreText]);
+        this.currentDisplayScore = 0;
+    }
 
     update(score) {
-        if (!this.scoreText) {
-            return;
+        if (!this.scoreText || !this.scene) return;
+
+        // Robuste Konvertierung des Score-Werts
+        let safeScore;
+        
+        // Prüfe auf NaN (NaN !== NaN)
+        if (score !== score) {
+            safeScore = this.currentDisplayScore;
+        } else if (score === undefined || score === null) {
+            safeScore = this.currentDisplayScore;
+        } else if (typeof score === 'number') {
+            safeScore = Number.isFinite(score) ? Math.max(0, score) : this.currentDisplayScore;
+        } else if (typeof score === 'string') {
+            const parsed = parseInt(score, 10);
+            safeScore = Number.isNaN(parsed) ? this.currentDisplayScore : Math.max(0, parsed);
+        } else {
+            safeScore = this.currentDisplayScore;
         }
 
-        const safeScore = Number.isFinite(Number(score)) ? Number(score) : 0;
-        this.scoreText.setText(`${safeScore}`);
-
-        // Force visibility
-        this.scoreText.setVisible(true);
-        this.scoreText.setAlpha(1);
-        this.scoreLabel.setVisible(true);
-        this.scoreLabel.setAlpha(1);
-        if (this.panel) {
-            this.panel.setVisible(false); // Keep panel disabled
+        // Animation bei Score-Änderung
+        if (safeScore !== this.currentDisplayScore) {
+            this.animateScoreChange(safeScore);
         }
+        
+        this.currentDisplayScore = safeScore;
     }
 
+    formatScore(score) {
+        return score.toString().padStart(6, '0');
+    }
+
+    animateScoreChange(newScore) {
+        // Aktualisiere den Text sofort
+        this.scoreText.setText(this.formatScore(newScore));
+        
+        if (!this.scene) return;
+        
+        // Scale-Animation bei Score-Anstieg
+        this.scene.tweens.killTweensOf(this.scoreText);
+        
+        this.scene.tweens.add({
+            targets: this.scoreText,
+            scale: { from: 1.3, to: 1 },
+            duration: 200,
+            ease: 'Back.easeOut'
+        });
+
+        // Farb-Flash
+        this.scoreText.setColor('#ffffff');
+        this.scoreText.setShadow(0, 0, '#ffffff', 10, false, true);
+        
+        this.scene.time.delayedCall(100, () => {
+            if (this.scoreText) {
+                this.scoreText.setColor('#00ffaa');
+                this.scoreText.setShadow(0, 0, '#00ffaa', 6, false, true);
+            }
+        });
+    }
 
     destroy() {
-        if (this.scoreText) { this.scoreText.destroy(); }
-        if (this.scoreLabel) { this.scoreLabel.destroy(); }
-        if (this.panel) { this.panel.destroy(); }
-        this.corners.forEach((corner) => corner.destroy());
-        this.corners = [];
-    }
-
-    createCircuitCorners(scene, x, y, width, height, colors, circuit) {
-        const cornerSize = circuit.cornerSize;
-        const positions = [
-            [[x, y + cornerSize], [x, y], [x + cornerSize, y]],
-            [[x + width - cornerSize, y], [x + width, y], [x + width, y + cornerSize]],
-            [[x, y + height - cornerSize], [x, y + height], [x + cornerSize, y + height]],
-            [[x + width - cornerSize, y + height], [x + width, y + height], [x + width, y + height - cornerSize]]
-        ];
-
-        return positions.map((points) => {
-            const graphic = scene.add.graphics();
-            graphic.lineStyle(2, colors.circuit.traceDim, 0.5);
-            graphic.beginPath();
-            graphic.moveTo(points[0][0], points[0][1]);
-            graphic.lineTo(points[1][0], points[1][1]);
-            graphic.lineTo(points[2][0], points[2][1]);
-            graphic.strokePath();
-            graphic.setDepth?.(905);
-            graphic.setScrollFactor?.(0);
-            return graphic;
-        });
+        if (this.container) {
+            this.container.destroy();
+            this.container = null;
+        }
+        this.scoreText = null;
+        this.scoreLabel = null;
     }
 }

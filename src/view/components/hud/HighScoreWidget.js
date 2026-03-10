@@ -1,145 +1,125 @@
 import { themeConfig } from '../../../config/themeConfig.js';
 
+/**
+ * HighScoreWidget - Zeigt den High Score an
+ */
 export class HighScoreWidget {
     constructor() {
         this.scene = null;
-        this.panel = null;
+        this.container = null;
         this.highScoreText = null;
         this.highScoreLabel = null;
-        this.corners = [];
-        this.lastHighScore = 0;
+        this.crownIcon = null;
+        this.currentDisplayHighScore = 0;
     }
 
-    create(scene) {
+    create(scene, x, y) {
         this.scene = scene;
 
-        const techSmall = themeConfig.fonts.tech.small;
-        const colors = themeConfig.colors;
-        const circuit = themeConfig.circuit;
-        const borderStyle = circuit.border;
+        // Container für das gesamte Widget
+        this.container = scene.add.container(x, y);
+        this.container.setDepth(1100);
+        this.container.setScrollFactor(0);
 
-        const panelHeight = 45;
-        const padding = themeConfig.layout.spacing.md;
-        const x = 10;
-        const y = panelHeight + 20;
-        const labelWidth = 100;
-        const valueWidth = 120;
-        const panelWidth = labelWidth + valueWidth + padding * 2;
-
-        this.panel = scene.add.rectangle(
-            x + panelWidth / 2,
-            y + panelHeight / 2,
-            panelWidth,
-            panelHeight,
-            colors.panel.background
+        // Crown Icon
+        this.crownIcon = scene.add.text(
+            0,
+            -2,
+            '♔',
+            {
+                fontFamily: 'Arial, sans-serif',
+                fontSize: '14px',
+                color: '#ffdd00'
+            }
         );
-        this.panel.setStrokeStyle(borderStyle.width, borderStyle.color, borderStyle.alpha);
-        this.panel.setAlpha(colors.panel.alpha);
-        this.panel.setDepth(900);
-        this.panel.setScrollFactor(0);
-        this.panel.setVisible(false); // Disable panel for visibility
+        this.crownIcon.setOrigin(0, 0);
+        this.crownIcon.setDepth(1101);
+        this.crownIcon.setShadow(0, 0, '#ffaa00', 4, false, true);
 
-        this.corners = this.createCircuitCorners(scene, x, y, panelWidth, panelHeight, colors, circuit);
-
+        // Label - "HIGH"
         this.highScoreLabel = scene.add.text(
-            x + padding + labelWidth / 2,
-            y + panelHeight / 2,
-            'HIGH SCORE',
+            16,
+            0,
+            'HIGH',
             {
-                fontFamily: techSmall.family,
-                fontSize: techSmall.size,
-                fontStyle: techSmall.style,
-                fontWeight: techSmall.weight,
-                letterSpacing: techSmall.letterSpacing,
-                color: `#${colors.accent.toString(16).padStart(6, '0')}`
+                fontFamily: 'Arial, sans-serif',
+                fontSize: '11px',
+                fontStyle: 'bold',
+                color: '#ffaa00'
             }
         );
-        this.highScoreLabel.setOrigin(0.5);
-        this.highScoreLabel.setDepth(950);
-        this.highScoreLabel.setScrollFactor(0);
+        this.highScoreLabel.setOrigin(0, 0);
+        this.highScoreLabel.setDepth(1101);
 
+        // High Score Value
         this.highScoreText = scene.add.text(
-            x + padding + labelWidth + valueWidth / 2,
-            y + panelHeight / 2,
-            '0',
+            0,
+            14,
+            '000000',
             {
-                fontFamily: techSmall.family,
+                fontFamily: 'Courier New, monospace',
                 fontSize: '22px',
-                fontStyle: techSmall.style,
-                fontWeight: techSmall.weight,
-                letterSpacing: techSmall.letterSpacing,
-                color: '#88ff88'
+                fontStyle: 'bold',
+                color: '#ffdd00'
             }
         );
-        this.highScoreText.setOrigin(0.5);
-        this.highScoreText.setDepth(1001); // Same depth as ScoreBoard
-        this.highScoreText.setScrollFactor(0);
-        this.highScoreText.setVisible(true);
-        this.highScoreText.setAlpha(1);
+        this.highScoreText.setOrigin(0, 0);
+        this.highScoreText.setDepth(1101);
+        this.highScoreText.setShadow(0, 0, '#ffaa00', 6, false, true);
+
+        this.container.add([this.crownIcon, this.highScoreLabel, this.highScoreText]);
+        this.currentDisplayHighScore = 0;
     }
 
-
     update(highScore) {
-        if (!this.highScoreText) {
-            return;
+        if (!this.highScoreText || !this.scene) return;
+
+        // Robuste Konvertierung des High Score-Werts
+        let safeHighScore;
+        if (highScore === undefined || highScore === null) {
+            safeHighScore = this.currentDisplayHighScore;
+        } else if (typeof highScore === 'number') {
+            safeHighScore = Number.isFinite(highScore) ? Math.max(0, highScore) : this.currentDisplayHighScore;
+        } else if (typeof highScore === 'string') {
+            const parsed = parseInt(highScore, 10);
+            safeHighScore = Number.isNaN(parsed) ? this.currentDisplayHighScore : Math.max(0, parsed);
+        } else {
+            safeHighScore = this.currentDisplayHighScore;
         }
 
-        const safeHighScore = Number.isFinite(Number(highScore)) ? Number(highScore) : 0;
-        this.highScoreText.setText(`${safeHighScore}`);
-        this.lastHighScore = safeHighScore;
+        // Prüfe auf neuen Rekord
+        if (safeHighScore > this.currentDisplayHighScore && this.currentDisplayHighScore > 0) {
+            this.highlightIfNewRecord();
+        }
 
-        // Force visibility
-        this.highScoreText.setVisible(true);
-        this.highScoreText.setAlpha(1);
-        this.highScoreLabel.setVisible(true);
-        this.highScoreLabel.setAlpha(1);
+        this.highScoreText.setText(this.formatScore(safeHighScore));
+        this.currentDisplayHighScore = safeHighScore;
+    }
+
+    formatScore(score) {
+        return score.toString().padStart(6, '0');
     }
 
     highlightIfNewRecord() {
-        if (!this.scene || !this.highScoreText) {
-            return;
-        }
+        if (!this.scene) return;
 
-        this.scene.tweens.killTweensOf(this.highScoreText);
-        this.highScoreText.setScale(1);
         this.scene.tweens.add({
-            targets: this.highScoreText,
-            scale: { from: 1, to: 1.15 },
-            duration: 180,
+            targets: [this.highScoreText, this.crownIcon],
+            scale: { from: 1, to: 1.2 },
+            duration: 200,
             yoyo: true,
-            repeat: 2,
+            repeat: 3,
             ease: 'Sine.easeOut'
         });
     }
 
     destroy() {
-        if (this.highScoreText) { this.highScoreText.destroy(); }
-        if (this.highScoreLabel) { this.highScoreLabel.destroy(); }
-        if (this.panel) { this.panel.destroy(); }
-        this.corners.forEach((corner) => corner.destroy());
-        this.corners = [];
-    }
-
-    createCircuitCorners(scene, x, y, width, height, colors, circuit) {
-        const cornerSize = circuit.cornerSize;
-        const positions = [
-            [[x, y + cornerSize], [x, y], [x + cornerSize, y]],
-            [[x + width - cornerSize, y], [x + width, y], [x + width, y + cornerSize]],
-            [[x, y + height - cornerSize], [x, y + height], [x + cornerSize, y + height]],
-            [[x + width - cornerSize, y + height], [x + width, y + height], [x + width, y + height - cornerSize]]
-        ];
-
-        return positions.map((points) => {
-            const graphic = scene.add.graphics();
-            graphic.lineStyle(2, colors.circuit.traceDim, 0.5);
-            graphic.beginPath();
-            graphic.moveTo(points[0][0], points[0][1]);
-            graphic.lineTo(points[1][0], points[1][1]);
-            graphic.lineTo(points[2][0], points[2][1]);
-            graphic.strokePath();
-            graphic.setDepth?.(905);
-            graphic.setScrollFactor?.(0);
-            return graphic;
-        });
+        if (this.container) {
+            this.container.destroy();
+            this.container = null;
+        }
+        this.highScoreText = null;
+        this.highScoreLabel = null;
+        this.crownIcon = null;
     }
 }

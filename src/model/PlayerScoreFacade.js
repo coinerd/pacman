@@ -11,13 +11,24 @@ export class PlayerScoreFacade {
     }
 
     /**
+     * Hilfsfunktion: Stellt sicher dass ein Wert eine gültige Zahl ist
+     */
+    toValidNumber(value, fallback = 0) {
+        // NaN check (NaN !== NaN)
+        if (value !== value) return fallback;
+        if (value === undefined || value === null) return fallback;
+        if (typeof value === 'number') return Number.isFinite(value) ? value : fallback;
+        return fallback;
+    }
+
+    /**
      * Read-only player/session state for UI and input guards.
      * @returns {{lives:number,level:number,isPaused:boolean,isGameOver:boolean,isDying:boolean}}
      */
     getPlayerState() {
         return Object.freeze({
-            lives: this.gameModel?.lives ?? 0,
-            level: this.gameModel?.level ?? 1,
+            lives: this.toValidNumber(this.gameModel?.lives, 0),
+            level: this.toValidNumber(this.gameModel?.level, 1),
             isPaused: Boolean(this.gameModel?.isPaused),
             isGameOver: Boolean(this.gameModel?.isGameOver),
             isDying: Boolean(this.gameModel?.isDying)
@@ -29,12 +40,16 @@ export class PlayerScoreFacade {
      * @returns {{score:number,highScore:number,combo:number,lives:number}}
      */
     getScoreState() {
-        const score = this.gameModel?.score ?? 0;
+        const rawScore = this.gameModel?.score;
+        const rawHighScore = this.gameModel?.highScore;
+        const rawLives = this.gameModel?.lives;
+        
+
         return Object.freeze({
-            score: score,
-            highScore: this.gameModel?.highScore ?? 0,
-            combo: this.gameModel?.currentComboGhosts ?? 0,
-            lives: this.gameModel?.lives ?? 0
+            score: this.toValidNumber(rawScore, 0),
+            highScore: this.toValidNumber(rawHighScore, 0),
+            combo: this.toValidNumber(this.gameModel?.currentComboGhosts, 0),
+            lives: this.toValidNumber(rawLives, 0)
         });
     }
 
@@ -111,4 +126,4 @@ export class PlayerScoreFacade {
         this.gameModel?.applyCollisionEffect?.({ type: 'pacman_died' });
         return this.getPlayerState();
     }
-};
+}

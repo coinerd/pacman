@@ -1,122 +1,116 @@
 import { themeConfig } from '../../../config/themeConfig.js';
 
+/**
+ * LevelWidget - Zeigt das aktuelle Level an
+ */
 export class LevelWidget {
     constructor() {
-        this.panel = null;
+        this.scene = null;
+        this.container = null;
         this.levelText = null;
-        this.levelLabel = null;
-        this.corners = [];
+        this.badgeBg = null;
+        this.lastLevel = 1;
     }
 
-    create(scene) {
-        const techSmall = themeConfig.fonts.tech.small;
-        const colors = themeConfig.colors;
-        const circuit = themeConfig.circuit;
-        const borderStyle = circuit.border;
+    create(scene, x, y) {
+        this.scene = scene;
 
-        const panelHeight = 45;
-        const padding = themeConfig.layout.spacing.md;
-        const x = 10;
-        const y = panelHeight * 3 + 40;
-        const labelWidth = 75;
-        const valueWidth = 80;
-        const panelWidth = labelWidth + valueWidth + padding * 2;
+        // Container für das gesamte Widget
+        this.container = scene.add.container(x, y);
+        this.container.setDepth(1100);
+        this.container.setScrollFactor(0);
 
-        this.panel = scene.add.rectangle(
-            x + panelWidth / 2,
-            y + panelHeight / 2,
-            panelWidth,
-            panelHeight,
-            colors.panel.background
+        // Badge Background
+        this.badgeBg = scene.add.rectangle(
+            0,
+            12,
+            32,
+            24,
+            0x00aaff,
+            0.2
         );
-        this.panel.setStrokeStyle(borderStyle.width, borderStyle.color, borderStyle.alpha);
-        this.panel.setAlpha(colors.panel.alpha);
-        this.panel.setDepth(900);
-        this.panel.setScrollFactor(0);
-        this.panel.setVisible(false); // Disable panel for visibility
+        this.badgeBg.setStrokeStyle(1, 0x00aaff, 0.8);
+        this.badgeBg.setOrigin(0.5);
+        this.badgeBg.setDepth(1100);
 
-        this.corners = this.createCircuitCorners(scene, x, y, panelWidth, panelHeight, colors, circuit);
-
-        this.levelLabel = scene.add.text(
-            x + padding + labelWidth / 2,
-            y + panelHeight / 2,
-            'LEVEL',
-            {
-                fontFamily: techSmall.family,
-                fontSize: techSmall.size,
-                fontStyle: techSmall.style,
-                fontWeight: techSmall.weight,
-                letterSpacing: techSmall.letterSpacing,
-                color: `#${colors.accent.toString(16).padStart(6, '0')}`
-            }
-        );
-        this.levelLabel.setOrigin(0.5);
-        this.levelLabel.setDepth(950);
-        this.levelLabel.setScrollFactor(0);
-
+        // Level Value
         this.levelText = scene.add.text(
-            x + padding + labelWidth + valueWidth / 2,
-            y + panelHeight / 2,
+            0,
+            12,
             '1',
             {
-                fontFamily: techSmall.family,
-                fontSize: '22px',
-                fontStyle: techSmall.style,
-                fontWeight: techSmall.weight,
-                letterSpacing: techSmall.letterSpacing,
-                color: '#88ff88'
+                fontFamily: 'Courier New, monospace',
+                fontSize: '18px',
+                fontStyle: 'bold',
+                color: '#00ddff'
             }
         );
         this.levelText.setOrigin(0.5);
-        this.levelText.setDepth(1001); // Same depth as ScoreBoard
-        this.levelText.setScrollFactor(0);
-        this.levelText.setVisible(true);
-        this.levelText.setAlpha(1);
+        this.levelText.setDepth(1102);
+        this.levelText.setShadow(0, 0, '#00aaff', 6, false, true);
+
+        this.container.add([this.badgeBg, this.levelText]);
     }
 
-
     update(level) {
-        if (!this.levelText) {
-            return;
+        if (!this.levelText) return;
+
+        const safeLevel = Math.max(1, Number.isFinite(Number(level)) ? Number(level) : 1);
+        
+        if (safeLevel > this.lastLevel && this.scene) {
+            this.animateLevelUp(safeLevel);
+        } else {
+            this.levelText.setText(`${safeLevel}`);
         }
+        
+        this.updateBadgeColor(safeLevel);
+        this.lastLevel = safeLevel;
+    }
 
-        this.levelText.setText(`${level}`);
+    updateBadgeColor(level) {
+        if (!this.badgeBg || !this.levelText) return;
 
-        // Force visibility
-        this.levelText.setVisible(true);
-        this.levelText.setAlpha(1);
-        this.levelLabel.setVisible(true);
-        this.levelLabel.setAlpha(1);
+        const colors = [
+            { bg: 0x00aaff, text: '#00ddff', border: 0x00aaff },
+            { bg: 0x00ffaa, text: '#00ffaa', border: 0x00ffaa },
+            { bg: 0xffaa00, text: '#ffcc00', border: 0xffaa00 },
+            { bg: 0xff6666, text: '#ff8888', border: 0xff6666 },
+            { bg: 0xff00ff, text: '#ff66ff', border: 0xff00ff },
+        ];
+
+        const colorIndex = Math.min(level - 1, colors.length - 1);
+        const color = colors[colorIndex];
+
+        this.badgeBg.setFillStyle(color.bg, 0.2);
+        this.badgeBg.setStrokeStyle(1, color.border, 0.8);
+        this.levelText.setColor(color.text);
+        this.levelText.setShadow(0, 0, color.border, 6, false, true);
+    }
+
+    animateLevelUp(newLevel) {
+        if (!this.scene) return;
+
+        this.scene.tweens.add({
+            targets: [this.levelText, this.badgeBg],
+            scale: { from: 1.5, to: 1 },
+            duration: 400,
+            ease: 'Back.easeOut'
+        });
+
+        this.levelText.setText(`${newLevel}`);
+
+        this.badgeBg.setFillStyle(0xffffff, 0.5);
+        this.scene.time.delayedCall(100, () => {
+            this.updateBadgeColor(newLevel);
+        });
     }
 
     destroy() {
-        if (this.levelText) { this.levelText.destroy(); }
-        if (this.levelLabel) { this.levelLabel.destroy(); }
-        if (this.panel) { this.panel.destroy(); }
-        this.corners.forEach((corner) => corner.destroy());
-        this.corners = [];
-    }
-
-    createCircuitCorners(scene, x, y, width, height, colors, circuit) {
-        const cornerSize = circuit.cornerSize;
-        const positions = [
-            [[x, y + cornerSize], [x, y], [x + cornerSize, y]],
-            [[x + width - cornerSize, y], [x + width, y], [x + width, y + cornerSize]],
-            [[x, y + height - cornerSize], [x, y + height], [x + cornerSize, y + height]],
-            [[x + width - cornerSize, y + height], [x + width, y + height], [x + width, y + height - cornerSize]]
-        ];
-
-        return positions.map((points) => {
-            const graphic = scene.add.graphics();
-            graphic.lineStyle(2, colors.circuit.traceDim, 0.5);
-            graphic.beginPath();
-            graphic.moveTo(points[0][0], points[0][1]);
-            graphic.lineTo(points[1][0], points[1][1]);
-            graphic.lineTo(points[2][0], points[2][1]);
-            graphic.strokePath();
-            graphic.setDepth?.(905);
-            graphic.setScrollFactor?.(0);
-            return graphic;
-        });
+        if (this.container) {
+            this.container.destroy();
+            this.container = null;
+        }
+        this.levelText = null;
+        this.badgeBg = null;
     }
 }

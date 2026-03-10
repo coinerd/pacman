@@ -319,6 +319,24 @@ export default class GameModelDI {
             this.applyCollisionEffect(event);
         }
 
+        // Debug: Log pelletsRemaining alle 100 frames
+        if (this.tickCount % 100 === 0) {
+            console.log('pelletsRemaining:', this.pelletsRemaining, 'totalPellets:', this.totalPellets);
+        }
+
+        // Prüfe auf Level-Complete (nur wenn nicht bereits complete)
+        // Wichtig: Prüfe direkt am SpawningSystem, nicht am Event!
+        if (!this.levelComplete && this.pelletsRemaining === 0 && this.totalPellets > 0) {
+            console.log('Level Complete detected! pelletsRemaining is 0');
+            this.levelComplete = true;
+            // Emit LEVEL_COMPLETE Event nur EINMAL
+            gameEvents.emit(GAME_EVENTS.LEVEL_COMPLETE, {
+                level: this.level,
+                score: this.score,
+                highScore: this.highScore
+            });
+        }
+        
         // Emit Events
         const events = [...movementEvents, ...collisionEvents];
         this.emitEvents(events);
@@ -351,8 +369,13 @@ export default class GameModelDI {
         const ghost = this.entityRegistry.getGhostByType(data.ghostType);
         if (ghost) {
             ghost.eat();
-            const baseScore = [200, 400, 800, 1600][ghost.eatenCount % 4];
-            const score = baseScore * this.levelSystem.getScoreMultiplier();
+            
+            // Sichere Berechnung des Scores
+            const eatenCount = ghost.eatenCount ?? 0;
+            const baseScore = [200, 400, 800, 1600][eatenCount % 4] ?? 200;
+            const multiplier = this.levelSystem.getScoreMultiplier() ?? 1;
+            const score = baseScore * multiplier;
+            
             this.scoreModule.currentComboGhosts++;
             this.gameState.score += score;
             this.gameState.ghostsEaten++;
@@ -360,6 +383,7 @@ export default class GameModelDI {
                 this.gameState.maxComboGhosts,
                 this.scoreModule.currentComboGhosts
             );
+            this.checkHighScore();
         }
     }
 

@@ -1,122 +1,105 @@
 import { themeConfig } from '../../../config/themeConfig.js';
 
+/**
+ * LivesWidget - Zeigt Leben als Herz-Icons an
+ */
 export class LivesWidget {
     constructor() {
-        this.panel = null;
-        this.livesText = null;
-        this.livesLabel = null;
-        this.corners = [];
+        this.scene = null;
+        this.container = null;
+        this.heartIcons = [];
+        this.lastLives = 3;
     }
 
-    create(scene) {
-        const techSmall = themeConfig.fonts.tech.small;
-        const colors = themeConfig.colors;
-        const circuit = themeConfig.circuit;
-        const borderStyle = circuit.border;
+    create(scene, x, y) {
+        this.scene = scene;
 
-        const panelHeight = 45;
-        const padding = themeConfig.layout.spacing.md;
-        const x = 10;
-        const y = panelHeight * 2 + 30;
-        const labelWidth = 75;
-        const valueWidth = 80;
-        const panelWidth = labelWidth + valueWidth + padding * 2;
+        // Container für das gesamte Widget
+        this.container = scene.add.container(x, y);
+        this.container.setDepth(1100);
+        this.container.setScrollFactor(0);
 
-        this.panel = scene.add.rectangle(
-            x + panelWidth / 2,
-            y + panelHeight / 2,
-            panelWidth,
-            panelHeight,
-            colors.panel.background
-        );
-        this.panel.setStrokeStyle(borderStyle.width, borderStyle.color, borderStyle.alpha);
-        this.panel.setAlpha(colors.panel.alpha);
-        this.panel.setDepth(900);
-        this.panel.setScrollFactor(0);
-        this.panel.setVisible(false); // Disable panel for visibility
-
-        this.corners = this.createCircuitCorners(scene, x, y, panelWidth, panelHeight, colors, circuit);
-
-        this.livesLabel = scene.add.text(
-            x + padding + labelWidth / 2,
-            y + panelHeight / 2,
-            'LIVES',
-            {
-                fontFamily: techSmall.family,
-                fontSize: techSmall.size,
-                fontStyle: techSmall.style,
-                fontWeight: techSmall.weight,
-                letterSpacing: techSmall.letterSpacing,
-                color: `#${colors.accent.toString(16).padStart(6, '0')}`
-            }
-        );
-        this.livesLabel.setOrigin(0.5);
-        this.livesLabel.setDepth(950);
-        this.livesLabel.setScrollFactor(0);
-
-        this.livesText = scene.add.text(
-            x + padding + labelWidth + valueWidth / 2,
-            y + panelHeight / 2,
-            '3',
-            {
-                fontFamily: techSmall.family,
-                fontSize: '22px',
-                fontStyle: techSmall.style,
-                fontWeight: techSmall.weight,
-                letterSpacing: techSmall.letterSpacing,
-                color: '#88ff88'
-            }
-        );
-        this.livesText.setOrigin(0.5);
-        this.livesText.setDepth(1001); // Same depth as ScoreBoard
-        this.livesText.setScrollFactor(0);
-        this.livesText.setVisible(true);
-        this.livesText.setAlpha(1);
+        // Initialisiere Herz-Icons (zentriert)
+        this.createHeartIcons(3);
     }
 
+    createHeartIcons(maxLives) {
+        this.heartIcons.forEach(icon => icon.destroy());
+        this.heartIcons = [];
+
+        const spacing = 16;
+        const totalWidth = (maxLives - 1) * spacing;
+        const startX = -totalWidth / 2;
+
+        for (let i = 0; i < maxLives; i++) {
+            const heart = this.scene.add.text(
+                startX + (i * spacing),
+                8,
+                '♥',
+                {
+                    fontFamily: 'Arial, sans-serif',
+                    fontSize: '18px',
+                    color: '#ff4444'
+                }
+            );
+            heart.setOrigin(0.5, 0);
+            heart.setDepth(1101);
+            heart.setShadow(0, 0, '#ff0000', 4, false, true);
+            
+            this.heartIcons.push(heart);
+            this.container.add(heart);
+        }
+    }
 
     update(lives) {
-        if (!this.livesText) {
-            return;
+        if (!this.container) return;
+
+        const safeLives = Math.max(0, Math.min(lives, this.heartIcons.length));
+        
+        this.heartIcons.forEach((heart, index) => {
+            const isActive = index < safeLives;
+            
+            if (isActive) {
+                heart.setVisible(true);
+                heart.setAlpha(1);
+                heart.setColor('#ff4444');
+                heart.setScale(1);
+                heart.setShadow(0, 0, '#ff0000', 4, false, true);
+            } else {
+                heart.setVisible(true);
+                heart.setAlpha(0.25);
+                heart.setColor('#666666');
+                heart.setScale(0.9);
+                heart.setShadow(0, 0, '#000000', 0, false, true);
+            }
+        });
+
+        if (safeLives < this.lastLives && this.scene) {
+            this.animateLifeLost(safeLives);
         }
 
-        this.livesText.setText(`${lives}`);
+        this.lastLives = safeLives;
+    }
 
-        // Force visibility
-        this.livesText.setVisible(true);
-        this.livesText.setAlpha(1);
-        this.livesLabel.setVisible(true);
-        this.livesLabel.setAlpha(1);
+    animateLifeLost(remainingLives) {
+        const lastActiveHeart = this.heartIcons[remainingLives - 1];
+        if (lastActiveHeart) {
+            this.scene.tweens.add({
+                targets: lastActiveHeart,
+                scale: { from: 1.3, to: 1 },
+                duration: 300,
+                ease: 'Back.easeOut'
+            });
+        }
     }
 
     destroy() {
-        if (this.livesText) { this.livesText.destroy(); }
-        if (this.livesLabel) { this.livesLabel.destroy(); }
-        if (this.panel) { this.panel.destroy(); }
-        this.corners.forEach((corner) => corner.destroy());
-        this.corners = [];
-    }
-
-    createCircuitCorners(scene, x, y, width, height, colors, circuit) {
-        const cornerSize = circuit.cornerSize;
-        const positions = [
-            [[x, y + cornerSize], [x, y], [x + cornerSize, y]],
-            [[x + width - cornerSize, y], [x + width, y], [x + width, y + cornerSize]],
-            [[x, y + height - cornerSize], [x, y + height], [x + cornerSize, y + height]],
-            [[x + width - cornerSize, y + height], [x + width, y + height], [x + width, y + height - cornerSize]]
-        ];
-
-        return positions.map((points) => {
-            const graphic = scene.add.graphics();
-            graphic.lineStyle(2, colors.circuit.traceDim, 0.5);
-            graphic.beginPath();
-            graphic.moveTo(points[0][0], points[0][1]);
-            graphic.lineTo(points[1][0], points[1][1]);
-            graphic.lineTo(points[2][0], points[2][1]);
-            graphic.strokePath();
-            graphic.setDepth?.(905);
-            graphic.setScrollFactor?.(0);
-            return graphic;
-        });
+        this.heartIcons.forEach(icon => icon.destroy());
+        this.heartIcons = [];
+        
+        if (this.container) {
+            this.container.destroy();
+            this.container = null;
+        }
     }
 }

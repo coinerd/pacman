@@ -106,6 +106,8 @@ export class CollisionHandler {
             return null;
         }
 
+
+
         // Kein Distanz-Check mehr - Pacman frisst Pellet wenn er im gleichen Grid-Tile ist
         // Dies ist das Standard-Verhalten in Pacman
 
@@ -134,9 +136,8 @@ export class CollisionHandler {
     }
 
     eatPelletAt(gridX, gridY, gameState) {
-        // Pellet aus Grid entfernen
-        gameState.pelletGrid[gridY][gridX] = PELLET_TYPES.NONE;
-        gameState.pelletsRemaining--;
+        // WICHTIG: Das Pellet wird vom GameModel/SpawningSystem entfernt!
+        // Hier nur den Callback aufrufen
 
         // Callback aufrufen (unterstützt sowohl this.callbacks als auch direkte Property)
         if (this.onPelletEaten) {
@@ -145,21 +146,18 @@ export class CollisionHandler {
             this.callbacks.onPelletEaten({ gridX, gridY });
         }
 
-        // Level-Complete prüfen
-        const levelComplete = gameState.pelletsRemaining === 0;
-
+        // Level-Complete wird vom GameModel geprüft
         return {
             score: 10,
             isPowerPellet: false,
-            pelletsRemaining: gameState.pelletsRemaining,
-            levelComplete
+            pelletsRemaining: gameState.pelletsRemaining - 1, // Geschätzter Wert für das Event
+            levelComplete: false // Wird vom GameModel korrigiert
         };
     }
 
     eatPowerPelletAt(gridX, gridY, gameState) {
-        // Power Pellet aus Grid entfernen
-        gameState.pelletGrid[gridY][gridX] = PELLET_TYPES.NONE;
-        gameState.pelletsRemaining--;
+        // WICHTIG: Das Power-Pellet wird vom GameModel/SpawningSystem entfernt!
+        // Hier nur den Callback aufrufen
 
         // Callback aufrufen (unterstützt sowohl this.callbacks als auch direkte Property)
         if (this.onPowerPelletEaten) {
@@ -168,14 +166,12 @@ export class CollisionHandler {
             this.callbacks.onPowerPelletEaten({ gridX, gridY });
         }
 
-        // Level-Complete prüfen
-        const levelComplete = gameState.pelletsRemaining === 0;
-
+        // Level-Complete wird vom GameModel geprüft
         return {
             score: 50,
             isPowerPellet: true,
-            pelletsRemaining: gameState.pelletsRemaining,
-            levelComplete
+            pelletsRemaining: gameState.pelletsRemaining - 1, // Geschätzter Wert für das Event
+            levelComplete: false // Wird vom GameModel korrigiert
         };
     }
 
