@@ -33,6 +33,12 @@ export default class GameModelDI {
             ghosts: {}
         };
 
+        // OPTIMIZATION: Snapshot pooling to reduce GC pressure
+        this._snapshotPool = null;
+        this._ghostsSnapshotPool = null;
+        this._lastSnapshotTime = 0;
+        this._cachedSnapshot = null;
+
         if (useDI) {
             // Services are already registered by GameScene
             // Just get them from container
@@ -673,40 +679,81 @@ export default class GameModelDI {
     // === Snapshots & Serialization ===
 
     getSnapshot() {
-        // OPTIMIZED: Avoid deep copying static data and expensive Object.freeze()
-        // Maze never changes during level - return reference only
-        // PelletGrid changes rarely - only copy if needed (dirty flag logic)
+        // OPTIMIZED: Reuse snapshot object to reduce GC pressure
+        // Only update changed values instead of creating new objects
 
-        const ghostsSnapshot = new Array(this.ghosts.length);
-        for (let i = 0; i < this.ghosts.length; i++) {
-            ghostsSnapshot[i] = this.ghosts[i].getSnapshot();
+        if (!this._cachedSnapshot) {
+            this._cachedSnapshot = this._createSnapshot();
         }
 
+        // Update mutable properties in place
+        const snap = this._cachedSnapshot;
+        snap.tickCount = this.tickCount;
+        snap.level = this.level;
+        snap.score = this.score;
+        snap.highScore = this.highScore;
+        snap.lives = this.lives;
+        snap.pelletsEaten = this.pelletsEaten;
+        snap.ghostsEaten = this.ghostsEaten;
+        snap.pelletsRemaining = this.pelletsRemaining;
+        snap.totalPellets = this.totalPellets;
+        snap.isPaused = this.isPaused;
+        snap.isGameOver = this.isGameOver;
+        snap.levelComplete = this.levelComplete;
+        snap.isDying = this.isDying;
+
+        // References (static during level)
+        snap.maze = this.maze;
+        snap.pelletGrid = this.pelletGrid;
+        snap.levelInfo = this.levelSystem.getLevelInfo();
+
+        // Update entity snapshots in place
+        snap.pacman = this.pacman?.getSnapshot();
+
+        // Reuse ghosts array
+        if (!snap.ghosts) {
+            snap.ghosts = [];
+        }
+        const ghosts = this.ghosts;
+        for (let i = 0; i < ghosts.length; i++) {
+            snap.ghosts[i] = ghosts[i].getSnapshot();
+        }
+        snap.ghosts.length = ghosts.length; // Trim if needed
+
+        snap.fruit = this.fruit?.getSnapshot();
+        snap.boss = this.bossBattleSystem?.getSnapshot();
+        const powerUpSnap = this.additionalPowerUpSystem?.getSnapshot();
+        snap.powerUps = powerUpSnap?.spawnedPowerUps || [];
+        snap.story = this.storyMode?.getSnapshot();
+
+        return snap;
+    }
+
+    _createSnapshot() {
+        // Initial creation - only called once
         return {
-            tickCount: this.tickCount,
-            level: this.level,
-            score: this.score,
-            highScore: this.highScore,
-            lives: this.lives,
-            pelletsEaten: this.pelletsEaten,
-            ghostsEaten: this.ghostsEaten,
-            pelletsRemaining: this.pelletsRemaining,
-            totalPellets: this.totalPellets,
-            isPaused: this.isPaused,
-            isGameOver: this.isGameOver,
-            levelComplete: this.levelComplete,
-            isDying: this.isDying,
-            // Maze is static during level - no copy needed
-            maze: this.maze,
-            // Return pelletGrid reference directly - View doesn't modify it
-            pelletGrid: this.pelletGrid,
-            pacman: this.pacman?.getSnapshot(),
-            ghosts: ghostsSnapshot,
-            fruit: this.fruit?.getSnapshot(),
-            boss: this.bossBattleSystem?.getSnapshot(),
-            powerUps: this.additionalPowerUpSystem?.getSnapshot()?.spawnedPowerUps || [],
-            story: this.storyMode?.getSnapshot(),
-            levelInfo: this.levelSystem.getLevelInfo()
+            tickCount: 0,
+            level: 1,
+            score: 0,
+            highScore: 0,
+            lives: 3,
+            pelletsEaten: 0,
+            ghostsEaten: 0,
+            pelletsRemaining: 0,
+            totalPellets: 0,
+            isPaused: false,
+            isGameOver: false,
+            levelComplete: false,
+            isDying: false,
+            maze: null,
+            pelletGrid: null,
+            pacman: null,
+            ghosts: [],
+            fruit: null,
+            boss: null,
+            powerUps: [],
+            story: null,
+            levelInfo: null
         };
     }
 
