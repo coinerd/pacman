@@ -49,6 +49,12 @@ export class PowerPelletPool {
     release(pellet) {
         const index = this.active.indexOf(pellet);
         if (index !== -1) {
+            // Stop the pulse tween if it exists
+            if (pellet.pulseTween) {
+                pellet.pulseTween.stop();
+                pellet.pulseTween = null;
+            }
+
             this.active.splice(index, 1);
             pellet.setVisible(false);
             pellet.setActive(false);
@@ -75,6 +81,11 @@ export class PowerPelletPool {
 
     destroy() {
         for (const pellet of [...this.available, ...this.active]) {
+            // Stop any running tweens
+            if (pellet.pulseTween) {
+                pellet.pulseTween.stop();
+                pellet.pulseTween = null;
+            }
             pellet.destroy();
         }
         this.available = [];

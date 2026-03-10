@@ -190,6 +190,10 @@ export class PowerUpVisualManager {
         if (!visual) {
             return;
         }
+        // Kill tweens before destroying sprites
+        if (this.scene && this.scene.tweens) {
+            this.scene.tweens.killTweensOf(visual.sprite);
+        }
         visual.sprite.destroy();
         visual.text.destroy();
         const key = `${visual.type}_${visual.gridX}_${visual.gridY}`;
@@ -241,6 +245,10 @@ export class PowerUpVisualManager {
      */
     clearAllPowerUps() {
         for (const visual of this.powerUpVisuals.values()) {
+            // Kill tweens before destroying sprites
+            if (this.scene && this.scene.tweens) {
+                this.scene.tweens.killTweensOf(visual.sprite);
+            }
             visual.sprite.destroy();
             visual.text.destroy();
         }

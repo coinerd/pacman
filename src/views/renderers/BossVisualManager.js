@@ -309,6 +309,11 @@ export class BossVisualManager {
             return;
         }
 
+        // Kill all tweens on boss sprite before destroying
+        if (this.scene && this.scene.tweens) {
+            this.scene.tweens.killTweensOf(this.bossVisual.sprite);
+        }
+
         this.bossVisual.sprite.destroy();
         this.bossVisual.healthBar.background.destroy();
         this.bossVisual.healthBar.fill.destroy();

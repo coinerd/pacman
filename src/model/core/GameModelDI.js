@@ -303,6 +303,7 @@ export default class GameModelDI {
         this.gameState.score += 10;
         this.spawningSystem.removePelletAt(data.gridX, data.gridY);
         this.checkHighScore();
+        this.checkLevelComplete();
     }
 
     handlePowerPelletEaten(data) {
@@ -310,7 +311,18 @@ export default class GameModelDI {
         this.gameState.score += 50;
         this.spawningSystem.removePelletAt(data.gridX, data.gridY);
         this.checkHighScore();
+        this.checkLevelComplete();
         this.setGhostsFrightened(this.levelSystem.getFrightenedDuration());
+    }
+
+    checkLevelComplete() {
+        if (this.pelletsRemaining === 0 && !this.levelComplete) {
+            this.levelComplete = true;
+            gameEvents.emit(GAME_EVENTS.LEVEL_COMPLETE, {
+                level: this.level,
+                score: this.score
+            });
+        }
     }
 
     handleGhostEaten(data) {

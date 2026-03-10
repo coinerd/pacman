@@ -86,8 +86,8 @@ export class PelletRenderer {
     createPowerPellet(x, y) {
         const powerPellet = this.powerPelletPool.get(x, y);
 
-        // Add pulse animation
-        this.scene.tweens.add({
+        // Add pulse animation and store reference to stop it later
+        const tween = this.scene.tweens.add({
             targets: powerPellet,
             scale: { from: 1, to: 1.5 },
             alpha: { from: 1, to: 0.7 },
@@ -96,6 +96,9 @@ export class PelletRenderer {
             repeat: -1,
             ease: 'Sine.easeInOut'
         });
+
+        // Store tween reference on the pellet for cleanup
+        powerPellet.pulseTween = tween;
     }
 
     /**
