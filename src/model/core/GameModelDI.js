@@ -704,7 +704,7 @@ export default class GameModelDI {
             ghosts: ghostsSnapshot,
             fruit: this.fruit?.getSnapshot(),
             boss: this.bossBattleSystem?.getSnapshot(),
-            powerUps: this.additionalPowerUpSystem?.getSnapshot(),
+            powerUps: this.additionalPowerUpSystem?.getSnapshot()?.spawnedPowerUps || [],
             story: this.storyMode?.getSnapshot(),
             levelInfo: this.levelSystem.getLevelInfo()
         };
