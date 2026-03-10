@@ -13,6 +13,9 @@ export class PelletRenderer {
         this.scene = scene;
         this.pelletPool = null;
         this.powerPelletPool = null;
+        // Cache für Grid-Hash um unnötige Updates zu vermeiden
+        this.lastPelletGridHash = null;
+        this.pelletCount = 0;
     }
 
     /**
@@ -68,13 +71,32 @@ export class PelletRenderer {
     }
 
     /**
-     * Update pellet visuals based on current pellet grid
-     * Removes pellets that no longer exist, adds new ones
+     * OPTIMIZED: Update pellet visuals based on current pellet grid
+     * Uses hash comparison to avoid processing unchanged grids
      * @param {Array<Array<number>>} pelletGrid - Current pellet grid
      */
     updatePelletVisuals(pelletGrid) {
         if (!pelletGrid) {
             return;
+        }
+
+        // OPTIMIZATION: Quick count check first
+        let currentPelletCount = 0;
+        let powerPelletCount = 0;
+        for (let y = 0; y < pelletGrid.length; y++) {
+            for (let x = 0; x < pelletGrid[y].length; x++) {
+                const type = pelletGrid[y][x];
+                if (type === PELLET_TYPES.PELLET) {currentPelletCount++;}
+                else if (type === PELLET_TYPES.POWER_PELLET) {powerPelletCount++;}
+            }
+        }
+
+        // If counts match, grid likely hasn't changed - skip expensive update
+        const activePellets = this.pelletPool.active.length;
+        const activePowerPellets = this.powerPelletPool.active.length;
+
+        if (currentPelletCount === activePellets && powerPelletCount === activePowerPellets) {
+            return; // Nothing changed, skip update
         }
 
         // Remove pellets that are no longer in the grid
