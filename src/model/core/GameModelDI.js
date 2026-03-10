@@ -28,6 +28,10 @@ export default class GameModelDI {
     constructor(config = {}, useDI = true) {
         this.useDI = useDI;
         this.eventUnsubscribers = [];
+        this.movementEntityIds = {
+            player: null,
+            ghosts: {}
+        };
 
         if (useDI) {
             // Services are already registered by GameScene
@@ -168,7 +172,8 @@ export default class GameModelDI {
         this.entityRegistry.createFruit();
 
         const pacman = this.entityRegistry.getPacman();
-        this.movementSystem.registerEntity(pacman, { type: 'player', speed: 100 });
+        const playerMovement = this.movementSystem.registerEntity(pacman, { type: 'player', speed: 100 });
+        this.movementEntityIds.player = pacman.id;
 
         for (const ghost of this.entityRegistry.getGhosts()) {
             this.movementSystem.registerEntity(ghost, {
@@ -177,6 +182,7 @@ export default class GameModelDI {
                 aiType: ghost.ghostType,
                 initialMode: 'SCATTER'
             });
+            this.movementEntityIds.ghosts[ghost.ghostType] = ghost.id;
         }
 
         // PHASE 6: Setup feature system event listeners
@@ -436,8 +442,14 @@ export default class GameModelDI {
         this.gameState.updateDeathTimer(deltaSeconds);
 
         if (this.gameState.isDeathComplete()) {
-            if (this.lives <= 0) {
+            if (this.lives <= 1) {
+                // Last life lost - game over
                 this.setGameOver(true);
+                gameEvents.emit(GAME_EVENTS.GAME_OVER, {
+                    score: this.score,
+                    highScore: this.highScore,
+                    level: this.level
+                });
             } else {
                 this.lives--;
                 this.resetPositions();
@@ -537,8 +549,27 @@ export default class GameModelDI {
     }
 
     resetPositions() {
+        // Reset positions in entity registry
         this.entityRegistry.resetPositions();
-        this.movementSystem?.reset();
+
+        // Also reset positions in movement system to keep them in sync
+        if (this.movementSystem) {
+            const spawnPoint = this.spawningSystem.getSpawnPoints()?.player || { x: 13, y: 23 };
+
+            if (this.movementEntityIds.player) {
+                this.movementSystem.resetEntity(this.movementEntityIds.player, spawnPoint.x, spawnPoint.y);
+            }
+
+            // Reset ghosts in movement system
+            const ghostSpawns = this.spawningSystem.getSpawnPoints()?.ghosts || {};
+            for (const ghost of this.entityRegistry.getGhosts()) {
+                const ghostId = this.movementEntityIds.ghosts[ghost.ghostType];
+                const ghostSpawn = ghostSpawns[ghost.ghostType];
+                if (ghostId && ghostSpawn) {
+                    this.movementSystem.resetEntity(ghostId, ghostSpawn.x, ghostSpawn.y);
+                }
+            }
+        }
     }
 
     // === High Score ===

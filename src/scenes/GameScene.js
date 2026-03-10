@@ -100,9 +100,6 @@ export default class GameScene extends Phaser.Scene {
         this.uiController = new UIController(this, this.playerScoreFacade);
         this.uiController.create();
 
-        // Start game loop
-        this.start();
-
         this.inputManager = new InputManager();
         this.inputManager.registerAdapter('keyboard', new KeyboardAdapter(this.input));
 
