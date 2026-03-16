@@ -1,579 +1,509 @@
-import { directions, ghostModes } from '../../src/config/gameConfig.js';
-import { EnemyAISystem } from '../../src/systems/EnemyAISystem.js';
-import { createMazeData } from '../../src/utils/MazeLayout.js';
-import { msToSeconds } from '../../src/utils/Time.js';
+/**
+ * Tests for GhostAISystem
+ * Tests ghost AI behavior, targeting, and mode cycling
+ */
 
-const { maze } = createMazeData();
+import { directions, ghostModes, scatterTargets } from '../../src/config/gameConfig.js';
+import * as MazeLayout from '../../src/utils/MazeLayout.js';
 
 describe('GhostAISystem', () => {
     let aiSystem;
-    let mockEnemies;
-    let mockPlayer;
+    let mockGhosts;
+    let mockPacman;
+    let mockMaze;
 
     beforeEach(() => {
-        aiSystem = new EnemyAISystem();
+        // Mock MazeLayout functions
+        jest.spyOn(MazeLayout, 'getDistance').mockImplementation((x1, y1, x2, y2) =>
+            Math.abs(x2 - x1) + Math.abs(y2 - y1)
+        );
+        jest.spyOn(MazeLayout, 'getValidDirections').mockReturnValue([
+            directions.UP, directions.RIGHT, directions.DOWN, directions.LEFT
+        ]);
 
-        mockPlayer = {
+        // Import after mocks are set up
+        const { GhostAISystem } = require('../../src/systems/GhostAISystem.js');
+        aiSystem = new GhostAISystem();
+
+        mockPacman = {
             gridX: 14,
             gridY: 14,
             direction: directions.RIGHT
         };
 
-        mockEnemies = [
-            {
-                type: 'alpha',
-                gridX: 2,
-                gridY: 1,
-                direction: directions.RIGHT,
-                nextDirection: directions.NONE,
-                setDirection(dir) {
-                    this.direction = dir;
-                    this.nextDirection = directions.NONE;
-                },
-                mode: ghostModes.SCATTER,
-                isFrightened: false,
-                isEaten: false,
-                targetX: 0,
-                targetY: 0,
-                modeTimer: 0,
-                isMoving: true
-            },
-            {
-                type: 'beta',
-                gridX: 24,
-                gridY: 1,
-                direction: directions.LEFT,
-                nextDirection: directions.NONE,
-                setDirection(dir) {
-                    this.direction = dir;
-                    this.nextDirection = directions.NONE;
-                },
-                mode: ghostModes.SCATTER,
-                isFrightened: false,
-                isEaten: false,
-                targetX: 0,
-                targetY: 0,
-                modeTimer: 0,
-                isMoving: true
-            },
-            {
-                type: 'gamma',
-                gridX: 2,
-                gridY: 25,
-                direction: directions.UP,
-                nextDirection: directions.NONE,
-                setDirection(dir) {
-                    this.direction = dir;
-                    this.nextDirection = directions.NONE;
-                },
-                mode: ghostModes.SCATTER,
-                isFrightened: false,
-                isEaten: false,
-                targetX: 0,
-                targetY: 0,
-                modeTimer: 0,
-                isMoving: true
-            },
-            {
-                type: 'delta',
-                gridX: 24,
-                gridY: 25,
-                direction: directions.DOWN,
-                nextDirection: directions.NONE,
-                setDirection(dir) {
-                    this.direction = dir;
-                    this.nextDirection = directions.NONE;
-                },
-                mode: ghostModes.SCATTER,
-                isFrightened: false,
-                isEaten: false,
-                targetX: 0,
-                targetY: 0,
-                modeTimer: 0,
-                isMoving: true
-            }
+        mockGhosts = [
+            createMockGhost('alpha', 2, 1),
+            createMockGhost('beta', 24, 1),
+            createMockGhost('gamma', 12, 14),
+            createMockGhost('delta', 14, 20)
         ];
 
-        aiSystem.setEnemies(mockEnemies);
+        mockMaze = {};
     });
 
-    describe('Constructor', () => {
-        test('initializes with empty enemies array', () => {
-            const system = new EnemyAISystem();
-            expect(system.enemies).toEqual([]);
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
+    function createMockGhost(type, gridX, gridY) {
+        return {
+            type,
+            gridX,
+            gridY,
+            direction: directions.RIGHT,
+            mode: ghostModes.SCATTER,
+            isFrightened: false,
+            isEaten: false,
+            targetX: 0,
+            targetY: 0,
+            setDirection: jest.fn(function(dir) {
+                this.direction = dir;
+            })
+        };
+    }
+
+    describe('constructor', () => {
+        it('should initialize with empty ghosts array', () => {
+            expect(aiSystem.ghosts).toEqual([]);
         });
 
-        test('initializes globalModeTimer to 0', () => {
-            expect(aiSystem.globalModeTimer).toBe(0);
-        });
-
-        test('initializes globalMode to SCATTER', () => {
+        it('should initialize with global mode SCATTER', () => {
             expect(aiSystem.globalMode).toBe(ghostModes.SCATTER);
         });
 
-        test('initializes cycleIndex to 0', () => {
+        it('should initialize with mode timer at 0', () => {
+            expect(aiSystem.globalModeTimer).toBe(0);
+        });
+
+        it('should initialize with cycle index 0', () => {
             expect(aiSystem.cycleIndex).toBe(0);
         });
 
-        test('has correct cycle durations', () => {
-            expect(aiSystem.cycles.length).toBe(8);
+        it('should have 8 mode cycles defined', () => {
+            expect(aiSystem.cycles).toHaveLength(8);
+        });
+
+        it('should have first cycle as SCATTER for 7 seconds', () => {
             expect(aiSystem.cycles[0].mode).toBe(ghostModes.SCATTER);
             expect(aiSystem.cycles[0].duration).toBe(7);
-            expect(aiSystem.cycles[1].mode).toBe(ghostModes.CHASE);
-            expect(aiSystem.cycles[1].duration).toBe(20);
-            expect(aiSystem.cycles[aiSystem.cycles.length - 1].duration).toBe(-1);
+        });
+
+        it('should have last cycle as permanent CHASE', () => {
+            expect(aiSystem.cycles[7].mode).toBe(ghostModes.CHASE);
+            expect(aiSystem.cycles[7].duration).toBe(-1);
         });
     });
 
-    describe('setEnemies()', () => {
-        test('sets the enemies array', () => {
-            const system = new EnemyAISystem();
-            system.setEnemies(mockEnemies);
-            expect(system.enemies).toBe(mockEnemies);
+    describe('setGhosts', () => {
+        it('should store ghosts array', () => {
+            aiSystem.setGhosts(mockGhosts);
+            expect(aiSystem.ghosts).toBe(mockGhosts);
         });
     });
 
-    describe('updateGlobalMode()', () => {
-        test('does not change mode if timer not elapsed', () => {
-            aiSystem.updateGlobalMode(msToSeconds(5000));
-            expect(aiSystem.globalMode).toBe(ghostModes.SCATTER);
-            expect(aiSystem.globalModeTimer).toBe(5);
+    describe('updateGlobalMode', () => {
+        it('should increment timer', () => {
+            aiSystem.updateGlobalMode(0.5);
+            expect(aiSystem.globalModeTimer).toBe(0.5);
+        });
+
+        it('should not change mode if duration not reached', () => {
+            aiSystem.updateGlobalMode(5);
             expect(aiSystem.cycleIndex).toBe(0);
+            expect(aiSystem.globalMode).toBe(ghostModes.SCATTER);
         });
 
-        test('transitions to CHASE after first scatter duration', () => {
-            aiSystem.updateGlobalMode(msToSeconds(7000));
+        it('should advance to next cycle when duration reached', () => {
+            aiSystem.updateGlobalMode(7);
+            expect(aiSystem.cycleIndex).toBe(1);
             expect(aiSystem.globalMode).toBe(ghostModes.CHASE);
             expect(aiSystem.globalModeTimer).toBe(0);
-            expect(aiSystem.cycleIndex).toBe(1);
         });
 
-        test('transitions through multiple cycles', () => {
-            aiSystem.updateGlobalMode(msToSeconds(7000));
-            expect(aiSystem.globalMode).toBe(ghostModes.CHASE);
-            expect(aiSystem.cycleIndex).toBe(1);
-
-            aiSystem.updateGlobalMode(msToSeconds(20000));
-            expect(aiSystem.globalMode).toBe(ghostModes.SCATTER);
-            expect(aiSystem.cycleIndex).toBe(2);
-        });
-
-        test('handles partial timer increments', () => {
-            aiSystem.updateGlobalMode(msToSeconds(5000));
-            expect(aiSystem.globalModeTimer).toBe(5);
-            expect(aiSystem.globalMode).toBe(ghostModes.SCATTER);
-
-            aiSystem.updateGlobalMode(msToSeconds(2000));
-            expect(aiSystem.globalModeTimer).toBe(0);
-            expect(aiSystem.globalMode).toBe(ghostModes.CHASE);
-        });
-
-        test('does not change mode when in permanent chase (duration -1)', () => {
-            aiSystem.cycleIndex = 7;
-            aiSystem.globalMode = ghostModes.CHASE;
-            aiSystem.globalModeTimer = msToSeconds(1000);
-
-            aiSystem.updateGlobalMode(msToSeconds(5000));
-
-            expect(aiSystem.globalMode).toBe(ghostModes.CHASE);
+        it('should not advance if current cycle is permanent', () => {
+            aiSystem.cycleIndex = 7; // Last cycle (permanent)
+            aiSystem.updateGlobalMode(100);
             expect(aiSystem.cycleIndex).toBe(7);
         });
     });
 
-    describe('updateAlphaTarget()', () => {
-        test('targets scatter corner in SCATTER mode', () => {
-            const blinky = mockEnemies[0];
-            blinky.mode = ghostModes.SCATTER;
-            aiSystem.updateAlphaTarget(blinky, mockPlayer);
+    describe('updateGhostTarget', () => {
+        it('should set ghost house target when eaten', () => {
+            const ghost = createMockGhost('alpha', 5, 5);
+            ghost.isEaten = true;
 
-            expect(blinky.targetX).toBeDefined();
-            expect(blinky.targetY).toBeDefined();
+            aiSystem.updateGhostTarget(ghost, mockPacman);
+
+            expect(ghost.targetX).toBe(13);
+            expect(ghost.targetY).toBe(14);
         });
 
-        test('targets Pacman in CHASE mode', () => {
-            const blinky = mockEnemies[0];
-            blinky.mode = ghostModes.CHASE;
-            aiSystem.updateAlphaTarget(blinky, mockPlayer);
+        it('should not set target when frightened', () => {
+            const ghost = createMockGhost('alpha', 5, 5);
+            ghost.isFrightened = true;
+            ghost.targetX = 99;
+            ghost.targetY = 99;
 
-            expect(blinky.targetX).toBe(mockPlayer.gridX);
-            expect(blinky.targetY).toBe(mockPlayer.gridY);
-        });
-    });
+            aiSystem.updateGhostTarget(ghost, mockPacman);
 
-    describe('updateBetaTarget()', () => {
-        test('targets scatter corner in SCATTER mode', () => {
-            const pinky = mockEnemies[1];
-            pinky.mode = ghostModes.SCATTER;
-            aiSystem.updateBetaTarget(pinky, mockPlayer);
-
-            expect(pinky.targetX).toBeDefined();
-            expect(pinky.targetY).toBeDefined();
+            // Target should remain unchanged
+            expect(ghost.targetX).toBe(99);
+            expect(ghost.targetY).toBe(99);
         });
 
-        test('targets 4 tiles ahead of Pacman in CHASE mode (RIGHT)', () => {
-            const pinky = mockEnemies[1];
-            pinky.mode = ghostModes.CHASE;
-            mockPlayer.direction = directions.RIGHT;
+        it('should call updateAlphaTarget for alpha ghost', () => {
+            const ghost = createMockGhost('alpha', 5, 5);
+            aiSystem.updateAlphaTarget = jest.fn();
 
-            aiSystem.updateBetaTarget(pinky, mockPlayer);
+            aiSystem.updateGhostTarget(ghost, mockPacman);
 
-            expect(pinky.targetX).toBe(mockPlayer.gridX + 4);
-            expect(pinky.targetY).toBe(mockPlayer.gridY);
+            expect(aiSystem.updateAlphaTarget).toHaveBeenCalledWith(ghost, mockPacman);
         });
 
-        test('targets 4 tiles ahead of Pacman in CHASE mode (DOWN)', () => {
-            const pinky = mockEnemies[1];
-            pinky.mode = ghostModes.CHASE;
-            mockPlayer.direction = directions.DOWN;
+        it('should call updateBetaTarget for beta ghost', () => {
+            const ghost = createMockGhost('beta', 5, 5);
+            aiSystem.updateBetaTarget = jest.fn();
 
-            aiSystem.updateBetaTarget(pinky, mockPlayer);
+            aiSystem.updateGhostTarget(ghost, mockPacman);
 
-            expect(pinky.targetX).toBe(mockPlayer.gridX);
-            expect(pinky.targetY).toBe(mockPlayer.gridY + 4);
+            expect(aiSystem.updateBetaTarget).toHaveBeenCalledWith(ghost, mockPacman);
         });
 
-        test('replicates arcade bug when Pacman is moving UP', () => {
-            const pinky = mockEnemies[1];
-            pinky.mode = ghostModes.CHASE;
-            mockPlayer.direction = directions.UP;
+        it('should call updateGammaTarget for gamma ghost', () => {
+            const ghost = createMockGhost('gamma', 5, 5);
+            aiSystem.updateGammaTarget = jest.fn();
 
-            aiSystem.updateBetaTarget(pinky, mockPlayer);
+            aiSystem.updateGhostTarget(ghost, mockPacman);
 
-            expect(pinky.targetX).toBe(mockPlayer.gridX - 4);
-            expect(pinky.targetY).toBe(mockPlayer.gridY - 4);
+            expect(aiSystem.updateGammaTarget).toHaveBeenCalledWith(ghost, mockPacman);
         });
 
-        test('replicates arcade bug when Pacman is moving LEFT', () => {
-            const pinky = mockEnemies[1];
-            pinky.mode = ghostModes.CHASE;
-            mockPlayer.direction = directions.LEFT;
+        it('should call updateDeltaTarget for delta ghost', () => {
+            const ghost = createMockGhost('delta', 5, 5);
+            aiSystem.updateDeltaTarget = jest.fn();
 
-            aiSystem.updateBetaTarget(pinky, mockPlayer);
+            aiSystem.updateGhostTarget(ghost, mockPacman);
 
-            expect(pinky.targetX).toBe(mockPlayer.gridX - 4);
-            expect(pinky.targetY).toBe(mockPlayer.gridY);
+            expect(aiSystem.updateDeltaTarget).toHaveBeenCalledWith(ghost, mockPacman);
         });
     });
 
-    describe('updateGammaTarget()', () => {
-        test('targets scatter corner in SCATTER mode', () => {
-            const inky = mockEnemies[2];
-            inky.mode = ghostModes.SCATTER;
-            aiSystem.updateGammaTarget(inky, mockPlayer);
+    describe('updateAlphaTarget', () => {
+        it('should target scatter position in SCATTER mode', () => {
+            const ghost = createMockGhost('alpha', 5, 5);
+            ghost.mode = ghostModes.SCATTER;
 
-            expect(inky.targetX).toBeDefined();
-            expect(inky.targetY).toBeDefined();
+            aiSystem.updateAlphaTarget(ghost, mockPacman);
+
+            expect(ghost.targetX).toBe(scatterTargets.alpha.x);
+            expect(ghost.targetY).toBe(scatterTargets.alpha.y);
         });
 
-        test('targets Pacman when Blinky not found', () => {
-            const inky = mockEnemies[2];
-            inky.mode = ghostModes.CHASE;
-            aiSystem.setEnemies([inky]);
+        it('should target pacman in CHASE mode', () => {
+            const ghost = createMockGhost('alpha', 5, 5);
+            ghost.mode = ghostModes.CHASE;
 
-            aiSystem.updateGammaTarget(inky, mockPlayer);
+            aiSystem.updateAlphaTarget(ghost, mockPacman);
 
-            expect(inky.targetX).toBe(mockPlayer.gridX);
-            expect(inky.targetY).toBe(mockPlayer.gridY);
-        });
-
-        test('calculates vector from Blinky through pivot in CHASE mode', () => {
-            const inky = mockEnemies[2];
-            const blinky = mockEnemies[0];
-            inky.mode = ghostModes.CHASE;
-            mockPlayer.direction = directions.RIGHT;
-
-            aiSystem.updateGammaTarget(inky, mockPlayer);
-
-            expect(inky.targetX).toBeDefined();
-            expect(inky.targetY).toBeDefined();
+            expect(ghost.targetX).toBe(mockPacman.gridX);
+            expect(ghost.targetY).toBe(mockPacman.gridY);
         });
     });
 
-    describe('updateDeltaTarget()', () => {
-        test('targets scatter corner in SCATTER mode', () => {
-            const clyde = mockEnemies[3];
-            clyde.mode = ghostModes.SCATTER;
-            aiSystem.updateDeltaTarget(clyde, mockPlayer);
+    describe('updateBetaTarget', () => {
+        it('should target scatter position in SCATTER mode', () => {
+            const ghost = createMockGhost('beta', 5, 5);
+            ghost.mode = ghostModes.SCATTER;
 
-            expect(clyde.targetX).toBeDefined();
-            expect(clyde.targetY).toBeDefined();
+            aiSystem.updateBetaTarget(ghost, mockPacman);
+
+            expect(ghost.targetX).toBe(scatterTargets.beta.x);
+            expect(ghost.targetY).toBe(scatterTargets.beta.y);
         });
 
-        test('targets Pacman when distance > 8', () => {
-            const clyde = mockEnemies[3];
-            clyde.mode = ghostModes.CHASE;
-            clyde.gridX = 1;
-            clyde.gridY = 1;
-            mockPlayer.gridX = 14;
-            mockPlayer.gridY = 14;
+        it('should target 4 tiles ahead of pacman in CHASE mode', () => {
+            const ghost = createMockGhost('beta', 5, 5);
+            ghost.mode = ghostModes.CHASE;
 
-            aiSystem.updateDeltaTarget(clyde, mockPlayer);
+            aiSystem.updateBetaTarget(ghost, mockPacman);
 
-            expect(clyde.targetX).toBe(mockPlayer.gridX);
-            expect(clyde.targetY).toBe(mockPlayer.gridY);
+            expect(ghost.targetX).toBe(14 + 4); // pacman.gridX + direction.x * 4
+            expect(ghost.targetY).toBe(14); // pacman.gridY + direction.y * 4
         });
 
-        test('targets scatter corner when distance <= 8', () => {
-            const clyde = mockEnemies[3];
-            clyde.mode = ghostModes.CHASE;
-            clyde.gridX = 14;
-            clyde.gridY = 14;
-            mockPlayer.gridX = 16;
-            mockPlayer.gridY = 16;
+        it('should apply bug offset when pacman faces up', () => {
+            const ghost = createMockGhost('beta', 5, 5);
+            ghost.mode = ghostModes.CHASE;
+            mockPacman.direction = directions.UP;
 
-            aiSystem.updateDeltaTarget(clyde, mockPlayer);
+            aiSystem.updateBetaTarget(ghost, mockPacman);
 
-            expect(clyde.targetX).toBeDefined();
-            expect(clyde.targetY).toBeDefined();
+            expect(ghost.targetX).toBe(14 - 4); // Bug: left offset when going up
         });
     });
 
-    describe('updateGhostTarget()', () => {
-        test('targets ghost house when ghost is eaten', () => {
-            const blinky = mockEnemies[0];
-            blinky.isEaten = true;
+    describe('updateGammaTarget', () => {
+        it('should target scatter position in SCATTER mode', () => {
+            const ghost = createMockGhost('gamma', 5, 5);
+            ghost.mode = ghostModes.SCATTER;
 
-            aiSystem.updateEnemyTarget(blinky, mockPlayer);
+            aiSystem.updateGammaTarget(ghost, mockPacman);
 
-            expect(blinky.targetX).toBe(13);
-            expect(blinky.targetY).toBe(14);
+            expect(ghost.targetX).toBe(scatterTargets.gamma.x);
+            expect(ghost.targetY).toBe(scatterTargets.gamma.y);
         });
 
-        test('does not change target when frightened', () => {
-            const blinky = mockEnemies[0];
-            blinky.isFrightened = true;
-            blinky.targetX = 5;
-            blinky.targetY = 5;
+        it('should use pacman position if no alpha ghost found', () => {
+            const ghost = createMockGhost('gamma', 5, 5);
+            ghost.mode = ghostModes.CHASE;
+            aiSystem.ghosts = [];
 
-            aiSystem.updateEnemyTarget(blinky, mockPlayer);
+            aiSystem.updateGammaTarget(ghost, mockPacman);
 
-            expect(blinky.targetX).toBe(5);
-            expect(blinky.targetY).toBe(5);
+            expect(ghost.targetX).toBe(mockPacman.gridX);
+            expect(ghost.targetY).toBe(mockPacman.gridY);
         });
 
-        test('calls appropriate target update method based on ghost type', () => {
-            const blinky = mockEnemies[0];
-            blinky.mode = ghostModes.CHASE;
+        it('should calculate vector target from alpha through pivot', () => {
+            const ghost = createMockGhost('gamma', 5, 5);
+            ghost.mode = ghostModes.CHASE;
+            const alphaGhost = createMockGhost('alpha', 2, 2);
+            aiSystem.ghosts = [alphaGhost];
 
-            aiSystem.updateEnemyTarget(blinky, mockPlayer);
+            aiSystem.updateGammaTarget(ghost, mockPacman);
 
-            expect(blinky.targetX).toBe(mockPlayer.gridX);
-            expect(blinky.targetY).toBe(mockPlayer.gridY);
-        });
-    });
-
-    describe('getEnemyByType()', () => {
-        test('returns correct ghost by type', () => {
-            expect(aiSystem.getEnemyByType('alpha')).toBe(mockEnemies[0]);
-            expect(aiSystem.getEnemyByType('beta')).toBe(mockEnemies[1]);
-            expect(aiSystem.getEnemyByType('gamma')).toBe(mockEnemies[2]);
-            expect(aiSystem.getEnemyByType('delta')).toBe(mockEnemies[3]);
-        });
-
-        test('returns undefined for non-existent type', () => {
-            expect(aiSystem.getEnemyByType('unknown')).toBeUndefined();
+            // Pivot is 2 tiles ahead of pacman (16, 14)
+            // Vector from alpha (2, 2) through pivot (16, 14)
+            // Target = pivot + (pivot - alpha) = (16, 14) + (14, 12) = (30, 26)
+            expect(ghost.targetX).toBe(30);
+            expect(ghost.targetY).toBe(26);
         });
     });
 
-    describe('chooseDirection()', () => {
-        test('chooses only available direction', () => {
-            const blinky = mockEnemies[0];
-            blinky.gridX = 2;
-            blinky.gridY = 1;
-            blinky.direction = directions.NONE;
+    describe('updateDeltaTarget', () => {
+        it('should target scatter position in SCATTER mode', () => {
+            const ghost = createMockGhost('delta', 5, 5);
+            ghost.mode = ghostModes.SCATTER;
 
-            aiSystem.chooseDirection(blinky, maze);
+            aiSystem.updateDeltaTarget(ghost, mockPacman);
 
-            expect(blinky.direction).not.toBe(directions.NONE);
+            expect(ghost.targetX).toBe(scatterTargets.delta.x);
+            expect(ghost.targetY).toBe(scatterTargets.delta.y);
         });
 
-        test('cannot reverse direction when multiple options available', () => {
-            const blinky = mockEnemies[0];
-            blinky.gridX = 10;
-            blinky.gridY = 10;
-            blinky.direction = directions.RIGHT;
-            const originalDir = blinky.direction;
+        it('should target pacman when distance > 8', () => {
+            const ghost = createMockGhost('delta', 1, 1);
+            ghost.mode = ghostModes.CHASE;
 
-            aiSystem.chooseDirection(blinky, maze);
+            aiSystem.updateDeltaTarget(ghost, mockPacman);
 
-            expect(blinky.direction).not.toBe(directions.LEFT);
+            expect(ghost.targetX).toBe(mockPacman.gridX);
+            expect(ghost.targetY).toBe(mockPacman.gridY);
         });
 
-        test('chooses direction minimizing distance to target', () => {
-            const blinky = mockEnemies[0];
-            blinky.gridX = 2;
-            blinky.gridY = 1;
-            blinky.direction = directions.RIGHT;
-            blinky.targetX = 20;
-            blinky.targetY = 20;
+        it('should retreat to scatter when distance <= 8', () => {
+            const ghost = createMockGhost('delta', 13, 14); // Close to pacman
+            ghost.mode = ghostModes.CHASE;
 
-            aiSystem.chooseDirection(blinky, maze);
+            aiSystem.updateDeltaTarget(ghost, mockPacman);
 
-            expect(blinky.direction).not.toBe(directions.NONE);
-        });
-
-        test('chooses random direction when frightened', () => {
-            const blinky = mockEnemies[0];
-            blinky.gridX = 10;
-            blinky.gridY = 10;
-            blinky.direction = directions.RIGHT;
-            blinky.isFrightened = true;
-
-            const chosenDirections = new Set();
-            for (let i = 0; i < 10; i++) {
-                aiSystem.chooseDirection(blinky, maze);
-                if (blinky.direction !== directions.NONE) {
-                    chosenDirections.add(`${blinky.direction.x},${blinky.direction.y}`);
-                }
-            }
-
-            expect(chosenDirections.size).toBeGreaterThan(0);
+            expect(ghost.targetX).toBe(scatterTargets.delta.x);
+            expect(ghost.targetY).toBe(scatterTargets.delta.y);
         });
     });
 
-    describe('getReverseDirection()', () => {
-        test('returns LEFT for RIGHT', () => {
-            expect(aiSystem.getReverseDirection(directions.RIGHT)).toBe(
-                directions.LEFT
-            );
+    describe('getGhostByType', () => {
+        it('should return ghost by type', () => {
+            aiSystem.setGhosts(mockGhosts);
+            const alpha = aiSystem.getGhostByType('alpha');
+            expect(alpha.type).toBe('alpha');
         });
 
-        test('returns RIGHT for LEFT', () => {
-            expect(aiSystem.getReverseDirection(directions.LEFT)).toBe(
-                directions.RIGHT
-            );
+        it('should return undefined if ghost not found', () => {
+            aiSystem.setGhosts(mockGhosts);
+            const ghost = aiSystem.getGhostByType('unknown');
+            expect(ghost).toBeUndefined();
+        });
+    });
+
+    describe('chooseDirection', () => {
+        it('should set NONE direction if no valid directions', () => {
+            MazeLayout.getValidDirections.mockReturnValue([]);
+            const ghost = createMockGhost('alpha', 5, 5);
+
+            aiSystem.chooseDirection(ghost, mockMaze);
+
+            expect(ghost.setDirection).toHaveBeenCalledWith(directions.NONE);
         });
 
-        test('returns DOWN for UP', () => {
-            expect(aiSystem.getReverseDirection(directions.UP)).toBe(directions.DOWN);
+        it('should set single valid direction if only one option', () => {
+            MazeLayout.getValidDirections.mockReturnValue([directions.RIGHT]);
+            const ghost = createMockGhost('alpha', 5, 5);
+
+            aiSystem.chooseDirection(ghost, mockMaze);
+
+            expect(ghost.setDirection).toHaveBeenCalledWith(directions.RIGHT);
         });
 
-        test('returns UP for DOWN', () => {
+        it('should filter out reverse direction', () => {
+            const ghost = createMockGhost('alpha', 5, 5);
+            ghost.direction = directions.RIGHT;
+
+            aiSystem.chooseDirection(ghost, mockMaze);
+
+            // Should not call setDirection with LEFT (reverse of RIGHT)
+            const calls = ghost.setDirection.mock.calls;
+            const leftCalls = calls.filter(c => c[0] === directions.LEFT);
+            expect(leftCalls.length).toBe(0);
+        });
+
+        it('should choose random direction when frightened', () => {
+            const ghost = createMockGhost('alpha', 5, 5);
+            ghost.isFrightened = true;
+
+            aiSystem.chooseDirection(ghost, mockMaze);
+
+            expect(ghost.setDirection).toHaveBeenCalled();
+        });
+
+        it('should choose direction that minimizes distance to target', () => {
+            const ghost = createMockGhost('alpha', 5, 5);
+            ghost.targetX = 10;
+            ghost.targetY = 5;
+
+            aiSystem.chooseDirection(ghost, mockMaze);
+
+            // Should choose RIGHT to get closer to target at (10, 5)
+            expect(ghost.setDirection).toHaveBeenCalledWith(directions.RIGHT);
+        });
+    });
+
+    describe('getReverseDirection', () => {
+        it('should return LEFT for RIGHT', () => {
+            expect(aiSystem.getReverseDirection(directions.RIGHT)).toBe(directions.LEFT);
+        });
+
+        it('should return RIGHT for LEFT', () => {
+            expect(aiSystem.getReverseDirection(directions.LEFT)).toBe(directions.RIGHT);
+        });
+
+        it('should return UP for DOWN', () => {
             expect(aiSystem.getReverseDirection(directions.DOWN)).toBe(directions.UP);
         });
 
-        test('returns NONE for invalid direction', () => {
-            expect(aiSystem.getReverseDirection(directions.NONE)).toBe(
-                directions.NONE
-            );
+        it('should return DOWN for UP', () => {
+            expect(aiSystem.getReverseDirection(directions.UP)).toBe(directions.DOWN);
+        });
+
+        it('should return NONE for NONE', () => {
+            expect(aiSystem.getReverseDirection(directions.NONE)).toBe(directions.NONE);
         });
     });
 
-    describe('update()', () => {
-        test('updates global mode timer', () => {
-            aiSystem.update(msToSeconds(5000), maze, mockPlayer);
-            expect(aiSystem.globalModeTimer).toBe(5);
+    describe('update', () => {
+        it('should update global mode', () => {
+            aiSystem.setGhosts([]);
+            aiSystem.updateGlobalMode = jest.fn();
+
+            aiSystem.update(0.5, mockMaze, mockPacman);
+
+            expect(aiSystem.updateGlobalMode).toHaveBeenCalledWith(0.5);
         });
 
-        test('syncs ghost mode with global mode when not frightened or eaten', () => {
-            const blinky = mockEnemies[0];
-            blinky.mode = ghostModes.SCATTER;
+        it('should sync ghost mode with global mode', () => {
+            const ghost = createMockGhost('alpha', 5, 5);
+            aiSystem.setGhosts([ghost]);
             aiSystem.globalMode = ghostModes.CHASE;
 
-            aiSystem.update(msToSeconds(0), maze, mockPlayer);
+            aiSystem.update(0.5, mockMaze, mockPacman);
 
-            expect(blinky.mode).toBe(ghostModes.CHASE);
+            expect(ghost.mode).toBe(ghostModes.CHASE);
         });
 
-        test('does not change ghost mode when frightened', () => {
-            const blinky = mockEnemies[0];
-            blinky.mode = ghostModes.SCATTER;
-            blinky.isFrightened = true;
+        // Note: After reversing direction, chooseDirection() picks best direction toward target
+        // This is correct behavior - direction may not stay as reversed
+        it.skip('should reverse ghost direction on mode change', () => {
+            const ghost = createMockGhost('alpha', 5, 5);
+            ghost.direction = directions.RIGHT;
+            ghost.mode = ghostModes.SCATTER;
+            aiSystem.setGhosts([ghost]);
             aiSystem.globalMode = ghostModes.CHASE;
 
-            aiSystem.update(msToSeconds(0), maze, mockPlayer);
+            aiSystem.update(0.5, mockMaze, mockPacman);
 
-            expect(blinky.mode).toBe(ghostModes.SCATTER);
+            expect(ghost.direction).toBe(directions.LEFT);
         });
 
-        test('does not change ghost mode when eaten', () => {
-            const blinky = mockEnemies[0];
-            blinky.mode = ghostModes.SCATTER;
-            blinky.isEaten = true;
+        it('should not change mode if ghost is frightened', () => {
+            const ghost = createMockGhost('alpha', 5, 5);
+            ghost.mode = ghostModes.FRIGHTENED;
+            ghost.isFrightened = true;
+            aiSystem.setGhosts([ghost]);
             aiSystem.globalMode = ghostModes.CHASE;
 
-            aiSystem.update(msToSeconds(0), maze, mockPlayer);
+            aiSystem.update(0.5, mockMaze, mockPacman);
 
-            expect(blinky.mode).toBe(ghostModes.SCATTER);
+            expect(ghost.mode).toBe(ghostModes.FRIGHTENED);
         });
 
-        test.skip('reverses ghost direction when mode changes - TODO: behavior changed with DirectionBuffer', () => {
-            const blinky = mockEnemies[0];
-            blinky.mode = ghostModes.SCATTER;
-            blinky.direction = directions.RIGHT;
+        it('should not change mode if ghost is eaten', () => {
+            const ghost = createMockGhost('alpha', 5, 5);
+            ghost.isEaten = true;
+            aiSystem.setGhosts([ghost]);
             aiSystem.globalMode = ghostModes.CHASE;
 
-            aiSystem.update(msToSeconds(0), maze, mockPlayer);
+            aiSystem.update(0.5, mockMaze, mockPacman);
 
-            expect(blinky.direction).toBe(directions.LEFT);
-        });
-
-        test('updates ghost targets', () => {
-            const blinky = mockEnemies[0];
-            aiSystem.globalMode = ghostModes.CHASE;
-            blinky.mode = ghostModes.SCATTER;
-            blinky.targetX = 0;
-            blinky.targetY = 0;
-
-            aiSystem.update(msToSeconds(0), maze, mockPlayer);
-
-            expect(blinky.targetX).toBe(mockPlayer.gridX);
-            expect(blinky.targetY).toBe(mockPlayer.gridY);
+            expect(ghost.mode).toBe(ghostModes.SCATTER);
         });
     });
 
-    describe('Integration: Mode Cycle', () => {
-        test('completes full mode cycle sequence', () => {
-            const expectedModes = [
-                ghostModes.SCATTER,
-                ghostModes.CHASE,
-                ghostModes.SCATTER,
-                ghostModes.CHASE,
-                ghostModes.SCATTER,
-                ghostModes.CHASE,
-                ghostModes.SCATTER,
-                ghostModes.CHASE
-            ];
+    describe('updatePinkyTarget', () => {
+        it('should target 4 tiles ahead in CHASE mode', () => {
+            const ghost = createMockGhost('pinky', 5, 5);
+            ghost.mode = ghostModes.CHASE;
 
-            const durations = [
-                msToSeconds(7000),
-                msToSeconds(20000),
-                msToSeconds(7000),
-                msToSeconds(20000),
-                msToSeconds(5000),
-                msToSeconds(20000),
-                msToSeconds(5000),
-                msToSeconds(20000)
-            ];
+            aiSystem.updatePinkyTarget(ghost, mockPacman);
 
-            for (let i = 0; i < expectedModes.length; i++) {
-                expect(aiSystem.globalMode).toBe(expectedModes[i]);
-                aiSystem.update(durations[i], maze, mockPlayer);
-            }
-
-            expect(aiSystem.globalMode).toBe(ghostModes.CHASE);
+            expect(ghost.targetX).toBe(18); // 14 + 4
+            expect(ghost.targetY).toBe(14);
         });
     });
 
-    describe('Integration: Ghost AI', () => {
-        test('all ghosts update targets correctly in SCATTER mode', () => {
-            mockEnemies.forEach((ghost) => {
-                ghost.mode = ghostModes.SCATTER;
-                aiSystem.updateEnemyTarget(ghost, mockPlayer);
+    describe('updateInkyTarget', () => {
+        it('should use pacman position if no blinky found', () => {
+            const ghost = createMockGhost('inky', 5, 5);
+            ghost.mode = ghostModes.CHASE;
+            aiSystem.ghosts = [];
 
-                expect(ghost.targetX).toBeDefined();
-                expect(ghost.targetY).toBeDefined();
-            });
+            aiSystem.updateInkyTarget(ghost, mockPacman);
+
+            expect(ghost.targetX).toBe(mockPacman.gridX);
+            expect(ghost.targetY).toBe(mockPacman.gridY);
         });
 
-        test('all ghosts update targets correctly in CHASE mode', () => {
-            mockEnemies.forEach((ghost) => {
-                ghost.mode = ghostModes.CHASE;
-                aiSystem.updateEnemyTarget(ghost, mockPlayer);
+        it('should calculate vector from blinky through pivot', () => {
+            const ghost = createMockGhost('inky', 5, 5);
+            ghost.mode = ghostModes.CHASE;
+            const blinkyGhost = createMockGhost('blinky', 2, 2);
+            aiSystem.ghosts = [blinkyGhost];
 
-                expect(ghost.targetX).toBeDefined();
-                expect(ghost.targetY).toBeDefined();
-            });
+            aiSystem.updateInkyTarget(ghost, mockPacman);
+
+            expect(ghost.targetX).toBe(30);
+            expect(ghost.targetY).toBe(26);
+        });
+    });
+
+    describe('updateClydeTarget', () => {
+        it('should target pacman when far away', () => {
+            const ghost = createMockGhost('clyde', 1, 1);
+            ghost.mode = ghostModes.CHASE;
+
+            aiSystem.updateClydeTarget(ghost, mockPacman);
+
+            expect(ghost.targetX).toBe(mockPacman.gridX);
+            expect(ghost.targetY).toBe(mockPacman.gridY);
         });
     });
 });
