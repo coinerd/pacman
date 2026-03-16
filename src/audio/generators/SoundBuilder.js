@@ -134,6 +134,11 @@ export class SoundBuilder {
      * @param {number} volume - Volume level
      */
     buildSweep(params, volume) {
+        if (!this.audioContext) {
+            console.warn('[SoundBuilder] AudioContext not available');
+            return;
+        }
+
         const oscillator = this.audioContext.createOscillator();
         const gain = this.audioContext.createGain();
 
@@ -157,6 +162,11 @@ export class SoundBuilder {
      * @param {number} volume - Volume level
      */
     buildMelody(params, volume) {
+        if (!this.audioContext) {
+            console.warn('[SoundBuilder] AudioContext not available');
+            return;
+        }
+
         const { frequencies, duration, wave = 'sine', delay = 0, steps = 1 } = params;
 
         for (let i = 0; i < frequencies.length; i++) {

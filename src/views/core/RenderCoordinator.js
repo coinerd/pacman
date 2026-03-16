@@ -80,20 +80,34 @@ export class RenderCoordinator {
         const startTime = performance.now();
         this.frameCount++;
 
-        // Frame rate limiting
-        const now = performance.now();
+        // Performance optimization: Improved frame rate limiting
+        // Use timestamp from deltaTime parameter if available (more accurate)
+        const now = startTime;
         const elapsed = now - this.lastRenderTime;
 
-        if (elapsed < this.frameInterval) {
+        // Skip frame if not enough time has passed
+        // But allow slight timing variations to avoid stuttering
+        if (elapsed < this.frameInterval * 0.95) {
             return; // Skip frame
         }
 
-        this.lastRenderTime = now - (elapsed % this.frameInterval);
+        // Update last render time, accounting for any accumulated lag
+        // This prevents spiral of death when frames take too long
+        if (elapsed > this.frameInterval * 2) {
+            // If we're way behind, reset to current time to avoid catching up
+            this.lastRenderTime = now;
+        } else {
+            // Normal case: advance by exactly one frame interval
+            this.lastRenderTime += this.frameInterval;
+        }
+
         this.isRendering = true;
 
         // Execute render phases in order
-        for (const [phaseName, phase] of Object.entries(this.renderPhases)) {
-            this.renderPhase(phase, deltaTime);
+        // Performance: Cache phase count to avoid repeated lookups
+        const phases = Object.values(this.renderPhases);
+        for (let i = 0; i < phases.length; i++) {
+            this.renderPhase(phases[i], deltaTime);
         }
 
         // Clear render queue
@@ -117,7 +131,11 @@ export class RenderCoordinator {
             return;
         }
 
-        for (const { renderer } of renderers) {
+        // Performance optimization: Use for loop instead of for...of
+        // Cache length to avoid repeated property access
+        const length = renderers.length;
+        for (let i = 0; i < length; i++) {
+            const renderer = renderers[i].renderer;
             if (renderer && typeof renderer.render === 'function') {
                 try {
                     renderer.render(deltaTime);

@@ -61,6 +61,7 @@ describe('DebugOverlay', () => {
 
     describe('debug info', () => {
         test('should update debug information', () => {
+            overlay.setVisible(true); // Make overlay visible first
             const debugInfo = {
                 score: 1000,
                 level: 2,

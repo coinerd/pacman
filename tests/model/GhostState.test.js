@@ -92,7 +92,7 @@ describe('EnemyState', () => {
         });
 
         test('returns movement events', () => {
-            ghost.setDirection(directions.RIGHT);
+            ghost.setDesiredDirection(directions.RIGHT);
             const events = ghost.update(0.1, maze);
 
             expect(Array.isArray(events)).toBe(true);

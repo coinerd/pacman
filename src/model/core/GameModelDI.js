@@ -32,6 +32,11 @@ export default class GameModelDI {
             player: null,
             ghosts: {}
         };
+
+        // Always initialize when using DI, or when config is provided
+        if (useDI || Object.keys(config).length > 0) {
+            this.init(config);
+        }
     }
 
     init(config = {}) {
@@ -55,7 +60,12 @@ export default class GameModelDI {
         this.scoreModule = globalContainer.get('scoreModule');
         this.sessionModule = globalContainer.get('sessionModule');
 
+        // Initialize gameState from config
         this.levelSystem.setLevel(config.level || 1);
+        if (config.level !== undefined) {this.gameState.level = config.level;}
+        if (config.score !== undefined) {this.gameState.score = config.score;}
+        if (config.lives !== undefined) {this.gameState.lives = config.lives;}
+        if (config.highScore !== undefined) {this.gameState.highScore = config.highScore;}
 
         this.initializeMovementSystem();
         this.registerMovementEntities();
@@ -108,18 +118,24 @@ export default class GameModelDI {
      * Initialize movement system
      */
     initializeMovementSystem() {
-        this.movementSystem = new MovementSystem({
-            tileSize: 20,
-            tunnelRow: 15,
-            virusCoreCenter: { x: 13, y: 14 },
-            virusCoreEntrance: { x: 13, y: 11 }
-        });
+        // Only create if not already provided via DI
+        if (!this.movementSystem) {
+            this.movementSystem = new MovementSystem({
+                tileSize: 20,
+                tunnelRow: 15,
+                virusCoreCenter: { x: 13, y: 14 },
+                virusCoreEntrance: { x: 13, y: 11 }
+            });
+        }
 
-        this.movementSystem.initialize(this.spawningSystem.getMaze(), {
-            tileConfig: { wall: 1, pellet: 2, empty: 0 },
-            modeDurations: this.levelSystem.getModeDurations(),
-            frightenedDuration: this.levelSystem.getFrightenedDuration()
-        });
+        // Initialize if the method exists (might be a mock)
+        if (this.movementSystem.initialize) {
+            this.movementSystem.initialize(this.spawningSystem.getMaze(), {
+                tileConfig: { wall: 1, pellet: 2, empty: 0 },
+                modeDurations: this.levelSystem.getModeDurations(),
+                frightenedDuration: this.levelSystem.getFrightenedDuration()
+            });
+        }
     }
 
     /**
@@ -223,51 +239,62 @@ export default class GameModelDI {
             this.setDesiredDirection(input.direction);
         }
 
-        // Update Movement
-        const pacman = this.entityRegistry.getPacman();
-        const movementEvents = this.movementSystem.update(deltaSeconds, {
+        // Update Movement - with null guards
+        const pacman = this.entityRegistry?.getPacman();
+        const ghosts = this.entityRegistry?.getGhosts() || [];
+        const movementEvents = this.movementSystem?.update(deltaSeconds, {
             player: pacman,
             pacman: pacman,
-            ghosts: this.entityRegistry.getGhosts()
+            ghosts: ghosts
         }) || [];
 
-        // Update Entities
-        pacman.update(deltaSeconds, this.spawningSystem.getMaze());
-
-        for (const ghost of this.entityRegistry.getGhosts()) {
-            ghost.update(deltaSeconds, this.spawningSystem.getMaze());
+        // Update Entities - with null guards
+        const maze = this.spawningSystem?.getMaze();
+        if (pacman && maze) {
+            pacman.update(deltaSeconds, maze);
         }
 
-        // Update Fruit
-        this.entityRegistry.getFruit()?.update(deltaSeconds);
+        for (const ghost of ghosts) {
+            if (ghost && maze) {
+                ghost.update(deltaSeconds, maze);
+            }
+        }
 
-        // Collision Detection
+        // Update Fruit - with null guard
+        const fruit = this.entityRegistry?.getFruit();
+        if (fruit) {
+            fruit.update(deltaSeconds);
+        }
+
+        // Collision Detection - with null guards
         const entities = {
             pacman: pacman,
-            ghosts: this.entityRegistry.getGhosts(),
-            fruit: this.entityRegistry.getFruit()
+            ghosts: ghosts,
+            fruit: fruit
         };
 
-        const collisionEvents = this.collisionHandler.checkAllCollisions(entities, {
-            pelletGrid: this.spawningSystem.getPelletGrid(),
-            pelletsRemaining: this.spawningSystem.getPelletsRemaining()
-        });
+        const collisionEvents = this.collisionHandler?.checkAllCollisions(entities, {
+            pelletGrid: this.spawningSystem?.getPelletGrid(),
+            pelletsRemaining: this.spawningSystem?.getPelletsRemaining()
+        }) || [];
 
         // Apply Collision Effects
         for (const event of collisionEvents) {
             this.applyCollisionEffect(event);
         }
 
-        // Sync Movement to Entities
-        this.movementSystem.syncToEntities();
+        // Sync Movement to Entities - with null guard
+        this.movementSystem?.syncToEntities();
 
         // Emit Events
         const events = [...movementEvents, ...collisionEvents];
         this.emitEvents(events);
 
-        // Update tick counter
-        this.gameState.incrementTick();
-        this.tickCount = this.gameState.tick;
+        // Update tick counter - with null guard
+        if (this.gameState) {
+            this.gameState.incrementTick();
+            this.tickCount = this.gameState.tick;
+        }
 
         return events;
     }
@@ -299,23 +326,26 @@ export default class GameModelDI {
     // === Collision Event Handlers ===
 
     handlePelletEaten(data) {
+        if (!this.scoreModule || !this.gameState || !this.spawningSystem) {return;}
         this.scoreModule.pelletsEaten++;
         this.gameState.score += 10;
-        this.spawningSystem.removePelletAt(data.gridX, data.gridY);
+        this.spawningSystem.removePelletAt(data?.gridX, data?.gridY);
         this.checkHighScore();
         this.checkLevelComplete();
     }
 
     handlePowerPelletEaten(data) {
+        if (!this.scoreModule || !this.gameState || !this.spawningSystem || !this.levelSystem) {return;}
         this.scoreModule.pelletsEaten++;
         this.gameState.score += 50;
-        this.spawningSystem.removePelletAt(data.gridX, data.gridY);
+        this.spawningSystem.removePelletAt(data?.gridX, data?.gridY);
         this.checkHighScore();
         this.checkLevelComplete();
         this.setGhostsFrightened(this.levelSystem.getFrightenedDuration());
     }
 
     checkLevelComplete() {
+        if (!this.spawningSystem) {return;}
         if (this.pelletsRemaining === 0 && !this.levelComplete) {
             this.levelComplete = true;
             gameEvents.emit(GAME_EVENTS.LEVEL_COMPLETE, {
@@ -326,7 +356,8 @@ export default class GameModelDI {
     }
 
     handleGhostEaten(data) {
-        const ghost = this.entityRegistry.getGhostByType(data.ghostType);
+        if (!this.entityRegistry || !this.scoreModule || !this.gameState || !this.levelSystem) {return;}
+        const ghost = this.entityRegistry.getGhostByType(data?.ghostType);
         if (ghost) {
             ghost.eat();
             const eatenCount = ghost.eatenCount ?? 0;
@@ -350,10 +381,11 @@ export default class GameModelDI {
     }
 
     handleFruitEaten(data) {
+        if (!this.entityRegistry || !this.levelSystem || !this.gameState) {return;}
         const fruit = this.entityRegistry.getFruit();
         if (fruit) {
             fruit.eat();
-            const score = this.levelSystem.getFruitScore(data.fruitType);
+            const score = this.levelSystem.getFruitScore(data?.fruitType);
             this.gameState.score += score;
             this.checkHighScore();
         }
@@ -409,12 +441,12 @@ export default class GameModelDI {
     // === Input Handling ===
 
     setDesiredDirection(direction) {
-        const pacman = this.entityRegistry.getPacman();
+        const pacman = this.entityRegistry?.getPacman();
         if (pacman) {
             pacman.setDesiredDirection(direction);
         }
         // Also update movement system with the new direction
-        if (this.movementSystem && this.movementEntityIds.player) {
+        if (this.movementSystem && this.movementEntityIds?.player) {
             this.movementSystem.setDirection(this.movementEntityIds.player, direction);
         }
     }
@@ -426,27 +458,34 @@ export default class GameModelDI {
     // === Ghost Management ===
 
     setGhostsFrightened(duration) {
-        for (const ghost of this.entityRegistry.getGhosts()) {
-            ghost.setFrightened(duration);
+        const ghosts = this.entityRegistry?.getGhosts() || [];
+        for (const ghost of ghosts) {
+            if (ghost) {
+                ghost.setFrightened(duration);
+            }
         }
     }
 
     resetPositions() {
-        // Reset positions in entity registry
-        this.entityRegistry.resetPositions();
+        // Reset positions in entity registry - with null guard
+        if (this.entityRegistry) {
+            this.entityRegistry.resetPositions();
+        }
 
         // Also reset positions in movement system to keep them in sync
-        if (this.movementSystem) {
-            const spawnPoint = this.spawningSystem.getSpawnPoints()?.player || { x: 13, y: 23 };
+        if (this.movementSystem && this.spawningSystem) {
+            const spawnPoints = this.spawningSystem.getSpawnPoints();
+            const spawnPoint = spawnPoints?.player || { x: 13, y: 23 };
 
-            if (this.movementEntityIds.player) {
+            if (this.movementEntityIds?.player) {
                 this.movementSystem.resetEntity(this.movementEntityIds.player, spawnPoint.x, spawnPoint.y);
             }
 
             // Reset ghosts in movement system
-            const ghostSpawns = this.spawningSystem.getSpawnPoints()?.ghosts || {};
-            for (const ghost of this.entityRegistry.getGhosts()) {
-                const ghostId = this.movementEntityIds.ghosts[ghost.ghostType];
+            const ghostSpawns = spawnPoints?.ghosts || {};
+            const ghosts = this.entityRegistry?.getGhosts() || [];
+            for (const ghost of ghosts) {
+                const ghostId = this.movementEntityIds?.ghosts?.[ghost.ghostType];
                 const ghostSpawn = ghostSpawns[ghost.ghostType];
                 if (ghostId && ghostSpawn) {
                     this.movementSystem.resetEntity(ghostId, ghostSpawn.x, ghostSpawn.y);

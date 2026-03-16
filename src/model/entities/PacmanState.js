@@ -66,7 +66,7 @@ export class PacmanState extends ModelEntity {
 
         // Apply input direction to buffer if provided
         if (inputDirection && inputDirection !== directions.NONE) {
-            this.setDirection(inputDirection);
+            this.setDesiredDirection(inputDirection);
         }
 
         // Update moving state based on current direction

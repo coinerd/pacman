@@ -3,7 +3,11 @@ module.exports = {
     ['@babel/preset-env', {
       targets: {
         node: 'current'
-      }
+      },
+      modules: 'auto'
     }]
+  ],
+  plugins: [
+    'babel-plugin-transform-import-meta'
   ]
 };

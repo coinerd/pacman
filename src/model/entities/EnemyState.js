@@ -58,6 +58,9 @@ export class EnemyState extends ModelEntity {
         this.targetY = 0;
         this.modeTransitionTimer = 0;
 
+        // Track how many times this ghost has been eaten (for score calculation)
+        this.eatenCount = 0;
+
         // State flags
         this.isEaten = false;
         this.isFrightened = false;
@@ -368,6 +371,7 @@ export class EnemyState extends ModelEntity {
         this.isEaten = true;
         this.isFrightened = false;
         this.speedModifier = 1.0;
+        this.eatenCount++; // Increment for score calculation
     }
 
     /**
@@ -389,6 +393,7 @@ export class EnemyState extends ModelEntity {
         this.modeTransitionTimer = 0;
         this.speedMultiplier = 1.0;
         this.speedModifier = 1.0;
+        this.eatenCount = 0; // Reset eaten count on level reset
 
         // Reset position to exact tile center
         const tileSize = 20; // Default tile size

@@ -61,11 +61,11 @@ export class DebugOverlay {
 
     updateDebugInfo(info) {
         if (!this.visible) {return;}
-        
+
         const infoText = Object.entries(info)
             .map(([key, value]) => `${key}: ${value}`)
             .join('\n');
-        
+
         // Only update if text actually changed
         if (this.debugText.text !== infoText) {
             this.debugText.setText(infoText);

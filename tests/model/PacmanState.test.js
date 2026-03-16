@@ -6,12 +6,14 @@
 import { PacmanState } from '../../src/model/entities/PacmanState.js';
 import { directions, levelConfig } from '../../src/config/gameConfig.js';
 import { createMazeData } from '../../src/utils/MazeLayout.js';
+import { resetEntityCounters } from '../../src/model/ModelEntity.js';
 
 describe('PacmanState', () => {
     let pacman;
     let maze;
 
     beforeEach(() => {
+        resetEntityCounters();
         const mazeData = createMazeData();
         maze = mazeData.maze;
         pacman = new PacmanState(13, 23, 1);
@@ -64,7 +66,7 @@ describe('PacmanState', () => {
             // Position at tile center to ensure direction gets applied
             pacman.x = 13 * 20 + 10;
             pacman.y = 23 * 20 + 10;
-            pacman.setDirection(directions.RIGHT);
+            pacman.setDesiredDirection(directions.RIGHT);
 
             // Use larger delta to ensure movement happens
             pacman.update(0.5, maze);
@@ -89,7 +91,7 @@ describe('PacmanState', () => {
         });
 
         test('returns movement events', () => {
-            pacman.setDirection(directions.RIGHT);
+            pacman.setDesiredDirection(directions.RIGHT);
             const events = pacman.update(0.5, maze);
 
             // Should have tile_enter event when moving to next tile
@@ -246,7 +248,7 @@ describe('PacmanState', () => {
             expect(visual).toHaveProperty('rotation');
             expect(visual).toHaveProperty('isDying');
             expect(visual).toHaveProperty('visible');
-            expect(visual).toHaveProperty('opacity');
+            expect(visual).toHaveProperty('alpha');
         });
 
         test('rotation matches direction angle', () => {

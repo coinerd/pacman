@@ -1,9 +1,29 @@
 // src/utils/ErrorHandler.js
 
+// Helper to safely check import.meta.env - uses eval to avoid parse-time errors
+function getIsDevelopment() {
+    // Check for Vite's import.meta.env using eval to prevent parse errors in Jest
+    try {
+        const hasImportMeta = eval('typeof import.meta !== "undefined"');
+        if (hasImportMeta) {
+            const isDev = eval('import.meta.env?.DEV === true');
+            if (isDev) {return true;}
+        }
+    } catch (e) {
+        // import.meta not available or not accessible
+    }
+
+    // Fallback checks
+    return (typeof window !== 'undefined' && window.location?.hostname === 'localhost')
+        || (typeof process !== 'undefined' && process.env?.NODE_ENV === 'development');
+}
+
 export class ErrorHandler {
     constructor() {
         this.errors = [];
-        this.isDevelopment = process.env.NODE_ENV === 'development';
+        // Browser-compatible environment detection
+        // Uses import.meta.env for Vite, falls back to window check for other environments
+        this.isDevelopment = getIsDevelopment();
     }
 
     static instance = null;
@@ -22,6 +42,11 @@ export class ErrorHandler {
             context,
             timestamp: new Date().toISOString()
         };
+
+        // Prevent memory leak by limiting errors array to 100 entries
+        if (this.errors.length >= 100) {
+            this.errors.shift(); // Remove oldest error
+        }
 
         this.errors.push(errorInfo);
         console.error('[ErrorHandler]', errorInfo);

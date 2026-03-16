@@ -14,10 +14,43 @@ import {
 } from '../utils/MazeLayout.js';
 import { DirectionBuffer } from '../utils/movement/DirectionBuffer.js';
 
-let entityIdCounter = 0;
+// Global counters for entity IDs (better for debugging)
+let entityCounters = {
+    player: 0,
+    enemy: 0,
+    fruit: 0,
+    generic: 0
+};
 
-export function generateEntityId() {
-    return `entity_${++entityIdCounter}_${Date.now()}`;
+/**
+ * Generate a unique, debuggable entity ID
+ * @param {string} type - Entity type
+ * @returns {string} Unique entity ID
+ */
+export function generateEntityId(type = 'generic') {
+    const counter = entityCounters[type] || entityCounters.generic;
+    entityCounters[type] = counter + 1;
+    return `${type}_${counter + 1}`;
+}
+
+/**
+ * Reset entity ID counters (useful for testing)
+ */
+export function resetEntityCounters() {
+    entityCounters = {
+        player: 0,
+        enemy: 0,
+        fruit: 0,
+        generic: 0
+    };
+}
+
+/**
+ * Get current entity counters (useful for debugging)
+ * @returns {Object} Current counters
+ */
+export function getEntityCounters() {
+    return { ...entityCounters };
 }
 
 export class ModelEntity {
@@ -29,8 +62,8 @@ export class ModelEntity {
 	 * @param {string} config.type - Entity type identifier
 	 */
     constructor(gridX, gridY, config = {}) {
-        this.id = generateEntityId();
         this.type = config.type || 'generic';
+        this.id = generateEntityId(this.type);
 
         // Grid position (logical)
         this.gridX = gridX;
@@ -169,7 +202,7 @@ export class ModelEntity {
         }
         const nextX = this.gridX + direction.x;
         const nextY = this.gridY + direction.y;
-        return isWalkableTile(nextX, nextY, maze);
+        return isWalkableTile(maze, nextX, nextY);
     }
 
     /**

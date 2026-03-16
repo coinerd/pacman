@@ -418,4 +418,12 @@ export default class GameScene extends Phaser.Scene {
         // Phase 4: Services freigeben
         clearServices();
     }
+
+    /**
+     * Phaser shutdown lifecycle method
+     * Ensures proper cleanup when scene is stopped
+     */
+    shutdown() {
+        this.cleanup();
+    }
 }

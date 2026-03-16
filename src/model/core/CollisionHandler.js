@@ -34,6 +34,12 @@ export class CollisionHandler {
 
         // Cache für Pellet-Position
         this.lastPelletGrid = { x: null, y: null };
+
+        // Performance optimization: Cache collision radius squared to avoid recalculating
+        this.collisionRadius = gameConfig.tileSize * 0.6;
+        this.collisionRadiusSquared = this.collisionRadius * this.collisionRadius;
+        this.fruitCollisionRadius = gameConfig.tileSize * 0.5;
+        this.fruitCollisionRadiusSquared = this.fruitCollisionRadius * this.fruitCollisionRadius;
     }
 
     // === Haupt-Kollisionstest ===
@@ -182,7 +188,9 @@ export class CollisionHandler {
             return null;
         }
 
-        const collisionRadius = gameConfig.tileSize * 0.6;
+        // Performance optimization: Use squared distance to avoid expensive sqrt()
+        // Only use sqrt() when we actually have a collision
+        const collisionRadiusSquared = this.collisionRadiusSquared;
 
         for (const ghost of ghosts) {
             if (ghost.isEaten) {
@@ -191,9 +199,10 @@ export class CollisionHandler {
 
             const dx = pacman.x - ghost.x;
             const dy = pacman.y - ghost.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
+            const distanceSquared = dx * dx + dy * dy;
 
-            if (distance <= collisionRadius) {
+            // Early exit: Check squared distance first (much faster than sqrt)
+            if (distanceSquared <= collisionRadiusSquared) {
                 return this.handleGhostCollision(ghost);
             }
         }
@@ -240,11 +249,12 @@ export class CollisionHandler {
             return null;
         }
 
+        // Performance optimization: Use squared distance to avoid expensive sqrt()
         const dx = pacman.x - fruit.x;
         const dy = pacman.y - fruit.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
+        const distanceSquared = dx * dx + dy * dy;
 
-        if (distance <= gameConfig.tileSize * 0.5) {
+        if (distanceSquared <= this.fruitCollisionRadiusSquared) {
             // Callback aufrufen (unterstützt sowohl this.callbacks als auch direkte Property)
             if (this.onFruitEaten) {
                 this.onFruitEaten({ fruitType: fruit.fruitType });

@@ -97,6 +97,11 @@ const mockScene = {
         stop: jest.fn(),
         launch: jest.fn(),
         restart: jest.fn()
+    },
+    textures: {
+        exists: jest.fn(() => false),
+        remove: jest.fn(),
+        get: jest.fn(() => ({ key: 'mock' }))
     }
 };
 

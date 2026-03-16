@@ -9,17 +9,16 @@
  * - NO Phaser dependencies (pure data model)
  */
 
-import { GameState } from './core/GameState.js';
-import { EntityRegistry } from './core/EntityRegistry.js';
-import { CollisionHandler } from './core/CollisionHandler.js';
-import { PlayerModule, ScoreModule, SessionModule } from './systems/index.js';
-import { LevelSystem } from './systems/LevelSystem.js';
-import { SpawningSystem } from './systems/SpawningSystem.js';
-import { MovementSystem } from '../movement/index.js';
+import { GameState } from './GameState.js';
+import { EntityRegistry } from './EntityRegistry.js';
+import { CollisionHandler } from './CollisionHandler.js';
+import { LevelSystem } from '../systems/LevelSystem.js';
+import { SpawningSystem } from '../systems/SpawningSystem.js';
+import { MovementSystem } from '../../movement/index.js';
 import { AdditionalPowerUpSystem } from '../../systems/AdditionalPowerUpSystem.js';
 import BossBattleSystem from '../../systems/BossBattleSystem.js';
 import StoryMode from '../../systems/StoryMode.js';
-import { GAME_EVENTS, gameEvents } from '../core/EventBus.js';
+import { GAME_EVENTS, gameEvents } from '../../core/EventBus.js';
 
 export default class GameModel {
     /**
@@ -193,14 +192,14 @@ export default class GameModel {
     // === Collision Event Handlers ===
 
     handlePelletEaten(data) {
-        this.scoreModule.pelletsEaten++;
+        this.gameState.pelletsEaten++;
         this.gameState.score += 10;
         this.spawningSystem.removePelletAt(data.gridX, data.gridY);
         this.checkHighScore();
     }
 
     handlePowerPelletEaten(data) {
-        this.scoreModule.pelletsEaten++;
+        this.gameState.pelletsEaten++;
         this.gameState.score += 50;
         this.spawningSystem.removePelletAt(data.gridX, data.gridY);
         this.checkHighScore();
@@ -213,12 +212,12 @@ export default class GameModel {
             ghost.eat();
             const baseScore = [200, 400, 800, 1600][ghost.eatenCount % 4];
             const score = baseScore * this.levelSystem.getScoreMultiplier();
-            this.scoreModule.currentComboGhosts++;
+            this.gameState.currentComboGhosts++;
             this.gameState.score += score;
             this.gameState.ghostsEaten++;
             this.gameState.maxComboGhosts = Math.max(
                 this.gameState.maxComboGhosts,
-                this.scoreModule.currentComboGhosts
+                this.gameState.currentComboGhosts
             );
         }
     }
@@ -262,6 +261,12 @@ export default class GameModel {
     // === Death Sequence ===
 
     onPacmanDeath() {
+        // Guard clause: Prevent multiple death triggers during death sequence
+        if (this.isDying) {
+            console.warn('[GameModel] onPacmanDeath called while already dying - ignoring');
+            return;
+        }
+
         this.isDying = true;
         this.gameState.startDeathTimer();
         this.levelDeaths++;
@@ -332,7 +337,7 @@ export default class GameModel {
 
     resetPositions() {
         this.entityRegistry.resetPositions();
-        this.movementSystem?.resetEntities();
+        this.movementSystem?.reset();
     }
 
     // === High Score ===
@@ -368,17 +373,17 @@ export default class GameModel {
     get lives() { return this.gameState.lives; }
     set lives(value) { this.gameState.lives = value; }
 
-    get pelletsEaten() { return this.scoreModule.pelletsEaten; }
-    set pelletsEaten(value) { this.scoreModule.pelletsEaten = value; }
+    get pelletsEaten() { return this.gameState.pelletsEaten; }
+    set pelletsEaten(value) { this.gameState.pelletsEaten = value; }
 
-    get ghostsEaten() { return this.scoreModule.ghostsEaten; }
-    set ghostsEaten(value) { this.scoreModule.ghostsEaten = value; }
+    get ghostsEaten() { return this.gameState.ghostsEaten; }
+    set ghostsEaten(value) { this.gameState.ghostsEaten = value; }
 
-    get currentComboGhosts() { return this.scoreModule.currentComboGhosts; }
-    set currentComboGhosts(value) { this.scoreModule.currentComboGhosts = value; }
+    get currentComboGhosts() { return this.gameState.currentComboGhosts; }
+    set currentComboGhosts(value) { this.gameState.currentComboGhosts = value; }
 
-    get maxComboGhosts() { return this.scoreModule.maxComboGhosts; }
-    set maxComboGhosts(value) { this.scoreModule.maxComboGhosts = value; }
+    get maxComboGhosts() { return this.gameState.maxComboGhosts; }
+    set maxComboGhosts(value) { this.gameState.maxComboGhosts = value; }
 
     get isPaused() { return this.gameState.isPaused; }
     set isPaused(value) { this.gameState.isPaused = value; }
