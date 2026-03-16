@@ -5,7 +5,6 @@
  * Implementiert IMazeAdapter
  */
 
-import { IMazeAdapter } from '../interfaces/IMazeAdapter.js';
 import { Direction } from '../core/Direction.js';
 
 /**

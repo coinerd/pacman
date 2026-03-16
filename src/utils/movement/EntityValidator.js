@@ -21,19 +21,19 @@ export function validateEntityState(entity) {
 }
 
 export function isMovingInDirection(entity) {
-    return entity.direction && (entity.direction.x !== 0 || entity.direction.y !== 0);
+    return !!(entity?.direction && (entity.direction.x !== 0 || entity.direction.y !== 0));
 }
 
 export function hasBufferedTurn(entity) {
-    return entity.nextDirection && (entity.nextDirection.x !== 0 || entity.nextDirection.y !== 0);
+    return !!(entity?.nextDirection && (entity.nextDirection.x !== 0 || entity.nextDirection.y !== 0));
 }
 
 export function isValidDirection(direction) {
-    return direction && (direction === directions.UP ||
+    return !!(direction && (direction === directions.UP ||
                          direction === directions.DOWN ||
                          direction === directions.LEFT ||
                          direction === directions.RIGHT ||
-                         direction === directions.NONE);
+                         direction === directions.NONE));
 }
 
 export function isGridConsistent(entity, _tolerance = gameConfig.tileSize * 0.15) {

@@ -4,13 +4,9 @@
  * Implementiert IAIController
  */
 
-import { IAIController } from '../interfaces/IAIController.js';
-import { Direction } from '../core/Direction.js';
 import {
     AIStrategies,
-    chooseDirectionToTarget,
-    calculateTarget,
-    getDistance
+    chooseDirectionToTarget
 } from '../core/AIStrategies.js';
 import { createSeededRandomFn } from '../../utils/SeededRandom.js';
 

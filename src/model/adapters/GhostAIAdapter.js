@@ -13,8 +13,7 @@ import {
 } from '../../config/gameConfig.js';
 import {
     getDistance,
-    getValidDirections,
-    isWalkableTile
+    getValidDirections
 } from '../../utils/MazeLayout.js';
 
 export class GhostAIAdapter {

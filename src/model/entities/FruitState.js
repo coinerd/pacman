@@ -5,7 +5,7 @@
  */
 
 import { ModelEntity } from '../ModelEntity.js';
-import { gameConfig, fruitConfig, scoreValues } from '../../config/gameConfig.js';
+import { gameConfig, fruitConfig } from '../../config/gameConfig.js';
 import { getCenterPixel } from '../../utils/MazeLayout.js';
 
 export class FruitState extends ModelEntity {

@@ -46,7 +46,7 @@ export function getManhattanDistance(x1, y1, x2, y2) {
  * @returns {Object|null} - Target {x, y} oder null für random
  */
 export function alphaStrategy(context) {
-    const { entity, player, mode, scatterTarget } = context;
+    const { player, mode, scatterTarget } = context;
 
     if (mode === 'SCATTER' || !player) {
         return scatterTarget;
@@ -64,7 +64,7 @@ export function alphaStrategy(context) {
  * @returns {Object|null}
  */
 export function betaStrategy(context) {
-    const { entity, player, mode, scatterTarget } = context;
+    const { player, mode, scatterTarget } = context;
 
     if (mode === 'SCATTER' || !player) {
         return scatterTarget;
@@ -88,7 +88,7 @@ export function betaStrategy(context) {
  * @returns {Object|null}
  */
 export function gammaStrategy(context) {
-    const { entity, player, mode, scatterTarget, allEntities } = context;
+    const { player, mode, scatterTarget, allEntities } = context;
 
     if (mode === 'SCATTER' || !player) {
         return scatterTarget;

@@ -7,7 +7,7 @@
 import { PlayerState } from '../entities/PlayerState.js';
 import { EnemyState } from '../entities/EnemyState.js';
 import { FruitState } from '../entities/FruitState.js';
-import { directions, enemyStartPositions, playerStartPosition } from '../../config/gameConfig.js';
+import { enemyStartPositions, playerStartPosition } from '../../config/gameConfig.js';
 
 export class EntityRegistry {
     /**

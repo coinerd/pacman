@@ -3,7 +3,7 @@
  * Verwaltet Level-Progression und Level-Konfiguration.
  */
 
-import { gameConfig, scoreValues } from '../../config/gameConfig.js';
+import { scoreValues } from '../../config/gameConfig.js';
 
 export class LevelSystem {
     constructor() {

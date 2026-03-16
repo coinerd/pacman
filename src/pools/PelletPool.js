@@ -1,4 +1,3 @@
-import Phaser from 'phaser';
 import { gameConfig, colors } from '../config/gameConfig.js';
 
 export class PelletPool {

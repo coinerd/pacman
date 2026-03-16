@@ -18,8 +18,7 @@ import {
 } from '../../config/gameConfig.js';
 import {
     getDistance,
-    getValidDirections,
-    isWalkableTile
+    getValidDirections
 } from '../../utils/MazeLayout.js';
 import { ModelEntity } from '../ModelEntity.js';
 

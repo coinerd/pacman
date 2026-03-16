@@ -46,7 +46,7 @@ function registerCoreServices(config = {}) {
     globalContainer.clear();
 
     // Event Bus (Singleton - first service)
-    globalContainer.register('eventBus', (container) => new EventBus(), true);
+    globalContainer.register('eventBus', (_container) => new EventBus(), true);
 
     // Game State (Singleton)
     globalContainer.register('gameState', (container) => new GameState({

@@ -5,7 +5,7 @@
 
 import MazeGenerator from '../../utils/MazeGenerator.js';
 import { countPellets, createMazeData, PELLET_TYPES } from '../../utils/MazeLayout.js';
-import { gameConfig, enemyStartPositions, playerStartPosition, fruitConfig, virusCore } from '../../config/gameConfig.js';
+import { gameConfig, enemyStartPositions, playerStartPosition, virusCore } from '../../config/gameConfig.js';
 
 export class SpawningSystem {
     constructor(levelSystem) {

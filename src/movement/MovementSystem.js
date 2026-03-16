@@ -5,7 +5,6 @@
  * Implementiert IMovementSystem
  */
 
-import { IMovementSystem } from './interfaces/IMovementSystem.js';
 import { MovementEngine } from './core/MovementEngine.js';
 import { MovementComponent } from './core/MovementComponent.js';
 import { AIController } from './ai/AIController.js';
