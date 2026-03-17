@@ -104,7 +104,7 @@ export class ServiceContainer {
      * @returns {Array<string>}
      */
     getSingletonNames() {
-        return Array.from(this.singletons);
+        return Array.from(this.singletons.keys());
     }
 
     /**
