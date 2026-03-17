@@ -9,7 +9,7 @@ function getIsDevelopment() {
             const isDev = eval('import.meta.env?.DEV === true');
             if (isDev) {return true;}
         }
-    } catch (e) {
+    } catch (_e) {
         // import.meta not available or not accessible
     }
 

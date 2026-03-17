@@ -1,5 +1,3 @@
-import { themeConfig } from '../../../config/themeConfig.js';
-
 /**
  * LevelWidget - Zeigt das aktuelle Level an
  */

@@ -33,7 +33,7 @@ export class NoiseGenerator {
      * @param {number} index - Sample index
      * @returns {number}
      */
-    generateNoiseSample(type, index) {
+    generateNoiseSample(type, _index) {
         switch (type) {
         case 'white':
             return Math.random() * 2 - 1;

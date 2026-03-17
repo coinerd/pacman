@@ -15,7 +15,7 @@ jest.mock('../../../src/config/gameConfig.js', () => ({
 }));
 
 jest.mock('../../../src/utils/MazeGenerator.js', () => ({
-    generate: jest.fn((options) => ({
+    generate: jest.fn((_options) => ({
         maze: Array(33).fill(null).map(() => Array(25).fill(0)),
         pelletGrid: Array(33).fill(null).map(() => Array(25).fill(0)),
         stats: { pelletCount: 100 }

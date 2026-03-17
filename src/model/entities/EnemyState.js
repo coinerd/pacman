@@ -90,7 +90,7 @@ export class EnemyState extends ModelEntity {
      * @param {Object} pacmanState - Player state for AI targeting
      * @returns {Array<Object>} - Events generated
      */
-    update(deltaSeconds, maze, pacmanState = null) {
+    update(deltaSeconds, maze, _pacmanState = null) {
         const events = [];
 
         // In TileCenterMovement mode:

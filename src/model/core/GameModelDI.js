@@ -9,10 +9,8 @@
  */
 
 import { globalContainer } from '../../core/ServiceContainer.js';
-import { registerFeatureSystems } from '../../core/ServiceRegistry.js';
 import { MovementSystem } from '../../movement/MovementSystem.js';
 import { GAME_EVENTS, gameEvents } from '../../core/EventBus.js';
-import { Direction } from '../../movement/core/Direction.js';
 
 export default class GameModelDI {
     /**
@@ -87,7 +85,7 @@ export default class GameModelDI {
             level: config.level || 1
         });
 
-        const mazeData = this.spawningSystem.generateMazeForLevel(config.level || 1);
+        this.spawningSystem.generateMazeForLevel(config.level || 1);
 
         this.gameState = new GameState({
             level: config.level || 1,
@@ -147,7 +145,7 @@ export default class GameModelDI {
         this.entityRegistry.createFruit();
 
         const pacman = this.entityRegistry.getPacman();
-        const playerMovement = this.movementSystem.registerEntity(pacman, { type: 'player', speed: 100 });
+        this.movementSystem.registerEntity(pacman, { type: 'player', speed: 100 });
         this.movementEntityIds.player = pacman.id;
 
         for (const ghost of this.entityRegistry.getGhosts()) {
@@ -376,7 +374,7 @@ export default class GameModelDI {
         }
     }
 
-    handlePacmanDied(data) {
+    handlePacmanDied(_data) {
         this.onPacmanDeath();
     }
 

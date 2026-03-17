@@ -292,7 +292,7 @@ describe('SoundEngine', () => {
             soundEngine.setVolume(0.5);
 
             // Simulate playback start
-            const context = soundEngine.getContext();
+            soundEngine.getContext();
 
             // Disable mid-playback
             soundEngine.setEnabled(false);

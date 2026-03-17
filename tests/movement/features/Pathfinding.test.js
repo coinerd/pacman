@@ -6,8 +6,7 @@ import {
     findPathBFS,
     findPathAStar,
     hasDirectPath,
-    findEscapeRoutes,
-    findPathWithTimeout
+    findEscapeRoutes
 } from '../../../src/movement/features/Pathfinding.js';
 import { MazeAdapter } from '../../../src/movement/adapters/MazeAdapter.js';
 import { Direction } from '../../../src/movement/core/Direction.js';

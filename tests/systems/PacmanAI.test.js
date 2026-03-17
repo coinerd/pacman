@@ -1,4 +1,4 @@
-import { directions, gameConfig } from '../../src/config/gameConfig.js';
+import { directions } from '../../src/config/gameConfig.js';
 import { PacmanAI } from '../../src/systems/PacmanAI.js';
 import { PELLET_TYPES } from '../../src/utils/MazeLayout.js';
 import { createMockPlayer } from '../utils/testHelpers.js';

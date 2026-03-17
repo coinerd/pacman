@@ -151,7 +151,7 @@ export class ReplaySystem {
 	 * Update playback state (called each frame during replay)
 	 * @param {number} delta - Time since last update
 	 */
-    update(delta) {
+    update(_delta) {
         if (!this.isReplaying || !this.playback) {
             return;
         }

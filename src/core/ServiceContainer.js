@@ -80,7 +80,7 @@ export class ServiceContainer {
      */
     clear() {
         // Destroy all instances that have a destroy method
-        for (const [name, instance] of this.instances) {
+        for (const [, instance] of this.instances) {
             if (typeof instance.destroy === 'function') {
                 instance.destroy();
             }

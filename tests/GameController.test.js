@@ -16,7 +16,7 @@ class MockGameModel {
         };
     }
 
-    setInputDirection(direction) {
+    setInputDirection(_direction) {
         // Mock implementation
     }
 

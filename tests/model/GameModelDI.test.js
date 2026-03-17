@@ -5,7 +5,7 @@
  */
 
 import GameModelDI from '../../src/model/core/GameModelDI.js';
-import { globalContainer, ServiceContainer } from '../../src/core/ServiceContainer.js';
+import { globalContainer } from '../../src/core/ServiceContainer.js';
 
 // Mock Services
 function createMockGameState(config) {
@@ -127,7 +127,7 @@ function createMockEntityRegistry(config) {
     };
 }
 
-function createMockCollisionHandler(config) {
+function createMockCollisionHandler(_config) {
     return {
         checkAllCollisions: jest.fn(() => []),
         checkPelletCollision: jest.fn(),
@@ -163,15 +163,15 @@ describe('GameModelDI', () => {
         globalContainer.clear();
 
         // Register mock services
-        globalContainer.register('gameState', (container) => createMockGameState({}), true);
-        globalContainer.register('levelSystem', (container) => createMockLevelSystem(), true);
-        globalContainer.register('spawningSystem', (container) => createMockSpawningSystem(), true);
-        globalContainer.register('entityRegistry', (container) => createMockEntityRegistry({}), true);
-        globalContainer.register('collisionHandler', (container) => createMockCollisionHandler({}), true);
-        globalContainer.register('movementSystem', (container) => createMockMovementSystem(), true);
-        globalContainer.register('playerModule', (container) => ({}), true);
-        globalContainer.register('scoreModule', (container) => ({}), true);
-        globalContainer.register('sessionModule', (container) => ({}), true);
+        globalContainer.register('gameState', (_container) => createMockGameState({}), true);
+        globalContainer.register('levelSystem', (_container) => createMockLevelSystem(), true);
+        globalContainer.register('spawningSystem', (_container) => createMockSpawningSystem(), true);
+        globalContainer.register('entityRegistry', (_container) => createMockEntityRegistry({}), true);
+        globalContainer.register('collisionHandler', (_container) => createMockCollisionHandler({}), true);
+        globalContainer.register('movementSystem', (_container) => createMockMovementSystem(), true);
+        globalContainer.register('playerModule', (_container) => ({}), true);
+        globalContainer.register('scoreModule', (_container) => ({}), true);
+        globalContainer.register('sessionModule', (_container) => ({}), true);
     });
 
     afterEach(() => {
@@ -419,7 +419,7 @@ describe('ServiceContainer', () => {
     });
 
     test('should clear all services', () => {
-        const factory = (container) => ({ id: 'test' });
+        const factory = (_container) => ({ id: 'test' });
 
         globalContainer.register('testService', factory, true);
         globalContainer.get('testService');

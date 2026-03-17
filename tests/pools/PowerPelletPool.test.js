@@ -1,6 +1,5 @@
 import { PowerPelletPool } from '../../src/pools/PowerPelletPool.js';
 import { createMockScene } from '../utils/testHelpers.js';
-import { gameConfig } from '../../src/config/gameConfig.js';
 
 describe('PowerPelletPool', () => {
     let pool;
@@ -66,7 +65,7 @@ describe('PowerPelletPool', () => {
 
     describe('cleanup', () => {
         test('should destroy all power pellets', () => {
-            const pellet = pool.get();
+            pool.get();
             pool.destroy();
 
             expect(pool.available.length).toBe(0);

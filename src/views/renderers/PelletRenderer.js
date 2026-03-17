@@ -106,7 +106,7 @@ export class PelletRenderer {
      * Pellets werden nur via Events entfernt.
      * Diese Methode bleibt für Kompatibilität aber macht nichts mehr.
      */
-    updatePelletVisuals(pelletGrid) {
+    updatePelletVisuals(_pelletGrid) {
         // NOP - Pellets werden nur einmal erstellt und via Events entfernt
         // Kein Grid-Scanning mehr bei jedem Frame!
     }

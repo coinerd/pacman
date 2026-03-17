@@ -49,7 +49,7 @@ describe('ToneGenerator', () => {
 
     describe('createGain', () => {
         test('should create gain node', () => {
-            const gain = toneGenerator.createGain(0.5);
+            toneGenerator.createGain(0.5);
 
             expect(mockAudioContext.createGain).toHaveBeenCalled();
         });
@@ -143,7 +143,7 @@ describe('ToneGenerator', () => {
 
             const baseOsc = toneGenerator.createOscillator('sine', 440);
 
-            const delay = toneGenerator.createEcho(baseOsc, 0.3, 0.5, 0.3);
+            toneGenerator.createEcho(baseOsc, 0.3, 0.5, 0.3);
 
             expect(mockAudioContext.createDelay).toHaveBeenCalled();
         });

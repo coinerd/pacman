@@ -57,7 +57,7 @@ describe('LogoCreator', () => {
 
     describe('createADAWomanLogo', () => {
         it('should create a container at specified position', () => {
-            const container = LogoCreator.createADAWomanLogo(mockScene, {
+            LogoCreator.createADAWomanLogo(mockScene, {
                 x: 100,
                 y: 100
             });

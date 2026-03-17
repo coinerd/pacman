@@ -4,7 +4,6 @@ describe('FixedTimeStepLoop', () => {
     let loop;
     let mockCallback;
     const FIXED_DT = 1 / 60;
-    const MAX_DT = 0.1;
 
     beforeEach(() => {
         mockCallback = jest.fn();

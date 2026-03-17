@@ -70,7 +70,7 @@ function createMockSpawningSystem() {
         getPelletsRemaining: () => 100,
         getTotalPellets: () => 200,
         removePelletAt: () => true,
-        setPelletsRemaining: function(val) { }
+        setPelletsRemaining: function(_val) { }
     };
 }
 

@@ -222,7 +222,7 @@ export default class GameModel {
         }
     }
 
-    handlePacmanDied(data) {
+    handlePacmanDied(_data) {
         this.onPacmanDeath();
     }
 

@@ -13,7 +13,7 @@ class MockAdapter extends InputAdapter {
         this.updateCalled = false;
     }
 
-    update(deltaTime) {
+    update(_deltaTime) {
         this.updateCalled = true;
     }
 }

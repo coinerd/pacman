@@ -459,7 +459,7 @@ describe('MazeGenerator', () => {
 /**
  * Helper function to count path neighbors
  */
-function countNeighbors(maze, x, y, tileType) {
+function _countNeighbors(maze, x, y, tileType) {
     let count = 0;
     const directions = [
         { dx: 0, dy: -1 }, // up

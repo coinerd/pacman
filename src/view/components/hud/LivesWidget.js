@@ -1,5 +1,3 @@
-import { themeConfig } from '../../../config/themeConfig.js';
-
 /**
  * LivesWidget - Zeigt Leben als Herz-Icons an
  */

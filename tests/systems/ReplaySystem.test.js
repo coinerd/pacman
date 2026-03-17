@@ -1,4 +1,3 @@
-import { gameEvents } from '../../src/core/EventBus.js';
 import { ReplaySystem } from '../../src/systems/ReplaySystem.js';
 
 jest.mock('../../src/core/EventBus.js', () => ({
@@ -463,7 +462,6 @@ describe('ReplaySystem', () => {
         });
 
         test('should set isReplaying to false when finished', () => {
-            const { gameEvents } = require('../../src/core/EventBus.js');
             const now = Date.now();
             const recording = {
                 timestamp: now - 2000,

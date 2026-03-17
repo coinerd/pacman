@@ -8,7 +8,6 @@ import Phaser from 'phaser';
 import {
     animationConfig,
     directions,
-    gameConfig,
     physicsConfig
 } from '../config/gameConfig.js';
 import { themeConfig } from '../config/themeConfig.js';

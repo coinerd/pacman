@@ -4,8 +4,6 @@
  * Manages effect scheduling, batching, and cleanup
  */
 
-import { colors } from '../../config/gameConfig.js';
-
 export class EffectOrchestrator {
     constructor(scene) {
         this.scene = scene;

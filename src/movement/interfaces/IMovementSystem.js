@@ -132,7 +132,7 @@ export class IMovementSystem {
      * @param {string} entityId - ID der Entity
      * @param {number} duration - Dauer in Sekunden
      */
-    setFrightened(_entityId, duration) {
+    setFrightened(_entityId, _duration) {
         throw new Error('Not implemented');
     }
 
@@ -175,3 +175,4 @@ export class IMovementSystem {
         throw new Error('Not implemented');
     }
 }
+

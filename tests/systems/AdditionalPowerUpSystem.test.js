@@ -1,5 +1,5 @@
 import { AdditionalPowerUpSystem, POWER_UP_TYPES } from '../../src/systems/AdditionalPowerUpSystem.js';
-import { GAME_EVENTS, gameEvents } from '../../src/core/EventBus.js';
+import { GAME_EVENTS } from '../../src/core/EventBus.js';
 
 // Mock gameConfig
 jest.mock('../../src/config/gameConfig.js', () => ({

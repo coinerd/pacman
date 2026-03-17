@@ -186,7 +186,7 @@ export class PlayerRenderer {
     /**
 	 * Update direction animation
 	 */
-    updateDirectionAnimation(newDirection) {
+    updateDirectionAnimation(_newDirection) {
         // Can be used to trigger direction-specific animations
         this.pulsePhase = 0;
     }

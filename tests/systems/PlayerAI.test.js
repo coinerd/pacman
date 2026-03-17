@@ -13,7 +13,7 @@ const mockDirections = {
 // Mock MazeLayout functions
 jest.mock('../../src/utils/MazeLayout.js', () => ({
     getDistance: jest.fn((x1, y1, x2, y2) => Math.abs(x1 - x2) + Math.abs(y1 - y2)),
-    getValidDirections: jest.fn((maze, x, y) => {
+    getValidDirections: jest.fn((_maze, _x, _y) => {
         // Return all directions for testing
         return [mockDirections.UP, mockDirections.DOWN, mockDirections.LEFT, mockDirections.RIGHT];
     }),

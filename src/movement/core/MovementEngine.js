@@ -5,7 +5,6 @@
  */
 
 import { Direction, directionsEqual } from './Direction.js';
-import { MovementComponent } from './MovementComponent.js';
 
 /**
  * Zentrale Movement-Engine

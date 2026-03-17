@@ -57,7 +57,7 @@ export class IAIController {
      * @param {AIContext} context - AI-Kontext
      * @returns {Array<AIDecision>} - Array von AI-Entscheidungen
      */
-    update(_deltaSeconds, context) {
+    update(_deltaSeconds, _context) {
         throw new Error('Not implemented');
     }
 

@@ -4,7 +4,6 @@
  */
 
 import GameModelDI from '../../src/model/core/GameModelDI.js';
-import { GameSnapshot } from '../../src/views/ViewInterface.js';
 import { globalContainer } from '../../src/core/ServiceContainer.js';
 
 // Mock Services
@@ -133,7 +132,7 @@ function createMockEntityRegistry(config) {
     };
 }
 
-function createMockCollisionHandler(config) {
+function createMockCollisionHandler(_config) {
     return {
         checkAllCollisions: jest.fn(() => []),
         checkPelletCollision: jest.fn(),
@@ -171,15 +170,15 @@ describe('GameModel.getSnapshot()', () => {
         globalContainer.clear();
 
         // Register mock services
-        globalContainer.register('gameState', (container) => createMockGameState({}), true);
-        globalContainer.register('levelSystem', (container) => createMockLevelSystem(), true);
-        globalContainer.register('spawningSystem', (container) => createMockSpawningSystem(), true);
-        globalContainer.register('entityRegistry', (container) => createMockEntityRegistry({}), true);
-        globalContainer.register('collisionHandler', (container) => createMockCollisionHandler({}), true);
-        globalContainer.register('movementSystem', (container) => createMockMovementSystem(), true);
-        globalContainer.register('playerModule', (container) => ({}), true);
-        globalContainer.register('scoreModule', (container) => ({ pelletsEaten: 0, ghostsEaten: 0, currentComboGhosts: 0 }), true);
-        globalContainer.register('sessionModule', (container) => ({}), true);
+        globalContainer.register('gameState', (_container) => createMockGameState({}), true);
+        globalContainer.register('levelSystem', (_container) => createMockLevelSystem(), true);
+        globalContainer.register('spawningSystem', (_container) => createMockSpawningSystem(), true);
+        globalContainer.register('entityRegistry', (_container) => createMockEntityRegistry({}), true);
+        globalContainer.register('collisionHandler', (_container) => createMockCollisionHandler({}), true);
+        globalContainer.register('movementSystem', (_container) => createMockMovementSystem(), true);
+        globalContainer.register('playerModule', (_container) => ({}), true);
+        globalContainer.register('scoreModule', (_container) => ({ pelletsEaten: 0, ghostsEaten: 0, currentComboGhosts: 0 }), true);
+        globalContainer.register('sessionModule', (_container) => ({}), true);
 
         // Create a fresh game model for each test
         gameModel = new GameModelDI({

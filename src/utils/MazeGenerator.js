@@ -4,12 +4,8 @@
  * Creates playable mazes with valid spawn points and connectivity
  */
 
-import { gameConfig } from '../config/gameConfig.js';
 import {
-    getTileType,
-    getValidDirections,
     isWalkableTile,
-    isWall,
     PELLET_TYPES,
     TILE_TYPES
 } from './MazeLayout.js';

@@ -260,7 +260,7 @@ describe('MovementEngine', () => {
             });
             engine.registerEntity('test', mc);
 
-            const events = engine.update(0.11);
+            engine.update(0.11);
 
             // After wrapping, should be at left side
             expect(mc.gridX).toBeGreaterThanOrEqual(0);

@@ -176,7 +176,7 @@ export class UIController {
      * Update UI from snapshot (wird vom GameScene aufgerufen)
      * Ignoriert den Snapshot und holt direkt aktuelle Daten
      */
-    updateFromSnapshot(snapshot) {
+    updateFromSnapshot(_snapshot) {
         // Snapshot wird ignoriert - wir holen immer direkt aktuelle Daten
         this.update();
     }

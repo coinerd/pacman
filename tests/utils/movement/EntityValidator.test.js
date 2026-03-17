@@ -13,7 +13,7 @@ import {
     validateGridToWorldConsistency,
     isGridCenter
 } from '../../../src/utils/movement/EntityValidator.js';
-import { directions, gameConfig } from '../../../src/config/gameConfig.js';
+import { directions } from '../../../src/config/gameConfig.js';
 
 // Mock gameConfig
 jest.mock('../../../src/config/gameConfig.js', () => ({

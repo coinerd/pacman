@@ -72,7 +72,7 @@ export class DebugOverlay {
         }
     }
 
-    update(time, delta) {
+    update(time, _delta) {
         if (!this.visible) {return;}
 
         this.frameCount++;

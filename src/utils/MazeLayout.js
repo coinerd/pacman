@@ -160,7 +160,7 @@ export function getCenterPixel(gridX, gridY) {
     };
 }
 
-export function getValidDirections(maze, gridX, gridY, allowReverse = true) {
+export function getValidDirections(maze, gridX, gridY, _allowReverse = true) {
     const validDirs = [];
     const { UP, DOWN, LEFT, RIGHT } = {
         UP: { x: 0, y: -1 },

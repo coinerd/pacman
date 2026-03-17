@@ -37,7 +37,7 @@ describe('Memory Leak Prevention', () => {
             manager.registerAdapter('mock', adapter);
 
             // Start temp switch with long duration
-            const promise = manager.tempSwitch('mock', 10000);
+            manager.tempSwitch('mock', 10000);
 
             // Verify timeout is tracked
             expect(manager.pendingTimeouts.size).toBe(1);

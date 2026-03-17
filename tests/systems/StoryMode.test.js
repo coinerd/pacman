@@ -1,6 +1,5 @@
 import StoryMode from '../../src/systems/StoryMode.js';
 import { GAME_EVENTS, gameEvents } from '../../src/core/EventBus.js';
-import { storyConfig } from '../../src/config/gameConfig.js';
 
 // Mock gameConfig
 jest.mock('../../src/config/gameConfig.js', () => ({

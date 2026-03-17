@@ -36,7 +36,7 @@ describe('TechSoundManager', () => {
 
         // Mock SoundBank
         SoundBank.mockImplementation(() => ({
-            getSoundConfig: jest.fn((name) => ({
+            getSoundConfig: jest.fn((_name) => ({
                 baseFreq: 440,
                 duration: 0.1
             }))

@@ -225,7 +225,7 @@ export class BossVisualManager {
      * Flash boss visual for damage feedback
      * @param {string} bossType - Boss type
      */
-    flashBossVisual(bossType) {
+    flashBossVisual(_bossType) {
         if (!this.bossVisual) {
             return;
         }

@@ -62,7 +62,7 @@ describe('ErrorHandler', () => {
             const fn = jest.fn((a, b) => a + b);
             const wrapped = handler.wrap(fn);
 
-            const result = wrapped(3, 4);
+            wrapped(3, 4);
 
             expect(fn).toHaveBeenCalledWith(3, 4);
         });

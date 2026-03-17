@@ -1,4 +1,4 @@
-import { gameConfig, physicsConfig } from '../config/gameConfig.js';
+import { gameConfig } from '../config/gameConfig.js';
 
 const origin = { x: 0, y: 0 };
 

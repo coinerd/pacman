@@ -8,7 +8,7 @@ export { EPS, worldToTile, tileCenter, encodeTile, decodeTile, tileToWorld, isAt
 /**
  * @deprecated Use TileCenterMovementStrategy instead
  */
-export function performGridMovementStep(entity, maze, deltaSeconds) {
+export function performGridMovementStep(entity, _maze, _deltaSeconds) {
     console.warn('[DEPRECATED] performGridMovementStep is deprecated. Use TileCenterMovementStrategy instead.');
     return entity;
 }

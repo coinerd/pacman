@@ -10,9 +10,8 @@
  * @deprecated Use ViewManager directly for new code
  */
 
-import { ViewContext } from './ViewInterface.js';
 import { ViewManager } from './core/ViewManager.js';
-import { GAME_EVENTS, gameEvents } from '../core/EventBus.js';
+import { GAME_EVENTS } from '../core/EventBus.js';
 import { VIEW_EVENTS } from './ViewEvents.js';
 
 export default class ModelDrivenGameView {
@@ -174,7 +173,7 @@ export default class ModelDrivenGameView {
                 this.soundManager.playDeath?.();
                 this.startDeathAnimation();
             }),
-            this.eventBus.on(VIEW_EVENTS.FRUIT_EATEN, (data) => {
+            this.eventBus.on(VIEW_EVENTS.FRUIT_EATEN, (_data) => {
                 this.soundManager.playFruitEat?.();
                 const fruit = this.lastSnapshot?.fruit;
                 if (fruit) {

@@ -70,7 +70,7 @@ export function createMockAudioContext() {
             connect: jest.fn()
         })),
 
-        createScriptProcessor: jest.fn((bufferSize, inputChannels, outputChannels) => ({
+        createScriptProcessor: jest.fn((bufferSize, _inputChannels, _outputChannels) => ({
             bufferSize,
             connect: jest.fn(),
             onaudioprocess: null

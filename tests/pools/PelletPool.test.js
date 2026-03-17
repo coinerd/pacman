@@ -93,7 +93,7 @@ describe('PelletPool', () => {
 
     describe('cleanup', () => {
         test('should destroy all pellets', () => {
-            const pellet = pool.get(5, 5);
+            pool.get(5, 5);
             pool.destroy();
 
             expect(pool.available.length).toBe(0);

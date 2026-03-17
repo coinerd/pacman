@@ -312,7 +312,7 @@ export class GhostRenderer {
     /**
 	 * Update mode animation
 	 */
-    updateModeAnimation(newMode, isFrightened) {
+    updateModeAnimation(_newMode, _isFrightened) {
         // Can be used to trigger mode-specific animations
     }
 

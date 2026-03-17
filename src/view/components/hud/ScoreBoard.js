@@ -1,5 +1,3 @@
-import { themeConfig } from '../../../config/themeConfig.js';
-
 /**
  * ScoreBoard - Zeigt den aktuellen Score an
  */

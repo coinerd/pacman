@@ -244,7 +244,7 @@ export class EntityRenderer {
      * Update animation
      * @param {number} deltaTime - Time since last frame
      */
-    updateAnimation(deltaTime) {
+    updateAnimation(_deltaTime) {
         // Override in subclasses for specific animation logic
     }
 

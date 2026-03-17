@@ -6,7 +6,6 @@
 import {
     directions,
     ghostModes,
-    ghostHouse,
     scatterTargets
 } from '../../../src/config/gameConfig.js';
 import { GhostAIAdapter } from '../../../src/model/adapters/GhostAIAdapter.js';

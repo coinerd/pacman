@@ -1,5 +1,3 @@
-import { themeConfig } from '../../../config/themeConfig.js';
-
 /**
  * HighScoreWidget - Zeigt den High Score an
  */

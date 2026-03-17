@@ -6,8 +6,7 @@
 import {
     directions,
     ghostModes,
-    ghostSpeedMultipliers,
-    levelConfig
+    ghostSpeedMultipliers
 } from '../../src/config/gameConfig.js';
 import { EnemyState } from '../../src/model/entities/EnemyState.js';
 import { createMazeData } from '../../src/utils/MazeLayout.js';

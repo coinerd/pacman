@@ -46,7 +46,6 @@ export default class PauseScene extends Phaser.Scene {
 	 */
     createOverlay() {
         const colors = this.theme.colors;
-        const animConfig = this.theme.animations;
 
         // Semi-transparent background
         this.add.rectangle(

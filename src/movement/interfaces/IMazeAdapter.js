@@ -86,7 +86,7 @@ export class IMazeAdapter {
      * @param {number} y2 - Ziel Y
      * @returns {number} - Euklidische Distanz
      */
-    getDistance(x1, y1, x2, y2) {
+    getDistance(_x1, _y1, _x2, _y2) {
         throw new Error('Not implemented');
     }
 }

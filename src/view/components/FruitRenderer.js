@@ -165,8 +165,6 @@ export class FruitRenderer {
      * Draw strawberry
      */
     drawStrawberry(x, y, radius, color) {
-        const fruitColor = color || fruitConfig.types[1].color;
-
         this.graphics.fillStyle(color, 1);
 
         // Body (triangle-ish)

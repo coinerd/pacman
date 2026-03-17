@@ -9,22 +9,18 @@
  */
 
 import { colors, gameConfig } from '../config/gameConfig.js';
-import { GAME_EVENTS, gameEvents } from '../core/EventBus.js';
-import { ViewContext, ViewState, GameSnapshot } from './ViewInterface.js';
+import { GAME_EVENTS } from '../core/EventBus.js';
+import { ViewState } from './ViewInterface.js';
 import { SceneTransitionHandler } from './SceneTransitionHandler.js';
-import { VIEW_EVENTS } from './ViewEvents.js';
 import { SoundManager } from '../managers/SoundManager.js';
 import { EffectManager } from '../scenes/systems/EffectManager.js';
-import { gridToPixel, pixelToGrid, TILE_TYPES } from '../utils/MazeLayout.js';
+import { TILE_TYPES } from '../utils/MazeLayout.js';
 import { GhostRenderer } from '../view/components/GhostRenderer.js';
 import { FruitRenderer } from '../view/components/FruitRenderer.js';
 import { PlayerRenderer } from '../view/components/PlayerRenderer.js';
 
 // Phase 2: New renderer modules
 import { PelletRenderer } from './renderers/PelletRenderer.js';
-
-// Phase 4: Service Container
-import { globalContainer } from '../core/ServiceContainer.js';
 
 export default class ModelDrivenGameViewDI {
     /**
@@ -515,7 +511,7 @@ export default class ModelDrivenGameViewDI {
 	 * Show game over overlay
 	 */
     showGameOverOverlay() {
-        const overlay = this.scene.add.rectangle(
+        this.scene.add.rectangle(
             this.scene.scale.width / 2,
             this.scene.scale.height / 2,
             this.scene.scale.width,

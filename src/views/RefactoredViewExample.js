@@ -164,7 +164,7 @@ export class DecoupledGameView {
     /**
      * Maze visuals updaten (lazy) ✅
      */
-    updateMazeVisuals(maze) {
+    updateMazeVisuals(_maze) {
         // Erstelle/aktualisiere Maze-Grafik
         // Kein direct Model-Zugriff, nur aus Snapshot
         if (!this.mazeTexture || this.mazeTexture.needsUpdate) {
