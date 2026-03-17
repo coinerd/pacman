@@ -173,51 +173,135 @@ export class SoundManager {
 
         this.musicPlaying = true;
 
-        // Retro chiptune melody - catchy arcade style
-        // Note frequencies (Hz) - simple pentatonic scale for happy retro feel
+        // Extended retro chiptune melody - complex arcade style piece
+        // Note frequencies (Hz) - multiple sections for variety
         const melody = [
-            // Phrase 1 - upbeat opening
-            { freq: 523.25, duration: 0.15 },  // C5
-            { freq: 587.33, duration: 0.15 },  // D5
-            { freq: 659.25, duration: 0.15 },  // E5
-            { freq: 698.46, duration: 0.15 },  // F5
-            { freq: 783.99, duration: 0.3 },   // G5
-            { freq: 698.46, duration: 0.15 },  // F5
-            { freq: 659.25, duration: 0.15 },  // E5
-            { freq: 587.33, duration: 0.3 },   // D5
+            // SECTION A - Main Theme (8 bars)
+            // Bar 1-2: Opening motif
+            { freq: 523.25, duration: 0.25 },  // C5
+            { freq: 587.33, duration: 0.25 },  // D5
+            { freq: 659.25, duration: 0.25 },  // E5
+            { freq: 698.46, duration: 0.25 },  // F5
+            { freq: 783.99, duration: 0.5 },   // G5 (half note)
+            { freq: 698.46, duration: 0.25 },  // F5
+            { freq: 659.25, duration: 0.25 },  // E5
+            { freq: 587.33, duration: 0.5 },   // D5 (half note)
             
-            // Phrase 2 - call and response
-            { freq: 523.25, duration: 0.15 },  // C5
-            { freq: 587.33, duration: 0.15 },  // D5
-            { freq: 659.25, duration: 0.15 },  // E5
-            { freq: 783.99, duration: 0.15 },  // G5
-            { freq: 880.00, duration: 0.3 },   // A5
-            { freq: 783.99, duration: 0.15 },  // G5
-            { freq: 659.25, duration: 0.15 },  // E5
-            { freq: 523.25, duration: 0.3 },   // C5
+            // Bar 3-4: Rising phrase
+            { freq: 523.25, duration: 0.25 },  // C5
+            { freq: 587.33, duration: 0.25 },  // D5
+            { freq: 659.25, duration: 0.25 },  // E5
+            { freq: 783.99, duration: 0.25 },  // G5
+            { freq: 880.00, duration: 0.5 },   // A5 (half note)
+            { freq: 783.99, duration: 0.25 },  // G5
+            { freq: 659.25, duration: 0.25 },  // E5
+            { freq: 523.25, duration: 0.5 },   // C5 (half note)
             
-            // Phrase 3 - climbing up
-            { freq: 659.25, duration: 0.15 },  // E5
-            { freq: 698.46, duration: 0.15 },  // F5
-            { freq: 783.99, duration: 0.15 },  // G5
-            { freq: 880.00, duration: 0.15 },  // A5
-            { freq: 987.77, duration: 0.3 },   // B5
-            { freq: 880.00, duration: 0.15 },  // A5
-            { freq: 783.99, duration: 0.15 },  // G5
-            { freq: 659.25, duration: 0.3 },   // E5
+            // Bar 5-6: Climbing
+            { freq: 659.25, duration: 0.25 },  // E5
+            { freq: 698.46, duration: 0.25 },  // F5
+            { freq: 783.99, duration: 0.25 },  // G5
+            { freq: 880.00, duration: 0.25 },  // A5
+            { freq: 987.77, duration: 0.5 },   // B5 (half note)
+            { freq: 880.00, duration: 0.25 },  // A5
+            { freq: 783.99, duration: 0.25 },  // G5
+            { freq: 659.25, duration: 0.5 },   // E5 (half note)
             
-            // Phrase 4 - resolution
+            // Bar 7-8: Resolution
+            { freq: 523.25, duration: 0.33 },  // C5
+            { freq: 659.25, duration: 0.33 },  // E5
+            { freq: 783.99, duration: 0.33 },  // G5
+            { freq: 523.25, duration: 0.33 },  // C5
+            { freq: 659.25, duration: 0.33 },  // E5
+            { freq: 783.99, duration: 0.33 },  // G5
+            { freq: 1046.50, duration: 1.0 },  // C6 - sustained finale
+            
+            // SECTION B - Bridge (8 bars)
+            // Bar 9-10: Minor key shift
+            { freq: 440.00, duration: 0.25 },  // A4
+            { freq: 493.88, duration: 0.25 },  // B4
+            { freq: 523.25, duration: 0.25 },  // C5
+            { freq: 587.33, duration: 0.25 },  // D5
+            { freq: 659.25, duration: 0.5 },   // E5
+            { freq: 587.33, duration: 0.25 },  // D5
+            { freq: 523.25, duration: 0.25 },  // C5
+            { freq: 493.88, duration: 0.5 },   // B4
+            
+            // Bar 11-12: Descending
+            { freq: 440.00, duration: 0.25 },  // A4
+            { freq: 392.00, duration: 0.25 },  // G4
+            { freq: 349.23, duration: 0.25 },  // F4
+            { freq: 329.63, duration: 0.25 },  // E4
+            { freq: 293.66, duration: 0.5 },   // D4
+            { freq: 329.63, duration: 0.25 },  // E4
+            { freq: 349.23, duration: 0.25 },  // F4
+            { freq: 392.00, duration: 0.5 },   // G4
+            
+            // Bar 13-14: Building tension
+            { freq: 440.00, duration: 0.25 },  // A4
+            { freq: 523.25, duration: 0.25 },  // C5
+            { freq: 587.33, duration: 0.25 },  // D5
+            { freq: 659.25, duration: 0.25 },  // E5
+            { freq: 698.46, duration: 0.5 },   // F5
+            { freq: 659.25, duration: 0.25 },  // E5
+            { freq: 587.33, duration: 0.25 },  // D5
+            { freq: 523.25, duration: 0.5 },   // C5
+            
+            // Bar 15-16: Transition back
+            { freq: 493.88, duration: 0.25 },  // B4
+            { freq: 523.25, duration: 0.25 },  // C5
+            { freq: 587.33, duration: 0.25 },  // D5
+            { freq: 659.25, duration: 0.25 },  // E5
+            { freq: 698.46, duration: 0.25 },  // F5
+            { freq: 783.99, duration: 0.25 },  // G5
+            { freq: 880.00, duration: 0.5 },   // A5
+            { freq: 0, duration: 0.5 },        // REST
+            
+            // SECTION A' - Return of Main Theme (8 bars)
+            // Bar 17-18: Opening motif variation
+            { freq: 783.99, duration: 0.25 },  // G5
+            { freq: 880.00, duration: 0.25 },  // A5
+            { freq: 987.77, duration: 0.25 },  // B5
+            { freq: 1046.50, duration: 0.25 }, // C6
+            { freq: 987.77, duration: 0.5 },   // B5
+            { freq: 880.00, duration: 0.25 },  // A5
+            { freq: 783.99, duration: 0.25 },  // G5
+            { freq: 698.46, duration: 0.5 },   // F5
+            
+            // Bar 19-20: Arpeggiated phrase
             { freq: 523.25, duration: 0.2 },   // C5
             { freq: 659.25, duration: 0.2 },   // E5
             { freq: 783.99, duration: 0.2 },   // G5
-            { freq: 523.25, duration: 0.2 },   // C5
-            { freq: 659.25, duration: 0.2 },   // E5
+            { freq: 1046.50, duration: 0.2 },  // C6
             { freq: 783.99, duration: 0.2 },   // G5
-            { freq: 1046.50, duration: 0.4 },  // C6 - high note finale
+            { freq: 659.25, duration: 0.2 },   // E5
+            { freq: 523.25, duration: 0.4 },   // C5
+            { freq: 0, duration: 0.4 },        // REST
+            
+            // Bar 21-22: Triplets feel
+            { freq: 587.33, duration: 0.167 }, // D5
+            { freq: 659.25, duration: 0.167 }, // E5
+            { freq: 698.46, duration: 0.167 }, // F5
+            { freq: 783.99, duration: 0.167 }, // G5
+            { freq: 880.00, duration: 0.167 }, // A5
+            { freq: 987.77, duration: 0.167 }, // B5
+            { freq: 1046.50, duration: 0.5 },  // C6
+            { freq: 987.77, duration: 0.25 },  // B5
+            { freq: 880.00, duration: 0.25 },  // A5
+            
+            // Bar 23-24: Grand finale
+            { freq: 783.99, duration: 0.25 },  // G5
+            { freq: 880.00, duration: 0.25 },  // A5
+            { freq: 783.99, duration: 0.25 },  // G5
+            { freq: 698.46, duration: 0.25 },  // F5
+            { freq: 659.25, duration: 0.5 },   // E5
+            { freq: 523.25, duration: 0.5 },   // C5
+            { freq: 659.25, duration: 0.5 },   // E5
+            { freq: 783.99, duration: 1.0 },   // G5 - sustained final note
         ];
 
         let noteIndex = 0;
-        const bpm = 180; // Beats per minute - fast and energetic
+        const bpm = 120; // Slower tempo for better flow (was 180)
         const beatDuration = 60 / bpm; // Duration of one beat in seconds
 
         // Play the melody in a loop
