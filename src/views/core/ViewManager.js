@@ -475,6 +475,10 @@ export class ViewManager {
     // === Audio ===
 
     resumeAudio() {
+        // Initialize AudioContext if not already done (browser autoplay policy requires user interaction)
+        if (!this.soundManager.initialized) {
+            this.soundManager.initialize();
+        }
         this.soundManager.resume?.();
     }
 
