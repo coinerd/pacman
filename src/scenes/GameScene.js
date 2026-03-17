@@ -26,7 +26,6 @@ import { AchievementSystem } from '../systems/AchievementSystem.js';
 import { DebugOverlay } from '../systems/DebugOverlay.js';
 import { FixedTimeStepLoop } from '../systems/FixedTimeStepLoop.js';
 import { ReplaySystem } from '../systems/ReplaySystem.js';
-import { createMazeData } from '../utils/MazeLayout.js';
 import { normalizeDeltaSeconds } from '../utils/Time.js';
 import GameView from '../views/ModelDrivenGameView.js';
 import { LevelManager } from './systems/LevelManager.js';
@@ -44,18 +43,16 @@ export default class GameScene extends Phaser.Scene {
     }
 
     init(data) {
-        const levelData = createMazeData();
-
         // Phase 4: Registriere DI-Services mit vollständigen Daten
+        // MAZE RANDOMIZATION: Don't pass maze/pelletGrid/spawnPoints
+        // so SpawningSystem.generateMazeForLevel() will be called instead of setMaze()
         registerCoreServices({
             level: data.level || 1,
             lives: data.lives || 3,
             score: data.score || 0,
             highScore: data.highScore || 0,
-            deathPauseDuration: animationConfig.deathPauseDuration,
-            maze: levelData.maze,
-            pelletGrid: levelData.pelletGrid,
-            spawnPoints: levelData.spawnPoints
+            deathPauseDuration: animationConfig.deathPauseDuration
+            // Removed: maze, pelletGrid, spawnPoints - now generated randomly
         });
 
         // Phase 4: Verwende GameModelDI mit DI (keine Duplizierung nötig)
