@@ -615,4 +615,440 @@ export class SoundManager {
             this.musicInterval = null;
         }
     }
+
+    /**
+     * Start dark background music theme - E minor version
+     * Dark, ominous reinterpretation of the main theme
+     */
+    startDarkTheme() {
+        if (!this.initialized) {
+            this.initialize();
+        }
+
+        if (this.musicPlaying) {
+            return;
+        }
+
+        this.musicPlaying = true;
+
+        // DARK THEME - E Minor, ominous reinterpretation
+        // Same structure but lower register, minor intervals, dissonance
+        // Key: E minor (E4 = 329.63 Hz as root, lower for ominous feel)
+        
+        const melody = [
+            // ============================================
+            // DARK INTRO (0:00-0:25) - Ominous, building dread
+            // ============================================
+            // Low, slow opening - minor key atmosphere
+            { freq: 329.63, duration: 0.75, volume: 0.25, intensity: 0 },    // E4 - root, quiet
+            { freq: 392.00, duration: 0.75, volume: 0.25, intensity: 0 },    // G4 - minor 3rd
+            { freq: 493.88, duration: 0.75, volume: 0.25, intensity: 0 },    // B4 - perfect 5th
+            { freq: 659.25, duration: 1.5, volume: 0.3, intensity: 0 },      // E5 - octave, sustained
+            
+            // Repeat with slight variation, add subtle dissonant bass
+            { freq: 329.63, duration: 0.75, volume: 0.35, intensity: 0.4, bass: 'single' },
+            { freq: 392.00, duration: 0.75, volume: 0.35, intensity: 0.4 },
+            { freq: 493.88, duration: 0.75, volume: 0.35, intensity: 0.4 },
+            { freq: 587.33, duration: 0.75, volume: 0.35, intensity: 0.4 },  // D5 - minor 7th (darker)
+            { freq: 659.25, duration: 1.5, volume: 0.4, intensity: 0.5 },
+            
+            // Building tension with tritones
+            { freq: 329.63, duration: 0.33, volume: 0.45, intensity: 0.6, bass: 'chord2' },
+            { freq: 466.16, duration: 0.33, volume: 0.45, intensity: 0.6 },  // Bb4 - tritone (diminished)
+            { freq: 493.88, duration: 0.33, volume: 0.45, intensity: 0.6 },
+            { freq: 659.25, duration: 0.33, volume: 0.45, intensity: 0.6, bass: 'chord2' },
+            { freq: 466.16, duration: 0.33, volume: 0.45, intensity: 0.6 },  // Tritone again
+            { freq: 493.88, duration: 0.33, volume: 0.45, intensity: 0.6 },
+            { freq: 329.63, duration: 0.75, volume: 0.5, intensity: 0.8, bass: 'chord3' },
+            { freq: 0, duration: 0.5, volume: 0, intensity: 0 },  // REST - ominous silence
+            
+            // ============================================
+            // DARK THEME A - Main Theme in Minor (0:25-1:20)
+            // ============================================
+            // Phrase 1 - Ominous motif (minor key, heavy bass)
+            { freq: 329.63, duration: 0.33, volume: 0.8, intensity: 2, bass: 'chord3' },
+            { freq: 392.00, duration: 0.33, volume: 0.8, intensity: 2 },
+            { freq: 440.00, duration: 0.33, volume: 0.8, intensity: 2, bass: 'chord3' },
+            { freq: 493.88, duration: 0.33, volume: 0.8, intensity: 2 },
+            { freq: 587.33, duration: 0.66, volume: 0.8, intensity: 2, bass: 'chord3' },  // Minor 7th
+            { freq: 493.88, duration: 0.33, volume: 0.8, intensity: 2 },
+            { freq: 440.00, duration: 0.33, volume: 0.8, intensity: 2, bass: 'chord2' },
+            { freq: 392.00, duration: 0.66, volume: 0.8, intensity: 2 },
+            
+            // Phrase 2 - Descending into darkness
+            { freq: 329.63, duration: 0.33, volume: 0.85, intensity: 2, bass: 'arp' },
+            { freq: 392.00, duration: 0.33, volume: 0.85, intensity: 2 },
+            { freq: 440.00, duration: 0.33, volume: 0.85, intensity: 2, bass: 'arp' },
+            { freq: 493.88, duration: 0.33, volume: 0.85, intensity: 2 },
+            { freq: 587.33, duration: 0.66, volume: 0.9, intensity: 2, bass: 'chord3' },
+            { freq: 493.88, duration: 0.33, volume: 0.85, intensity: 2 },
+            { freq: 440.00, duration: 0.33, volume: 0.85, intensity: 2, bass: 'chord2' },
+            { freq: 329.63, duration: 0.66, volume: 0.85, intensity: 2 },
+            
+            // Phrase 3 - Climbing tension
+            { freq: 440.00, duration: 0.33, volume: 0.9, intensity: 2, bass: 'chord2' },
+            { freq: 493.88, duration: 0.33, volume: 0.9, intensity: 2 },
+            { freq: 587.33, duration: 0.33, volume: 0.9, intensity: 2, bass: 'chord3' },
+            { freq: 659.25, duration: 0.33, volume: 0.9, intensity: 2 },
+            { freq: 783.99, duration: 0.66, volume: 0.95, intensity: 2, bass: 'chord3' },  // G5
+            { freq: 659.25, duration: 0.33, volume: 0.9, intensity: 2 },
+            { freq: 587.33, duration: 0.33, volume: 0.9, intensity: 2, bass: 'chord2' },
+            { freq: 440.00, duration: 0.66, volume: 0.9, intensity: 2 },
+            
+            // Phrase 4 - Dark resolution
+            { freq: 329.63, duration: 0.5, volume: 0.9, intensity: 2, bass: 'chord3' },
+            { freq: 440.00, duration: 0.5, volume: 0.9, intensity: 2 },
+            { freq: 493.88, duration: 0.5, volume: 0.9, intensity: 2, bass: 'chord3' },
+            { freq: 329.63, duration: 0.5, volume: 0.9, intensity: 2 },
+            { freq: 440.00, duration: 0.5, volume: 0.9, intensity: 2, bass: 'chord2' },
+            { freq: 493.88, duration: 0.5, volume: 0.9, intensity: 2 },
+            { freq: 659.25, duration: 1.5, volume: 1.0, intensity: 2, bass: 'chord3' },  // E5 - sustained
+            
+            // Theme A variation - darker
+            { freq: 587.33, duration: 0.33, volume: 0.8, intensity: 2, bass: 'chord2' },
+            { freq: 659.25, duration: 0.33, volume: 0.8, intensity: 2 },
+            { freq: 783.99, duration: 0.33, volume: 0.8, intensity: 2, bass: 'chord3' },
+            { freq: 880.00, duration: 0.33, volume: 0.8, intensity: 2 },  // A5
+            { freq: 783.99, duration: 0.66, volume: 0.8, intensity: 2, bass: 'chord3' },
+            { freq: 659.25, duration: 0.33, volume: 0.8, intensity: 2 },
+            { freq: 587.33, duration: 0.33, volume: 0.8, intensity: 2, bass: 'chord2' },
+            { freq: 493.88, duration: 0.66, volume: 0.8, intensity: 2 },
+            
+            { freq: 440.00, duration: 0.33, volume: 0.8, intensity: 2, bass: 'arp' },
+            { freq: 493.88, duration: 0.33, volume: 0.8, intensity: 2 },
+            { freq: 587.33, duration: 0.33, volume: 0.8, intensity: 2, bass: 'arp' },
+            { freq: 659.25, duration: 0.33, volume: 0.8, intensity: 2 },
+            { freq: 783.99, duration: 0.66, volume: 0.85, intensity: 2, bass: 'chord3' },
+            { freq: 659.25, duration: 0.33, volume: 0.8, intensity: 2 },
+            { freq: 587.33, duration: 0.33, volume: 0.8, intensity: 2, bass: 'chord2' },
+            { freq: 440.00, duration: 0.66, volume: 0.8, intensity: 2 },
+            
+            { freq: 0, duration: 0.5, volume: 0, intensity: 0 },  // REST
+            
+            // ============================================
+            // DARK BRIDGE B - Even Darker (1:20-2:15)
+            // ============================================
+            // Descending into the abyss - very low register
+            { freq: 293.66, duration: 0.33, volume: 0.6, intensity: 1.2, bass: 'chord2' },  // D4
+            { freq: 329.63, duration: 0.33, volume: 0.6, intensity: 1.2 },
+            { freq: 392.00, duration: 0.33, volume: 0.6, intensity: 1.2, bass: 'chord2' },
+            { freq: 440.00, duration: 0.33, volume: 0.6, intensity: 1.2 },
+            { freq: 493.88, duration: 0.66, volume: 0.65, intensity: 1.5, bass: 'chord3' },
+            { freq: 440.00, duration: 0.33, volume: 0.6, intensity: 1.2 },
+            { freq: 392.00, duration: 0.33, volume: 0.6, intensity: 1.2, bass: 'chord2' },
+            { freq: 329.63, duration: 0.66, volume: 0.6, intensity: 1.2 },
+            
+            // Phrase 2 - Deep descent
+            { freq: 293.66, duration: 0.33, volume: 0.65, intensity: 1.5, bass: 'chord2' },
+            { freq: 261.63, duration: 0.33, volume: 0.65, intensity: 1.5 },  // C4 - darker
+            { freq: 246.94, duration: 0.33, volume: 0.65, intensity: 1.5, bass: 'chord2' },  // B3
+            { freq: 220.00, duration: 0.33, volume: 0.65, intensity: 1.5 },  // A3 - very low
+            { freq: 196.00, duration: 0.66, volume: 0.7, intensity: 1.7, bass: 'chord3' },  // G3
+            { freq: 220.00, duration: 0.33, volume: 0.65, intensity: 1.5 },
+            { freq: 246.94, duration: 0.33, volume: 0.65, intensity: 1.5, bass: 'chord2' },
+            { freq: 293.66, duration: 0.66, volume: 0.65, intensity: 1.5 },
+            
+            // Phrase 3 - Rising from depths (crescendo)
+            { freq: 293.66, duration: 0.33, volume: 0.7, intensity: 1.6, bass: 'chord2' },
+            { freq: 329.63, duration: 0.33, volume: 0.75, intensity: 1.7 },
+            { freq: 392.00, duration: 0.33, volume: 0.8, intensity: 1.8, bass: 'chord2' },
+            { freq: 440.00, duration: 0.33, volume: 0.85, intensity: 1.9 },
+            { freq: 493.88, duration: 0.66, volume: 0.9, intensity: 2, bass: 'chord3' },
+            { freq: 440.00, duration: 0.33, volume: 0.85, intensity: 1.9 },
+            { freq: 392.00, duration: 0.33, volume: 0.8, intensity: 1.8, bass: 'chord2' },
+            { freq: 329.63, duration: 0.66, volume: 0.75, intensity: 1.7 },
+            
+            // Phrase 4 - Transition with dissonance
+            { freq: 311.13, duration: 0.33, volume: 0.8, intensity: 2, bass: 'chord2' },  // Eb4 - tritone
+            { freq: 329.63, duration: 0.33, volume: 0.85, intensity: 2 },
+            { freq: 392.00, duration: 0.33, volume: 0.9, intensity: 2, bass: 'chord2' },
+            { freq: 440.00, duration: 0.33, volume: 0.95, intensity: 2 },
+            { freq: 466.16, duration: 0.33, volume: 1.0, intensity: 2, bass: 'chord2' },  // Bb4 - tritone
+            { freq: 493.88, duration: 0.33, volume: 1.0, intensity: 2 },
+            { freq: 587.33, duration: 0.66, volume: 1.0, intensity: 2, bass: 'chord3' },
+            { freq: 0, duration: 0.5, volume: 0, intensity: 0 },  // REST
+            
+            // ============================================
+            // DARK THEME C - Ominous Arpeggios (2:15-3:05)
+            // ============================================
+            // E minor arpeggios - dark and foreboding
+            { freq: 329.63, duration: 0.25, volume: 1.0, intensity: 2, bass: 'arp' },
+            { freq: 392.00, duration: 0.25, volume: 1.0, intensity: 2 },
+            { freq: 493.88, duration: 0.25, volume: 1.0, intensity: 2, bass: 'arp' },
+            { freq: 659.25, duration: 0.25, volume: 1.0, intensity: 2 },
+            { freq: 493.88, duration: 0.25, volume: 1.0, intensity: 2, bass: 'arp' },
+            { freq: 392.00, duration: 0.25, volume: 1.0, intensity: 2 },
+            { freq: 329.63, duration: 0.5, volume: 1.0, intensity: 2, bass: 'chord3' },
+            
+            // B diminished arpeggio (darker)
+            { freq: 246.94, duration: 0.25, volume: 1.0, intensity: 2, bass: 'arp' },  // B3
+            { freq: 293.66, duration: 0.25, volume: 1.0, intensity: 2 },  // D4
+            { freq: 349.23, duration: 0.25, volume: 1.0, intensity: 2, bass: 'arp' },  // F4
+            { freq: 493.88, duration: 0.25, volume: 1.0, intensity: 2 },  // B4
+            { freq: 349.23, duration: 0.25, volume: 1.0, intensity: 2, bass: 'arp' },
+            { freq: 293.66, duration: 0.25, volume: 1.0, intensity: 2 },
+            { freq: 246.94, duration: 0.5, volume: 1.0, intensity: 2, bass: 'chord3' },
+            
+            // A minor arpeggio
+            { freq: 220.00, duration: 0.25, volume: 1.0, intensity: 2, bass: 'arp' },  // A3
+            { freq: 261.63, duration: 0.25, volume: 1.0, intensity: 2 },  // C4
+            { freq: 329.63, duration: 0.25, volume: 1.0, intensity: 2, bass: 'arp' },  // E4
+            { freq: 440.00, duration: 0.25, volume: 1.0, intensity: 2 },  // A4
+            { freq: 329.63, duration: 0.25, volume: 1.0, intensity: 2, bass: 'arp' },
+            { freq: 261.63, duration: 0.25, volume: 1.0, intensity: 2 },
+            { freq: 220.00, duration: 0.5, volume: 1.0, intensity: 2, bass: 'chord3' },
+            
+            // F# diminished arpeggio (very dark)
+            { freq: 185.00, duration: 0.25, volume: 1.0, intensity: 2, bass: 'arp' },  // F#3
+            { freq: 220.00, duration: 0.25, volume: 1.0, intensity: 2 },  // A3
+            { freq: 261.63, duration: 0.25, volume: 1.0, intensity: 2, bass: 'arp' },  // C4
+            { freq: 369.99, duration: 0.25, volume: 1.0, intensity: 2 },  // F#4
+            { freq: 261.63, duration: 0.25, volume: 1.0, intensity: 2, bass: 'arp' },
+            { freq: 220.00, duration: 0.25, volume: 1.0, intensity: 2 },
+            { freq: 185.00, duration: 0.5, volume: 1.0, intensity: 2, bass: 'chord3' },
+            
+            // Rising chromatic tension
+            { freq: 329.63, duration: 0.2, volume: 1.0, intensity: 2, bass: 'chord2' },
+            { freq: 349.23, duration: 0.2, volume: 1.0, intensity: 2 },  // F4
+            { freq: 392.00, duration: 0.2, volume: 1.0, intensity: 2, bass: 'chord2' },
+            { freq: 415.30, duration: 0.2, volume: 1.0, intensity: 2 },  // Ab4
+            { freq: 440.00, duration: 0.2, volume: 1.0, intensity: 2, bass: 'chord2' },
+            { freq: 466.16, duration: 0.2, volume: 1.0, intensity: 2 },  // Bb4
+            { freq: 493.88, duration: 0.2, volume: 1.0, intensity: 2, bass: 'chord2' },
+            { freq: 523.25, duration: 0.2, volume: 1.0, intensity: 2 },  // C5
+            { freq: 587.33, duration: 0.2, volume: 1.0, intensity: 2, bass: 'chord2' },
+            { freq: 622.25, duration: 0.2, volume: 1.0, intensity: 2 },  // Eb5
+            { freq: 659.25, duration: 0.2, volume: 1.0, intensity: 2, bass: 'chord2' },
+            { freq: 698.46, duration: 0.2, volume: 1.0, intensity: 2 },  // F5
+            { freq: 783.99, duration: 0.66, volume: 1.1, intensity: 2, bass: 'chord3' },  // G5
+            { freq: 0, duration: 0.33, volume: 0, intensity: 0 },  // REST
+            
+            // ============================================
+            // DARK BRIDGE D - Quiet Dread (3:05-3:50)
+            // ============================================
+            // Very soft, suspenseful - waiting for something
+            { freq: 493.88, duration: 0.66, volume: 0.3, intensity: 0.2, bass: 'single' },
+            { freq: 587.33, duration: 0.66, volume: 0.3, intensity: 0.2 },
+            { freq: 659.25, duration: 0.66, volume: 0.3, intensity: 0.2, bass: 'single' },
+            { freq: 587.33, duration: 0.66, volume: 0.3, intensity: 0.2 },
+            
+            { freq: 493.88, duration: 0.66, volume: 0.35, intensity: 0.3, bass: 'single' },
+            { freq: 392.00, duration: 0.66, volume: 0.35, intensity: 0.3 },
+            { freq: 440.00, duration: 0.66, volume: 0.35, intensity: 0.3, bass: 'single' },
+            { freq: 493.88, duration: 1.33, volume: 0.35, intensity: 0.3 },
+            
+            // Slowly building dread
+            { freq: 329.63, duration: 0.66, volume: 0.4, intensity: 0.5, bass: 'chord2' },
+            { freq: 392.00, duration: 0.66, volume: 0.45, intensity: 0.6 },
+            { freq: 493.88, duration: 0.66, volume: 0.5, intensity: 0.7, bass: 'chord2' },
+            { freq: 659.25, duration: 0.66, volume: 0.55, intensity: 0.8 },
+            
+            { freq: 587.33, duration: 0.66, volume: 0.6, intensity: 0.9, bass: 'chord2' },
+            { freq: 523.25, duration: 0.66, volume: 0.65, intensity: 1.0 },
+            { freq: 493.88, duration: 0.66, volume: 0.7, intensity: 1.1, bass: 'chord2' },
+            { freq: 440.00, duration: 0.66, volume: 0.75, intensity: 1.3 },
+            { freq: 392.00, duration: 0.66, volume: 0.8, intensity: 1.5, bass: 'chord3' },
+            { freq: 329.63, duration: 0.66, volume: 0.85, intensity: 1.7 },
+            { freq: 293.66, duration: 0.66, volume: 0.9, intensity: 1.9, bass: 'chord3' },
+            
+            { freq: 0, duration: 0.66, volume: 0, intensity: 0 },  // REST - dramatic pause
+            
+            // ============================================
+            // DARK THEME A RETURN - Full Power (3:50-4:40)
+            // ============================================
+            // Phrase 1 - Back to main theme (maximum darkness)
+            { freq: 329.63, duration: 0.33, volume: 1.1, intensity: 2, bass: 'chord3' },
+            { freq: 392.00, duration: 0.33, volume: 1.1, intensity: 2 },
+            { freq: 440.00, duration: 0.33, volume: 1.1, intensity: 2, bass: 'chord3' },
+            { freq: 493.88, duration: 0.33, volume: 1.1, intensity: 2 },
+            { freq: 587.33, duration: 0.66, volume: 1.1, intensity: 2, bass: 'chord3' },
+            { freq: 493.88, duration: 0.33, volume: 1.1, intensity: 2 },
+            { freq: 440.00, duration: 0.33, volume: 1.1, intensity: 2, bass: 'chord3' },
+            { freq: 392.00, duration: 0.66, volume: 1.1, intensity: 2 },
+            
+            // Phrase 2
+            { freq: 329.63, duration: 0.33, volume: 1.15, intensity: 2, bass: 'arp' },
+            { freq: 392.00, duration: 0.33, volume: 1.15, intensity: 2 },
+            { freq: 440.00, duration: 0.33, volume: 1.15, intensity: 2, bass: 'arp' },
+            { freq: 493.88, duration: 0.33, volume: 1.15, intensity: 2 },
+            { freq: 587.33, duration: 0.66, volume: 1.2, intensity: 2, bass: 'chord3' },
+            { freq: 493.88, duration: 0.33, volume: 1.15, intensity: 2 },
+            { freq: 440.00, duration: 0.33, volume: 1.15, intensity: 2, bass: 'chord3' },
+            { freq: 329.63, duration: 0.66, volume: 1.15, intensity: 2 },
+            
+            // Phrase 3 - High intensity
+            { freq: 587.33, duration: 0.33, volume: 1.2, intensity: 2, bass: 'chord3' },
+            { freq: 659.25, duration: 0.33, volume: 1.2, intensity: 2 },
+            { freq: 783.99, duration: 0.33, volume: 1.2, intensity: 2, bass: 'chord3' },
+            { freq: 880.00, duration: 0.33, volume: 1.2, intensity: 2 },  // A5
+            { freq: 987.77, duration: 0.66, volume: 1.25, intensity: 2, bass: 'chord3' },  // B5
+            { freq: 880.00, duration: 0.33, volume: 1.2, intensity: 2 },
+            { freq: 783.99, duration: 0.33, volume: 1.2, intensity: 2, bass: 'chord3' },
+            { freq: 659.25, duration: 0.66, volume: 1.2, intensity: 2 },
+            
+            // Phrase 4 - Building to finale
+            { freq: 587.33, duration: 0.33, volume: 1.25, intensity: 2, bass: 'chord3' },
+            { freq: 659.25, duration: 0.33, volume: 1.25, intensity: 2 },
+            { freq: 587.33, duration: 0.33, volume: 1.25, intensity: 2, bass: 'chord3' },
+            { freq: 493.88, duration: 0.33, volume: 1.25, intensity: 2 },
+            { freq: 440.00, duration: 0.66, volume: 1.3, intensity: 2, bass: 'chord3' },
+            { freq: 392.00, duration: 0.66, volume: 1.3, intensity: 2, bass: 'chord3' },
+            { freq: 440.00, duration: 0.66, volume: 1.3, intensity: 2, bass: 'chord3' },
+            { freq: 493.88, duration: 0.66, volume: 1.3, intensity: 2, bass: 'chord3' },
+            
+            { freq: 0, duration: 0.5, volume: 0, intensity: 0 },  // REST
+            
+            // ============================================
+            // DARK FINALE - Epic Doom (4:40-5:15)
+            // ============================================
+            // Massive dark chords
+            { freq: 329.63, duration: 0.25, volume: 1.3, intensity: 2, bass: 'chord3' },
+            { freq: 392.00, duration: 0.25, volume: 1.3, intensity: 2 },
+            { freq: 493.88, duration: 0.25, volume: 1.3, intensity: 2, bass: 'chord3' },
+            { freq: 659.25, duration: 0.5, volume: 1.3, intensity: 2, bass: 'arp' },
+            { freq: 493.88, duration: 0.25, volume: 1.3, intensity: 2 },
+            { freq: 392.00, duration: 0.25, volume: 1.3, intensity: 2, bass: 'chord3' },
+            { freq: 329.63, duration: 0.5, volume: 1.3, intensity: 2, bass: 'chord3' },
+            
+            { freq: 392.00, duration: 0.25, volume: 1.3, intensity: 2, bass: 'chord3' },
+            { freq: 493.88, duration: 0.25, volume: 1.3, intensity: 2 },
+            { freq: 587.33, duration: 0.25, volume: 1.3, intensity: 2, bass: 'chord3' },
+            { freq: 783.99, duration: 0.5, volume: 1.3, intensity: 2, bass: 'arp' },  // G5
+            { freq: 587.33, duration: 0.25, volume: 1.3, intensity: 2 },
+            { freq: 493.88, duration: 0.25, volume: 1.3, intensity: 2, bass: 'chord3' },
+            { freq: 392.00, duration: 0.5, volume: 1.3, intensity: 2, bass: 'chord3' },
+            
+            // Rising to dark climax
+            { freq: 659.25, duration: 0.33, volume: 1.4, intensity: 2, bass: 'chord3' },
+            { freq: 739.99, duration: 0.33, volume: 1.4, intensity: 2 },  // F#5
+            { freq: 783.99, duration: 0.33, volume: 1.4, intensity: 2, bass: 'chord3' },  // G5
+            { freq: 880.00, duration: 0.33, volume: 1.4, intensity: 2 },  // A5
+            { freq: 987.77, duration: 0.66, volume: 1.5, intensity: 2, bass: 'chord3' },  // B5 - peak!
+            { freq: 880.00, duration: 0.33, volume: 1.4, intensity: 2 },
+            { freq: 783.99, duration: 0.33, volume: 1.4, intensity: 2, bass: 'chord3' },
+            { freq: 659.25, duration: 0.66, volume: 1.4, intensity: 2, bass: 'chord3' },
+            
+            // Final descent into darkness
+            { freq: 587.33, duration: 0.66, volume: 1.3, intensity: 2, bass: 'chord3' },
+            { freq: 493.88, duration: 0.66, volume: 1.3, intensity: 2, bass: 'chord3' },
+            { freq: 440.00, duration: 0.66, volume: 1.3, intensity: 2, bass: 'chord3' },
+            { freq: 392.00, duration: 0.66, volume: 1.3, intensity: 2, bass: 'chord3' },
+            { freq: 329.63, duration: 1.0, volume: 1.3, intensity: 2, bass: 'chord3' },
+            { freq: 293.66, duration: 1.0, volume: 1.3, intensity: 2, bass: 'chord3' },  // D4
+            { freq: 329.63, duration: 1.5, volume: 1.4, intensity: 2, bass: 'chord3' },  // E4 - resolution
+            { freq: 261.63, duration: 2.5, volume: 1.5, intensity: 2, bass: 'chord3' },  // C4 - dark final sustain!
+            
+            // Silence before loop
+            { freq: 0, duration: 1.33, volume: 0, intensity: 0 },
+        ];
+
+        let noteIndex = 0;
+        const bpm = 100; // Slower tempo for darker feel (was 120)
+        const beatDuration = 60 / bpm;
+
+        // Play the melody in a loop
+        const playMelodyNote = () => {
+            if (!this.musicPlaying || !this.audioContext) {return;}
+
+            const note = melody[noteIndex];
+            
+            // Handle REST (freq 0)
+            if (note.freq === 0) {
+                noteIndex = (noteIndex + 1) % melody.length;
+                return;
+            }
+            
+            // Get dynamic volume for this note
+            const noteVolume = this.musicVolume * (note.volume || 1.0);
+            
+            // Create oscillator for melody (square wave for classic 8-bit sound)
+            const oscillator = this.audioContext.createOscillator();
+            const gainNode = this.audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(this.audioContext.destination);
+
+            oscillator.type = 'square';
+            oscillator.frequency.setValueAtTime(note.freq, this.audioContext.currentTime);
+
+            // Volume envelope
+            const noteTime = note.duration * beatDuration;
+            gainNode.gain.setValueAtTime(noteVolume, this.audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + noteTime * 0.9);
+
+            oscillator.start(this.audioContext.currentTime);
+            oscillator.stop(this.audioContext.currentTime + noteTime);
+
+            // Add bass based on intensity and bass type
+            const intensity = note.intensity !== undefined ? note.intensity : 1;
+            const bassType = note.bass || 'single';
+            
+            if (intensity > 0 && noteIndex % 2 === 0) {
+                const bassVolume = noteVolume * 0.25 * intensity;
+                const rootFreq = note.freq / 2;
+                
+                // Frequency ratios for chord tones
+                const major3rd = rootFreq * 1.26;
+                const minor3rd = rootFreq * 1.189;
+                const perfect5th = rootFreq * 1.498;
+                
+                // Dark theme: Always use minor 3rd for darker sound
+                const thirdFreq = minor3rd;
+                
+                const createBassOsc = (freq, startTime, duration, type = 'sawtooth') => {
+                    const osc = this.audioContext.createOscillator();
+                    const gain = this.audioContext.createGain();
+                    
+                    osc.connect(gain);
+                    gain.connect(this.audioContext.destination);
+                    
+                    osc.type = type;
+                    osc.frequency.setValueAtTime(freq, startTime);
+                    
+                    gain.gain.setValueAtTime(bassVolume, startTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration * 0.8);
+                    
+                    osc.start(startTime);
+                    osc.stop(startTime + duration);
+                };
+                
+                switch (bassType) {
+                    case 'chord2':
+                        createBassOsc(rootFreq, this.audioContext.currentTime, noteTime);
+                        createBassOsc(perfect5th, this.audioContext.currentTime, noteTime);
+                        break;
+                    case 'chord3':
+                        createBassOsc(rootFreq, this.audioContext.currentTime, noteTime);
+                        createBassOsc(thirdFreq, this.audioContext.currentTime, noteTime);
+                        createBassOsc(perfect5th, this.audioContext.currentTime, noteTime);
+                        break;
+                    case 'arp':
+                        const arpDuration = noteTime / 3;
+                        createBassOsc(rootFreq, this.audioContext.currentTime, arpDuration);
+                        createBassOsc(thirdFreq, this.audioContext.currentTime + arpDuration, arpDuration);
+                        createBassOsc(perfect5th, this.audioContext.currentTime + arpDuration * 2, arpDuration);
+                        break;
+                    case 'single':
+                    default:
+                        createBassOsc(rootFreq, this.audioContext.currentTime, noteTime);
+                        break;
+                }
+            }
+
+            noteIndex = (noteIndex + 1) % melody.length;
+        };
+
+        playMelodyNote();
+
+        let lastNoteDuration = melody[0].duration * beatDuration * 1000;
+        const scheduleNextNote = () => {
+            if (!this.musicPlaying) {return;}
+            
+            playMelodyNote();
+            const currentNoteDuration = melody[noteIndex === 0 ? melody.length - 1 : noteIndex - 1].duration * beatDuration * 1000;
+            this.musicInterval = setTimeout(scheduleNextNote, currentNoteDuration);
+        };
+
+        this.musicInterval = setTimeout(scheduleNextNote, lastNoteDuration);
+    }
 }
