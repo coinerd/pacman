@@ -43,7 +43,7 @@ export class SpawningSystem {
         this.preset = options.preset || 'default';
 
         /** @type {SeedMode} */
-        this.seedMode = options.seedMode || 'level_sequence';
+        this.seedMode = options.seedMode || 'full_random';
 
         /** @type {number|null} */
         this.overrideSeed = options.overrideSeed || null;

@@ -65,7 +65,7 @@ export default class GameModel {
         // Spawning System (Phase 3: mit Maze-Konfiguration)
         this.spawningSystem = new SpawningSystem(this.levelSystem, {
             preset: config.mazePreset || 'default',
-            seedMode: config.seedMode || 'level_sequence',
+            seedMode: config.seedMode || 'full_random',
             overrideSeed: config.overrideSeed || null
         });
 
