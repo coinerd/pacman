@@ -6,11 +6,18 @@
  * - Loosely coupled through DI
  * - Easier to test (can inject mock services)
  * - Better control over service lifecycles
+ *
+ * Structure:
+ * - GameModelCollisionHandlers.js: Collision event handlers
+ * - GameModelStep.js: Game loop step logic
+ * - GameModelDI.js: Main facade class (this file)
  */
 
 import { globalContainer } from '../../core/ServiceContainer.js';
 import { MovementSystem } from '../../movement/MovementSystem.js';
 import { GAME_EVENTS, gameEvents } from '../../core/EventBus.js';
+import { createCollisionHandlers } from './GameModelCollisionHandlers.js';
+import { executeStep, createSnapshot } from './GameModelStep.js';
 
 export default class GameModelDI {
     /**
@@ -60,10 +67,18 @@ export default class GameModelDI {
 
         // Initialize gameState from config
         this.levelSystem.setLevel(config.level || 1);
-        if (config.level !== undefined) {this.gameState.level = config.level;}
-        if (config.score !== undefined) {this.gameState.score = config.score;}
-        if (config.lives !== undefined) {this.gameState.lives = config.lives;}
-        if (config.highScore !== undefined) {this.gameState.highScore = config.highScore;}
+        if (config.level !== undefined) {
+            this.gameState.level = config.level;
+        }
+        if (config.score !== undefined) {
+            this.gameState.score = config.score;
+        }
+        if (config.lives !== undefined) {
+            this.gameState.lives = config.lives;
+        }
+        if (config.highScore !== undefined) {
+            this.gameState.highScore = config.highScore;
+        }
 
         this.initializeMovementSystem();
         this.registerMovementEntities();
@@ -100,13 +115,9 @@ export default class GameModelDI {
             spawnPoints: this.spawningSystem.getSpawnPoints()
         });
 
-        this.collisionHandler = new CollisionHandler({
-            onPelletEaten: this.handlePelletEaten.bind(this),
-            onPowerPelletEaten: this.handlePowerPelletEaten.bind(this),
-            onGhostEaten: this.handleGhostEaten.bind(this),
-            onPacmanDied: this.handlePacmanDied.bind(this),
-            onFruitEaten: this.handleFruitEaten.bind(this)
-        });
+        this.collisionHandler = new CollisionHandler(
+            createCollisionHandlers(this)
+        );
 
         this.initializeMovementSystem();
         this.registerMovementEntities();
@@ -158,13 +169,12 @@ export default class GameModelDI {
             this.movementEntityIds.ghosts[ghost.ghostType] = ghost.id;
         }
 
-        // PHASE 6: Setup feature system event listeners
+        // Setup feature system event listeners
         this.setupFeatureSystemEventListeners();
     }
 
     /**
-     * PHASE 6: Setup event listeners for feature systems
-     * Feature systems communicate via EventBus instead of direct GameModel access
+     * Setup event listeners for feature systems
      */
     setupFeatureSystemEventListeners() {
         // BOSS_DEFEATED - Add bonus score when boss is defeated
@@ -199,12 +209,12 @@ export default class GameModelDI {
             })
         );
 
-        // Register gameState in entityRegistry (for BossBattleSystem check)
+        // Register gameState in entityRegistry
         this.entityRegistry.registerEntity('gameState', {
             isBossBattleActive: () => this.bossBattleSystem?.isBossBattleActive() || false
         });
 
-        // Register pelletGrid in entityRegistry (for AdditionalPowerUpSystem)
+        // Register pelletGrid in entityRegistry
         this.entityRegistry.registerEntity('pelletGrid', this.spawningSystem.getPelletGrid());
     }
 
@@ -212,205 +222,14 @@ export default class GameModelDI {
      * Setup collision callbacks
      */
     setupCollisionCallbacks() {
-        this.collisionHandler.onPelletEaten = this.handlePelletEaten.bind(this);
-        this.collisionHandler.onPowerPelletEaten = this.handlePowerPelletEaten.bind(this);
-        this.collisionHandler.onGhostEaten = this.handleGhostEaten.bind(this);
-        this.collisionHandler.onPacmanDied = this.handlePacmanDied.bind(this);
-        this.collisionHandler.onFruitEaten = this.handleFruitEaten.bind(this);
+        const handlers = createCollisionHandlers(this);
+        Object.assign(this.collisionHandler, handlers);
     }
 
     // === Main Game Loop ===
 
     step(deltaSeconds, input = null) {
-        // Pause/GameOver Check
-        if (this.isPaused || this.isGameOver) {
-            return [];
-        }
-
-        // Death Sequence
-        if (this.isDying) {
-            return this.updateDeathSequence(deltaSeconds);
-        }
-
-        // Input Handling
-        if (input?.direction) {
-            this.setDesiredDirection(input.direction);
-        }
-
-        // Update Movement - with null guards
-        const pacman = this.entityRegistry?.getPacman();
-        const ghosts = this.entityRegistry?.getGhosts() || [];
-        const movementEvents = this.movementSystem?.update(deltaSeconds, {
-            player: pacman,
-            pacman: pacman,
-            ghosts: ghosts
-        }) || [];
-
-        // Update Entities - with null guards
-        const maze = this.spawningSystem?.getMaze();
-        if (pacman && maze) {
-            pacman.update(deltaSeconds, maze);
-        }
-
-        for (const ghost of ghosts) {
-            if (ghost && maze) {
-                ghost.update(deltaSeconds, maze);
-            }
-        }
-
-        // Update Fruit - with null guard
-        const fruit = this.entityRegistry?.getFruit();
-        if (fruit) {
-            fruit.update(deltaSeconds);
-        }
-
-        // Collision Detection - with null guards
-        const entities = {
-            pacman: pacman,
-            ghosts: ghosts,
-            fruit: fruit
-        };
-
-        const collisionEvents = this.collisionHandler?.checkAllCollisions(entities, {
-            pelletGrid: this.spawningSystem?.getPelletGrid(),
-            pelletsRemaining: this.spawningSystem?.getPelletsRemaining()
-        }) || [];
-
-        // Apply Collision Effects
-        for (const event of collisionEvents) {
-            this.applyCollisionEffect(event);
-        }
-
-        // Sync Movement to Entities - with null guard
-        this.movementSystem?.syncToEntities();
-
-        // Emit Events
-        const events = [...movementEvents, ...collisionEvents];
-        this.emitEvents(events);
-
-        // Update tick counter - with null guard
-        if (this.gameState) {
-            this.gameState.incrementTick();
-            this.tickCount = this.gameState.tick;
-        }
-
-        return events;
-    }
-
-    updateDeathSequence(deltaSeconds) {
-        this.gameState.updateDeathTimer(deltaSeconds);
-
-        if (this.gameState.isDeathComplete()) {
-            if (this.lives <= 1) {
-                // Last life lost - game over
-                this.setGameOver(true);
-                gameEvents.emit(GAME_EVENTS.GAME_OVER, {
-                    score: this.score,
-                    highScore: this.highScore,
-                    level: this.level
-                });
-            } else {
-                this.lives--;
-                this.resetPositions();
-                this.isDying = false;
-                gameEvents.emit(GAME_EVENTS.RESPAWN);
-                return [{ type: 'respawn' }];
-            }
-        }
-
-        return [];
-    }
-
-    // === Collision Event Handlers ===
-
-    handlePelletEaten(data) {
-        if (!this.scoreModule || !this.gameState || !this.spawningSystem) {return;}
-        this.scoreModule.pelletsEaten++;
-        this.gameState.score += 10;
-        this.spawningSystem.removePelletAt(data?.gridX, data?.gridY);
-        this.checkHighScore();
-        this.checkLevelComplete();
-    }
-
-    handlePowerPelletEaten(data) {
-        if (!this.scoreModule || !this.gameState || !this.spawningSystem || !this.levelSystem) {return;}
-        this.scoreModule.pelletsEaten++;
-        this.gameState.score += 50;
-        this.spawningSystem.removePelletAt(data?.gridX, data?.gridY);
-        this.checkHighScore();
-        this.checkLevelComplete();
-        this.setGhostsFrightened(this.levelSystem.getFrightenedDuration());
-    }
-
-    checkLevelComplete() {
-        if (!this.spawningSystem) {return;}
-        if (this.pelletsRemaining === 0 && !this.levelComplete) {
-            this.levelComplete = true;
-            gameEvents.emit(GAME_EVENTS.LEVEL_COMPLETE, {
-                level: this.level,
-                score: this.score
-            });
-        }
-    }
-
-    handleGhostEaten(data) {
-        if (!this.entityRegistry || !this.scoreModule || !this.gameState || !this.levelSystem) {return;}
-        const ghost = this.entityRegistry.getGhostByType(data?.ghostType);
-        if (ghost) {
-            ghost.eat();
-            const eatenCount = ghost.eatenCount ?? 0;
-            const baseScore = [200, 400, 800, 1600][eatenCount % 4] ?? 200;
-            const multiplier = this.levelSystem.getScoreMultiplier() ?? 1;
-            const score = baseScore * multiplier;
-
-            this.scoreModule.currentComboGhosts++;
-            this.gameState.score += score;
-            this.gameState.ghostsEaten++;
-            this.gameState.maxComboGhosts = Math.max(
-                this.gameState.maxComboGhosts,
-                this.scoreModule.currentComboGhosts
-            );
-            this.checkHighScore();
-        }
-    }
-
-    handlePacmanDied(_data) {
-        this.onPacmanDeath();
-    }
-
-    handleFruitEaten(data) {
-        if (!this.entityRegistry || !this.levelSystem || !this.gameState) {return;}
-        const fruit = this.entityRegistry.getFruit();
-        if (fruit) {
-            fruit.eat();
-            const score = this.levelSystem.getFruitScore(data?.fruitType);
-            this.gameState.score += score;
-            this.checkHighScore();
-        }
-    }
-
-    // === Collision Effect Application ===
-
-    applyCollisionEffect(event) {
-        switch (event.type) {
-        case 'pelletEaten':
-        case 'powerPelletEaten':
-        case 'ghostEaten':
-        case 'fruitEaten':
-            // Already handled in callbacks
-            break;
-        case 'pacmanDied':
-            this.onPacmanDeath();
-            break;
-        }
-    }
-
-    // === Death Sequence ===
-
-    onPacmanDeath() {
-        this.isDying = true;
-        this.gameState.startDeathTimer();
-        this.levelDeaths++;
+        return executeStep(this, deltaSeconds, input);
     }
 
     // === Level Management ===
@@ -418,7 +237,8 @@ export default class GameModelDI {
     startLevel(level) {
         this.level = level;
         const mazeData = this.spawningSystem.generateMazeForLevel(level);
-        this.entityRegistry = new (require('./EntityRegistry.js').default)({
+        const EntityRegistry = require('./EntityRegistry.js').default;
+        this.entityRegistry = new EntityRegistry({
             level,
             spawnPoints: mazeData.spawnPoints
         });
@@ -443,7 +263,6 @@ export default class GameModelDI {
         if (pacman) {
             pacman.setDesiredDirection(direction);
         }
-        // Also update movement system with the new direction
         if (this.movementSystem && this.movementEntityIds?.player) {
             this.movementSystem.setDirection(this.movementEntityIds.player, direction);
         }
@@ -465,21 +284,22 @@ export default class GameModelDI {
     }
 
     resetPositions() {
-        // Reset positions in entity registry - with null guard
         if (this.entityRegistry) {
             this.entityRegistry.resetPositions();
         }
 
-        // Also reset positions in movement system to keep them in sync
         if (this.movementSystem && this.spawningSystem) {
             const spawnPoints = this.spawningSystem.getSpawnPoints();
             const spawnPoint = spawnPoints?.player || { x: 13, y: 23 };
 
             if (this.movementEntityIds?.player) {
-                this.movementSystem.resetEntity(this.movementEntityIds.player, spawnPoint.x, spawnPoint.y);
+                this.movementSystem.resetEntity(
+                    this.movementEntityIds.player,
+                    spawnPoint.x,
+                    spawnPoint.y
+                );
             }
 
-            // Reset ghosts in movement system
             const ghostSpawns = spawnPoints?.ghosts || {};
             const ghosts = this.entityRegistry?.getGhosts() || [];
             for (const ghost of ghosts) {
@@ -500,14 +320,6 @@ export default class GameModelDI {
         }
     }
 
-    // === Event Emission ===
-
-    emitEvents(events) {
-        for (const event of events) {
-            gameEvents.emit(event.type, event);
-        }
-    }
-
     // === Utility Methods ===
 
     eatPelletAt(x, y) {
@@ -517,35 +329,7 @@ export default class GameModelDI {
     // === Snapshots & Serialization ===
 
     getSnapshot() {
-        const ghostsSnapshot = new Array(this.ghosts.length);
-        for (let i = 0; i < this.ghosts.length; i++) {
-            ghostsSnapshot[i] = this.ghosts[i].getSnapshot();
-        }
-
-        return {
-            tickCount: this.tickCount,
-            level: this.level,
-            score: this.score,
-            highScore: this.highScore,
-            lives: this.lives,
-            pelletsEaten: this.pelletsEaten,
-            ghostsEaten: this.ghostsEaten,
-            pelletsRemaining: this.pelletsRemaining,
-            totalPellets: this.totalPellets,
-            isPaused: this.isPaused,
-            isGameOver: this.isGameOver,
-            levelComplete: this.levelComplete,
-            isDying: this.isDying,
-            maze: this.maze,
-            pelletGrid: this.pelletGrid,
-            pacman: this.pacman?.getSnapshot(),
-            ghosts: ghostsSnapshot,
-            fruit: this.fruit?.getSnapshot(),
-            boss: this.bossBattleSystem?.getSnapshot(),
-            powerUps: this.additionalPowerUpSystem?.getSnapshot()?.spawnedPowerUps || [],
-            story: this.storyMode?.getSnapshot(),
-            levelInfo: this.levelSystem.getLevelInfo()
-        };
+        return createSnapshot(this);
     }
 
     serialize() {
@@ -584,60 +368,123 @@ export default class GameModelDI {
      * Cleanup - unsubscribe all event listeners
      */
     destroy() {
-        this.eventUnsubscribers.forEach(unsubscribe => unsubscribe());
+        this.eventUnsubscribers.forEach((unsubscribe) => unsubscribe());
         this.eventUnsubscribers = [];
     }
 
     // === Property Getters/Setters ===
 
-    get tickCount() { return this.gameState.tick; }
-    set tickCount(value) { this.gameState.tick = value; }
+    get tickCount() {
+        return this.gameState.tick;
+    }
+    set tickCount(value) {
+        this.gameState.tick = value;
+    }
 
-    get level() { return this.gameState.level; }
-    set level(value) { this.gameState.level = value; }
+    get level() {
+        return this.gameState.level;
+    }
+    set level(value) {
+        this.gameState.level = value;
+    }
 
-    get score() { return this.gameState.score; }
-    set score(value) { this.gameState.score = value; }
+    get score() {
+        return this.gameState.score;
+    }
+    set score(value) {
+        this.gameState.score = value;
+    }
 
-    get highScore() { return this.gameState.highScore; }
-    set highScore(value) { this.gameState.highScore = value; }
+    get highScore() {
+        return this.gameState.highScore;
+    }
+    set highScore(value) {
+        this.gameState.highScore = value;
+    }
 
-    get lives() { return this.gameState.lives; }
-    set lives(value) { this.gameState.lives = value; }
+    get lives() {
+        return this.gameState.lives;
+    }
+    set lives(value) {
+        this.gameState.lives = value;
+    }
 
-    get pelletsEaten() { return this.scoreModule.pelletsEaten; }
-    set pelletsEaten(value) { this.scoreModule.pelletsEaten = value; }
+    get pelletsEaten() {
+        return this.scoreModule.pelletsEaten;
+    }
+    set pelletsEaten(value) {
+        this.scoreModule.pelletsEaten = value;
+    }
 
-    get ghostsEaten() { return this.scoreModule.ghostsEaten; }
-    set ghostsEaten(value) { this.scoreModule.ghostsEaten = value; }
+    get ghostsEaten() {
+        return this.scoreModule.ghostsEaten;
+    }
+    set ghostsEaten(value) {
+        this.scoreModule.ghostsEaten = value;
+    }
 
-    get pelletsRemaining() { return this.spawningSystem.getPelletsRemaining(); }
-    set pelletsRemaining(value) { this.spawningSystem.setPelletsRemaining(value); }
+    get pelletsRemaining() {
+        return this.spawningSystem.getPelletsRemaining();
+    }
+    set pelletsRemaining(value) {
+        this.spawningSystem.setPelletsRemaining(value);
+    }
 
-    get totalPellets() { return this.spawningSystem.getTotalPellets(); }
-    // totalPellets is read-only, calculated from pelletGrid
+    get totalPellets() {
+        return this.spawningSystem.getTotalPellets();
+    }
 
-    get isPaused() { return this.gameState.isPaused; }
-    set isPaused(value) { this.gameState.isPaused = value; }
+    get isPaused() {
+        return this.gameState.isPaused;
+    }
+    set isPaused(value) {
+        this.gameState.isPaused = value;
+    }
 
-    get isGameOver() { return this.gameState.isGameOver; }
-    set isGameOver(value) { this.gameState.isGameOver = value; }
+    get isGameOver() {
+        return this.gameState.isGameOver;
+    }
+    set isGameOver(value) {
+        this.gameState.isGameOver = value;
+    }
 
-    get levelComplete() { return this.gameState.levelComplete; }
-    set levelComplete(value) { this.gameState.levelComplete = value; }
+    get levelComplete() {
+        return this.gameState.levelComplete;
+    }
+    set levelComplete(value) {
+        this.gameState.levelComplete = value;
+    }
 
-    get isDying() { return this.gameState.isDying; }
-    set isDying(value) { this.gameState.isDying = value; }
+    get isDying() {
+        return this.gameState.isDying;
+    }
+    set isDying(value) {
+        this.gameState.isDying = value;
+    }
 
-    get levelDeaths() { return this.gameState.levelDeaths; }
-    set levelDeaths(value) { this.gameState.levelDeaths = value; }
+    get levelDeaths() {
+        return this.gameState.levelDeaths;
+    }
+    set levelDeaths(value) {
+        this.gameState.levelDeaths = value;
+    }
 
-    get pacman() { return this.entityRegistry.getPacman(); }
-    get ghosts() { return this.entityRegistry.getGhosts(); }
-    get fruit() { return this.entityRegistry.getFruit(); }
+    get pacman() {
+        return this.entityRegistry.getPacman();
+    }
+    get ghosts() {
+        return this.entityRegistry.getGhosts();
+    }
+    get fruit() {
+        return this.entityRegistry.getFruit();
+    }
 
-    get maze() { return this.spawningSystem.getMaze(); }
-    get pelletGrid() { return this.spawningSystem.getPelletGrid(); }
+    get maze() {
+        return this.spawningSystem.getMaze();
+    }
+    get pelletGrid() {
+        return this.spawningSystem.getPelletGrid();
+    }
 
     getGhostByType(ghostType) {
         return this.entityRegistry.getGhostByType(ghostType);
