@@ -186,7 +186,7 @@ export default class ModelDrivenGameView {
             this.eventBus.on(VIEW_EVENTS.SCREEN_SHAKE, (data) => {
                 this.effectManager.createScreenShake?.(data.intensity, data.duration);
             }),
-            this.eventBus.on(VIEW_EVENTS.GHOST_MODE_CHANGED, (data) => {
+            this.eventBus.on(VIEW_EVENTS.GHOST_MODE_CHANGED, () => {
                 // Handled by entity renderer
             }),
             this.eventBus.on(VIEW_EVENTS.BOSS_SPAWNED, (data) => {

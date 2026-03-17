@@ -1,6 +1,5 @@
 // tests/utils/testHelpers.js
 
-import { PlayerState } from '../../src/model/entities/PlayerState.js';
 import { TILE_TYPES } from '../../src/utils/MazeLayout.js';
 import { createGameModel } from './modelTestUtils.js';
 
@@ -205,7 +204,7 @@ export const createMockScene = () => {
                         this.rotation = val;
                         return this;
                     }),
-                    setOrigin: jest.fn(function (x, y) {
+                    setOrigin: jest.fn(function (_x, _y) {
                         return this;
                     }),
                     setFillStyle: jest.fn(function (color, alpha) {

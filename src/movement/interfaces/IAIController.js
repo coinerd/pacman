@@ -39,7 +39,7 @@ export class IAIController {
      * @param {string} aiType - Typ der AI (alpha, beta, gamma, delta)
      * @param {Object} options - Optionale Parameter
      */
-    registerEntity(_entityId, aiType, options = {}) {
+    registerEntity(_entityId, _aiType, _options = {}) {
         throw new Error('Not implemented');
     }
 

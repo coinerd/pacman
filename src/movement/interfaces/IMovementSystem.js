@@ -59,7 +59,7 @@ export class IMovementSystem {
      * @param {Array<Array<number>>} mazeGrid - 2D-Array des Mazes
      * @param {MovementConfig} config - Konfiguration
      */
-    initialize(_mazeGrid, config) {
+    initialize(_mazeGrid, _config) {
         throw new Error('Not implemented');
     }
 
@@ -68,7 +68,7 @@ export class IMovementSystem {
      * @param {MovementEntity} entity - Die zu registrierende Entity
      * @param {Object} options - Optionale Parameter (aiType, scatterTarget, etc.)
      */
-    registerEntity(entity, options = {}) {
+    registerEntity(_entity, _options = {}) {
         throw new Error('Not implemented');
     }
 
@@ -86,7 +86,7 @@ export class IMovementSystem {
      * @param {Object} context - Kontext mit Entities, Player, etc.
      * @returns {MovementEvent[]} - Generierte Events
      */
-    update(_deltaSeconds, context = {}) {
+    update(_deltaSeconds, _context = {}) {
         throw new Error('Not implemented');
     }
 
@@ -96,7 +96,7 @@ export class IMovementSystem {
      * @param {Direction} direction - Neue Richtung
      * @returns {boolean} - True wenn erfolgreich
      */
-    setDirection(_entityId, direction) {
+    setDirection(_entityId, _direction) {
         throw new Error('Not implemented');
     }
 
@@ -150,7 +150,7 @@ export class IMovementSystem {
      * @param {number} gridX - Neue Grid-X-Position
      * @param {number} gridY - Neue Grid-Y-Position
      */
-    resetEntity(_entityId, gridX, gridY) {
+    resetEntity(_entityId, _gridX, _gridY) {
         throw new Error('Not implemented');
     }
 
@@ -175,6 +175,3 @@ export class IMovementSystem {
         throw new Error('Not implemented');
     }
 }
-
-
-

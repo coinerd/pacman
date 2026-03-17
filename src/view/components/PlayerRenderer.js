@@ -51,7 +51,7 @@ export class PlayerRenderer {
     /**
 	 * Draw player hexagon with eye
 	 */
-    drawPlayer(x, y, direction) {
+    drawPlayer(x, y, _direction) {
         const radius = gameConfig.tileSize * 0.4;
 
         // Clear previous frame

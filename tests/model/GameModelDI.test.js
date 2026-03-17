@@ -86,7 +86,7 @@ function createMockSpawningSystem() {
     };
 }
 
-function createMockEntityRegistry(config) {
+function createMockEntityRegistry(_config) {
     const entities = {};
 
     return {
@@ -387,7 +387,7 @@ describe('ServiceContainer', () => {
     });
 
     test('should register and retrieve singleton services', () => {
-        const factory = (container) => ({ id: 'service1' });
+        const factory = (_container) => ({ id: 'service1' });
 
         globalContainer.register('testService', factory, true);
 
@@ -432,7 +432,7 @@ describe('ServiceContainer', () => {
     });
 
     test('should get service names', () => {
-        const factory = (container) => ({ id: 'test' });
+        const factory = (_container) => ({ id: 'test' });
 
         globalContainer.register('service1', factory, true);
         globalContainer.register('service2', factory, false);

@@ -45,7 +45,7 @@ describe('Starting Positions Validation', () => {
         });
 
         test('All enemy starting position coordinates are within maze bounds', () => {
-            for (const [_name, pos] of Object.entries(enemyStartPositions)) {
+            for (const [, pos] of Object.entries(enemyStartPositions)) {
                 expect(pos.x).toBeGreaterThanOrEqual(0);
                 expect(pos.x).toBeLessThan(mazeLayout[0].length);
                 expect(pos.y).toBeGreaterThanOrEqual(0);

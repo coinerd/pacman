@@ -4,7 +4,7 @@
  * Zeigt, wie die verbesserte Architektur in der Praxis aussieht
  */
 
-import { GameSnapshot, ViewContext, ViewState } from './ViewInterface.js';
+import { ViewContext, ViewState } from './ViewInterface.js';
 import { SceneTransitionHandler } from './SceneTransitionHandler.js';
 import { VIEW_EVENTS } from './ViewEvents.js';
 import { gameEvents } from '../core/EventBus.js';
