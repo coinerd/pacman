@@ -96,8 +96,14 @@ export default class GameScene extends Phaser.Scene {
 
         this.gameView.create();
 
-        // Start retro background music
-        this.gameView.soundManager?.startBackgroundMusic?.();
+        // Randomly choose between bright theme (C major) and dark theme (E minor)
+        // 50% chance for each theme
+        const playDarkTheme = Math.random() < 0.5;
+        if (playDarkTheme) {
+            this.gameView.soundManager?.startDarkTheme?.();
+        } else {
+            this.gameView.soundManager?.startBackgroundMusic?.();
+        }
 
         this.uiController = new UIController(this, this.playerScoreFacade);
         this.uiController.create();
