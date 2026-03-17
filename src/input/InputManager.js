@@ -31,6 +31,7 @@ export class InputManager {
         this.isPaused = false;
         this.inputHistory = [];
         this.maxHistorySize = 1000;
+        this.pendingTimeouts = new Set(); // Track pending timeouts for cleanup
     }
 
     /**
@@ -246,10 +247,13 @@ export class InputManager {
         this.setActiveAdapter(tempAdapter);
 
         return new Promise(resolve => {
-            setTimeout(() => {
+            const timeoutId = setTimeout(() => {
+                this.pendingTimeouts.delete(timeoutId);
                 this.setActiveAdapter(previousAdapters);
                 resolve();
             }, duration);
+
+            this.pendingTimeouts.add(timeoutId);
         });
     }
 
@@ -270,6 +274,10 @@ export class InputManager {
      * Clean up all adapters and resources
      */
     destroy() {
+        // Clear all pending timeouts
+        this.pendingTimeouts.forEach(id => clearTimeout(id));
+        this.pendingTimeouts.clear();
+
         this.adapters.forEach(adapter => adapter.destroy());
         this.adapters.clear();
         this.activeAdapters.clear();
