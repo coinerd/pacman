@@ -48,6 +48,49 @@ A modern, fully-featured tech-themed maze game built with Phaser.js and Vite. Th
 - **Death pause**: Momentary pause when ADA-Woman dies
 - **High score display**: Shows current and all-time best
 
+### Maze Randomization System
+
+The game features a sophisticated maze randomization system with multiple difficulty presets:
+
+- **5 Difficulty Presets**: default, easy, medium, hard, expert
+- **Seed-based Generation**: Reproducible mazes for replays and daily challenges
+- **Level Scaling**: Progressive difficulty increase with each level
+- **Rule-based Validation**: All generated mazes meet quality criteria
+
+#### Presets
+
+| Preset | Path Density | Dead Ends | Difficulty |
+|--------|--------------|-----------|------------|
+| Easy | 85% | Low | Beginner-friendly |
+| Medium | 70% | Moderate | Balanced |
+| Hard | 55% | High | Challenging |
+| Expert | 45% | Very High | For masters |
+
+#### Seed Modes
+
+- **full_random**: Every level gets a unique random seed (arcade mode)
+- **level_sequence**: Predictable sequence for speedruns
+- **daily_challenge**: Same seed for all players on a given day
+- **seeded**: Manual seed for replays and debugging
+
+#### API Usage
+
+```javascript
+import GameModel from './src/model/core/GameModel.js';
+
+// Start with a specific preset
+const gameModel = new GameModel({
+    mazePreset: 'hard',
+    seedMode: 'level_sequence'
+});
+
+// Get seed info for replay
+const seedInfo = gameModel.getMazeSeedInfo();
+
+// Create replay record
+const record = gameModel.createMazeReplayRecord();
+```
+
 ### Advanced Features
 - **Replay System**: Record and replay gameplay sessions
 - **Achievement System**: Unlock achievements for various accomplishments
