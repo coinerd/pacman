@@ -134,26 +134,9 @@ export class EventBus {
             return;
         }
 
-        const listeners = this.listeners.get(event);
-        const length = listeners.length;
-
-        // Performance optimization: Use for loop instead of forEach to avoid function calls
-        // Use a flag to track if we need to copy the array (only if listeners modify during emit)
-        let needsCopy = false;
-        const originalLength = length;
-
-        // First pass: check if any listener might modify the array
-        // (We assume they might, so we use a copy strategy only when needed)
-        for (let i = 0; i < originalLength; i++) {
-            const listener = listeners[i];
-            if (!listener) {
-                needsCopy = true;
-                break;
-            }
-        }
-
-        // Create copy only if needed (listeners modified during emit)
-        const listenersToCall = needsCopy ? [...listeners] : listeners;
+        // Create a snapshot copy to safely iterate even if listeners modify the array during emit
+        // This prevents issues when a listener unsubscribes another listener during iteration
+        const listenersToCall = [...this.listeners.get(event)];
 
         for (let i = 0; i < listenersToCall.length; i++) {
             const listener = listenersToCall[i];
