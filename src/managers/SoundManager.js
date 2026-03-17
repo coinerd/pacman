@@ -208,34 +208,34 @@ export class SoundManager {
             // ============================================
             // THEME A - Main Theme (0:20-1:10) - Full energy
             // ============================================
-            // Phrase 1 - Opening motif (loud, full bass)
-            { freq: 523.25, duration: 0.25, volume: 1.0, intensity: 2 },
+            // Phrase 1 - Opening motif (loud, full bass with power chords)
+            { freq: 523.25, duration: 0.25, volume: 1.0, intensity: 2, bass: 'chord2' },
             { freq: 587.33, duration: 0.25, volume: 1.0, intensity: 2 },
-            { freq: 659.25, duration: 0.25, volume: 1.0, intensity: 2 },
+            { freq: 659.25, duration: 0.25, volume: 1.0, intensity: 2, bass: 'chord3' },
             { freq: 698.46, duration: 0.25, volume: 1.0, intensity: 2 },
-            { freq: 783.99, duration: 0.5, volume: 1.0, intensity: 2 },
+            { freq: 783.99, duration: 0.5, volume: 1.0, intensity: 2, bass: 'chord3' },
             { freq: 698.46, duration: 0.25, volume: 1.0, intensity: 2 },
-            { freq: 659.25, duration: 0.25, volume: 1.0, intensity: 2 },
+            { freq: 659.25, duration: 0.25, volume: 1.0, intensity: 2, bass: 'chord2' },
             { freq: 587.33, duration: 0.5, volume: 1.0, intensity: 2 },
             
-            // Phrase 2 - Rising
-            { freq: 523.25, duration: 0.25, volume: 1.0, intensity: 2 },
+            // Phrase 2 - Rising (with arpeggiated bass)
+            { freq: 523.25, duration: 0.25, volume: 1.0, intensity: 2, bass: 'arp' },
             { freq: 587.33, duration: 0.25, volume: 1.0, intensity: 2 },
-            { freq: 659.25, duration: 0.25, volume: 1.0, intensity: 2 },
+            { freq: 659.25, duration: 0.25, volume: 1.0, intensity: 2, bass: 'arp' },
             { freq: 783.99, duration: 0.25, volume: 1.0, intensity: 2 },
-            { freq: 880.00, duration: 0.5, volume: 1.0, intensity: 2 },
+            { freq: 880.00, duration: 0.5, volume: 1.0, intensity: 2, bass: 'chord3' },
             { freq: 783.99, duration: 0.25, volume: 1.0, intensity: 2 },
-            { freq: 659.25, duration: 0.25, volume: 1.0, intensity: 2 },
+            { freq: 659.25, duration: 0.25, volume: 1.0, intensity: 2, bass: 'chord2' },
             { freq: 523.25, duration: 0.5, volume: 1.0, intensity: 2 },
             
-            // Phrase 3 - Climbing
-            { freq: 659.25, duration: 0.25, volume: 1.0, intensity: 2 },
+            // Phrase 3 - Climbing (power chords)
+            { freq: 659.25, duration: 0.25, volume: 1.0, intensity: 2, bass: 'chord2' },
             { freq: 698.46, duration: 0.25, volume: 1.0, intensity: 2 },
-            { freq: 783.99, duration: 0.25, volume: 1.0, intensity: 2 },
+            { freq: 783.99, duration: 0.25, volume: 1.0, intensity: 2, bass: 'chord3' },
             { freq: 880.00, duration: 0.25, volume: 1.0, intensity: 2 },
-            { freq: 987.77, duration: 0.5, volume: 1.0, intensity: 2 },
+            { freq: 987.77, duration: 0.5, volume: 1.0, intensity: 2, bass: 'chord3' },
             { freq: 880.00, duration: 0.25, volume: 1.0, intensity: 2 },
-            { freq: 783.99, duration: 0.25, volume: 1.0, intensity: 2 },
+            { freq: 783.99, duration: 0.25, volume: 1.0, intensity: 2, bass: 'chord2' },
             { freq: 659.25, duration: 0.5, volume: 1.0, intensity: 2 },
             
             // Phrase 4 - Resolution
@@ -314,56 +314,56 @@ export class SoundManager {
             // ============================================
             // THEME C - New Material (2:00-2:50) - Arpeggiated, energetic
             // ============================================
-            // Fast arpeggios - C major
-            { freq: 523.25, duration: 0.2, volume: 1.0, intensity: 2 },
+            // Fast arpeggios - C major with arpeggiated bass
+            { freq: 523.25, duration: 0.2, volume: 1.0, intensity: 2, bass: 'arp' },
             { freq: 659.25, duration: 0.2, volume: 1.0, intensity: 2 },
             { freq: 783.99, duration: 0.2, volume: 1.0, intensity: 2 },
-            { freq: 1046.50, duration: 0.2, volume: 1.0, intensity: 2 },
+            { freq: 1046.50, duration: 0.2, volume: 1.0, intensity: 2, bass: 'arp' },
             { freq: 783.99, duration: 0.2, volume: 1.0, intensity: 2 },
             { freq: 659.25, duration: 0.2, volume: 1.0, intensity: 2 },
-            { freq: 523.25, duration: 0.4, volume: 1.0, intensity: 2 },
+            { freq: 523.25, duration: 0.4, volume: 1.0, intensity: 2, bass: 'chord3' },
             
             // G major arpeggio
-            { freq: 392.00, duration: 0.2, volume: 1.0, intensity: 2 },
+            { freq: 392.00, duration: 0.2, volume: 1.0, intensity: 2, bass: 'arp' },
             { freq: 493.88, duration: 0.2, volume: 1.0, intensity: 2 },
             { freq: 587.33, duration: 0.2, volume: 1.0, intensity: 2 },
-            { freq: 783.99, duration: 0.2, volume: 1.0, intensity: 2 },
+            { freq: 783.99, duration: 0.2, volume: 1.0, intensity: 2, bass: 'arp' },
             { freq: 587.33, duration: 0.2, volume: 1.0, intensity: 2 },
             { freq: 493.88, duration: 0.2, volume: 1.0, intensity: 2 },
-            { freq: 392.00, duration: 0.4, volume: 1.0, intensity: 2 },
+            { freq: 392.00, duration: 0.4, volume: 1.0, intensity: 2, bass: 'chord3' },
             
             // A minor arpeggio
-            { freq: 440.00, duration: 0.2, volume: 1.0, intensity: 2 },
+            { freq: 440.00, duration: 0.2, volume: 1.0, intensity: 2, bass: 'arp' },
             { freq: 523.25, duration: 0.2, volume: 1.0, intensity: 2 },
             { freq: 659.25, duration: 0.2, volume: 1.0, intensity: 2 },
-            { freq: 880.00, duration: 0.2, volume: 1.0, intensity: 2 },
+            { freq: 880.00, duration: 0.2, volume: 1.0, intensity: 2, bass: 'arp' },
             { freq: 659.25, duration: 0.2, volume: 1.0, intensity: 2 },
             { freq: 523.25, duration: 0.2, volume: 1.0, intensity: 2 },
-            { freq: 440.00, duration: 0.4, volume: 1.0, intensity: 2 },
+            { freq: 440.00, duration: 0.4, volume: 1.0, intensity: 2, bass: 'chord3' },
             
             // F major arpeggio
-            { freq: 349.23, duration: 0.2, volume: 1.0, intensity: 2 },
+            { freq: 349.23, duration: 0.2, volume: 1.0, intensity: 2, bass: 'arp' },
             { freq: 440.00, duration: 0.2, volume: 1.0, intensity: 2 },
             { freq: 523.25, duration: 0.2, volume: 1.0, intensity: 2 },
-            { freq: 698.46, duration: 0.2, volume: 1.0, intensity: 2 },
+            { freq: 698.46, duration: 0.2, volume: 1.0, intensity: 2, bass: 'arp' },
             { freq: 523.25, duration: 0.2, volume: 1.0, intensity: 2 },
             { freq: 440.00, duration: 0.2, volume: 1.0, intensity: 2 },
-            { freq: 349.23, duration: 0.4, volume: 1.0, intensity: 2 },
+            { freq: 349.23, duration: 0.4, volume: 1.0, intensity: 2, bass: 'chord3' },
             
-            // Triplets - rising
-            { freq: 523.25, duration: 0.167, volume: 1.0, intensity: 2 },
+            // Triplets - rising (power chords)
+            { freq: 523.25, duration: 0.167, volume: 1.0, intensity: 2, bass: 'chord2' },
             { freq: 587.33, duration: 0.167, volume: 1.0, intensity: 2 },
             { freq: 659.25, duration: 0.167, volume: 1.0, intensity: 2 },
-            { freq: 698.46, duration: 0.167, volume: 1.0, intensity: 2 },
+            { freq: 698.46, duration: 0.167, volume: 1.0, intensity: 2, bass: 'chord2' },
             { freq: 783.99, duration: 0.167, volume: 1.0, intensity: 2 },
             { freq: 880.00, duration: 0.167, volume: 1.0, intensity: 2 },
-            { freq: 987.77, duration: 0.167, volume: 1.0, intensity: 2 },
+            { freq: 987.77, duration: 0.167, volume: 1.0, intensity: 2, bass: 'chord3' },
             { freq: 1046.50, duration: 0.167, volume: 1.0, intensity: 2 },
             { freq: 987.77, duration: 0.167, volume: 1.0, intensity: 2 },
-            { freq: 880.00, duration: 0.167, volume: 1.0, intensity: 2 },
+            { freq: 880.00, duration: 0.167, volume: 1.0, intensity: 2, bass: 'chord2' },
             { freq: 783.99, duration: 0.167, volume: 1.0, intensity: 2 },
             { freq: 698.46, duration: 0.167, volume: 1.0, intensity: 2 },
-            { freq: 659.25, duration: 0.5, volume: 1.0, intensity: 2 },
+            { freq: 659.25, duration: 0.5, volume: 1.0, intensity: 2, bass: 'chord3' },
             { freq: 0, duration: 0.25, volume: 0, intensity: 0 },  // REST
             
             // ============================================
@@ -441,39 +441,42 @@ export class SoundManager {
             // ============================================
             // GRAND FINALE (4:20-5:00) - Epic conclusion
             // ============================================
-            // Big chords (arpeggiated)
-            { freq: 523.25, duration: 0.2, volume: 1.3, intensity: 2 },
+            // Big chords (arpeggiated with full bass chords)
+            { freq: 523.25, duration: 0.2, volume: 1.3, intensity: 2, bass: 'chord3' },
             { freq: 659.25, duration: 0.2, volume: 1.3, intensity: 2 },
+            { freq: 783.99, duration: 0.2, volume: 1.3, intensity: 2, bass: 'chord3' },
+            { freq: 1046.50, duration: 0.4, volume: 1.3, intensity: 2, bass: 'arp' },
             { freq: 783.99, duration: 0.2, volume: 1.3, intensity: 2 },
-            { freq: 1046.50, duration: 0.4, volume: 1.3, intensity: 2 },
-            { freq: 783.99, duration: 0.2, volume: 1.3, intensity: 2 },
-            { freq: 659.25, duration: 0.2, volume: 1.3, intensity: 2 },
-            { freq: 523.25, duration: 0.4, volume: 1.3, intensity: 2 },
+            { freq: 659.25, duration: 0.2, volume: 1.3, intensity: 2, bass: 'chord3' },
+            { freq: 523.25, duration: 0.4, volume: 1.3, intensity: 2, bass: 'chord3' },
             
-            { freq: 659.25, duration: 0.2, volume: 1.3, intensity: 2 },
+            { freq: 659.25, duration: 0.2, volume: 1.3, intensity: 2, bass: 'chord3' },
             { freq: 783.99, duration: 0.2, volume: 1.3, intensity: 2 },
+            { freq: 987.77, duration: 0.2, volume: 1.3, intensity: 2, bass: 'chord3' },
+            { freq: 1318.51, duration: 0.4, volume: 1.3, intensity: 2, bass: 'arp' },  // E6
             { freq: 987.77, duration: 0.2, volume: 1.3, intensity: 2 },
-            { freq: 1318.51, duration: 0.4, volume: 1.3, intensity: 2 },  // E6
-            { freq: 987.77, duration: 0.2, volume: 1.3, intensity: 2 },
-            { freq: 783.99, duration: 0.2, volume: 1.3, intensity: 2 },
-            { freq: 659.25, duration: 0.4, volume: 1.3, intensity: 2 },
+            { freq: 783.99, duration: 0.2, volume: 1.3, intensity: 2, bass: 'chord3' },
+            { freq: 659.25, duration: 0.4, volume: 1.3, intensity: 2, bass: 'chord3' },
             
-            // Rising to climax
-            { freq: 1046.50, duration: 0.25, volume: 1.4, intensity: 2 },
+            // Rising to climax (full power chords)
+            { freq: 1046.50, duration: 0.25, volume: 1.4, intensity: 2, bass: 'chord3' },
             { freq: 1174.66, duration: 0.25, volume: 1.4, intensity: 2 },
-            { freq: 1318.51, duration: 0.25, volume: 1.4, intensity: 2 },
+            { freq: 1318.51, duration: 0.25, volume: 1.4, intensity: 2, bass: 'chord3' },
             { freq: 1396.91, duration: 0.25, volume: 1.4, intensity: 2 },  // F6
-            { freq: 1567.98, duration: 0.5, volume: 1.5, intensity: 2 },  // G6 - peak!
+            { freq: 1567.98, duration: 0.5, volume: 1.5, intensity: 2, bass: 'chord3' },  // G6 - peak!
             { freq: 1396.91, duration: 0.25, volume: 1.4, intensity: 2 },
-            { freq: 1318.51, duration: 0.25, volume: 1.4, intensity: 2 },
-            { freq: 1046.50, duration: 0.5, volume: 1.4, intensity: 2 },
+            { freq: 1318.51, duration: 0.25, volume: 1.4, intensity: 2, bass: 'chord3' },
+            { freq: 1046.50, duration: 0.5, volume: 1.4, intensity: 2, bass: 'chord3' },
             
-            // Final sustained notes - epic ending
-            { freq: 783.99, duration: 0.5, volume: 1.3, intensity: 2 },
-            { freq: 880.00, duration: 0.5, volume: 1.3, intensity: 2 },
-            { freq: 783.99, duration: 0.5, volume: 1.3, intensity: 2 },
-            { freq: 659.25, duration: 0.5, volume: 1.3, intensity: 2 },
-            { freq: 523.25, duration: 0.75, volume: 1.3, intensity: 2 },
+            // Final sustained notes - epic ending with full chords
+            { freq: 783.99, duration: 0.5, volume: 1.3, intensity: 2, bass: 'chord3' },
+            { freq: 880.00, duration: 0.5, volume: 1.3, intensity: 2, bass: 'chord3' },
+            { freq: 783.99, duration: 0.5, volume: 1.3, intensity: 2, bass: 'chord3' },
+            { freq: 659.25, duration: 0.5, volume: 1.3, intensity: 2, bass: 'chord3' },
+            { freq: 523.25, duration: 0.75, volume: 1.3, intensity: 2, bass: 'chord3' },
+            { freq: 659.25, duration: 0.75, volume: 1.3, intensity: 2, bass: 'chord3' },
+            { freq: 783.99, duration: 1.0, volume: 1.3, intensity: 2, bass: 'chord3' },
+            { freq: 1046.50, duration: 2.0, volume: 1.5, intensity: 2, bass: 'chord3' },  // C6 - epic final sustain!
             { freq: 659.25, duration: 0.75, volume: 1.3, intensity: 2 },
             { freq: 783.99, duration: 1.0, volume: 1.3, intensity: 2 },
             { freq: 1046.50, duration: 2.0, volume: 1.5, intensity: 2 },  // C6 - epic final sustain!
@@ -519,25 +522,66 @@ export class SoundManager {
             oscillator.start(this.audioContext.currentTime);
             oscillator.stop(this.audioContext.currentTime + noteTime);
 
-            // Add bass note based on intensity (0 = no bass, 1 = light, 2 = full)
+            // Add bass based on intensity and bass type
             const intensity = note.intensity !== undefined ? note.intensity : 1;
+            const bassType = note.bass || 'single'; // 'single', 'chord2', 'chord3', 'arp'
+            
             if (intensity > 0 && noteIndex % 2 === 0) {
-                const bassOsc = this.audioContext.createOscillator();
-                const bassGain = this.audioContext.createGain();
+                const bassVolume = noteVolume * 0.25 * intensity;
+                const rootFreq = note.freq / 2; // One octave down
                 
-                bassOsc.connect(bassGain);
-                bassGain.connect(this.audioContext.destination);
+                // Frequency ratios for chord tones
+                const major3rd = rootFreq * 1.26;  // Major 3rd
+                const minor3rd = rootFreq * 1.189; // Minor 3rd
+                const perfect5th = rootFreq * 1.498; // Perfect 5th
                 
-                bassOsc.type = 'sawtooth'; // Bass uses sawtooth for more depth
-                bassOsc.frequency.setValueAtTime(note.freq / 2, this.audioContext.currentTime); // One octave down
+                // Determine if major or minor based on melody context
+                const isMinor = note.freq === 440 || note.freq === 493.88 || note.freq === 587.33; // A, B, D frequencies
+                const thirdFreq = isMinor ? minor3rd : major3rd;
                 
-                // Bass volume scales with intensity (0.3 for light, 0.6 for full)
-                const bassVolume = noteVolume * 0.3 * intensity;
-                bassGain.gain.setValueAtTime(bassVolume, this.audioContext.currentTime);
-                bassGain.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + noteTime * 0.8);
+                // Helper function to create a bass oscillator
+                const createBassOsc = (freq, startTime, duration, type = 'sawtooth') => {
+                    const osc = this.audioContext.createOscillator();
+                    const gain = this.audioContext.createGain();
+                    
+                    osc.connect(gain);
+                    gain.connect(this.audioContext.destination);
+                    
+                    osc.type = type;
+                    osc.frequency.setValueAtTime(freq, startTime);
+                    
+                    gain.gain.setValueAtTime(bassVolume, startTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration * 0.8);
+                    
+                    osc.start(startTime);
+                    osc.stop(startTime + duration);
+                };
                 
-                bassOsc.start(this.audioContext.currentTime);
-                bassOsc.stop(this.audioContext.currentTime + noteTime);
+                // Play bass based on type
+                switch (bassType) {
+                    case 'chord2': // Power chord (root + 5th)
+                        createBassOsc(rootFreq, this.audioContext.currentTime, noteTime);
+                        createBassOsc(perfect5th, this.audioContext.currentTime, noteTime);
+                        break;
+                        
+                    case 'chord3': // Full chord (root + 3rd + 5th)
+                        createBassOsc(rootFreq, this.audioContext.currentTime, noteTime);
+                        createBassOsc(thirdFreq, this.audioContext.currentTime, noteTime);
+                        createBassOsc(perfect5th, this.audioContext.currentTime, noteTime);
+                        break;
+                        
+                    case 'arp': // Arpeggio (root, 3rd, 5th in sequence)
+                        const arpDuration = noteTime / 3;
+                        createBassOsc(rootFreq, this.audioContext.currentTime, arpDuration);
+                        createBassOsc(thirdFreq, this.audioContext.currentTime + arpDuration, arpDuration);
+                        createBassOsc(perfect5th, this.audioContext.currentTime + arpDuration * 2, arpDuration);
+                        break;
+                        
+                    case 'single':
+                    default: // Single bass note
+                        createBassOsc(rootFreq, this.audioContext.currentTime, noteTime);
+                        break;
+                }
             }
 
             // Move to next note
