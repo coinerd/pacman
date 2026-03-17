@@ -173,135 +173,317 @@ export class SoundManager {
 
         this.musicPlaying = true;
 
-        // Extended retro chiptune melody - complex arcade style piece
-        // Note frequencies (Hz) - multiple sections for variety
+        // EPIC 5-MINUTE RETRO CHIPTUNE - Full dynamic piece with multiple themes
+        // Structure: Intro → Theme A → A Var → Bridge B → Theme C → Bridge D → Theme A Return → Finale
+        // Total: ~5 minutes before loop
+        
+        // Note: volume = dynamic multiplier (0.0-1.5), intensity = bass level (0-2)
         const melody = [
-            // SECTION A - Main Theme (8 bars)
-            // Bar 1-2: Opening motif
-            { freq: 523.25, duration: 0.25 },  // C5
-            { freq: 587.33, duration: 0.25 },  // D5
-            { freq: 659.25, duration: 0.25 },  // E5
-            { freq: 698.46, duration: 0.25 },  // F5
-            { freq: 783.99, duration: 0.5 },   // G5 (half note)
-            { freq: 698.46, duration: 0.25 },  // F5
-            { freq: 659.25, duration: 0.25 },  // E5
-            { freq: 587.33, duration: 0.5 },   // D5 (half note)
+            // ============================================
+            // INTRO (0:00-0:20) - Quiet, building atmosphere
+            // ============================================
+            // Soft opening - melody only, no bass
+            { freq: 523.25, duration: 0.5, volume: 0.3, intensity: 0 },   // C5
+            { freq: 659.25, duration: 0.5, volume: 0.3, intensity: 0 },   // E5
+            { freq: 783.99, duration: 0.5, volume: 0.3, intensity: 0 },   // G5
+            { freq: 1046.50, duration: 1.0, volume: 0.3, intensity: 0 },  // C6 - sustained
             
-            // Bar 3-4: Rising phrase
-            { freq: 523.25, duration: 0.25 },  // C5
-            { freq: 587.33, duration: 0.25 },  // D5
-            { freq: 659.25, duration: 0.25 },  // E5
-            { freq: 783.99, duration: 0.25 },  // G5
-            { freq: 880.00, duration: 0.5 },   // A5 (half note)
-            { freq: 783.99, duration: 0.25 },  // G5
-            { freq: 659.25, duration: 0.25 },  // E5
-            { freq: 523.25, duration: 0.5 },   // C5 (half note)
+            // Repeat with slight variation, add subtle bass
+            { freq: 523.25, duration: 0.5, volume: 0.4, intensity: 0.5 },
+            { freq: 659.25, duration: 0.5, volume: 0.4, intensity: 0.5 },
+            { freq: 783.99, duration: 0.5, volume: 0.4, intensity: 0.5 },
+            { freq: 987.77, duration: 0.5, volume: 0.4, intensity: 0.5 },  // B5
+            { freq: 1046.50, duration: 1.0, volume: 0.5, intensity: 0.5 }, // C6
             
-            // Bar 5-6: Climbing
-            { freq: 659.25, duration: 0.25 },  // E5
-            { freq: 698.46, duration: 0.25 },  // F5
-            { freq: 783.99, duration: 0.25 },  // G5
-            { freq: 880.00, duration: 0.25 },  // A5
-            { freq: 987.77, duration: 0.5 },   // B5 (half note)
-            { freq: 880.00, duration: 0.25 },  // A5
-            { freq: 783.99, duration: 0.25 },  // G5
-            { freq: 659.25, duration: 0.5 },   // E5 (half note)
+            // Building - add arpeggios
+            { freq: 523.25, duration: 0.25, volume: 0.5, intensity: 1 },
+            { freq: 659.25, duration: 0.25, volume: 0.5, intensity: 1 },
+            { freq: 783.99, duration: 0.25, volume: 0.5, intensity: 1 },
+            { freq: 1046.50, duration: 0.25, volume: 0.5, intensity: 1 },
+            { freq: 783.99, duration: 0.25, volume: 0.5, intensity: 1 },
+            { freq: 659.25, duration: 0.25, volume: 0.5, intensity: 1 },
+            { freq: 523.25, duration: 0.5, volume: 0.6, intensity: 1 },
+            { freq: 0, duration: 0.25, volume: 0, intensity: 0 },  // REST
             
-            // Bar 7-8: Resolution
-            { freq: 523.25, duration: 0.33 },  // C5
-            { freq: 659.25, duration: 0.33 },  // E5
-            { freq: 783.99, duration: 0.33 },  // G5
-            { freq: 523.25, duration: 0.33 },  // C5
-            { freq: 659.25, duration: 0.33 },  // E5
-            { freq: 783.99, duration: 0.33 },  // G5
-            { freq: 1046.50, duration: 1.0 },  // C6 - sustained finale
+            // ============================================
+            // THEME A - Main Theme (0:20-1:10) - Full energy
+            // ============================================
+            // Phrase 1 - Opening motif (loud, full bass)
+            { freq: 523.25, duration: 0.25, volume: 1.0, intensity: 2 },
+            { freq: 587.33, duration: 0.25, volume: 1.0, intensity: 2 },
+            { freq: 659.25, duration: 0.25, volume: 1.0, intensity: 2 },
+            { freq: 698.46, duration: 0.25, volume: 1.0, intensity: 2 },
+            { freq: 783.99, duration: 0.5, volume: 1.0, intensity: 2 },
+            { freq: 698.46, duration: 0.25, volume: 1.0, intensity: 2 },
+            { freq: 659.25, duration: 0.25, volume: 1.0, intensity: 2 },
+            { freq: 587.33, duration: 0.5, volume: 1.0, intensity: 2 },
             
-            // SECTION B - Bridge (8 bars)
-            // Bar 9-10: Minor key shift
-            { freq: 440.00, duration: 0.25 },  // A4
-            { freq: 493.88, duration: 0.25 },  // B4
-            { freq: 523.25, duration: 0.25 },  // C5
-            { freq: 587.33, duration: 0.25 },  // D5
-            { freq: 659.25, duration: 0.5 },   // E5
-            { freq: 587.33, duration: 0.25 },  // D5
-            { freq: 523.25, duration: 0.25 },  // C5
-            { freq: 493.88, duration: 0.5 },   // B4
+            // Phrase 2 - Rising
+            { freq: 523.25, duration: 0.25, volume: 1.0, intensity: 2 },
+            { freq: 587.33, duration: 0.25, volume: 1.0, intensity: 2 },
+            { freq: 659.25, duration: 0.25, volume: 1.0, intensity: 2 },
+            { freq: 783.99, duration: 0.25, volume: 1.0, intensity: 2 },
+            { freq: 880.00, duration: 0.5, volume: 1.0, intensity: 2 },
+            { freq: 783.99, duration: 0.25, volume: 1.0, intensity: 2 },
+            { freq: 659.25, duration: 0.25, volume: 1.0, intensity: 2 },
+            { freq: 523.25, duration: 0.5, volume: 1.0, intensity: 2 },
             
-            // Bar 11-12: Descending
-            { freq: 440.00, duration: 0.25 },  // A4
-            { freq: 392.00, duration: 0.25 },  // G4
-            { freq: 349.23, duration: 0.25 },  // F4
-            { freq: 329.63, duration: 0.25 },  // E4
-            { freq: 293.66, duration: 0.5 },   // D4
-            { freq: 329.63, duration: 0.25 },  // E4
-            { freq: 349.23, duration: 0.25 },  // F4
-            { freq: 392.00, duration: 0.5 },   // G4
+            // Phrase 3 - Climbing
+            { freq: 659.25, duration: 0.25, volume: 1.0, intensity: 2 },
+            { freq: 698.46, duration: 0.25, volume: 1.0, intensity: 2 },
+            { freq: 783.99, duration: 0.25, volume: 1.0, intensity: 2 },
+            { freq: 880.00, duration: 0.25, volume: 1.0, intensity: 2 },
+            { freq: 987.77, duration: 0.5, volume: 1.0, intensity: 2 },
+            { freq: 880.00, duration: 0.25, volume: 1.0, intensity: 2 },
+            { freq: 783.99, duration: 0.25, volume: 1.0, intensity: 2 },
+            { freq: 659.25, duration: 0.5, volume: 1.0, intensity: 2 },
             
-            // Bar 13-14: Building tension
-            { freq: 440.00, duration: 0.25 },  // A4
-            { freq: 523.25, duration: 0.25 },  // C5
-            { freq: 587.33, duration: 0.25 },  // D5
-            { freq: 659.25, duration: 0.25 },  // E5
-            { freq: 698.46, duration: 0.5 },   // F5
-            { freq: 659.25, duration: 0.25 },  // E5
-            { freq: 587.33, duration: 0.25 },  // D5
-            { freq: 523.25, duration: 0.5 },   // C5
+            // Phrase 4 - Resolution
+            { freq: 523.25, duration: 0.33, volume: 1.0, intensity: 2 },
+            { freq: 659.25, duration: 0.33, volume: 1.0, intensity: 2 },
+            { freq: 783.99, duration: 0.33, volume: 1.0, intensity: 2 },
+            { freq: 523.25, duration: 0.33, volume: 1.0, intensity: 2 },
+            { freq: 659.25, duration: 0.33, volume: 1.0, intensity: 2 },
+            { freq: 783.99, duration: 0.33, volume: 1.0, intensity: 2 },
+            { freq: 1046.50, duration: 1.0, volume: 1.0, intensity: 2 },
             
-            // Bar 15-16: Transition back
-            { freq: 493.88, duration: 0.25 },  // B4
-            { freq: 523.25, duration: 0.25 },  // C5
-            { freq: 587.33, duration: 0.25 },  // D5
-            { freq: 659.25, duration: 0.25 },  // E5
-            { freq: 698.46, duration: 0.25 },  // F5
-            { freq: 783.99, duration: 0.25 },  // G5
-            { freq: 880.00, duration: 0.5 },   // A5
-            { freq: 0, duration: 0.5 },        // REST
+            // Theme A - Repeat with variation (softer)
+            { freq: 783.99, duration: 0.25, volume: 0.8, intensity: 1.5 },
+            { freq: 880.00, duration: 0.25, volume: 0.8, intensity: 1.5 },
+            { freq: 987.77, duration: 0.25, volume: 0.8, intensity: 1.5 },
+            { freq: 1046.50, duration: 0.25, volume: 0.8, intensity: 1.5 },
+            { freq: 987.77, duration: 0.5, volume: 0.8, intensity: 1.5 },
+            { freq: 880.00, duration: 0.25, volume: 0.8, intensity: 1.5 },
+            { freq: 783.99, duration: 0.25, volume: 0.8, intensity: 1.5 },
+            { freq: 698.46, duration: 0.5, volume: 0.8, intensity: 1.5 },
             
-            // SECTION A' - Return of Main Theme (8 bars)
-            // Bar 17-18: Opening motif variation
-            { freq: 783.99, duration: 0.25 },  // G5
-            { freq: 880.00, duration: 0.25 },  // A5
-            { freq: 987.77, duration: 0.25 },  // B5
-            { freq: 1046.50, duration: 0.25 }, // C6
-            { freq: 987.77, duration: 0.5 },   // B5
-            { freq: 880.00, duration: 0.25 },  // A5
-            { freq: 783.99, duration: 0.25 },  // G5
-            { freq: 698.46, duration: 0.5 },   // F5
+            { freq: 659.25, duration: 0.25, volume: 0.8, intensity: 1.5 },
+            { freq: 783.99, duration: 0.25, volume: 0.8, intensity: 1.5 },
+            { freq: 880.00, duration: 0.25, volume: 0.8, intensity: 1.5 },
+            { freq: 987.77, duration: 0.25, volume: 0.8, intensity: 1.5 },
+            { freq: 1046.50, duration: 0.5, volume: 0.8, intensity: 1.5 },
+            { freq: 987.77, duration: 0.25, volume: 0.8, intensity: 1.5 },
+            { freq: 880.00, duration: 0.25, volume: 0.8, intensity: 1.5 },
+            { freq: 659.25, duration: 0.5, volume: 0.8, intensity: 1.5 },
             
-            // Bar 19-20: Arpeggiated phrase
-            { freq: 523.25, duration: 0.2 },   // C5
-            { freq: 659.25, duration: 0.2 },   // E5
-            { freq: 783.99, duration: 0.2 },   // G5
-            { freq: 1046.50, duration: 0.2 },  // C6
-            { freq: 783.99, duration: 0.2 },   // G5
-            { freq: 659.25, duration: 0.2 },   // E5
-            { freq: 523.25, duration: 0.4 },   // C5
-            { freq: 0, duration: 0.4 },        // REST
+            { freq: 0, duration: 0.5, volume: 0, intensity: 0 },  // REST - transition
             
-            // Bar 21-22: Triplets feel
-            { freq: 587.33, duration: 0.167 }, // D5
-            { freq: 659.25, duration: 0.167 }, // E5
-            { freq: 698.46, duration: 0.167 }, // F5
-            { freq: 783.99, duration: 0.167 }, // G5
-            { freq: 880.00, duration: 0.167 }, // A5
-            { freq: 987.77, duration: 0.167 }, // B5
-            { freq: 1046.50, duration: 0.5 },  // C6
-            { freq: 987.77, duration: 0.25 },  // B5
-            { freq: 880.00, duration: 0.25 },  // A5
+            // ============================================
+            // BRIDGE B - Minor Key (1:10-2:00) - Mysterious, quieter
+            // ============================================
+            // Phrase 1 - Minor feel (quieter, less bass)
+            { freq: 440.00, duration: 0.25, volume: 0.6, intensity: 1 },
+            { freq: 493.88, duration: 0.25, volume: 0.6, intensity: 1 },
+            { freq: 523.25, duration: 0.25, volume: 0.6, intensity: 1 },
+            { freq: 587.33, duration: 0.25, volume: 0.6, intensity: 1 },
+            { freq: 659.25, duration: 0.5, volume: 0.6, intensity: 1 },
+            { freq: 587.33, duration: 0.25, volume: 0.6, intensity: 1 },
+            { freq: 523.25, duration: 0.25, volume: 0.6, intensity: 1 },
+            { freq: 493.88, duration: 0.5, volume: 0.6, intensity: 1 },
             
-            // Bar 23-24: Grand finale
-            { freq: 783.99, duration: 0.25 },  // G5
-            { freq: 880.00, duration: 0.25 },  // A5
-            { freq: 783.99, duration: 0.25 },  // G5
-            { freq: 698.46, duration: 0.25 },  // F5
-            { freq: 659.25, duration: 0.5 },   // E5
-            { freq: 523.25, duration: 0.5 },   // C5
-            { freq: 659.25, duration: 0.5 },   // E5
-            { freq: 783.99, duration: 1.0 },   // G5 - sustained final note
+            // Phrase 2 - Descending (building)
+            { freq: 440.00, duration: 0.25, volume: 0.7, intensity: 1.2 },
+            { freq: 392.00, duration: 0.25, volume: 0.7, intensity: 1.2 },
+            { freq: 349.23, duration: 0.25, volume: 0.7, intensity: 1.2 },
+            { freq: 329.63, duration: 0.25, volume: 0.7, intensity: 1.2 },
+            { freq: 293.66, duration: 0.5, volume: 0.7, intensity: 1.2 },
+            { freq: 329.63, duration: 0.25, volume: 0.7, intensity: 1.2 },
+            { freq: 349.23, duration: 0.25, volume: 0.7, intensity: 1.2 },
+            { freq: 392.00, duration: 0.5, volume: 0.7, intensity: 1.2 },
+            
+            // Phrase 3 - Tension building (crescendo)
+            { freq: 440.00, duration: 0.25, volume: 0.8, intensity: 1.5 },
+            { freq: 523.25, duration: 0.25, volume: 0.85, intensity: 1.5 },
+            { freq: 587.33, duration: 0.25, volume: 0.9, intensity: 1.5 },
+            { freq: 659.25, duration: 0.25, volume: 0.95, intensity: 1.5 },
+            { freq: 698.46, duration: 0.5, volume: 1.0, intensity: 1.5 },
+            { freq: 659.25, duration: 0.25, volume: 1.0, intensity: 1.5 },
+            { freq: 587.33, duration: 0.25, volume: 1.0, intensity: 1.5 },
+            { freq: 523.25, duration: 0.5, volume: 1.0, intensity: 1.5 },
+            
+            // Phrase 4 - Transition (loud)
+            { freq: 493.88, duration: 0.25, volume: 1.0, intensity: 2 },
+            { freq: 523.25, duration: 0.25, volume: 1.0, intensity: 2 },
+            { freq: 587.33, duration: 0.25, volume: 1.0, intensity: 2 },
+            { freq: 659.25, duration: 0.25, volume: 1.0, intensity: 2 },
+            { freq: 698.46, duration: 0.25, volume: 1.0, intensity: 2 },
+            { freq: 783.99, duration: 0.25, volume: 1.0, intensity: 2 },
+            { freq: 880.00, duration: 0.5, volume: 1.0, intensity: 2 },
+            { freq: 0, duration: 0.5, volume: 0, intensity: 0 },  // REST
+            
+            // ============================================
+            // THEME C - New Material (2:00-2:50) - Arpeggiated, energetic
+            // ============================================
+            // Fast arpeggios - C major
+            { freq: 523.25, duration: 0.2, volume: 1.0, intensity: 2 },
+            { freq: 659.25, duration: 0.2, volume: 1.0, intensity: 2 },
+            { freq: 783.99, duration: 0.2, volume: 1.0, intensity: 2 },
+            { freq: 1046.50, duration: 0.2, volume: 1.0, intensity: 2 },
+            { freq: 783.99, duration: 0.2, volume: 1.0, intensity: 2 },
+            { freq: 659.25, duration: 0.2, volume: 1.0, intensity: 2 },
+            { freq: 523.25, duration: 0.4, volume: 1.0, intensity: 2 },
+            
+            // G major arpeggio
+            { freq: 392.00, duration: 0.2, volume: 1.0, intensity: 2 },
+            { freq: 493.88, duration: 0.2, volume: 1.0, intensity: 2 },
+            { freq: 587.33, duration: 0.2, volume: 1.0, intensity: 2 },
+            { freq: 783.99, duration: 0.2, volume: 1.0, intensity: 2 },
+            { freq: 587.33, duration: 0.2, volume: 1.0, intensity: 2 },
+            { freq: 493.88, duration: 0.2, volume: 1.0, intensity: 2 },
+            { freq: 392.00, duration: 0.4, volume: 1.0, intensity: 2 },
+            
+            // A minor arpeggio
+            { freq: 440.00, duration: 0.2, volume: 1.0, intensity: 2 },
+            { freq: 523.25, duration: 0.2, volume: 1.0, intensity: 2 },
+            { freq: 659.25, duration: 0.2, volume: 1.0, intensity: 2 },
+            { freq: 880.00, duration: 0.2, volume: 1.0, intensity: 2 },
+            { freq: 659.25, duration: 0.2, volume: 1.0, intensity: 2 },
+            { freq: 523.25, duration: 0.2, volume: 1.0, intensity: 2 },
+            { freq: 440.00, duration: 0.4, volume: 1.0, intensity: 2 },
+            
+            // F major arpeggio
+            { freq: 349.23, duration: 0.2, volume: 1.0, intensity: 2 },
+            { freq: 440.00, duration: 0.2, volume: 1.0, intensity: 2 },
+            { freq: 523.25, duration: 0.2, volume: 1.0, intensity: 2 },
+            { freq: 698.46, duration: 0.2, volume: 1.0, intensity: 2 },
+            { freq: 523.25, duration: 0.2, volume: 1.0, intensity: 2 },
+            { freq: 440.00, duration: 0.2, volume: 1.0, intensity: 2 },
+            { freq: 349.23, duration: 0.4, volume: 1.0, intensity: 2 },
+            
+            // Triplets - rising
+            { freq: 523.25, duration: 0.167, volume: 1.0, intensity: 2 },
+            { freq: 587.33, duration: 0.167, volume: 1.0, intensity: 2 },
+            { freq: 659.25, duration: 0.167, volume: 1.0, intensity: 2 },
+            { freq: 698.46, duration: 0.167, volume: 1.0, intensity: 2 },
+            { freq: 783.99, duration: 0.167, volume: 1.0, intensity: 2 },
+            { freq: 880.00, duration: 0.167, volume: 1.0, intensity: 2 },
+            { freq: 987.77, duration: 0.167, volume: 1.0, intensity: 2 },
+            { freq: 1046.50, duration: 0.167, volume: 1.0, intensity: 2 },
+            { freq: 987.77, duration: 0.167, volume: 1.0, intensity: 2 },
+            { freq: 880.00, duration: 0.167, volume: 1.0, intensity: 2 },
+            { freq: 783.99, duration: 0.167, volume: 1.0, intensity: 2 },
+            { freq: 698.46, duration: 0.167, volume: 1.0, intensity: 2 },
+            { freq: 659.25, duration: 0.5, volume: 1.0, intensity: 2 },
+            { freq: 0, duration: 0.25, volume: 0, intensity: 0 },  // REST
+            
+            // ============================================
+            // BRIDGE D - Quiet Interlude (2:50-3:30) - Soft, melodic
+            // ============================================
+            // Very soft, minimal bass
+            { freq: 659.25, duration: 0.5, volume: 0.4, intensity: 0.3 },
+            { freq: 783.99, duration: 0.5, volume: 0.4, intensity: 0.3 },
+            { freq: 880.00, duration: 0.5, volume: 0.4, intensity: 0.3 },
+            { freq: 783.99, duration: 0.5, volume: 0.4, intensity: 0.3 },
+            
+            { freq: 659.25, duration: 0.5, volume: 0.5, intensity: 0.5 },
+            { freq: 523.25, duration: 0.5, volume: 0.5, intensity: 0.5 },
+            { freq: 587.33, duration: 0.5, volume: 0.5, intensity: 0.5 },
+            { freq: 659.25, duration: 1.0, volume: 0.5, intensity: 0.5 },
+            
+            // Slowly building
+            { freq: 523.25, duration: 0.5, volume: 0.6, intensity: 0.7 },
+            { freq: 659.25, duration: 0.5, volume: 0.6, intensity: 0.7 },
+            { freq: 783.99, duration: 0.5, volume: 0.7, intensity: 0.9 },
+            { freq: 1046.50, duration: 0.5, volume: 0.8, intensity: 1.1 },
+            
+            { freq: 987.77, duration: 0.5, volume: 0.9, intensity: 1.3 },
+            { freq: 880.00, duration: 0.5, volume: 0.9, intensity: 1.5 },
+            { freq: 783.99, duration: 0.5, volume: 1.0, intensity: 1.7 },
+            { freq: 659.25, duration: 0.5, volume: 1.0, intensity: 2 },
+            
+            { freq: 0, duration: 0.5, volume: 0, intensity: 0 },  // REST - dramatic pause
+            
+            // ============================================
+            // THEME A RETURN (3:30-4:20) - Full power
+            // ============================================
+            // Phrase 1 - Back to main theme (loudest!)
+            { freq: 523.25, duration: 0.25, volume: 1.2, intensity: 2 },
+            { freq: 587.33, duration: 0.25, volume: 1.2, intensity: 2 },
+            { freq: 659.25, duration: 0.25, volume: 1.2, intensity: 2 },
+            { freq: 698.46, duration: 0.25, volume: 1.2, intensity: 2 },
+            { freq: 783.99, duration: 0.5, volume: 1.2, intensity: 2 },
+            { freq: 698.46, duration: 0.25, volume: 1.2, intensity: 2 },
+            { freq: 659.25, duration: 0.25, volume: 1.2, intensity: 2 },
+            { freq: 587.33, duration: 0.5, volume: 1.2, intensity: 2 },
+            
+            // Phrase 2
+            { freq: 523.25, duration: 0.25, volume: 1.2, intensity: 2 },
+            { freq: 587.33, duration: 0.25, volume: 1.2, intensity: 2 },
+            { freq: 659.25, duration: 0.25, volume: 1.2, intensity: 2 },
+            { freq: 783.99, duration: 0.25, volume: 1.2, intensity: 2 },
+            { freq: 880.00, duration: 0.5, volume: 1.2, intensity: 2 },
+            { freq: 783.99, duration: 0.25, volume: 1.2, intensity: 2 },
+            { freq: 659.25, duration: 0.25, volume: 1.2, intensity: 2 },
+            { freq: 523.25, duration: 0.5, volume: 1.2, intensity: 2 },
+            
+            // Phrase 3 - High energy
+            { freq: 783.99, duration: 0.25, volume: 1.2, intensity: 2 },
+            { freq: 880.00, duration: 0.25, volume: 1.2, intensity: 2 },
+            { freq: 987.77, duration: 0.25, volume: 1.2, intensity: 2 },
+            { freq: 1046.50, duration: 0.25, volume: 1.2, intensity: 2 },
+            { freq: 1174.66, duration: 0.5, volume: 1.2, intensity: 2 },  // D6
+            { freq: 1046.50, duration: 0.25, volume: 1.2, intensity: 2 },
+            { freq: 987.77, duration: 0.25, volume: 1.2, intensity: 2 },
+            { freq: 880.00, duration: 0.5, volume: 1.2, intensity: 2 },
+            
+            // Phrase 4 - Building to finale
+            { freq: 783.99, duration: 0.25, volume: 1.3, intensity: 2 },
+            { freq: 880.00, duration: 0.25, volume: 1.3, intensity: 2 },
+            { freq: 783.99, duration: 0.25, volume: 1.3, intensity: 2 },
+            { freq: 698.46, duration: 0.25, volume: 1.3, intensity: 2 },
+            { freq: 659.25, duration: 0.5, volume: 1.3, intensity: 2 },
+            { freq: 523.25, duration: 0.5, volume: 1.3, intensity: 2 },
+            { freq: 659.25, duration: 0.5, volume: 1.3, intensity: 2 },
+            { freq: 783.99, duration: 0.5, volume: 1.3, intensity: 2 },
+            
+            { freq: 0, duration: 0.5, volume: 0, intensity: 0 },  // REST - before finale
+            
+            // ============================================
+            // GRAND FINALE (4:20-5:00) - Epic conclusion
+            // ============================================
+            // Big chords (arpeggiated)
+            { freq: 523.25, duration: 0.2, volume: 1.3, intensity: 2 },
+            { freq: 659.25, duration: 0.2, volume: 1.3, intensity: 2 },
+            { freq: 783.99, duration: 0.2, volume: 1.3, intensity: 2 },
+            { freq: 1046.50, duration: 0.4, volume: 1.3, intensity: 2 },
+            { freq: 783.99, duration: 0.2, volume: 1.3, intensity: 2 },
+            { freq: 659.25, duration: 0.2, volume: 1.3, intensity: 2 },
+            { freq: 523.25, duration: 0.4, volume: 1.3, intensity: 2 },
+            
+            { freq: 659.25, duration: 0.2, volume: 1.3, intensity: 2 },
+            { freq: 783.99, duration: 0.2, volume: 1.3, intensity: 2 },
+            { freq: 987.77, duration: 0.2, volume: 1.3, intensity: 2 },
+            { freq: 1318.51, duration: 0.4, volume: 1.3, intensity: 2 },  // E6
+            { freq: 987.77, duration: 0.2, volume: 1.3, intensity: 2 },
+            { freq: 783.99, duration: 0.2, volume: 1.3, intensity: 2 },
+            { freq: 659.25, duration: 0.4, volume: 1.3, intensity: 2 },
+            
+            // Rising to climax
+            { freq: 1046.50, duration: 0.25, volume: 1.4, intensity: 2 },
+            { freq: 1174.66, duration: 0.25, volume: 1.4, intensity: 2 },
+            { freq: 1318.51, duration: 0.25, volume: 1.4, intensity: 2 },
+            { freq: 1396.91, duration: 0.25, volume: 1.4, intensity: 2 },  // F6
+            { freq: 1567.98, duration: 0.5, volume: 1.5, intensity: 2 },  // G6 - peak!
+            { freq: 1396.91, duration: 0.25, volume: 1.4, intensity: 2 },
+            { freq: 1318.51, duration: 0.25, volume: 1.4, intensity: 2 },
+            { freq: 1046.50, duration: 0.5, volume: 1.4, intensity: 2 },
+            
+            // Final sustained notes - epic ending
+            { freq: 783.99, duration: 0.5, volume: 1.3, intensity: 2 },
+            { freq: 880.00, duration: 0.5, volume: 1.3, intensity: 2 },
+            { freq: 783.99, duration: 0.5, volume: 1.3, intensity: 2 },
+            { freq: 659.25, duration: 0.5, volume: 1.3, intensity: 2 },
+            { freq: 523.25, duration: 0.75, volume: 1.3, intensity: 2 },
+            { freq: 659.25, duration: 0.75, volume: 1.3, intensity: 2 },
+            { freq: 783.99, duration: 1.0, volume: 1.3, intensity: 2 },
+            { freq: 1046.50, duration: 2.0, volume: 1.5, intensity: 2 },  // C6 - epic final sustain!
+            
+            // Brief silence before loop
+            { freq: 0, duration: 1.0, volume: 0, intensity: 0 },
         ];
 
         let noteIndex = 0;
-        const bpm = 120; // Slower tempo for better flow (was 180)
+        const bpm = 120; // Tempo
         const beatDuration = 60 / bpm; // Duration of one beat in seconds
 
         // Play the melody in a loop
@@ -309,6 +491,15 @@ export class SoundManager {
             if (!this.musicPlaying || !this.audioContext) {return;}
 
             const note = melody[noteIndex];
+            
+            // Handle REST (freq 0)
+            if (note.freq === 0) {
+                noteIndex = (noteIndex + 1) % melody.length;
+                return;
+            }
+            
+            // Get dynamic volume for this note
+            const noteVolume = this.musicVolume * (note.volume || 1.0);
             
             // Create oscillator for melody (square wave for classic 8-bit sound)
             const oscillator = this.audioContext.createOscillator();
@@ -322,14 +513,15 @@ export class SoundManager {
 
             // Volume envelope - quick attack, sustain, quick release
             const noteTime = note.duration * beatDuration;
-            gainNode.gain.setValueAtTime(this.musicVolume, this.audioContext.currentTime);
+            gainNode.gain.setValueAtTime(noteVolume, this.audioContext.currentTime);
             gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + noteTime * 0.9);
 
             oscillator.start(this.audioContext.currentTime);
             oscillator.stop(this.audioContext.currentTime + noteTime);
 
-            // Add bass note (one octave lower, every other note for driving rhythm)
-            if (noteIndex % 2 === 0) {
+            // Add bass note based on intensity (0 = no bass, 1 = light, 2 = full)
+            const intensity = note.intensity !== undefined ? note.intensity : 1;
+            if (intensity > 0 && noteIndex % 2 === 0) {
                 const bassOsc = this.audioContext.createOscillator();
                 const bassGain = this.audioContext.createGain();
                 
@@ -339,7 +531,9 @@ export class SoundManager {
                 bassOsc.type = 'sawtooth'; // Bass uses sawtooth for more depth
                 bassOsc.frequency.setValueAtTime(note.freq / 2, this.audioContext.currentTime); // One octave down
                 
-                bassGain.gain.setValueAtTime(this.musicVolume * 0.5, this.audioContext.currentTime);
+                // Bass volume scales with intensity (0.3 for light, 0.6 for full)
+                const bassVolume = noteVolume * 0.3 * intensity;
+                bassGain.gain.setValueAtTime(bassVolume, this.audioContext.currentTime);
                 bassGain.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + noteTime * 0.8);
                 
                 bassOsc.start(this.audioContext.currentTime);
