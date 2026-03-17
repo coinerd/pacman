@@ -96,6 +96,9 @@ export default class GameScene extends Phaser.Scene {
 
         this.gameView.create();
 
+        // Start retro background music
+        this.gameView.soundManager?.startBackgroundMusic?.();
+
         this.uiController = new UIController(this, this.playerScoreFacade);
         this.uiController.create();
 
@@ -403,6 +406,10 @@ export default class GameScene extends Phaser.Scene {
         this.uiController?.cleanup();
         this.inputManager?.destroy();
         this.gameController?.destroy();
+        
+        // Stop background music before cleaning up view
+        this.gameView?.soundManager?.stopBackgroundMusic?.();
+        
         this.gameView?.cleanup();
         this.debugOverlay?.cleanup();
         this.achievementSystem?.save();
