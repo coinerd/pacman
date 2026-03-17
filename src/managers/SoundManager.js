@@ -34,15 +34,15 @@ export class SoundManager {
      * @param {number} duration - Duration in seconds
      * @param {string} type - Waveform type ('sine', 'square', 'sawtooth', 'triangle')
      */
-    playTone(frequency, duration, type = 'square') {
+    async playTone(frequency, duration, type = 'square') {
         // Initialize AudioContext on first sound (browser autoplay policy requires user interaction)
         if (!this.initialized) {
             this.initialize();
         }
 
-        // Resume AudioContext if suspended (browser autoplay policy)
+        // Resume AudioContext if suspended (browser autoplay policy) - MUST await!
         if (this.audioContext && this.audioContext.state === 'suspended') {
-            this.audioContext.resume();
+            await this.audioContext.resume();
         }
 
         if (!this.enabled || !this.audioContext) {return;}
