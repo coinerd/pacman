@@ -1,0 +1,71 @@
+{
+  "$schema": "./mazeConfig.schema.json",
+  "meta": {
+    "name": "Hard",
+    "description": "Challenging maze with limited escape routes",
+    "author": "Game Designer",
+    "version": "1.0.0"
+  },
+
+  "dimensions": {
+    "width": 25,
+    "height": 33
+  },
+
+  "generation": {
+    "algorithm": "dfs",
+    "pathDensity": 0.55,
+    "deadEndFactor": 0.45,
+    "cellularAutomataIterations": 1,
+    "symmetry": "none",
+    "extraPathDensity": 0.1
+  },
+
+  "rules": {
+    "connectivity": {
+      "minCoverage": 1.0
+    },
+    "alternativePaths": {
+      "minPaths": 1,
+      "toTargets": ["powerPellets", "ghostSpawns"]
+    },
+    "deadEnds": {
+      "maxDensity": 0.3,
+      "minCount": 8,
+      "maxCount": 25
+    },
+    "corridors": {
+      "maxLength": 12,
+      "minWidth": 1
+    },
+    "spawnSafety": {
+      "playerRadius": 2,
+      "minFreedomSteps": 10,
+      "minWalkableInRadius": 5
+    },
+    "powerPellets": {
+      "count": 4,
+      "minDistanceFromSpawn": 12,
+      "cornerPlacement": true
+    }
+  },
+
+  "aesthetics": {
+    "circuitStyle": true,
+    "avoidFourWayIntersections": true,
+    "tunnelEnabled": true,
+    "tunnelRow": 15
+  },
+
+  "retry": {
+    "maxAttempts": 30,
+    "fallbackSeedOffset": 1000003,
+    "onFailure": "useLastValid"
+  },
+
+  "difficulty": {
+    "level": "hard",
+    "estimatedCompletionTime": 90,
+    "riskFactor": 0.7
+  }
+}

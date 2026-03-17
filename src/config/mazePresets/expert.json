@@ -1,0 +1,71 @@
+{
+  "$schema": "./mazeConfig.schema.json",
+  "meta": {
+    "name": "Expert",
+    "description": "Punishing maze for experienced players",
+    "author": "Game Designer",
+    "version": "1.0.0"
+  },
+
+  "dimensions": {
+    "width": 25,
+    "height": 33
+  },
+
+  "generation": {
+    "algorithm": "dfs",
+    "pathDensity": 0.45,
+    "deadEndFactor": 0.6,
+    "cellularAutomataIterations": 2,
+    "symmetry": "none",
+    "extraPathDensity": 0.05
+  },
+
+  "rules": {
+    "connectivity": {
+      "minCoverage": 1.0
+    },
+    "alternativePaths": {
+      "minPaths": 1,
+      "toTargets": ["powerPellets", "ghostSpawns"]
+    },
+    "deadEnds": {
+      "maxDensity": 0.4,
+      "minCount": 10,
+      "maxCount": 35
+    },
+    "corridors": {
+      "maxLength": 15,
+      "minWidth": 1
+    },
+    "spawnSafety": {
+      "playerRadius": 2,
+      "minFreedomSteps": 8,
+      "minWalkableInRadius": 4
+    },
+    "powerPellets": {
+      "count": 4,
+      "minDistanceFromSpawn": 15,
+      "cornerPlacement": true
+    }
+  },
+
+  "aesthetics": {
+    "circuitStyle": true,
+    "avoidFourWayIntersections": true,
+    "tunnelEnabled": true,
+    "tunnelRow": 15
+  },
+
+  "retry": {
+    "maxAttempts": 40,
+    "fallbackSeedOffset": 1000003,
+    "onFailure": "useLastValid"
+  },
+
+  "difficulty": {
+    "level": "expert",
+    "estimatedCompletionTime": 120,
+    "riskFactor": 0.9
+  }
+}

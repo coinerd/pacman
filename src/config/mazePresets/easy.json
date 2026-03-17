@@ -1,0 +1,71 @@
+{
+  "$schema": "./mazeConfig.schema.json",
+  "meta": {
+    "name": "Easy",
+    "description": "Forgiving maze with many paths and few dead ends",
+    "author": "Game Designer",
+    "version": "1.0.0"
+  },
+
+  "dimensions": {
+    "width": 25,
+    "height": 33
+  },
+
+  "generation": {
+    "algorithm": "dfs",
+    "pathDensity": 0.85,
+    "deadEndFactor": 0.2,
+    "cellularAutomataIterations": 0,
+    "symmetry": "horizontal",
+    "extraPathDensity": 0.25
+  },
+
+  "rules": {
+    "connectivity": {
+      "minCoverage": 1.0
+    },
+    "alternativePaths": {
+      "minPaths": 3,
+      "toTargets": ["powerPellets", "ghostSpawns"]
+    },
+    "deadEnds": {
+      "maxDensity": 0.1,
+      "minCount": 2,
+      "maxCount": 8
+    },
+    "corridors": {
+      "maxLength": 5,
+      "minWidth": 1
+    },
+    "spawnSafety": {
+      "playerRadius": 4,
+      "minFreedomSteps": 20,
+      "minWalkableInRadius": 10
+    },
+    "powerPellets": {
+      "count": 4,
+      "minDistanceFromSpawn": 8,
+      "cornerPlacement": true
+    }
+  },
+
+  "aesthetics": {
+    "circuitStyle": true,
+    "avoidFourWayIntersections": true,
+    "tunnelEnabled": true,
+    "tunnelRow": 15
+  },
+
+  "retry": {
+    "maxAttempts": 10,
+    "fallbackSeedOffset": 1000003,
+    "onFailure": "useLastValid"
+  },
+
+  "difficulty": {
+    "level": "easy",
+    "estimatedCompletionTime": 45,
+    "riskFactor": 0.3
+  }
+}

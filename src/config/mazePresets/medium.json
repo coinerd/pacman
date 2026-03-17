@@ -1,0 +1,71 @@
+{
+  "$schema": "./mazeConfig.schema.json",
+  "meta": {
+    "name": "Medium",
+    "description": "Balanced maze with moderate complexity",
+    "author": "Game Designer",
+    "version": "1.0.0"
+  },
+
+  "dimensions": {
+    "width": 25,
+    "height": 33
+  },
+
+  "generation": {
+    "algorithm": "dfs",
+    "pathDensity": 0.7,
+    "deadEndFactor": 0.3,
+    "cellularAutomataIterations": 0,
+    "symmetry": "none",
+    "extraPathDensity": 0.15
+  },
+
+  "rules": {
+    "connectivity": {
+      "minCoverage": 1.0
+    },
+    "alternativePaths": {
+      "minPaths": 2,
+      "toTargets": ["powerPellets", "ghostSpawns"]
+    },
+    "deadEnds": {
+      "maxDensity": 0.2,
+      "minCount": 5,
+      "maxCount": 15
+    },
+    "corridors": {
+      "maxLength": 8,
+      "minWidth": 1
+    },
+    "spawnSafety": {
+      "playerRadius": 3,
+      "minFreedomSteps": 15,
+      "minWalkableInRadius": 8
+    },
+    "powerPellets": {
+      "count": 4,
+      "minDistanceFromSpawn": 10,
+      "cornerPlacement": true
+    }
+  },
+
+  "aesthetics": {
+    "circuitStyle": true,
+    "avoidFourWayIntersections": true,
+    "tunnelEnabled": true,
+    "tunnelRow": 15
+  },
+
+  "retry": {
+    "maxAttempts": 20,
+    "fallbackSeedOffset": 1000003,
+    "onFailure": "useLastValid"
+  },
+
+  "difficulty": {
+    "level": "medium",
+    "estimatedCompletionTime": 60,
+    "riskFactor": 0.5
+  }
+}
