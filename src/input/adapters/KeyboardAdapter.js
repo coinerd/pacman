@@ -214,7 +214,7 @@ export class KeyboardAdapter extends InputAdapter {
      * @param {number} deltaTime - Time since last frame in ms
      * @returns {Object|null} Input object or null
      */
-    update(deltaTime) {
+    update(_deltaTime) {
         const input = this.getCurrentInput();
         if (input) {
             this.emitInput(input);

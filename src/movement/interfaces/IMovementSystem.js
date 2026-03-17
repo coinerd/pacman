@@ -59,7 +59,7 @@ export class IMovementSystem {
      * @param {Array<Array<number>>} mazeGrid - 2D-Array des Mazes
      * @param {MovementConfig} config - Konfiguration
      */
-    initialize(mazeGrid, config) {
+    initialize(_mazeGrid, config) {
         throw new Error('Not implemented');
     }
 
@@ -76,7 +76,7 @@ export class IMovementSystem {
      * Entfernt eine Entity
      * @param {string} entityId - ID der Entity
      */
-    unregisterEntity(entityId) {
+    unregisterEntity(_entityId) {
         throw new Error('Not implemented');
     }
 
@@ -86,7 +86,7 @@ export class IMovementSystem {
      * @param {Object} context - Kontext mit Entities, Player, etc.
      * @returns {MovementEvent[]} - Generierte Events
      */
-    update(deltaSeconds, context = {}) {
+    update(_deltaSeconds, context = {}) {
         throw new Error('Not implemented');
     }
 
@@ -96,7 +96,7 @@ export class IMovementSystem {
      * @param {Direction} direction - Neue Richtung
      * @returns {boolean} - True wenn erfolgreich
      */
-    setDirection(entityId, direction) {
+    setDirection(_entityId, direction) {
         throw new Error('Not implemented');
     }
 
@@ -105,7 +105,7 @@ export class IMovementSystem {
      * @param {string} entityId - ID der Entity
      * @returns {MovementState|null}
      */
-    getMovementState(entityId) {
+    getMovementState(_entityId) {
         throw new Error('Not implemented');
     }
 
@@ -114,7 +114,7 @@ export class IMovementSystem {
      * @param {string} entityId - ID der Entity
      * @param {number} speed - Neue Geschwindigkeit
      */
-    setSpeed(entityId, speed) {
+    setSpeed(_entityId, speed) {
         throw new Error('Not implemented');
     }
 
@@ -123,7 +123,7 @@ export class IMovementSystem {
      * @param {string} entityId - ID der Entity
      * @param {number} multiplier - Multiplier (z.B. 0.5 für frightened)
      */
-    setSpeedMultiplier(entityId, multiplier) {
+    setSpeedMultiplier(_entityId, multiplier) {
         throw new Error('Not implemented');
     }
 
@@ -132,7 +132,7 @@ export class IMovementSystem {
      * @param {string} entityId - ID der Entity
      * @param {number} duration - Dauer in Sekunden
      */
-    setFrightened(entityId, duration) {
+    setFrightened(_entityId, duration) {
         throw new Error('Not implemented');
     }
 
@@ -140,7 +140,7 @@ export class IMovementSystem {
      * Markiert Entity als eaten
      * @param {string} entityId - ID der Entity
      */
-    setEaten(entityId) {
+    setEaten(_entityId) {
         throw new Error('Not implemented');
     }
 
@@ -150,7 +150,7 @@ export class IMovementSystem {
      * @param {number} gridX - Neue Grid-X-Position
      * @param {number} gridY - Neue Grid-Y-Position
      */
-    resetEntity(entityId, gridX, gridY) {
+    resetEntity(_entityId, gridX, gridY) {
         throw new Error('Not implemented');
     }
 

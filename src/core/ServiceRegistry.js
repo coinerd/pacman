@@ -178,7 +178,7 @@ function registerCoreServices(config = {}) {
  * PHASE 6: Feature Systems no longer depend on GameModel directly
  * They communicate via EventBus
  */
-function registerFeatureSystems(container) {
+function registerFeatureSystems(_container) {
     // Boss Battle System (Singleton - no GameModel dependency!)
     globalContainer.register('bossBattleSystem', () => {
         return new BossBattleSystem();

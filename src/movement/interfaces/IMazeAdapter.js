@@ -20,7 +20,7 @@ export class IMazeAdapter {
      * @param {number} gridY - Grid-Y-Position
      * @returns {boolean}
      */
-    isWalkable(gridX, gridY) {
+    isWalkable(_gridX, _gridY) {
         throw new Error('Not implemented');
     }
 
@@ -30,7 +30,7 @@ export class IMazeAdapter {
      * @param {number} gridY - Grid-Y-Position
      * @returns {Array<Direction>} - Array gültiger Richtungen
      */
-    getValidDirections(gridX, gridY) {
+    getValidDirections(_gridX, _gridY) {
         throw new Error('Not implemented');
     }
 
@@ -40,7 +40,7 @@ export class IMazeAdapter {
      * @param {number} gridY - Grid-Y-Position
      * @returns {Position} - {x, y} Pixel-Koordinaten
      */
-    getTileCenter(gridX, gridY) {
+    getTileCenter(_gridX, _gridY) {
         throw new Error('Not implemented');
     }
 
@@ -50,7 +50,7 @@ export class IMazeAdapter {
      * @param {number} gridY - Grid-Y-Position
      * @returns {boolean}
      */
-    isTunnel(gridX, gridY) {
+    isTunnel(_gridX, _gridY) {
         throw new Error('Not implemented');
     }
 

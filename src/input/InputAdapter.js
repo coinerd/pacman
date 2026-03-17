@@ -106,7 +106,7 @@ export class InputAdapter {
      * Override in subclasses that need per-frame updates
      * @param {number} deltaTime - Time since last frame in ms
      */
-    update(deltaTime) {
+    update(_deltaTime) {
         // Override in subclasses
     }
 
@@ -130,17 +130,17 @@ export class InputEventNormalizer {
      * @param {Object} direction - Direction object or key name
      * @returns {Object} Normalized direction object
      */
-    static normalizeDirection(direction) {
-        if (!direction) {return null;}
+    static normalizeDirection(_direction) {
+        if (!_direction) {return null;}
 
         // If already a direction object with x/y
-        if (typeof direction.x === 'number' && typeof direction.y === 'number') {
-            return direction;
+        if (typeof _direction.x === 'number' && typeof _direction.y === 'number') {
+            return _direction;
         }
 
         // If it's a string key name, convert to direction
-        if (typeof direction === 'string') {
-            return this.directionFromKey(direction);
+        if (typeof _direction === 'string') {
+            return this.directionFromKey(_direction);
         }
 
         return null;

@@ -39,7 +39,7 @@ export class IAIController {
      * @param {string} aiType - Typ der AI (alpha, beta, gamma, delta)
      * @param {Object} options - Optionale Parameter
      */
-    registerEntity(entityId, aiType, options = {}) {
+    registerEntity(_entityId, aiType, options = {}) {
         throw new Error('Not implemented');
     }
 
@@ -47,7 +47,7 @@ export class IAIController {
      * Entfernt eine Entity
      * @param {string} entityId - ID der Entity
      */
-    unregisterEntity(entityId) {
+    unregisterEntity(_entityId) {
         throw new Error('Not implemented');
     }
 
@@ -57,7 +57,7 @@ export class IAIController {
      * @param {AIContext} context - AI-Kontext
      * @returns {Array<AIDecision>} - Array von AI-Entscheidungen
      */
-    update(deltaSeconds, context) {
+    update(_deltaSeconds, context) {
         throw new Error('Not implemented');
     }
 
@@ -66,7 +66,7 @@ export class IAIController {
      * @param {string} entityId - ID der Entity
      * @param {number} duration - Dauer in Sekunden
      */
-    setFrightened(entityId, duration) {
+    setFrightened(_entityId, duration) {
         throw new Error('Not implemented');
     }
 
@@ -74,7 +74,7 @@ export class IAIController {
      * Markiert Entity als eaten
      * @param {string} entityId - ID der Entity
      */
-    setEaten(entityId) {
+    setEaten(_entityId) {
         throw new Error('Not implemented');
     }
 
@@ -82,7 +82,7 @@ export class IAIController {
      * Reset einer Entity nach Respawn
      * @param {string} entityId - ID der Entity
      */
-    resetEntity(entityId) {
+    resetEntity(_entityId) {
         throw new Error('Not implemented');
     }
 
@@ -91,7 +91,7 @@ export class IAIController {
      * @param {string} entityId - ID der Entity
      * @param {string} mode - Neuer Modus
      */
-    setMode(entityId, mode) {
+    setMode(_entityId, mode) {
         throw new Error('Not implemented');
     }
 
