@@ -20,7 +20,7 @@ export function registerFeatureSystems(gameModel) {
                 bossLevel: system.bossLevel || 0
             });
         }
-        globalContainer.register('bossBattleSystem', (container) => system, true);
+        globalContainer.register('bossBattleSystem', (_container) => system, true);
     }
 
     // AdditionalPowerUpSystem (Singleton - depends on GameModel)
@@ -32,7 +32,7 @@ export function registerFeatureSystems(gameModel) {
                 activePowerUps: system.activePowerUps || []
             });
         }
-        globalContainer.register('additionalPowerUpSystem', (container) => system, true);
+        globalContainer.register('additionalPowerUpSystem', (_container) => system, true);
     }
 
     // StoryMode (Singleton - depends on GameModel)
@@ -46,6 +46,6 @@ export function registerFeatureSystems(gameModel) {
                 storyProgress: system.storyProgress || 0
             });
         }
-        globalContainer.register('storyMode', (container) => system, true);
+        globalContainer.register('storyMode', (_container) => system, true);
     }
 }

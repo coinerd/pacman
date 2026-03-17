@@ -49,7 +49,7 @@ function registerCoreServices(config = {}) {
     globalContainer.register('eventBus', (_container) => new EventBus(), true);
 
     // Game State (Singleton)
-    globalContainer.register('gameState', (container) => new GameState({
+    globalContainer.register('gameState', (_container) => new GameState({
         level: config.level || 1,
         lives: config.lives || 3,
         score: config.score || 0,
@@ -58,7 +58,7 @@ function registerCoreServices(config = {}) {
     }), true);
 
     // Level System (Singleton)
-    globalContainer.register('levelSystem', (container) => {
+    globalContainer.register('levelSystem', (_container) => {
         const levelSystem = new LevelSystem();
         levelSystem.setLevel(config.level || 1);
         return levelSystem;
@@ -89,7 +89,7 @@ function registerCoreServices(config = {}) {
     }, true);
 
     // Collision Handler (Singleton - transient because needs callbacks)
-    globalContainer.register('collisionHandler', (container) => new CollisionHandler({
+    globalContainer.register('collisionHandler', (_container) => new CollisionHandler({
         onPelletEaten: null, // Will be set by GameModel
         onPowerPelletEaten: null,
         onGhostEaten: null,
@@ -134,24 +134,24 @@ function registerCoreServices(config = {}) {
     }, true);
 
     // Player Module (Singleton)
-    globalContainer.register('playerModule', (container) => new PlayerModule(), true);
+    globalContainer.register('playerModule', (_container) => new PlayerModule(), true);
 
     // Score Module (Singleton)
-    globalContainer.register('scoreModule', (container) => new ScoreModule(), true);
+    globalContainer.register('scoreModule', (_container) => new ScoreModule(), true);
 
     // Session Module (Singleton)
-    globalContainer.register('sessionModule', (container) => new SessionModule(), true);
+    globalContainer.register('sessionModule', (_container) => new SessionModule(), true);
 
     // View Systems (Singleton)
-    globalContainer.register('pelletRenderer', (container) => {
+    globalContainer.register('pelletRenderer', (_container) => {
         return new PelletRenderer(null); // Scene will be set later
     }, true);
 
-    globalContainer.register('playerRenderer', (container) => {
+    globalContainer.register('playerRenderer', (_container) => {
         return new PlayerRenderer(null); // Scene will be set later
     }, true);
 
-    globalContainer.register('ghostRenderers', (container) => {
+    globalContainer.register('ghostRenderers', (_container) => {
         const ghostRenderers = {};
         const ghostTypes = ['red', 'pink', 'cyan', 'orange'];
         for (const ghostType of ghostTypes) {
@@ -160,15 +160,15 @@ function registerCoreServices(config = {}) {
         return ghostRenderers;
     }, true);
 
-    globalContainer.register('fruitRenderer', (container) => {
+    globalContainer.register('fruitRenderer', (_container) => {
         return new FruitRenderer(null); // Scene will be set later
     }, true);
 
-    globalContainer.register('soundManager', (container) => {
+    globalContainer.register('soundManager', (_container) => {
         return new SoundManager(null); // Scene will be set later
     }, true);
 
-    globalContainer.register('effectManager', (container) => {
+    globalContainer.register('effectManager', (_container) => {
         return new EffectManager(null); // Scene will be set later
     }, true);
 }
