@@ -455,28 +455,3 @@ describe('MazeGenerator', () => {
     });
 
 });
-
-/**
- * Helper function to count path neighbors
- */
-function _countNeighbors(maze, x, y, tileType) {
-    let count = 0;
-    const directions = [
-        { dx: 0, dy: -1 }, // up
-        { dx: 1, dy: 0 }, // right
-        { dx: 0, dy: 1 }, // down
-        { dx: -1, dy: 0 } // left
-    ];
-
-    for (const { dx, dy } of directions) {
-        const nx = x + dx;
-        const ny = y + dy;
-        if (ny >= 0 && ny < maze.length && nx >= 0 && nx < maze[0].length) {
-            if (maze[ny][nx] === tileType) {
-                count++;
-            }
-        }
-    }
-
-    return count;
-}

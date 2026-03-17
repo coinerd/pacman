@@ -66,7 +66,7 @@ export class IAIController {
      * @param {string} entityId - ID der Entity
      * @param {number} duration - Dauer in Sekunden
      */
-    setFrightened(_entityId, duration) {
+    setFrightened(_entityId, _duration) {
         throw new Error('Not implemented');
     }
 
@@ -91,7 +91,7 @@ export class IAIController {
      * @param {string} entityId - ID der Entity
      * @param {string} mode - Neuer Modus
      */
-    setMode(_entityId, mode) {
+    setMode(_entityId, _mode) {
         throw new Error('Not implemented');
     }
 
@@ -102,3 +102,4 @@ export class IAIController {
         throw new Error('Not implemented');
     }
 }
+

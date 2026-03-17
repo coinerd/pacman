@@ -58,8 +58,6 @@ describe('Starting Positions Validation', () => {
         test('Player should be able to move from starting position', () => {
             const tileType = mazeLayout[pacmanStartPosition.y][pacmanStartPosition.x];
             console.log(`Player tile type: ${tileType}`);
-            const x = pacmanStartPosition.x;
-            const y = pacmanStartPosition.y;
 
             expect(tileType).not.toBe(TILE_TYPES.WALL);
         });

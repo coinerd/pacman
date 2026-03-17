@@ -85,7 +85,7 @@ function createMockSpawningSystem() {
     };
 }
 
-function createMockEntityRegistry(config) {
+function createMockEntityRegistry(_config) {
     const entities = {};
 
     return {

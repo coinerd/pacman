@@ -132,7 +132,7 @@ export class ReplaySystem {
             .map((k) => {
                 try {
                     return JSON.parse(this.storage.getItem(k));
-                } catch (e) {
+                } catch {
                     return null;
                 }
             })

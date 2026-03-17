@@ -173,7 +173,7 @@ export default class ModelDrivenGameView {
                 this.soundManager.playDeath?.();
                 this.startDeathAnimation();
             }),
-            this.eventBus.on(VIEW_EVENTS.FRUIT_EATEN, (_data) => {
+            this.eventBus.on(VIEW_EVENTS.FRUIT_EATEN, () => {
                 this.soundManager.playFruitEat?.();
                 const fruit = this.lastSnapshot?.fruit;
                 if (fruit) {

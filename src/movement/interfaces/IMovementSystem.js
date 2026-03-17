@@ -114,7 +114,7 @@ export class IMovementSystem {
      * @param {string} entityId - ID der Entity
      * @param {number} speed - Neue Geschwindigkeit
      */
-    setSpeed(_entityId, speed) {
+    setSpeed(_entityId, _speed) {
         throw new Error('Not implemented');
     }
 
@@ -123,7 +123,7 @@ export class IMovementSystem {
      * @param {string} entityId - ID der Entity
      * @param {number} multiplier - Multiplier (z.B. 0.5 für frightened)
      */
-    setSpeedMultiplier(_entityId, multiplier) {
+    setSpeedMultiplier(_entityId, _multiplier) {
         throw new Error('Not implemented');
     }
 
@@ -175,4 +175,6 @@ export class IMovementSystem {
         throw new Error('Not implemented');
     }
 }
+
+
 

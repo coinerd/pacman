@@ -222,7 +222,7 @@ export class DecoupledGameView {
      * Pellet-Eaten Event Handler ✅
      */
     onPelletEaten(data) {
-        const { gridX, gridY, type } = data;
+        const { gridX, gridY } = data;
         this.removePelletVisual(gridX, gridY);
         this.viewState.visiblePellets.delete(`${gridX},${gridY}`);
     }

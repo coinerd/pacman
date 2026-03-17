@@ -400,7 +400,7 @@ describe('ServiceContainer', () => {
 
     test('should register and retrieve transient services', () => {
         let counter = 0;
-        const factory = (container) => ({ id: counter++ });
+        const factory = (_container) => ({ id: counter++ });
 
         globalContainer.register('testService', factory, false);
 

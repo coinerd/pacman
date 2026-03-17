@@ -224,7 +224,7 @@ export const createMockScene = () => {
                 setDepth: jest.fn().mockReturnThis(),
                 setInteractive: jest.fn().mockReturnThis()
             })),
-            circle: jest.fn((x, y, radius, color) => {
+            circle: jest.fn((x, y, radius, _color) => {
                 const mockCircle = {
                     x: x,
                     y: y,
@@ -313,3 +313,4 @@ export const measureTime = (fn) => {
     const end = performance.now();
     return { result, time: end - start };
 };
+

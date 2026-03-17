@@ -194,21 +194,21 @@ export class PlayerRenderer {
     /**
 	 * Add power-up effect
 	 */
-    addPowerUpEffect(type) {
+    addPowerUpEffect(_type) {
         // Implement power-up visual effects
     }
 
     /**
 	 * Remove power-up effect
 	 */
-    removePowerUpEffect(type) {
+    removePowerUpEffect(_type) {
         // Remove power-up visual effects
     }
 
     /**
 	 * Show score for eating
 	 */
-    showScore(score, x, y) {
+    showScore(_score, _x, _y) {
         // Show score popup
     }
 

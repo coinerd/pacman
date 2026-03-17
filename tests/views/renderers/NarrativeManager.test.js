@@ -31,7 +31,7 @@ const createMockScene = () => {
             }))
         },
         tweens: {
-            add: jest.fn((config) => {
+            add: jest.fn((_config) => {
                 // Store but don't execute
             })
         },

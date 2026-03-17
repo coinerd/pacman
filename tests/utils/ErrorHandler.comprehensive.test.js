@@ -121,7 +121,7 @@ describe('ErrorHandler Comprehensive', () => {
         test('should log assertion failure', () => {
             try {
                 handler.assert(false, 'Test assertion');
-            } catch (_e) {
+            } catch {
                 // Expected
             }
 

@@ -3,7 +3,7 @@
  * Tests for snapshot-based view updates
  */
 
-import { GameSnapshot, ViewContext } from '../../src/views/ViewInterface.js';
+import { ViewContext } from '../../src/views/ViewInterface.js';
 import ModelDrivenGameView from '../../src/views/ModelDrivenGameView.js';
 
 // Create mock functions
