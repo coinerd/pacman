@@ -157,7 +157,8 @@ export class SoundManager {
      * Creates an 8-bit chiptune melody that loops continuously
      */
     async startBackgroundMusic() {
-        if (this.musicPlaying || !this.enabled) {return;}
+        // Stop any existing music first (handles hot-reload scenarios)
+        this.stopBackgroundMusic();
 
         // Initialize AudioContext if needed
         if (!this.initialized) {
@@ -614,6 +615,12 @@ export class SoundManager {
             clearTimeout(this.musicInterval);
             this.musicInterval = null;
         }
+        // Close AudioContext to stop ALL audio (handles hot-reload scenarios)
+        if (this.audioContext) {
+            this.audioContext.close().catch(() => {});
+            this.audioContext = null;
+            this.initialized = false;
+        }
     }
 
     /**
@@ -621,12 +628,11 @@ export class SoundManager {
      * Dark, ominous reinterpretation of the main theme
      */
     startDarkTheme() {
+        // Stop any existing music first (handles hot-reload scenarios)
+        this.stopBackgroundMusic();
+
         if (!this.initialized) {
             this.initialize();
-        }
-
-        if (this.musicPlaying) {
-            return;
         }
 
         this.musicPlaying = true;
@@ -1057,12 +1063,11 @@ export class SoundManager {
      * Very rhythmic, driving, syncopated interpretation
      */
     startRhythmicTheme() {
+        // Stop any existing music first (handles hot-reload scenarios)
+        this.stopBackgroundMusic();
+
         if (!this.initialized) {
             this.initialize();
-        }
-
-        if (this.musicPlaying) {
-            return;
         }
 
         this.musicPlaying = true;
