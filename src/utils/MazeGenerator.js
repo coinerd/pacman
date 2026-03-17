@@ -21,6 +21,7 @@ import {
     applyCellularAutomata
 } from './maze/MazeAlgorithms.js';
 import { validateMaze } from './maze/MazeValidation.js';
+import { validateAgainstRules, createValidationReport } from './maze/MazeRules.js';
 import {
     applyCircuitAesthetics,
     applySymmetry,
@@ -321,9 +322,11 @@ export default class MazeGenerator {
 
     /**
      * Performs maze validation using validation module
+     * Now includes rule-based validation via MazeRules
      */
     performValidation() {
-        return validateMaze(
+        // Legacy validation (for backward compatibility)
+        const legacyResult = validateMaze(
             this.maze,
             this.width,
             this.height,
@@ -337,6 +340,46 @@ export default class MazeGenerator {
                 stats: this.stats
             }
         );
+
+        // Rule-based validation (new system)
+        const ruleResult = validateAgainstRules(
+            this.maze,
+            this.width,
+            this.height,
+            this.spawnPoints,
+            this.config
+        );
+
+        // Combine results - isValid only if both pass
+        const isValid = legacyResult.isValid && ruleResult.isValid;
+
+        return {
+            isValid,
+            message: isValid
+                ? 'Maze is valid'
+                : (ruleResult.errors[0]?.message || legacyResult.message),
+            // Legacy result for backward compatibility
+            legacyResult,
+            // New rule-based result
+            ruleResult,
+            // Convenience access to KPIs
+            kpis: ruleResult.kpis,
+            difficultyKPIs: ruleResult.getDifficultyKPIs(),
+            // Summary of rule validation
+            summary: ruleResult.summary,
+            // Errors and warnings from rule system
+            errors: ruleResult.errors,
+            warnings: ruleResult.warnings
+        };
+    }
+
+    /**
+     * Generates a validation report for debugging/logging
+     * @returns {string} Human-readable validation report
+     */
+    generateValidationReport() {
+        const result = this.performValidation();
+        return createValidationReport(result.ruleResult);
     }
 
     /**
