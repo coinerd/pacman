@@ -27,8 +27,8 @@ export class GameController {
         this.playerScoreFacade = playerScoreFacade;
         this.unsubscribeInput = null;
 
-        // Scene transition event handlers (Phase 2)
-        this.unsubscribeTransitionEvents = null;
+        // Event listener cleanup tracking (Memory Leak Fix)
+        this.eventUnsubscribers = [];
 
         if (inputManager) {
             this.setInputManager(inputManager);
@@ -59,54 +59,47 @@ export class GameController {
      * These events are emitted by SceneTransitionHandler in the View
      */
     bindSceneTransitionEvents() {
-        const unsubscribers = [];
-
         // Game win transition
-        unsubscribers.push(
+        this.eventUnsubscribers.push(
             gameEvents.on('GAME_WIN', (data) => {
                 this.handleSceneTransition('WinScene', data);
             })
         );
 
         // Game over transition
-        unsubscribers.push(
+        this.eventUnsubscribers.push(
             gameEvents.on('GAME_OVER', (data) => {
                 this.handleSceneTransition('GameOverScene', data);
             })
         );
 
         // Return to menu transition
-        unsubscribers.push(
+        this.eventUnsubscribers.push(
             gameEvents.on('RETURN_TO_MENU', (data) => {
                 this.handleSceneTransition('MenuScene', data);
             })
         );
 
         // Pause game transition
-        unsubscribers.push(
+        this.eventUnsubscribers.push(
             gameEvents.on('PAUSE_GAME', (data) => {
                 gameEvents.emit(GAME_EVENTS.PAUSE_REQUESTED, data);
             })
         );
 
         // Open settings transition
-        unsubscribers.push(
+        this.eventUnsubscribers.push(
             gameEvents.on('OPEN_SETTINGS', (data) => {
                 this.handleSceneTransition('SettingsScene', data);
             })
         );
 
         // Generic navigation event (fallback)
-        unsubscribers.push(
+        this.eventUnsubscribers.push(
             gameEvents.on('NAVIGATE_TO_SCENE', (data) => {
                 this.handleSceneTransition(data.sceneKey, data.data);
             })
         );
-
-        this.unsubscribeTransitionEvents = () => {
-            unsubscribers.forEach(unsub => unsub());
-            this.unsubscribeTransitionEvents = null;
-        };
     }
 
     /**
@@ -125,9 +118,9 @@ export class GameController {
      * Unbind scene transition events
      */
     unbindSceneTransitionEvents() {
-        if (this.unsubscribeTransitionEvents) {
-            this.unsubscribeTransitionEvents();
-        }
+        // Unsubscribe from all tracked events
+        this.eventUnsubscribers.forEach(unsub => unsub());
+        this.eventUnsubscribers = [];
     }
 
     /**
@@ -266,10 +259,16 @@ export class GameController {
             this.unsubscribeInput = null;
         }
 
-        // Cleanup scene transition events (Phase 2)
+        // Unsubscribe from all events
         this.unbindSceneTransitionEvents();
 
-        this.inputManager = null;
+        // Destroy input manager
+        if (this.inputManager) {
+            this.inputManager.destroy();
+            this.inputManager = null;
+        }
+
+        // Clear model reference
         this.gameModel = null;
         this.replaySystem = null;
         this.playerScoreFacade = null;
