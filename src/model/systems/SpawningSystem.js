@@ -1,55 +1,226 @@
 /**
  * SpawningSystem
  * Verwaltet Entity-Spawning, Maze-Generierung und Spawn-Punkte.
+ *
+ * Phase 3 Integration:
+ * - Nutzt MazeConfigLoader für konfigurierbare Maze-Presets
+ * - Nutzt MazeSeedManager für reproduzierbare Seeds
+ * - Unterstützt verschiedene Randomisierungs-Modi
  */
 
 import MazeGenerator from '../../utils/MazeGenerator.js';
 import { countPellets, createMazeData, PELLET_TYPES } from '../../utils/MazeLayout.js';
 import { gameConfig, enemyStartPositions, playerStartPosition, virusCore } from '../../config/gameConfig.js';
+import { mazeConfigLoader } from '../../utils/MazeConfigLoader.js';
+import { mazeSeedManager } from '../../utils/MazeSeedManager.js';
+
+/**
+ * @typedef {'default' | 'easy' | 'medium' | 'hard' | 'expert'} MazePreset
+ */
+
+/**
+ * @typedef {'full_random' | 'level_sequence' | 'daily_challenge' | 'seeded'} SeedMode
+ */
 
 export class SpawningSystem {
-    constructor(levelSystem) {
+    /**
+     * @param {Object} levelSystem - Das Level-System
+     * @param {Object} [options={}] - Zusätzliche Optionen
+     * @param {MazePreset} [options.preset='default'] - Maze-Preset
+     * @param {SeedMode} [options.seedMode='level_sequence'] - Seed-Modus
+     * @param {number} [options.overrideSeed] - Optionaler manueller Seed
+     */
+    constructor(levelSystem, options = {}) {
         this.levelSystem = levelSystem;
         this.maze = null;
         this.pelletGrid = null;
         this.spawnPoints = {};
         this.totalPellets = 0;
         this.pelletsRemaining = 0;
+
+        // Phase 3: Maze-Konfiguration
+        /** @type {MazePreset} */
+        this.preset = options.preset || 'default';
+
+        /** @type {SeedMode} */
+        this.seedMode = options.seedMode || 'level_sequence';
+
+        /** @type {number|null} */
+        this.overrideSeed = options.overrideSeed || null;
+
+        // Aktuelle Maze-Informationen für Replay
+        this.currentSeedInfo = null;
+        this.currentConfig = null;
+    }
+
+    /**
+     * Setzt das Maze-Preset
+     * @param {MazePreset} preset - Preset-Name
+     */
+    setPreset(preset) {
+        if (mazeConfigLoader.hasPreset(preset)) {
+            this.preset = preset;
+        } else {
+            console.warn(`[SpawningSystem] Unbekanntes Preset: ${preset}, nutze 'default'`);
+            this.preset = 'default';
+        }
+    }
+
+    /**
+     * Setzt den Seed-Modus
+     * @param {SeedMode} mode - Seed-Modus
+     */
+    setSeedMode(mode) {
+        this.seedMode = mode;
+    }
+
+    /**
+     * Setzt einen manuellen Seed (für Replay)
+     * @param {number} seed - Seed-Wert
+     */
+    setOverrideSeed(seed) {
+        this.overrideSeed = seed;
+        this.seedMode = 'seeded';
     }
 
     /**
      * Generiert ein Maze für ein Level
      * @param {number} level - Level-Nummer
-     * @returns {Object} { maze, pelletGrid, spawnPoints }
+     * @param {Object} [options={}] - Optionale Overrides
+     * @returns {Object} { maze, pelletGrid, spawnPoints, seedInfo, config }
      */
-    generateMazeForLevel(level) {
+    generateMazeForLevel(level, options = {}) {
+        // Phase 3: Nutze MazeConfigLoader für Konfiguration
+        const preset = options.preset || this.preset;
+        const overrides = options.configOverrides || {};
+
+        // Lade konfigurierte Maze-Parameter
+        const mazeConfig = mazeConfigLoader.loadConfig(level, preset, overrides);
+        this.currentConfig = mazeConfig;
+
+        // Generiere Seed mit MazeSeedManager
+        const seedInfo = mazeSeedManager.generateSeed(level, preset, {
+            mode: this.seedMode,
+            overrideSeed: this.overrideSeed
+        });
+        this.currentSeedInfo = seedInfo;
+
+        // Konvertiere Config zu MazeGenerator-Format
+        const generatorConfig = mazeConfigLoader.toGeneratorConfig(mazeConfig);
+
+        // Erstelle MazeGenerator mit konfigurierten Parametern
         const mazeGenerator = new MazeGenerator({
-            width: 28,
-            height: 31,
+            width: generatorConfig.width,
+            height: generatorConfig.height,
             tileSize: gameConfig.tileSize,
-            complexity: Math.min(0.1 + (level * 0.02), 0.5), // Steigende Komplexität pro Level
-            seed: level // Deterministisch pro Level
+            pathDensity: generatorConfig.pathDensity,
+            deadEndFactor: generatorConfig.deadEndFactor,
+            symmetry: generatorConfig.symmetry,
+            cellularAutomataIterations: generatorConfig.cellularAutomataIterations,
+            minAlternativePaths: generatorConfig.minAlternativePaths,
+            deadEndDensityThreshold: generatorConfig.deadEndDensityThreshold,
+            maxStraightCorridorLength: generatorConfig.maxStraightCorridorLength,
+            spawnSafetyRadius: generatorConfig.spawnSafetyRadius,
+            spawnSafetyMinFreedomSteps: generatorConfig.spawnSafetyMinFreedomSteps,
+            maxRetries: generatorConfig.maxRetries,
+            fallbackSeedOffset: generatorConfig.fallbackSeedOffset,
+            seed: seedInfo.seed,
+            // Behalte bestehende Spawn-Targets bei
+            playerSpawnTarget: playerStartPosition,
+            ghostSpawnTargets: enemyStartPositions,
+            virusCore: virusCore,
+            tunnelRow: generatorConfig.tunnelRow
         });
 
-        const maze = mazeGenerator.generate();
-        const { pelletGrid, spawnPoints } = createMazeData(maze, {
+        // Generiere Maze
+        const result = mazeGenerator.generate();
+        const { maze, stats, validationResult } = result;
+
+        // Erstelle vollständiges MazeData-Objekt
+        const mazeData = createMazeData(maze, {
             virusCore: virusCore,
             playerStart: playerStartPosition,
             enemyStarts: enemyStartPositions
         });
 
         this.maze = maze;
-        this.pelletGrid = pelletGrid;
-        this.spawnPoints = spawnPoints;
-        this.totalPellets = countPellets(pelletGrid);
+        this.pelletGrid = mazeData.pelletGrid;
+        this.spawnPoints = mazeData.spawnPoints;
+        this.totalPellets = countPellets(this.pelletGrid);
         this.pelletsRemaining = this.totalPellets;
 
         return {
-            maze,
-            pelletGrid,
-            spawnPoints,
-            totalPellets: this.totalPellets
+            maze: this.maze,
+            pelletGrid: this.pelletGrid,
+            spawnPoints: this.spawnPoints,
+            totalPellets: this.totalPellets,
+            // Phase 3: Zusätzliche Informationen
+            seedInfo,
+            config: mazeConfig,
+            stats,
+            validationResult
         };
+    }
+
+    /**
+     * Gibt die aktuellen Maze-Seed-Informationen zurück (für Replay)
+     * @returns {Object|null}
+     */
+    getSeedInfo() {
+        return this.currentSeedInfo;
+    }
+
+    /**
+     * Gibt die aktuelle Maze-Konfiguration zurück
+     * @returns {Object|null}
+     */
+    getMazeConfig() {
+        return this.currentConfig;
+    }
+
+    /**
+     * Erstellt einen Replay-Record für das aktuelle Maze
+     * @returns {Object}
+     */
+    createReplayRecord() {
+        if (!this.currentSeedInfo) {
+            return null;
+        }
+
+        return mazeSeedManager.createReplayRecord(
+            this.currentSeedInfo.seed,
+            this.currentSeedInfo.level,
+            this.currentSeedInfo.preset,
+            {
+                configName: this.currentConfig?.meta?.name || 'Unknown'
+            }
+        );
+    }
+
+    /**
+     * Lädt ein Maze aus einem Replay-Record
+     * @param {Object} replayRecord - Replay-Record mit seed, level, preset
+     * @returns {Object} Generiertes Maze
+     */
+    loadFromReplayRecord(replayRecord) {
+        const validation = mazeSeedManager.validateReplayRecord(replayRecord);
+        if (!validation.isValid) {
+            throw new Error(`Invalid replay record: ${validation.errors.join(', ')}`);
+        }
+
+        this.overrideSeed = replayRecord.seed;
+        this.seedMode = 'seeded';
+        this.preset = replayRecord.preset || 'default';
+
+        return this.generateMazeForLevel(replayRecord.level);
+    }
+
+    /**
+     * Listet verfügbare Presets auf
+     * @returns {Array}
+     */
+    listAvailablePresets() {
+        return mazeConfigLoader.listPresets();
     }
 
     /**

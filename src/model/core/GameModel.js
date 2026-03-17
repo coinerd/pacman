@@ -7,6 +7,11 @@
  * - Delegates to: GameState, EntityRegistry, CollisionHandler, LevelSystem, SpawningSystem
  * - Maintains backward compatibility with existing tests
  * - NO Phaser dependencies (pure data model)
+ *
+ * Phase 3 Integration:
+ * - Unterstützt Maze-Presets (easy, medium, hard, expert)
+ * - Unterstützt verschiedene Seed-Modi (level_sequence, full_random, daily_challenge, seeded)
+ * - Replay-fähig durch Seed-Speicherung
  */
 
 import { GameState } from './GameState.js';
@@ -20,6 +25,14 @@ import BossBattleSystem from '../../systems/BossBattleSystem.js';
 import StoryMode from '../../systems/StoryMode.js';
 import { GAME_EVENTS, gameEvents } from '../../core/EventBus.js';
 
+/**
+ * @typedef {'default' | 'easy' | 'medium' | 'hard' | 'expert'} MazePreset
+ */
+
+/**
+ * @typedef {'full_random' | 'level_sequence' | 'daily_challenge' | 'seeded'} SeedMode
+ */
+
 export default class GameModel {
     /**
      * @param {Object} config - Game configuration
@@ -29,6 +42,9 @@ export default class GameModel {
      * @param {number} config.highScore - High score
      * @param {Array<Array<number>>} config.maze - Optional maze override
      * @param {Array<Array<number>>} config.pelletGrid - Optional pellet grid override
+     * @param {MazePreset} [config.mazePreset='default'] - Maze-Preset für Generierung
+     * @param {SeedMode} [config.seedMode='level_sequence'] - Seed-Modus für Randomisierung
+     * @param {number} [config.overrideSeed] - Optionaler manueller Seed (für Replay)
      */
     constructor(config = {}) {
         // === Core Systems ===
@@ -46,8 +62,12 @@ export default class GameModel {
         this.levelSystem = new LevelSystem();
         this.levelSystem.setLevel(this.level);
 
-        // Spawning System
-        this.spawningSystem = new SpawningSystem(this.levelSystem);
+        // Spawning System (Phase 3: mit Maze-Konfiguration)
+        this.spawningSystem = new SpawningSystem(this.levelSystem, {
+            preset: config.mazePreset || 'default',
+            seedMode: config.seedMode || 'level_sequence',
+            overrideSeed: config.overrideSeed || null
+        });
 
         // Initialize Maze
         if (config.maze && config.pelletGrid) {
@@ -434,6 +454,71 @@ export default class GameModel {
         this.isGameOver = isGameOver;
     }
 
+    // === Phase 3: Maze Configuration ===
+
+    /**
+     * Setzt das Maze-Preset für die Generierung
+     * @param {MazePreset} preset - Preset-Name ('easy', 'medium', 'hard', 'expert', 'default')
+     */
+    setMazePreset(preset) {
+        this.spawningSystem.setPreset(preset);
+    }
+
+    /**
+     * Setzt den Seed-Modus für die Maze-Generierung
+     * @param {SeedMode} mode - Seed-Modus
+     */
+    setSeedMode(mode) {
+        this.spawningSystem.setSeedMode(mode);
+    }
+
+    /**
+     * Setzt einen manuellen Seed für reproduzierbare Mazes
+     * @param {number} seed - Seed-Wert
+     */
+    setMazeSeed(seed) {
+        this.spawningSystem.setOverrideSeed(seed);
+    }
+
+    /**
+     * Gibt die aktuellen Maze-Seed-Informationen zurück
+     * @returns {Object|null}
+     */
+    getMazeSeedInfo() {
+        return this.spawningSystem.getSeedInfo();
+    }
+
+    /**
+     * Erstellt einen Replay-Record für das aktuelle Spiel
+     * @returns {Object|null}
+     */
+    createMazeReplayRecord() {
+        return this.spawningSystem.createReplayRecord();
+    }
+
+    /**
+     * Lädt ein Maze aus einem Replay-Record
+     * @param {Object} replayRecord - Replay-Record
+     */
+    loadMazeFromReplay(replayRecord) {
+        const mazeData = this.spawningSystem.loadFromReplayRecord(replayRecord);
+        this.entityRegistry = new EntityRegistry({
+            level: replayRecord.level,
+            spawnPoints: mazeData.spawnPoints
+        });
+        this.initializeMovementSystem();
+        this.resetPositions();
+        return mazeData;
+    }
+
+    /**
+     * Listet verfügbare Maze-Presets auf
+     * @returns {Array}
+     */
+    listMazePresets() {
+        return this.spawningSystem.listAvailablePresets();
+    }
+
     // === Snapshots & Serialization ===
 
     getSnapshot() {
@@ -453,7 +538,9 @@ export default class GameModel {
             pacman: this.pacman?.getSnapshot(),
             ghosts: this.ghosts.map(g => g.getSnapshot()),
             fruit: this.fruit?.getSnapshot(),
-            levelInfo: this.levelSystem.getLevelInfo()
+            levelInfo: this.levelSystem.getLevelInfo(),
+            // Phase 3: Maze-Informationen für Replay
+            mazeSeedInfo: this.spawningSystem.getSeedInfo()
         };
     }
 
