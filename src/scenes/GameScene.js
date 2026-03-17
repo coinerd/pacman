@@ -96,13 +96,17 @@ export default class GameScene extends Phaser.Scene {
 
         this.gameView.create();
 
-        // Randomly choose between bright theme (C major) and dark theme (E minor)
-        // 50% chance for each theme
-        const playDarkTheme = Math.random() < 0.5;
-        if (playDarkTheme) {
+        // Randomly choose between three themes (33.3% each)
+        // 1. Bright theme (C major, 120 BPM) - energetic
+        // 2. Dark theme (E minor, 100 BPM) - ominous
+        // 3. Rhythmic theme (D major, 130 BPM) - driving
+        const themeChoice = Math.random();
+        if (themeChoice < 0.333) {
+            this.gameView.soundManager?.startBackgroundMusic?.();
+        } else if (themeChoice < 0.666) {
             this.gameView.soundManager?.startDarkTheme?.();
         } else {
-            this.gameView.soundManager?.startBackgroundMusic?.();
+            this.gameView.soundManager?.startRhythmicTheme?.();
         }
 
         this.uiController = new UIController(this, this.playerScoreFacade);

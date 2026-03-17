@@ -1051,4 +1051,483 @@ export class SoundManager {
 
         this.musicInterval = setTimeout(scheduleNextNote, lastNoteDuration);
     }
+
+    /**
+     * Start rhythmic background music theme - D major version
+     * Very rhythmic, driving, syncopated interpretation
+     */
+    startRhythmicTheme() {
+        if (!this.initialized) {
+            this.initialize();
+        }
+
+        if (this.musicPlaying) {
+            return;
+        }
+
+        this.musicPlaying = true;
+
+        // RHYTHMIC THEME - D Major, driving, syncopated
+        // Focus on rhythm and groove rather than melody
+        // Key: D major (D4 = 293.66 Hz as root, bright and triumphant)
+        
+        const melody = [
+            // ============================================
+            // RHYTHMIC INTRO (0:00-0:20) - Driving beat
+            // ============================================
+            // Percussive opening - rhythmic pattern
+            { freq: 587.33, duration: 0.125, volume: 0.7, intensity: 2, bass: 'chord2' },  // D5
+            { freq: 0, duration: 0.125, volume: 0, intensity: 0 },  // REST
+            { freq: 587.33, duration: 0.125, volume: 0.7, intensity: 2, bass: 'chord2' },
+            { freq: 0, duration: 0.125, volume: 0, intensity: 0 },  // REST
+            { freq: 587.33, duration: 0.125, volume: 0.75, intensity: 2, bass: 'chord2' },
+            { freq: 659.25, duration: 0.125, volume: 0.75, intensity: 2 },  // E5
+            { freq: 587.33, duration: 0.125, volume: 0.75, intensity: 2, bass: 'chord2' },
+            { freq: 0, duration: 0.125, volume: 0, intensity: 0 },
+            
+            // Repeat with variation
+            { freq: 587.33, duration: 0.125, volume: 0.8, intensity: 2, bass: 'chord2' },
+            { freq: 0, duration: 0.125, volume: 0, intensity: 0 },
+            { freq: 587.33, duration: 0.125, volume: 0.8, intensity: 2, bass: 'chord2' },
+            { freq: 0, duration: 0.125, volume: 0, intensity: 0 },
+            { freq: 587.33, duration: 0.125, volume: 0.85, intensity: 2, bass: 'chord3' },
+            { freq: 659.25, duration: 0.125, volume: 0.85, intensity: 2 },
+            { freq: 739.99, duration: 0.125, volume: 0.85, intensity: 2, bass: 'chord3' },  // F#5
+            { freq: 587.33, duration: 0.125, volume: 0.85, intensity: 2, bass: 'chord3' },
+            
+            // Building rhythm
+            { freq: 587.33, duration: 0.167, volume: 0.9, intensity: 2, bass: 'chord2' },
+            { freq: 659.25, duration: 0.167, volume: 0.9, intensity: 2 },
+            { freq: 739.99, duration: 0.167, volume: 0.9, intensity: 2, bass: 'chord2' },
+            { freq: 880.00, duration: 0.167, volume: 0.9, intensity: 2 },  // A5
+            { freq: 739.99, duration: 0.167, volume: 0.9, intensity: 2, bass: 'chord2' },
+            { freq: 659.25, duration: 0.167, volume: 0.9, intensity: 2 },
+            { freq: 587.33, duration: 0.33, volume: 0.95, intensity: 2, bass: 'chord3' },
+            { freq: 0, duration: 0.167, volume: 0, intensity: 0 },  // REST
+            
+            // ============================================
+            // RHYTHMIC THEME A - Main Groove (0:20-1:10)
+            // ============================================
+            // Syncopated rhythm pattern
+            { freq: 587.33, duration: 0.125, volume: 1.0, intensity: 2, bass: 'chord3' },
+            { freq: 0, duration: 0.125, volume: 0, intensity: 0 },
+            { freq: 659.25, duration: 0.125, volume: 1.0, intensity: 2, bass: 'chord2' },
+            { freq: 739.99, duration: 0.125, volume: 1.0, intensity: 2 },
+            { freq: 659.25, duration: 0.125, volume: 1.0, intensity: 2, bass: 'chord2' },
+            { freq: 0, duration: 0.125, volume: 0, intensity: 0 },
+            { freq: 587.33, duration: 0.25, volume: 1.0, intensity: 2, bass: 'chord3' },
+            { freq: 739.99, duration: 0.25, volume: 1.0, intensity: 2, bass: 'chord2' },
+            
+            // Phrase 2 - More syncopation
+            { freq: 880.00, duration: 0.125, volume: 1.0, intensity: 2, bass: 'chord3' },
+            { freq: 739.99, duration: 0.125, volume: 1.0, intensity: 2 },
+            { freq: 0, duration: 0.125, volume: 0, intensity: 0 },
+            { freq: 659.25, duration: 0.125, volume: 1.0, intensity: 2, bass: 'chord2' },
+            { freq: 739.99, duration: 0.125, volume: 1.0, intensity: 2 },
+            { freq: 880.00, duration: 0.125, volume: 1.0, intensity: 2, bass: 'chord2' },
+            { freq: 739.99, duration: 0.125, volume: 1.0, intensity: 2 },
+            { freq: 659.25, duration: 0.25, volume: 1.0, intensity: 2, bass: 'chord3' },
+            { freq: 587.33, duration: 0.25, volume: 1.0, intensity: 2, bass: 'chord3' },
+            
+            // Phrase 3 - Rising rhythm
+            { freq: 587.33, duration: 0.167, volume: 1.0, intensity: 2, bass: 'chord2' },
+            { freq: 659.25, duration: 0.167, volume: 1.0, intensity: 2 },
+            { freq: 739.99, duration: 0.167, volume: 1.0, intensity: 2, bass: 'chord2' },
+            { freq: 880.00, duration: 0.167, volume: 1.0, intensity: 2 },
+            { freq: 987.77, duration: 0.167, volume: 1.05, intensity: 2, bass: 'chord3' },  // B5
+            { freq: 880.00, duration: 0.167, volume: 1.0, intensity: 2 },
+            { freq: 739.99, duration: 0.167, volume: 1.0, intensity: 2, bass: 'chord2' },
+            { freq: 659.25, duration: 0.167, volume: 1.0, intensity: 2 },
+            { freq: 587.33, duration: 0.33, volume: 1.0, intensity: 2, bass: 'chord3' },
+            
+            // Phrase 4 - Rhythmic resolution
+            { freq: 440.00, duration: 0.125, volume: 1.0, intensity: 2, bass: 'chord2' },  // A4
+            { freq: 493.88, duration: 0.125, volume: 1.0, intensity: 2 },  // B4
+            { freq: 587.33, duration: 0.125, volume: 1.0, intensity: 2, bass: 'chord2' },
+            { freq: 659.25, duration: 0.125, volume: 1.0, intensity: 2 },
+            { freq: 739.99, duration: 0.125, volume: 1.0, intensity: 2, bass: 'chord2' },
+            { freq: 880.00, duration: 0.125, volume: 1.0, intensity: 2 },
+            { freq: 987.77, duration: 0.25, volume: 1.05, intensity: 2, bass: 'chord3' },
+            { freq: 1174.66, duration: 0.5, volume: 1.1, intensity: 2, bass: 'chord3' },  // D6 - peak!
+            
+            // Theme A variation - more complex rhythm
+            { freq: 587.33, duration: 0.083, volume: 1.0, intensity: 2, bass: 'chord2' },
+            { freq: 659.25, duration: 0.083, volume: 1.0, intensity: 2 },
+            { freq: 587.33, duration: 0.083, volume: 1.0, intensity: 2, bass: 'chord2' },
+            { freq: 659.25, duration: 0.083, volume: 1.0, intensity: 2 },
+            { freq: 587.33, duration: 0.083, volume: 1.0, intensity: 2, bass: 'chord2' },
+            { freq: 739.99, duration: 0.083, volume: 1.0, intensity: 2 },
+            { freq: 880.00, duration: 0.083, volume: 1.0, intensity: 2, bass: 'chord2' },
+            { freq: 739.99, duration: 0.083, volume: 1.0, intensity: 2 },
+            { freq: 659.25, duration: 0.083, volume: 1.0, intensity: 2, bass: 'chord2' },
+            { freq: 587.33, duration: 0.083, volume: 1.0, intensity: 2 },
+            { freq: 659.25, duration: 0.083, volume: 1.0, intensity: 2, bass: 'chord2' },
+            { freq: 739.99, duration: 0.25, volume: 1.0, intensity: 2, bass: 'chord3' },
+            
+            { freq: 880.00, duration: 0.125, volume: 1.0, intensity: 2, bass: 'chord2' },
+            { freq: 0, duration: 0.125, volume: 0, intensity: 0 },
+            { freq: 880.00, duration: 0.125, volume: 1.0, intensity: 2, bass: 'chord2' },
+            { freq: 0, duration: 0.125, volume: 0, intensity: 0 },
+            { freq: 880.00, duration: 0.125, volume: 1.0, intensity: 2, bass: 'chord3' },
+            { freq: 987.77, duration: 0.125, volume: 1.0, intensity: 2 },
+            { freq: 880.00, duration: 0.125, volume: 1.0, intensity: 2, bass: 'chord2' },
+            { freq: 739.99, duration: 0.125, volume: 1.0, intensity: 2 },
+            { freq: 659.25, duration: 0.25, volume: 1.0, intensity: 2, bass: 'chord3' },
+            { freq: 587.33, duration: 0.25, volume: 1.0, intensity: 2, bass: 'chord3' },
+            
+            { freq: 0, duration: 0.25, volume: 0, intensity: 0 },  // REST
+            
+            // ============================================
+            // RHYTHMIC BRIDGE B - Syncopated (1:10-2:00)
+            // ============================================
+            // Heavy syncopation
+            { freq: 739.99, duration: 0.25, volume: 0.9, intensity: 2, bass: 'chord3' },
+            { freq: 0, duration: 0.125, volume: 0, intensity: 0 },
+            { freq: 739.99, duration: 0.125, volume: 0.9, intensity: 2, bass: 'chord2' },
+            { freq: 659.25, duration: 0.125, volume: 0.9, intensity: 2 },
+            { freq: 587.33, duration: 0.25, volume: 0.9, intensity: 2, bass: 'chord2' },
+            { freq: 0, duration: 0.125, volume: 0, intensity: 0 },
+            { freq: 587.33, duration: 0.125, volume: 0.9, intensity: 2, bass: 'chord2' },
+            { freq: 659.25, duration: 0.125, volume: 0.9, intensity: 2 },
+            { freq: 739.99, duration: 0.25, volume: 0.95, intensity: 2, bass: 'chord3' },
+            
+            // Phrase 2 - Off-beat accents
+            { freq: 880.00, duration: 0.125, volume: 0.95, intensity: 2, bass: 'chord2' },
+            { freq: 0, duration: 0.125, volume: 0, intensity: 0 },
+            { freq: 880.00, duration: 0.125, volume: 0.95, intensity: 2, bass: 'chord2' },
+            { freq: 0, duration: 0.125, volume: 0, intensity: 0 },
+            { freq: 739.99, duration: 0.125, volume: 0.95, intensity: 2, bass: 'chord2' },
+            { freq: 880.00, duration: 0.125, volume: 0.95, intensity: 2 },
+            { freq: 987.77, duration: 0.25, volume: 1.0, intensity: 2, bass: 'chord3' },
+            { freq: 880.00, duration: 0.125, volume: 0.95, intensity: 2, bass: 'chord2' },
+            { freq: 739.99, duration: 0.125, volume: 0.95, intensity: 2 },
+            
+            // Phrase 3 - Driving pattern
+            { freq: 587.33, duration: 0.167, volume: 1.0, intensity: 2, bass: 'chord2' },
+            { freq: 587.33, duration: 0.167, volume: 1.0, intensity: 2, bass: 'chord2' },
+            { freq: 659.25, duration: 0.167, volume: 1.0, intensity: 2 },
+            { freq: 739.99, duration: 0.167, volume: 1.0, intensity: 2, bass: 'chord2' },
+            { freq: 880.00, duration: 0.167, volume: 1.0, intensity: 2 },
+            { freq: 880.00, duration: 0.167, volume: 1.0, intensity: 2, bass: 'chord2' },
+            { freq: 739.99, duration: 0.167, volume: 1.0, intensity: 2 },
+            { freq: 659.25, duration: 0.167, volume: 1.0, intensity: 2, bass: 'chord2' },
+            
+            // Phrase 4 - Rhythmic build
+            { freq: 587.33, duration: 0.125, volume: 1.0, intensity: 2, bass: 'chord3' },
+            { freq: 659.25, duration: 0.125, volume: 1.0, intensity: 2 },
+            { freq: 587.33, duration: 0.125, volume: 1.0, intensity: 2, bass: 'chord2' },
+            { freq: 739.99, duration: 0.125, volume: 1.0, intensity: 2 },
+            { freq: 659.25, duration: 0.125, volume: 1.0, intensity: 2, bass: 'chord2' },
+            { freq: 880.00, duration: 0.125, volume: 1.0, intensity: 2 },
+            { freq: 739.99, duration: 0.125, volume: 1.0, intensity: 2, bass: 'chord2' },
+            { freq: 987.77, duration: 0.125, volume: 1.05, intensity: 2 },
+            { freq: 880.00, duration: 0.125, volume: 1.0, intensity: 2, bass: 'chord2' },
+            { freq: 1174.66, duration: 0.125, volume: 1.1, intensity: 2 },
+            { freq: 987.77, duration: 0.25, volume: 1.05, intensity: 2, bass: 'chord3' },
+            { freq: 880.00, duration: 0.25, volume: 1.0, intensity: 2, bass: 'chord3' },
+            
+            { freq: 0, duration: 0.25, volume: 0, intensity: 0 },  // REST
+            
+            // ============================================
+            // RHYTHMIC THEME C - Fast Arpeggios (2:00-2:50)
+            // ============================================
+            // Very fast, rhythmic arpeggios
+            { freq: 587.33, duration: 0.1, volume: 1.1, intensity: 2, bass: 'arp' },
+            { freq: 739.99, duration: 0.1, volume: 1.1, intensity: 2 },
+            { freq: 880.00, duration: 0.1, volume: 1.1, intensity: 2, bass: 'arp' },
+            { freq: 1174.66, duration: 0.1, volume: 1.1, intensity: 2 },
+            { freq: 880.00, duration: 0.1, volume: 1.1, intensity: 2, bass: 'arp' },
+            { freq: 739.99, duration: 0.1, volume: 1.1, intensity: 2 },
+            { freq: 587.33, duration: 0.2, volume: 1.1, intensity: 2, bass: 'chord3' },
+            
+            // G major arpeggio
+            { freq: 392.00, duration: 0.1, volume: 1.1, intensity: 2, bass: 'arp' },  // G4
+            { freq: 493.88, duration: 0.1, volume: 1.1, intensity: 2 },
+            { freq: 587.33, duration: 0.1, volume: 1.1, intensity: 2, bass: 'arp' },
+            { freq: 783.99, duration: 0.1, volume: 1.1, intensity: 2 },  // G5
+            { freq: 587.33, duration: 0.1, volume: 1.1, intensity: 2, bass: 'arp' },
+            { freq: 493.88, duration: 0.1, volume: 1.1, intensity: 2 },
+            { freq: 392.00, duration: 0.2, volume: 1.1, intensity: 2, bass: 'chord3' },
+            
+            // A major arpeggio
+            { freq: 440.00, duration: 0.1, volume: 1.1, intensity: 2, bass: 'arp' },  // A4
+            { freq: 554.37, duration: 0.1, volume: 1.1, intensity: 2 },  // C#5
+            { freq: 659.25, duration: 0.1, volume: 1.1, intensity: 2, bass: 'arp' },  // E5
+            { freq: 880.00, duration: 0.1, volume: 1.1, intensity: 2 },  // A5
+            { freq: 659.25, duration: 0.1, volume: 1.1, intensity: 2, bass: 'arp' },
+            { freq: 554.37, duration: 0.1, volume: 1.1, intensity: 2 },
+            { freq: 440.00, duration: 0.2, volume: 1.1, intensity: 2, bass: 'chord3' },
+            
+            // B minor arpeggio (for contrast)
+            { freq: 493.88, duration: 0.1, volume: 1.1, intensity: 2, bass: 'arp' },  // B4
+            { freq: 587.33, duration: 0.1, volume: 1.1, intensity: 2 },  // D5
+            { freq: 739.99, duration: 0.1, volume: 1.1, intensity: 2, bass: 'arp' },  // F#5
+            { freq: 987.77, duration: 0.1, volume: 1.1, intensity: 2 },  // B5
+            { freq: 739.99, duration: 0.1, volume: 1.1, intensity: 2, bass: 'arp' },
+            { freq: 587.33, duration: 0.1, volume: 1.1, intensity: 2 },
+            { freq: 493.88, duration: 0.2, volume: 1.1, intensity: 2, bass: 'chord3' },
+            
+            // Fast triplets
+            { freq: 587.33, duration: 0.083, volume: 1.1, intensity: 2, bass: 'chord2' },
+            { freq: 659.25, duration: 0.083, volume: 1.1, intensity: 2 },
+            { freq: 739.99, duration: 0.083, volume: 1.1, intensity: 2, bass: 'chord2' },
+            { freq: 880.00, duration: 0.083, volume: 1.1, intensity: 2 },
+            { freq: 987.77, duration: 0.083, volume: 1.1, intensity: 2, bass: 'chord2' },
+            { freq: 1174.66, duration: 0.083, volume: 1.1, intensity: 2 },
+            { freq: 1318.51, duration: 0.083, volume: 1.15, intensity: 2, bass: 'chord3' },  // E6
+            { freq: 1174.66, duration: 0.083, volume: 1.1, intensity: 2 },
+            { freq: 987.77, duration: 0.083, volume: 1.1, intensity: 2, bass: 'chord2' },
+            { freq: 880.00, duration: 0.083, volume: 1.1, intensity: 2 },
+            { freq: 739.99, duration: 0.083, volume: 1.1, intensity: 2, bass: 'chord2' },
+            { freq: 659.25, duration: 0.083, volume: 1.1, intensity: 2 },
+            { freq: 587.33, duration: 0.33, volume: 1.1, intensity: 2, bass: 'chord3' },
+            { freq: 0, duration: 0.167, volume: 0, intensity: 0 },  // REST
+            
+            // ============================================
+            // RHYTHMIC BRIDGE D - Breakdown (2:50-3:35)
+            // ============================================
+            // Minimal rhythm - space and groove
+            { freq: 587.33, duration: 0.125, volume: 0.5, intensity: 1, bass: 'single' },
+            { freq: 0, duration: 0.375, volume: 0, intensity: 0 },
+            { freq: 587.33, duration: 0.125, volume: 0.5, intensity: 1, bass: 'single' },
+            { freq: 0, duration: 0.375, volume: 0, intensity: 0 },
+            
+            { freq: 659.25, duration: 0.125, volume: 0.55, intensity: 1.2, bass: 'single' },
+            { freq: 0, duration: 0.25, volume: 0, intensity: 0 },
+            { freq: 659.25, duration: 0.125, volume: 0.55, intensity: 1.2, bass: 'single' },
+            { freq: 0, duration: 0.25, volume: 0, intensity: 0 },
+            
+            // Building back up
+            { freq: 587.33, duration: 0.125, volume: 0.6, intensity: 1.4, bass: 'chord2' },
+            { freq: 659.25, duration: 0.125, volume: 0.6, intensity: 1.4 },
+            { freq: 587.33, duration: 0.125, volume: 0.6, intensity: 1.4, bass: 'chord2' },
+            { freq: 0, duration: 0.125, volume: 0, intensity: 0 },
+            { freq: 739.99, duration: 0.125, volume: 0.65, intensity: 1.5, bass: 'chord2' },
+            { freq: 0, duration: 0.125, volume: 0, intensity: 0 },
+            
+            { freq: 880.00, duration: 0.125, volume: 0.7, intensity: 1.6, bass: 'chord2' },
+            { freq: 739.99, duration: 0.125, volume: 0.7, intensity: 1.6 },
+            { freq: 880.00, duration: 0.125, volume: 0.75, intensity: 1.7, bass: 'chord2' },
+            { freq: 0, duration: 0.125, volume: 0, intensity: 0 },
+            { freq: 987.77, duration: 0.125, volume: 0.8, intensity: 1.8, bass: 'chord2' },
+            { freq: 0, duration: 0.125, volume: 0, intensity: 0 },
+            
+            { freq: 880.00, duration: 0.125, volume: 0.85, intensity: 1.9, bass: 'chord3' },
+            { freq: 987.77, duration: 0.125, volume: 0.85, intensity: 1.9 },
+            { freq: 1174.66, duration: 0.125, volume: 0.9, intensity: 2, bass: 'chord3' },
+            { freq: 987.77, duration: 0.125, volume: 0.9, intensity: 2 },
+            { freq: 880.00, duration: 0.125, volume: 0.95, intensity: 2, bass: 'chord3' },
+            { freq: 739.99, duration: 0.125, volume: 0.95, intensity: 2 },
+            { freq: 880.00, duration: 0.25, volume: 1.0, intensity: 2, bass: 'chord3' },
+            
+            { freq: 0, duration: 0.25, volume: 0, intensity: 0 },  // REST
+            
+            // ============================================
+            // RHYTHMIC THEME A RETURN - Full Energy (3:35-4:25)
+            // ============================================
+            // Back to main groove with full power
+            { freq: 587.33, duration: 0.125, volume: 1.1, intensity: 2, bass: 'chord3' },
+            { freq: 0, duration: 0.125, volume: 0, intensity: 0 },
+            { freq: 659.25, duration: 0.125, volume: 1.1, intensity: 2, bass: 'chord2' },
+            { freq: 739.99, duration: 0.125, volume: 1.1, intensity: 2 },
+            { freq: 659.25, duration: 0.125, volume: 1.1, intensity: 2, bass: 'chord2' },
+            { freq: 0, duration: 0.125, volume: 0, intensity: 0 },
+            { freq: 587.33, duration: 0.25, volume: 1.1, intensity: 2, bass: 'chord3' },
+            { freq: 739.99, duration: 0.25, volume: 1.1, intensity: 2, bass: 'chord2' },
+            
+            // Phrase 2
+            { freq: 880.00, duration: 0.125, volume: 1.1, intensity: 2, bass: 'chord3' },
+            { freq: 739.99, duration: 0.125, volume: 1.1, intensity: 2 },
+            { freq: 0, duration: 0.125, volume: 0, intensity: 0 },
+            { freq: 659.25, duration: 0.125, volume: 1.1, intensity: 2, bass: 'chord2' },
+            { freq: 739.99, duration: 0.125, volume: 1.1, intensity: 2 },
+            { freq: 880.00, duration: 0.125, volume: 1.1, intensity: 2, bass: 'chord2' },
+            { freq: 739.99, duration: 0.125, volume: 1.1, intensity: 2 },
+            { freq: 659.25, duration: 0.25, volume: 1.1, intensity: 2, bass: 'chord3' },
+            { freq: 587.33, duration: 0.25, volume: 1.1, intensity: 2, bass: 'chord3' },
+            
+            // Phrase 3 - Maximum rhythm
+            { freq: 1174.66, duration: 0.125, volume: 1.15, intensity: 2, bass: 'chord3' },
+            { freq: 0, duration: 0.125, volume: 0, intensity: 0 },
+            { freq: 1174.66, duration: 0.125, volume: 1.15, intensity: 2, bass: 'chord2' },
+            { freq: 0, duration: 0.125, volume: 0, intensity: 0 },
+            { freq: 1174.66, duration: 0.125, volume: 1.15, intensity: 2, bass: 'chord2' },
+            { freq: 987.77, duration: 0.125, volume: 1.15, intensity: 2 },
+            { freq: 880.00, duration: 0.125, volume: 1.15, intensity: 2, bass: 'chord2' },
+            { freq: 739.99, duration: 0.125, volume: 1.15, intensity: 2 },
+            { freq: 880.00, duration: 0.25, volume: 1.15, intensity: 2, bass: 'chord3' },
+            { freq: 987.77, duration: 0.25, volume: 1.15, intensity: 2, bass: 'chord3' },
+            
+            // Phrase 4 - Building to finale
+            { freq: 587.33, duration: 0.083, volume: 1.15, intensity: 2, bass: 'chord2' },
+            { freq: 659.25, duration: 0.083, volume: 1.15, intensity: 2 },
+            { freq: 739.99, duration: 0.083, volume: 1.15, intensity: 2, bass: 'chord2' },
+            { freq: 880.00, duration: 0.083, volume: 1.15, intensity: 2 },
+            { freq: 987.77, duration: 0.083, volume: 1.2, intensity: 2, bass: 'chord2' },
+            { freq: 1174.66, duration: 0.083, volume: 1.2, intensity: 2 },
+            { freq: 1318.51, duration: 0.083, volume: 1.2, intensity: 2, bass: 'chord3' },  // E6
+            { freq: 1174.66, duration: 0.083, volume: 1.2, intensity: 2 },
+            { freq: 987.77, duration: 0.083, volume: 1.2, intensity: 2, bass: 'chord2' },
+            { freq: 880.00, duration: 0.083, volume: 1.2, intensity: 2 },
+            { freq: 739.99, duration: 0.083, volume: 1.2, intensity: 2, bass: 'chord2' },
+            { freq: 659.25, duration: 0.083, volume: 1.2, intensity: 2 },
+            { freq: 587.33, duration: 0.33, volume: 1.2, intensity: 2, bass: 'chord3' },
+            
+            { freq: 0, duration: 0.167, volume: 0, intensity: 0 },  // REST
+            
+            // ============================================
+            // RHYTHMIC FINALE - Driving Conclusion (4:25-5:00)
+            // ============================================
+            // Maximum rhythmic intensity
+            { freq: 587.33, duration: 0.125, volume: 1.2, intensity: 2, bass: 'chord3' },
+            { freq: 739.99, duration: 0.125, volume: 1.2, intensity: 2, bass: 'chord3' },
+            { freq: 880.00, duration: 0.125, volume: 1.2, intensity: 2, bass: 'chord3' },
+            { freq: 1174.66, duration: 0.25, volume: 1.2, intensity: 2, bass: 'arp' },
+            { freq: 880.00, duration: 0.125, volume: 1.2, intensity: 2, bass: 'chord3' },
+            { freq: 739.99, duration: 0.125, volume: 1.2, intensity: 2, bass: 'chord3' },
+            { freq: 587.33, duration: 0.25, volume: 1.2, intensity: 2, bass: 'chord3' },
+            
+            { freq: 739.99, duration: 0.125, volume: 1.2, intensity: 2, bass: 'chord3' },
+            { freq: 880.00, duration: 0.125, volume: 1.2, intensity: 2, bass: 'chord3' },
+            { freq: 987.77, duration: 0.125, volume: 1.2, intensity: 2, bass: 'chord3' },
+            { freq: 1318.51, duration: 0.25, volume: 1.25, intensity: 2, bass: 'arp' },  // E6
+            { freq: 987.77, duration: 0.125, volume: 1.2, intensity: 2, bass: 'chord3' },
+            { freq: 880.00, duration: 0.125, volume: 1.2, intensity: 2, bass: 'chord3' },
+            { freq: 739.99, duration: 0.25, volume: 1.2, intensity: 2, bass: 'chord3' },
+            
+            // Climax
+            { freq: 1174.66, duration: 0.167, volume: 1.3, intensity: 2, bass: 'chord3' },
+            { freq: 1318.51, duration: 0.167, volume: 1.3, intensity: 2, bass: 'chord3' },
+            { freq: 1479.98, duration: 0.167, volume: 1.3, intensity: 2, bass: 'chord3' },  // F#6
+            { freq: 1567.98, duration: 0.167, volume: 1.35, intensity: 2, bass: 'chord3' },  // G6
+            { freq: 1760.00, duration: 0.33, volume: 1.4, intensity: 2, bass: 'chord3' },  // A6 - peak!
+            { freq: 1567.98, duration: 0.167, volume: 1.35, intensity: 2, bass: 'chord3' },
+            { freq: 1479.98, duration: 0.167, volume: 1.3, intensity: 2, bass: 'chord3' },
+            { freq: 1174.66, duration: 0.33, volume: 1.3, intensity: 2, bass: 'chord3' },
+            
+            // Final rhythmic pattern
+            { freq: 587.33, duration: 0.125, volume: 1.2, intensity: 2, bass: 'chord3' },
+            { freq: 0, duration: 0.125, volume: 0, intensity: 0 },
+            { freq: 587.33, duration: 0.125, volume: 1.2, intensity: 2, bass: 'chord3' },
+            { freq: 0, duration: 0.125, volume: 0, intensity: 0 },
+            { freq: 587.33, duration: 0.125, volume: 1.2, intensity: 2, bass: 'chord3' },
+            { freq: 659.25, duration: 0.125, volume: 1.2, intensity: 2, bass: 'chord3' },
+            { freq: 739.99, duration: 0.125, volume: 1.2, intensity: 2, bass: 'chord3' },
+            { freq: 880.00, duration: 0.25, volume: 1.25, intensity: 2, bass: 'chord3' },
+            { freq: 1174.66, duration: 0.5, volume: 1.3, intensity: 2, bass: 'chord3' },  // D6 - final!
+            
+            // Brief silence before loop
+            { freq: 0, duration: 0.5, volume: 0, intensity: 0 },
+        ];
+
+        let noteIndex = 0;
+        const bpm = 130; // Faster tempo for driving rhythm (was 120)
+        const beatDuration = 60 / bpm;
+
+        // Play the melody in a loop
+        const playMelodyNote = () => {
+            if (!this.musicPlaying || !this.audioContext) {return;}
+
+            const note = melody[noteIndex];
+            
+            // Handle REST (freq 0)
+            if (note.freq === 0) {
+                noteIndex = (noteIndex + 1) % melody.length;
+                return;
+            }
+            
+            // Get dynamic volume for this note
+            const noteVolume = this.musicVolume * (note.volume || 1.0);
+            
+            // Create oscillator for melody (square wave for classic 8-bit sound)
+            const oscillator = this.audioContext.createOscillator();
+            const gainNode = this.audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(this.audioContext.destination);
+
+            oscillator.type = 'square';
+            oscillator.frequency.setValueAtTime(note.freq, this.audioContext.currentTime);
+
+            // Volume envelope - shorter for more punchy rhythm
+            const noteTime = note.duration * beatDuration;
+            gainNode.gain.setValueAtTime(noteVolume, this.audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + noteTime * 0.75);
+
+            oscillator.start(this.audioContext.currentTime);
+            oscillator.stop(this.audioContext.currentTime + noteTime);
+
+            // Add bass based on intensity and bass type
+            const intensity = note.intensity !== undefined ? note.intensity : 1;
+            const bassType = note.bass || 'single';
+            
+            if (intensity > 0 && noteIndex % 2 === 0) {
+                const bassVolume = noteVolume * 0.25 * intensity;
+                const rootFreq = note.freq / 2;
+                
+                // Frequency ratios for chord tones
+                const major3rd = rootFreq * 1.26;
+                const minor3rd = rootFreq * 1.189;
+                const perfect5th = rootFreq * 1.498;
+                
+                // Rhythmic theme: Always use major 3rd for bright sound
+                const thirdFreq = major3rd;
+                
+                const createBassOsc = (freq, startTime, duration, type = 'sawtooth') => {
+                    const osc = this.audioContext.createOscillator();
+                    const gain = this.audioContext.createGain();
+                    
+                    osc.connect(gain);
+                    gain.connect(this.audioContext.destination);
+                    
+                    osc.type = type;
+                    osc.frequency.setValueAtTime(freq, startTime);
+                    
+                    // Shorter envelope for more punch
+                    gain.gain.setValueAtTime(bassVolume, startTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration * 0.7);
+                    
+                    osc.start(startTime);
+                    osc.stop(startTime + duration);
+                };
+                
+                switch (bassType) {
+                    case 'chord2':
+                        createBassOsc(rootFreq, this.audioContext.currentTime, noteTime);
+                        createBassOsc(perfect5th, this.audioContext.currentTime, noteTime);
+                        break;
+                    case 'chord3':
+                        createBassOsc(rootFreq, this.audioContext.currentTime, noteTime);
+                        createBassOsc(thirdFreq, this.audioContext.currentTime, noteTime);
+                        createBassOsc(perfect5th, this.audioContext.currentTime, noteTime);
+                        break;
+                    case 'arp':
+                        const arpDuration = noteTime / 3;
+                        createBassOsc(rootFreq, this.audioContext.currentTime, arpDuration);
+                        createBassOsc(thirdFreq, this.audioContext.currentTime + arpDuration, arpDuration);
+                        createBassOsc(perfect5th, this.audioContext.currentTime + arpDuration * 2, arpDuration);
+                        break;
+                    case 'single':
+                    default:
+                        createBassOsc(rootFreq, this.audioContext.currentTime, noteTime);
+                        break;
+                }
+            }
+
+            noteIndex = (noteIndex + 1) % melody.length;
+        };
+
+        playMelodyNote();
+
+        let lastNoteDuration = melody[0].duration * beatDuration * 1000;
+        const scheduleNextNote = () => {
+            if (!this.musicPlaying) {return;}
+            
+            playMelodyNote();
+            const currentNoteDuration = melody[noteIndex === 0 ? melody.length - 1 : noteIndex - 1].duration * beatDuration * 1000;
+            this.musicInterval = setTimeout(scheduleNextNote, currentNoteDuration);
+        };
+
+        this.musicInterval = setTimeout(scheduleNextNote, lastNoteDuration);
+    }
 }
