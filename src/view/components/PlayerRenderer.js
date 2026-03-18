@@ -54,6 +54,7 @@ export class PlayerRenderer {
 	 * Draw player as radial starburst pattern (Cardano-style)
 	 * 30 circles, 12 rays, no center point
 	 * Inner circles large, outer circles small
+	 * With pulsating glow effect
 	 */
     drawPlayer(x, y, _direction) {
         // Clear previous frame
@@ -67,6 +68,21 @@ export class PlayerRenderer {
         const baseRadius = gameConfig.tileSize * 0.4;
         const primaryColor = 0x00ced1;
         const accentColor = 0x00ffff;
+        const glowColor = 0x00ffff;
+
+        // Calculate pulse values (0 to 1, oscillating)
+        const pulseValue = (Math.sin(this.pulsePhase) + 1) / 2; // 0 to 1
+        const glowPulse = 0.3 + (pulseValue * 0.4); // 0.3 to 0.7 alpha
+        const scalePulse = 1 + (pulseValue * 0.08); // 1.0 to 1.08 scale
+
+        // Draw outer glow rings (pulsating)
+        const glowRadius = baseRadius * 1.1 * scalePulse;
+        this.graphics.fillStyle(glowColor, glowPulse * 0.15);
+        this.graphics.fillCircle(x, y, glowRadius * 1.3);
+        this.graphics.fillStyle(glowColor, glowPulse * 0.25);
+        this.graphics.fillCircle(x, y, glowRadius * 1.15);
+        this.graphics.fillStyle(glowColor, glowPulse * 0.35);
+        this.graphics.fillCircle(x, y, glowRadius);
 
         // 12 rays at 0°, 30°, 60°, 90°, 120°, 150°, 180°, 210°, 240°, 270°, 300°, 330°
         // Primary rays (0°, 60°, 120°, 180°, 240°, 300°) have 3 dots = 18 dots
@@ -84,7 +100,7 @@ export class PlayerRenderer {
                 ? [0.25, 0.50, 0.80]  // Primary rays: inner, middle, outer
                 : [0.35, 0.65];       // Secondary rays: middle positions
 
-            // Dot sizes (as multipliers of baseRadius)
+            // Dot sizes (as multipliers of baseRadius) - with pulse scale
             const sizes = isPrimary
                 ? [0.12, 0.09, 0.06]  // Large → small
                 : [0.10, 0.07];
@@ -98,16 +114,18 @@ export class PlayerRenderer {
             const angleRad = (ray.angle - 90) * (Math.PI / 180); // -90 to start from top
 
             for (let i = 0; i < ray.dotCount; i++) {
-                const distance = baseRadius * ray.distances[i];
-                const size = baseRadius * ray.sizes[i];
+                const distance = baseRadius * ray.distances[i] * scalePulse;
+                const size = baseRadius * ray.sizes[i] * scalePulse;
                 const cx = x + distance * Math.cos(angleRad);
                 const cy = y + distance * Math.sin(angleRad);
 
                 // Alternate colors for visual depth
                 const color = dotIndex % 2 === 0 ? primaryColor : accentColor;
-                const alpha = 1 - (i * 0.1); // Outer dots slightly more transparent
+                // Pulse brightness: base alpha + pulse contribution
+                const baseAlpha = 1 - (i * 0.1);
+                const pulseAlpha = baseAlpha + (pulseValue * 0.2);
 
-                this.graphics.fillStyle(color, alpha);
+                this.graphics.fillStyle(color, Math.min(pulseAlpha, 1));
                 this.graphics.fillCircle(cx, cy, size);
 
                 dotIndex++;

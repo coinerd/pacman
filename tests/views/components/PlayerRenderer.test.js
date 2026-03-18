@@ -248,14 +248,15 @@ describe('PlayerRenderer', () => {
             expect(graphics.fillStyle).toHaveBeenCalled();
         });
 
-        it('should draw 30 circles in radial starburst pattern (12 rays)', () => {
+        it('should draw 33 circles in radial starburst pattern with glow (12 rays + 3 glow rings)', () => {
             const graphics = mockScene.add.graphics.mock.results[0].value;
             graphics.fillCircle.mockClear();
 
             renderer.drawPlayer(100, 200, { x: 1, y: 0 });
 
             // Pattern: 12 rays (6 primary with 3 dots + 6 secondary with 2 dots) = 30 circles
-            expect(graphics.fillCircle).toHaveBeenCalledTimes(30);
+            // + 3 outer glow rings = 33 total
+            expect(graphics.fillCircle).toHaveBeenCalledTimes(33);
         });
 
         it('should fill circles for starburst pattern', () => {
