@@ -177,7 +177,7 @@ export class SoundManager {
         // EPIC 5-MINUTE RETRO CHIPTUNE - Full dynamic piece with multiple themes
         // Structure: Intro → Theme A → A Var → Bridge B → Theme C → Bridge D → Theme A Return → Finale
         // Total: ~5 minutes before loop
-        
+
         // Note: volume = dynamic multiplier (0.0-1.5), intensity = bass level (0-2)
         const melody = [
             // ============================================
@@ -188,14 +188,14 @@ export class SoundManager {
             { freq: 659.25, duration: 0.5, volume: 0.3, intensity: 0 },   // E5
             { freq: 783.99, duration: 0.5, volume: 0.3, intensity: 0 },   // G5
             { freq: 1046.50, duration: 1.0, volume: 0.3, intensity: 0 },  // C6 - sustained
-            
+
             // Repeat with slight variation, add subtle bass
             { freq: 523.25, duration: 0.5, volume: 0.4, intensity: 0.5 },
             { freq: 659.25, duration: 0.5, volume: 0.4, intensity: 0.5 },
             { freq: 783.99, duration: 0.5, volume: 0.4, intensity: 0.5 },
             { freq: 987.77, duration: 0.5, volume: 0.4, intensity: 0.5 },  // B5
             { freq: 1046.50, duration: 1.0, volume: 0.5, intensity: 0.5 }, // C6
-            
+
             // Building - add arpeggios
             { freq: 523.25, duration: 0.25, volume: 0.5, intensity: 1 },
             { freq: 659.25, duration: 0.25, volume: 0.5, intensity: 1 },
@@ -205,7 +205,7 @@ export class SoundManager {
             { freq: 659.25, duration: 0.25, volume: 0.5, intensity: 1 },
             { freq: 523.25, duration: 0.5, volume: 0.6, intensity: 1 },
             { freq: 0, duration: 0.25, volume: 0, intensity: 0 },  // REST
-            
+
             // ============================================
             // THEME A - Main Theme (0:20-1:10) - Full energy
             // ============================================
@@ -218,7 +218,7 @@ export class SoundManager {
             { freq: 698.46, duration: 0.25, volume: 1.0, intensity: 2 },
             { freq: 659.25, duration: 0.25, volume: 1.0, intensity: 2, bass: 'chord2' },
             { freq: 587.33, duration: 0.5, volume: 1.0, intensity: 2 },
-            
+
             // Phrase 2 - Rising (with arpeggiated bass)
             { freq: 523.25, duration: 0.25, volume: 1.0, intensity: 2, bass: 'arp' },
             { freq: 587.33, duration: 0.25, volume: 1.0, intensity: 2 },
@@ -228,7 +228,7 @@ export class SoundManager {
             { freq: 783.99, duration: 0.25, volume: 1.0, intensity: 2 },
             { freq: 659.25, duration: 0.25, volume: 1.0, intensity: 2, bass: 'chord2' },
             { freq: 523.25, duration: 0.5, volume: 1.0, intensity: 2 },
-            
+
             // Phrase 3 - Climbing (power chords)
             { freq: 659.25, duration: 0.25, volume: 1.0, intensity: 2, bass: 'chord2' },
             { freq: 698.46, duration: 0.25, volume: 1.0, intensity: 2 },
@@ -238,7 +238,7 @@ export class SoundManager {
             { freq: 880.00, duration: 0.25, volume: 1.0, intensity: 2 },
             { freq: 783.99, duration: 0.25, volume: 1.0, intensity: 2, bass: 'chord2' },
             { freq: 659.25, duration: 0.5, volume: 1.0, intensity: 2 },
-            
+
             // Phrase 4 - Resolution
             { freq: 523.25, duration: 0.33, volume: 1.0, intensity: 2 },
             { freq: 659.25, duration: 0.33, volume: 1.0, intensity: 2 },
@@ -247,7 +247,7 @@ export class SoundManager {
             { freq: 659.25, duration: 0.33, volume: 1.0, intensity: 2 },
             { freq: 783.99, duration: 0.33, volume: 1.0, intensity: 2 },
             { freq: 1046.50, duration: 1.0, volume: 1.0, intensity: 2 },
-            
+
             // Theme A - Repeat with variation (softer)
             { freq: 783.99, duration: 0.25, volume: 0.8, intensity: 1.5 },
             { freq: 880.00, duration: 0.25, volume: 0.8, intensity: 1.5 },
@@ -257,7 +257,7 @@ export class SoundManager {
             { freq: 880.00, duration: 0.25, volume: 0.8, intensity: 1.5 },
             { freq: 783.99, duration: 0.25, volume: 0.8, intensity: 1.5 },
             { freq: 698.46, duration: 0.5, volume: 0.8, intensity: 1.5 },
-            
+
             { freq: 659.25, duration: 0.25, volume: 0.8, intensity: 1.5 },
             { freq: 783.99, duration: 0.25, volume: 0.8, intensity: 1.5 },
             { freq: 880.00, duration: 0.25, volume: 0.8, intensity: 1.5 },
@@ -266,9 +266,9 @@ export class SoundManager {
             { freq: 987.77, duration: 0.25, volume: 0.8, intensity: 1.5 },
             { freq: 880.00, duration: 0.25, volume: 0.8, intensity: 1.5 },
             { freq: 659.25, duration: 0.5, volume: 0.8, intensity: 1.5 },
-            
+
             { freq: 0, duration: 0.5, volume: 0, intensity: 0 },  // REST - transition
-            
+
             // ============================================
             // BRIDGE B - Minor Key (1:10-2:00) - Mysterious, quieter
             // ============================================
@@ -281,7 +281,7 @@ export class SoundManager {
             { freq: 587.33, duration: 0.25, volume: 0.6, intensity: 1 },
             { freq: 523.25, duration: 0.25, volume: 0.6, intensity: 1 },
             { freq: 493.88, duration: 0.5, volume: 0.6, intensity: 1 },
-            
+
             // Phrase 2 - Descending (building)
             { freq: 440.00, duration: 0.25, volume: 0.7, intensity: 1.2 },
             { freq: 392.00, duration: 0.25, volume: 0.7, intensity: 1.2 },
@@ -291,7 +291,7 @@ export class SoundManager {
             { freq: 329.63, duration: 0.25, volume: 0.7, intensity: 1.2 },
             { freq: 349.23, duration: 0.25, volume: 0.7, intensity: 1.2 },
             { freq: 392.00, duration: 0.5, volume: 0.7, intensity: 1.2 },
-            
+
             // Phrase 3 - Tension building (crescendo)
             { freq: 440.00, duration: 0.25, volume: 0.8, intensity: 1.5 },
             { freq: 523.25, duration: 0.25, volume: 0.85, intensity: 1.5 },
@@ -301,7 +301,7 @@ export class SoundManager {
             { freq: 659.25, duration: 0.25, volume: 1.0, intensity: 1.5 },
             { freq: 587.33, duration: 0.25, volume: 1.0, intensity: 1.5 },
             { freq: 523.25, duration: 0.5, volume: 1.0, intensity: 1.5 },
-            
+
             // Phrase 4 - Transition (loud)
             { freq: 493.88, duration: 0.25, volume: 1.0, intensity: 2 },
             { freq: 523.25, duration: 0.25, volume: 1.0, intensity: 2 },
@@ -311,7 +311,7 @@ export class SoundManager {
             { freq: 783.99, duration: 0.25, volume: 1.0, intensity: 2 },
             { freq: 880.00, duration: 0.5, volume: 1.0, intensity: 2 },
             { freq: 0, duration: 0.5, volume: 0, intensity: 0 },  // REST
-            
+
             // ============================================
             // THEME C - New Material (2:00-2:50) - Arpeggiated, energetic
             // ============================================
@@ -323,7 +323,7 @@ export class SoundManager {
             { freq: 783.99, duration: 0.2, volume: 1.0, intensity: 2 },
             { freq: 659.25, duration: 0.2, volume: 1.0, intensity: 2 },
             { freq: 523.25, duration: 0.4, volume: 1.0, intensity: 2, bass: 'chord3' },
-            
+
             // G major arpeggio
             { freq: 392.00, duration: 0.2, volume: 1.0, intensity: 2, bass: 'arp' },
             { freq: 493.88, duration: 0.2, volume: 1.0, intensity: 2 },
@@ -332,7 +332,7 @@ export class SoundManager {
             { freq: 587.33, duration: 0.2, volume: 1.0, intensity: 2 },
             { freq: 493.88, duration: 0.2, volume: 1.0, intensity: 2 },
             { freq: 392.00, duration: 0.4, volume: 1.0, intensity: 2, bass: 'chord3' },
-            
+
             // A minor arpeggio
             { freq: 440.00, duration: 0.2, volume: 1.0, intensity: 2, bass: 'arp' },
             { freq: 523.25, duration: 0.2, volume: 1.0, intensity: 2 },
@@ -341,7 +341,7 @@ export class SoundManager {
             { freq: 659.25, duration: 0.2, volume: 1.0, intensity: 2 },
             { freq: 523.25, duration: 0.2, volume: 1.0, intensity: 2 },
             { freq: 440.00, duration: 0.4, volume: 1.0, intensity: 2, bass: 'chord3' },
-            
+
             // F major arpeggio
             { freq: 349.23, duration: 0.2, volume: 1.0, intensity: 2, bass: 'arp' },
             { freq: 440.00, duration: 0.2, volume: 1.0, intensity: 2 },
@@ -350,7 +350,7 @@ export class SoundManager {
             { freq: 523.25, duration: 0.2, volume: 1.0, intensity: 2 },
             { freq: 440.00, duration: 0.2, volume: 1.0, intensity: 2 },
             { freq: 349.23, duration: 0.4, volume: 1.0, intensity: 2, bass: 'chord3' },
-            
+
             // Triplets - rising (power chords)
             { freq: 523.25, duration: 0.167, volume: 1.0, intensity: 2, bass: 'chord2' },
             { freq: 587.33, duration: 0.167, volume: 1.0, intensity: 2 },
@@ -366,7 +366,7 @@ export class SoundManager {
             { freq: 698.46, duration: 0.167, volume: 1.0, intensity: 2 },
             { freq: 659.25, duration: 0.5, volume: 1.0, intensity: 2, bass: 'chord3' },
             { freq: 0, duration: 0.25, volume: 0, intensity: 0 },  // REST
-            
+
             // ============================================
             // BRIDGE D - Quiet Interlude (2:50-3:30) - Soft, melodic
             // ============================================
@@ -375,25 +375,25 @@ export class SoundManager {
             { freq: 783.99, duration: 0.5, volume: 0.4, intensity: 0.3 },
             { freq: 880.00, duration: 0.5, volume: 0.4, intensity: 0.3 },
             { freq: 783.99, duration: 0.5, volume: 0.4, intensity: 0.3 },
-            
+
             { freq: 659.25, duration: 0.5, volume: 0.5, intensity: 0.5 },
             { freq: 523.25, duration: 0.5, volume: 0.5, intensity: 0.5 },
             { freq: 587.33, duration: 0.5, volume: 0.5, intensity: 0.5 },
             { freq: 659.25, duration: 1.0, volume: 0.5, intensity: 0.5 },
-            
+
             // Slowly building
             { freq: 523.25, duration: 0.5, volume: 0.6, intensity: 0.7 },
             { freq: 659.25, duration: 0.5, volume: 0.6, intensity: 0.7 },
             { freq: 783.99, duration: 0.5, volume: 0.7, intensity: 0.9 },
             { freq: 1046.50, duration: 0.5, volume: 0.8, intensity: 1.1 },
-            
+
             { freq: 987.77, duration: 0.5, volume: 0.9, intensity: 1.3 },
             { freq: 880.00, duration: 0.5, volume: 0.9, intensity: 1.5 },
             { freq: 783.99, duration: 0.5, volume: 1.0, intensity: 1.7 },
             { freq: 659.25, duration: 0.5, volume: 1.0, intensity: 2 },
-            
+
             { freq: 0, duration: 0.5, volume: 0, intensity: 0 },  // REST - dramatic pause
-            
+
             // ============================================
             // THEME A RETURN (3:30-4:20) - Full power
             // ============================================
@@ -406,7 +406,7 @@ export class SoundManager {
             { freq: 698.46, duration: 0.25, volume: 1.2, intensity: 2 },
             { freq: 659.25, duration: 0.25, volume: 1.2, intensity: 2 },
             { freq: 587.33, duration: 0.5, volume: 1.2, intensity: 2 },
-            
+
             // Phrase 2
             { freq: 523.25, duration: 0.25, volume: 1.2, intensity: 2 },
             { freq: 587.33, duration: 0.25, volume: 1.2, intensity: 2 },
@@ -416,7 +416,7 @@ export class SoundManager {
             { freq: 783.99, duration: 0.25, volume: 1.2, intensity: 2 },
             { freq: 659.25, duration: 0.25, volume: 1.2, intensity: 2 },
             { freq: 523.25, duration: 0.5, volume: 1.2, intensity: 2 },
-            
+
             // Phrase 3 - High energy
             { freq: 783.99, duration: 0.25, volume: 1.2, intensity: 2 },
             { freq: 880.00, duration: 0.25, volume: 1.2, intensity: 2 },
@@ -426,7 +426,7 @@ export class SoundManager {
             { freq: 1046.50, duration: 0.25, volume: 1.2, intensity: 2 },
             { freq: 987.77, duration: 0.25, volume: 1.2, intensity: 2 },
             { freq: 880.00, duration: 0.5, volume: 1.2, intensity: 2 },
-            
+
             // Phrase 4 - Building to finale
             { freq: 783.99, duration: 0.25, volume: 1.3, intensity: 2 },
             { freq: 880.00, duration: 0.25, volume: 1.3, intensity: 2 },
@@ -436,9 +436,9 @@ export class SoundManager {
             { freq: 523.25, duration: 0.5, volume: 1.3, intensity: 2 },
             { freq: 659.25, duration: 0.5, volume: 1.3, intensity: 2 },
             { freq: 783.99, duration: 0.5, volume: 1.3, intensity: 2 },
-            
+
             { freq: 0, duration: 0.5, volume: 0, intensity: 0 },  // REST - before finale
-            
+
             // ============================================
             // GRAND FINALE (4:20-5:00) - Epic conclusion
             // ============================================
@@ -450,7 +450,7 @@ export class SoundManager {
             { freq: 783.99, duration: 0.2, volume: 1.3, intensity: 2 },
             { freq: 659.25, duration: 0.2, volume: 1.3, intensity: 2, bass: 'chord3' },
             { freq: 523.25, duration: 0.4, volume: 1.3, intensity: 2, bass: 'chord3' },
-            
+
             { freq: 659.25, duration: 0.2, volume: 1.3, intensity: 2, bass: 'chord3' },
             { freq: 783.99, duration: 0.2, volume: 1.3, intensity: 2 },
             { freq: 987.77, duration: 0.2, volume: 1.3, intensity: 2, bass: 'chord3' },
@@ -458,7 +458,7 @@ export class SoundManager {
             { freq: 987.77, duration: 0.2, volume: 1.3, intensity: 2 },
             { freq: 783.99, duration: 0.2, volume: 1.3, intensity: 2, bass: 'chord3' },
             { freq: 659.25, duration: 0.4, volume: 1.3, intensity: 2, bass: 'chord3' },
-            
+
             // Rising to climax (full power chords)
             { freq: 1046.50, duration: 0.25, volume: 1.4, intensity: 2, bass: 'chord3' },
             { freq: 1174.66, duration: 0.25, volume: 1.4, intensity: 2 },
@@ -468,7 +468,7 @@ export class SoundManager {
             { freq: 1396.91, duration: 0.25, volume: 1.4, intensity: 2 },
             { freq: 1318.51, duration: 0.25, volume: 1.4, intensity: 2, bass: 'chord3' },
             { freq: 1046.50, duration: 0.5, volume: 1.4, intensity: 2, bass: 'chord3' },
-            
+
             // Final sustained notes - epic ending with full chords
             { freq: 783.99, duration: 0.5, volume: 1.3, intensity: 2, bass: 'chord3' },
             { freq: 880.00, duration: 0.5, volume: 1.3, intensity: 2, bass: 'chord3' },
@@ -481,9 +481,9 @@ export class SoundManager {
             { freq: 659.25, duration: 0.75, volume: 1.3, intensity: 2 },
             { freq: 783.99, duration: 1.0, volume: 1.3, intensity: 2 },
             { freq: 1046.50, duration: 2.0, volume: 1.5, intensity: 2 },  // C6 - epic final sustain!
-            
+
             // Brief silence before loop
-            { freq: 0, duration: 1.0, volume: 0, intensity: 0 },
+            { freq: 0, duration: 1.0, volume: 0, intensity: 0 }
         ];
 
         let noteIndex = 0;
@@ -495,16 +495,16 @@ export class SoundManager {
             if (!this.musicPlaying || !this.audioContext) {return;}
 
             const note = melody[noteIndex];
-            
+
             // Handle REST (freq 0)
             if (note.freq === 0) {
                 noteIndex = (noteIndex + 1) % melody.length;
                 return;
             }
-            
+
             // Get dynamic volume for this note
             const noteVolume = this.musicVolume * (note.volume || 1.0);
-            
+
             // Create oscillator for melody (square wave for classic 8-bit sound)
             const oscillator = this.audioContext.createOscillator();
             const gainNode = this.audioContext.createGain();
@@ -526,62 +526,63 @@ export class SoundManager {
             // Add bass based on intensity and bass type
             const intensity = note.intensity !== undefined ? note.intensity : 1;
             const bassType = note.bass || 'single'; // 'single', 'chord2', 'chord3', 'arp'
-            
+
             if (intensity > 0 && noteIndex % 2 === 0) {
                 const bassVolume = noteVolume * 0.25 * intensity;
                 const rootFreq = note.freq / 2; // One octave down
-                
+
                 // Frequency ratios for chord tones
                 const major3rd = rootFreq * 1.26;  // Major 3rd
                 const minor3rd = rootFreq * 1.189; // Minor 3rd
                 const perfect5th = rootFreq * 1.498; // Perfect 5th
-                
+
                 // Determine if major or minor based on melody context
                 const isMinor = note.freq === 440 || note.freq === 493.88 || note.freq === 587.33; // A, B, D frequencies
                 const thirdFreq = isMinor ? minor3rd : major3rd;
-                
+
                 // Helper function to create a bass oscillator
                 const createBassOsc = (freq, startTime, duration, type = 'sawtooth') => {
                     const osc = this.audioContext.createOscillator();
                     const gain = this.audioContext.createGain();
-                    
+
                     osc.connect(gain);
                     gain.connect(this.audioContext.destination);
-                    
+
                     osc.type = type;
                     osc.frequency.setValueAtTime(freq, startTime);
-                    
+
                     gain.gain.setValueAtTime(bassVolume, startTime);
                     gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration * 0.8);
-                    
+
                     osc.start(startTime);
                     osc.stop(startTime + duration);
                 };
-                
+
                 // Play bass based on type
                 switch (bassType) {
-                    case 'chord2': // Power chord (root + 5th)
-                        createBassOsc(rootFreq, this.audioContext.currentTime, noteTime);
-                        createBassOsc(perfect5th, this.audioContext.currentTime, noteTime);
-                        break;
-                        
-                    case 'chord3': // Full chord (root + 3rd + 5th)
-                        createBassOsc(rootFreq, this.audioContext.currentTime, noteTime);
-                        createBassOsc(thirdFreq, this.audioContext.currentTime, noteTime);
-                        createBassOsc(perfect5th, this.audioContext.currentTime, noteTime);
-                        break;
-                        
-                    case 'arp': // Arpeggio (root, 3rd, 5th in sequence)
-                        const arpDuration = noteTime / 3;
-                        createBassOsc(rootFreq, this.audioContext.currentTime, arpDuration);
-                        createBassOsc(thirdFreq, this.audioContext.currentTime + arpDuration, arpDuration);
-                        createBassOsc(perfect5th, this.audioContext.currentTime + arpDuration * 2, arpDuration);
-                        break;
-                        
-                    case 'single':
-                    default: // Single bass note
-                        createBassOsc(rootFreq, this.audioContext.currentTime, noteTime);
-                        break;
+                case 'chord2': // Power chord (root + 5th)
+                    createBassOsc(rootFreq, this.audioContext.currentTime, noteTime);
+                    createBassOsc(perfect5th, this.audioContext.currentTime, noteTime);
+                    break;
+
+                case 'chord3': // Full chord (root + 3rd + 5th)
+                    createBassOsc(rootFreq, this.audioContext.currentTime, noteTime);
+                    createBassOsc(thirdFreq, this.audioContext.currentTime, noteTime);
+                    createBassOsc(perfect5th, this.audioContext.currentTime, noteTime);
+                    break;
+
+                case 'arp': { // Arpeggio (root, 3rd, 5th in sequence)
+                    const arpDuration = noteTime / 3;
+                    createBassOsc(rootFreq, this.audioContext.currentTime, arpDuration);
+                    createBassOsc(thirdFreq, this.audioContext.currentTime + arpDuration, arpDuration);
+                    createBassOsc(perfect5th, this.audioContext.currentTime + arpDuration * 2, arpDuration);
+                    break;
+                }
+
+                case 'single':
+                default: // Single bass note
+                    createBassOsc(rootFreq, this.audioContext.currentTime, noteTime);
+                    break;
                 }
             }
 
@@ -596,7 +597,7 @@ export class SoundManager {
         let lastNoteDuration = melody[0].duration * beatDuration * 1000; // Convert to ms
         const scheduleNextNote = () => {
             if (!this.musicPlaying) {return;}
-            
+
             playMelodyNote();
             const currentNoteDuration = melody[noteIndex === 0 ? melody.length - 1 : noteIndex - 1].duration * beatDuration * 1000;
             this.musicInterval = setTimeout(scheduleNextNote, currentNoteDuration);
@@ -640,7 +641,7 @@ export class SoundManager {
         // DARK THEME - E Minor, ominous reinterpretation
         // Same structure but lower register, minor intervals, dissonance
         // Key: E minor (E4 = 329.63 Hz as root, lower for ominous feel)
-        
+
         const melody = [
             // ============================================
             // DARK INTRO (0:00-0:25) - Ominous, building dread
@@ -650,14 +651,14 @@ export class SoundManager {
             { freq: 392.00, duration: 0.75, volume: 0.25, intensity: 0 },    // G4 - minor 3rd
             { freq: 493.88, duration: 0.75, volume: 0.25, intensity: 0 },    // B4 - perfect 5th
             { freq: 659.25, duration: 1.5, volume: 0.3, intensity: 0 },      // E5 - octave, sustained
-            
+
             // Repeat with slight variation, add subtle dissonant bass
             { freq: 329.63, duration: 0.75, volume: 0.35, intensity: 0.4, bass: 'single' },
             { freq: 392.00, duration: 0.75, volume: 0.35, intensity: 0.4 },
             { freq: 493.88, duration: 0.75, volume: 0.35, intensity: 0.4 },
             { freq: 587.33, duration: 0.75, volume: 0.35, intensity: 0.4 },  // D5 - minor 7th (darker)
             { freq: 659.25, duration: 1.5, volume: 0.4, intensity: 0.5 },
-            
+
             // Building tension with tritones
             { freq: 329.63, duration: 0.33, volume: 0.45, intensity: 0.6, bass: 'chord2' },
             { freq: 466.16, duration: 0.33, volume: 0.45, intensity: 0.6 },  // Bb4 - tritone (diminished)
@@ -667,7 +668,7 @@ export class SoundManager {
             { freq: 493.88, duration: 0.33, volume: 0.45, intensity: 0.6 },
             { freq: 329.63, duration: 0.75, volume: 0.5, intensity: 0.8, bass: 'chord3' },
             { freq: 0, duration: 0.5, volume: 0, intensity: 0 },  // REST - ominous silence
-            
+
             // ============================================
             // DARK THEME A - Main Theme in Minor (0:25-1:20)
             // ============================================
@@ -680,7 +681,7 @@ export class SoundManager {
             { freq: 493.88, duration: 0.33, volume: 0.8, intensity: 2 },
             { freq: 440.00, duration: 0.33, volume: 0.8, intensity: 2, bass: 'chord2' },
             { freq: 392.00, duration: 0.66, volume: 0.8, intensity: 2 },
-            
+
             // Phrase 2 - Descending into darkness
             { freq: 329.63, duration: 0.33, volume: 0.85, intensity: 2, bass: 'arp' },
             { freq: 392.00, duration: 0.33, volume: 0.85, intensity: 2 },
@@ -690,7 +691,7 @@ export class SoundManager {
             { freq: 493.88, duration: 0.33, volume: 0.85, intensity: 2 },
             { freq: 440.00, duration: 0.33, volume: 0.85, intensity: 2, bass: 'chord2' },
             { freq: 329.63, duration: 0.66, volume: 0.85, intensity: 2 },
-            
+
             // Phrase 3 - Climbing tension
             { freq: 440.00, duration: 0.33, volume: 0.9, intensity: 2, bass: 'chord2' },
             { freq: 493.88, duration: 0.33, volume: 0.9, intensity: 2 },
@@ -700,7 +701,7 @@ export class SoundManager {
             { freq: 659.25, duration: 0.33, volume: 0.9, intensity: 2 },
             { freq: 587.33, duration: 0.33, volume: 0.9, intensity: 2, bass: 'chord2' },
             { freq: 440.00, duration: 0.66, volume: 0.9, intensity: 2 },
-            
+
             // Phrase 4 - Dark resolution
             { freq: 329.63, duration: 0.5, volume: 0.9, intensity: 2, bass: 'chord3' },
             { freq: 440.00, duration: 0.5, volume: 0.9, intensity: 2 },
@@ -709,7 +710,7 @@ export class SoundManager {
             { freq: 440.00, duration: 0.5, volume: 0.9, intensity: 2, bass: 'chord2' },
             { freq: 493.88, duration: 0.5, volume: 0.9, intensity: 2 },
             { freq: 659.25, duration: 1.5, volume: 1.0, intensity: 2, bass: 'chord3' },  // E5 - sustained
-            
+
             // Theme A variation - darker
             { freq: 587.33, duration: 0.33, volume: 0.8, intensity: 2, bass: 'chord2' },
             { freq: 659.25, duration: 0.33, volume: 0.8, intensity: 2 },
@@ -719,7 +720,7 @@ export class SoundManager {
             { freq: 659.25, duration: 0.33, volume: 0.8, intensity: 2 },
             { freq: 587.33, duration: 0.33, volume: 0.8, intensity: 2, bass: 'chord2' },
             { freq: 493.88, duration: 0.66, volume: 0.8, intensity: 2 },
-            
+
             { freq: 440.00, duration: 0.33, volume: 0.8, intensity: 2, bass: 'arp' },
             { freq: 493.88, duration: 0.33, volume: 0.8, intensity: 2 },
             { freq: 587.33, duration: 0.33, volume: 0.8, intensity: 2, bass: 'arp' },
@@ -728,9 +729,9 @@ export class SoundManager {
             { freq: 659.25, duration: 0.33, volume: 0.8, intensity: 2 },
             { freq: 587.33, duration: 0.33, volume: 0.8, intensity: 2, bass: 'chord2' },
             { freq: 440.00, duration: 0.66, volume: 0.8, intensity: 2 },
-            
+
             { freq: 0, duration: 0.5, volume: 0, intensity: 0 },  // REST
-            
+
             // ============================================
             // DARK BRIDGE B - Even Darker (1:20-2:15)
             // ============================================
@@ -743,7 +744,7 @@ export class SoundManager {
             { freq: 440.00, duration: 0.33, volume: 0.6, intensity: 1.2 },
             { freq: 392.00, duration: 0.33, volume: 0.6, intensity: 1.2, bass: 'chord2' },
             { freq: 329.63, duration: 0.66, volume: 0.6, intensity: 1.2 },
-            
+
             // Phrase 2 - Deep descent
             { freq: 293.66, duration: 0.33, volume: 0.65, intensity: 1.5, bass: 'chord2' },
             { freq: 261.63, duration: 0.33, volume: 0.65, intensity: 1.5 },  // C4 - darker
@@ -753,7 +754,7 @@ export class SoundManager {
             { freq: 220.00, duration: 0.33, volume: 0.65, intensity: 1.5 },
             { freq: 246.94, duration: 0.33, volume: 0.65, intensity: 1.5, bass: 'chord2' },
             { freq: 293.66, duration: 0.66, volume: 0.65, intensity: 1.5 },
-            
+
             // Phrase 3 - Rising from depths (crescendo)
             { freq: 293.66, duration: 0.33, volume: 0.7, intensity: 1.6, bass: 'chord2' },
             { freq: 329.63, duration: 0.33, volume: 0.75, intensity: 1.7 },
@@ -763,7 +764,7 @@ export class SoundManager {
             { freq: 440.00, duration: 0.33, volume: 0.85, intensity: 1.9 },
             { freq: 392.00, duration: 0.33, volume: 0.8, intensity: 1.8, bass: 'chord2' },
             { freq: 329.63, duration: 0.66, volume: 0.75, intensity: 1.7 },
-            
+
             // Phrase 4 - Transition with dissonance
             { freq: 311.13, duration: 0.33, volume: 0.8, intensity: 2, bass: 'chord2' },  // Eb4 - tritone
             { freq: 329.63, duration: 0.33, volume: 0.85, intensity: 2 },
@@ -773,7 +774,7 @@ export class SoundManager {
             { freq: 493.88, duration: 0.33, volume: 1.0, intensity: 2 },
             { freq: 587.33, duration: 0.66, volume: 1.0, intensity: 2, bass: 'chord3' },
             { freq: 0, duration: 0.5, volume: 0, intensity: 0 },  // REST
-            
+
             // ============================================
             // DARK THEME C - Ominous Arpeggios (2:15-3:05)
             // ============================================
@@ -785,7 +786,7 @@ export class SoundManager {
             { freq: 493.88, duration: 0.25, volume: 1.0, intensity: 2, bass: 'arp' },
             { freq: 392.00, duration: 0.25, volume: 1.0, intensity: 2 },
             { freq: 329.63, duration: 0.5, volume: 1.0, intensity: 2, bass: 'chord3' },
-            
+
             // B diminished arpeggio (darker)
             { freq: 246.94, duration: 0.25, volume: 1.0, intensity: 2, bass: 'arp' },  // B3
             { freq: 293.66, duration: 0.25, volume: 1.0, intensity: 2 },  // D4
@@ -794,7 +795,7 @@ export class SoundManager {
             { freq: 349.23, duration: 0.25, volume: 1.0, intensity: 2, bass: 'arp' },
             { freq: 293.66, duration: 0.25, volume: 1.0, intensity: 2 },
             { freq: 246.94, duration: 0.5, volume: 1.0, intensity: 2, bass: 'chord3' },
-            
+
             // A minor arpeggio
             { freq: 220.00, duration: 0.25, volume: 1.0, intensity: 2, bass: 'arp' },  // A3
             { freq: 261.63, duration: 0.25, volume: 1.0, intensity: 2 },  // C4
@@ -803,7 +804,7 @@ export class SoundManager {
             { freq: 329.63, duration: 0.25, volume: 1.0, intensity: 2, bass: 'arp' },
             { freq: 261.63, duration: 0.25, volume: 1.0, intensity: 2 },
             { freq: 220.00, duration: 0.5, volume: 1.0, intensity: 2, bass: 'chord3' },
-            
+
             // F# diminished arpeggio (very dark)
             { freq: 185.00, duration: 0.25, volume: 1.0, intensity: 2, bass: 'arp' },  // F#3
             { freq: 220.00, duration: 0.25, volume: 1.0, intensity: 2 },  // A3
@@ -812,7 +813,7 @@ export class SoundManager {
             { freq: 261.63, duration: 0.25, volume: 1.0, intensity: 2, bass: 'arp' },
             { freq: 220.00, duration: 0.25, volume: 1.0, intensity: 2 },
             { freq: 185.00, duration: 0.5, volume: 1.0, intensity: 2, bass: 'chord3' },
-            
+
             // Rising chromatic tension
             { freq: 329.63, duration: 0.2, volume: 1.0, intensity: 2, bass: 'chord2' },
             { freq: 349.23, duration: 0.2, volume: 1.0, intensity: 2 },  // F4
@@ -828,7 +829,7 @@ export class SoundManager {
             { freq: 698.46, duration: 0.2, volume: 1.0, intensity: 2 },  // F5
             { freq: 783.99, duration: 0.66, volume: 1.1, intensity: 2, bass: 'chord3' },  // G5
             { freq: 0, duration: 0.33, volume: 0, intensity: 0 },  // REST
-            
+
             // ============================================
             // DARK BRIDGE D - Quiet Dread (3:05-3:50)
             // ============================================
@@ -837,18 +838,18 @@ export class SoundManager {
             { freq: 587.33, duration: 0.66, volume: 0.3, intensity: 0.2 },
             { freq: 659.25, duration: 0.66, volume: 0.3, intensity: 0.2, bass: 'single' },
             { freq: 587.33, duration: 0.66, volume: 0.3, intensity: 0.2 },
-            
+
             { freq: 493.88, duration: 0.66, volume: 0.35, intensity: 0.3, bass: 'single' },
             { freq: 392.00, duration: 0.66, volume: 0.35, intensity: 0.3 },
             { freq: 440.00, duration: 0.66, volume: 0.35, intensity: 0.3, bass: 'single' },
             { freq: 493.88, duration: 1.33, volume: 0.35, intensity: 0.3 },
-            
+
             // Slowly building dread
             { freq: 329.63, duration: 0.66, volume: 0.4, intensity: 0.5, bass: 'chord2' },
             { freq: 392.00, duration: 0.66, volume: 0.45, intensity: 0.6 },
             { freq: 493.88, duration: 0.66, volume: 0.5, intensity: 0.7, bass: 'chord2' },
             { freq: 659.25, duration: 0.66, volume: 0.55, intensity: 0.8 },
-            
+
             { freq: 587.33, duration: 0.66, volume: 0.6, intensity: 0.9, bass: 'chord2' },
             { freq: 523.25, duration: 0.66, volume: 0.65, intensity: 1.0 },
             { freq: 493.88, duration: 0.66, volume: 0.7, intensity: 1.1, bass: 'chord2' },
@@ -856,9 +857,9 @@ export class SoundManager {
             { freq: 392.00, duration: 0.66, volume: 0.8, intensity: 1.5, bass: 'chord3' },
             { freq: 329.63, duration: 0.66, volume: 0.85, intensity: 1.7 },
             { freq: 293.66, duration: 0.66, volume: 0.9, intensity: 1.9, bass: 'chord3' },
-            
+
             { freq: 0, duration: 0.66, volume: 0, intensity: 0 },  // REST - dramatic pause
-            
+
             // ============================================
             // DARK THEME A RETURN - Full Power (3:50-4:40)
             // ============================================
@@ -871,7 +872,7 @@ export class SoundManager {
             { freq: 493.88, duration: 0.33, volume: 1.1, intensity: 2 },
             { freq: 440.00, duration: 0.33, volume: 1.1, intensity: 2, bass: 'chord3' },
             { freq: 392.00, duration: 0.66, volume: 1.1, intensity: 2 },
-            
+
             // Phrase 2
             { freq: 329.63, duration: 0.33, volume: 1.15, intensity: 2, bass: 'arp' },
             { freq: 392.00, duration: 0.33, volume: 1.15, intensity: 2 },
@@ -881,7 +882,7 @@ export class SoundManager {
             { freq: 493.88, duration: 0.33, volume: 1.15, intensity: 2 },
             { freq: 440.00, duration: 0.33, volume: 1.15, intensity: 2, bass: 'chord3' },
             { freq: 329.63, duration: 0.66, volume: 1.15, intensity: 2 },
-            
+
             // Phrase 3 - High intensity
             { freq: 587.33, duration: 0.33, volume: 1.2, intensity: 2, bass: 'chord3' },
             { freq: 659.25, duration: 0.33, volume: 1.2, intensity: 2 },
@@ -891,7 +892,7 @@ export class SoundManager {
             { freq: 880.00, duration: 0.33, volume: 1.2, intensity: 2 },
             { freq: 783.99, duration: 0.33, volume: 1.2, intensity: 2, bass: 'chord3' },
             { freq: 659.25, duration: 0.66, volume: 1.2, intensity: 2 },
-            
+
             // Phrase 4 - Building to finale
             { freq: 587.33, duration: 0.33, volume: 1.25, intensity: 2, bass: 'chord3' },
             { freq: 659.25, duration: 0.33, volume: 1.25, intensity: 2 },
@@ -901,9 +902,9 @@ export class SoundManager {
             { freq: 392.00, duration: 0.66, volume: 1.3, intensity: 2, bass: 'chord3' },
             { freq: 440.00, duration: 0.66, volume: 1.3, intensity: 2, bass: 'chord3' },
             { freq: 493.88, duration: 0.66, volume: 1.3, intensity: 2, bass: 'chord3' },
-            
+
             { freq: 0, duration: 0.5, volume: 0, intensity: 0 },  // REST
-            
+
             // ============================================
             // DARK FINALE - Epic Doom (4:40-5:15)
             // ============================================
@@ -915,7 +916,7 @@ export class SoundManager {
             { freq: 493.88, duration: 0.25, volume: 1.3, intensity: 2 },
             { freq: 392.00, duration: 0.25, volume: 1.3, intensity: 2, bass: 'chord3' },
             { freq: 329.63, duration: 0.5, volume: 1.3, intensity: 2, bass: 'chord3' },
-            
+
             { freq: 392.00, duration: 0.25, volume: 1.3, intensity: 2, bass: 'chord3' },
             { freq: 493.88, duration: 0.25, volume: 1.3, intensity: 2 },
             { freq: 587.33, duration: 0.25, volume: 1.3, intensity: 2, bass: 'chord3' },
@@ -923,7 +924,7 @@ export class SoundManager {
             { freq: 587.33, duration: 0.25, volume: 1.3, intensity: 2 },
             { freq: 493.88, duration: 0.25, volume: 1.3, intensity: 2, bass: 'chord3' },
             { freq: 392.00, duration: 0.5, volume: 1.3, intensity: 2, bass: 'chord3' },
-            
+
             // Rising to dark climax
             { freq: 659.25, duration: 0.33, volume: 1.4, intensity: 2, bass: 'chord3' },
             { freq: 739.99, duration: 0.33, volume: 1.4, intensity: 2 },  // F#5
@@ -933,7 +934,7 @@ export class SoundManager {
             { freq: 880.00, duration: 0.33, volume: 1.4, intensity: 2 },
             { freq: 783.99, duration: 0.33, volume: 1.4, intensity: 2, bass: 'chord3' },
             { freq: 659.25, duration: 0.66, volume: 1.4, intensity: 2, bass: 'chord3' },
-            
+
             // Final descent into darkness
             { freq: 587.33, duration: 0.66, volume: 1.3, intensity: 2, bass: 'chord3' },
             { freq: 493.88, duration: 0.66, volume: 1.3, intensity: 2, bass: 'chord3' },
@@ -943,9 +944,9 @@ export class SoundManager {
             { freq: 293.66, duration: 1.0, volume: 1.3, intensity: 2, bass: 'chord3' },  // D4
             { freq: 329.63, duration: 1.5, volume: 1.4, intensity: 2, bass: 'chord3' },  // E4 - resolution
             { freq: 261.63, duration: 2.5, volume: 1.5, intensity: 2, bass: 'chord3' },  // C4 - dark final sustain!
-            
+
             // Silence before loop
-            { freq: 0, duration: 1.33, volume: 0, intensity: 0 },
+            { freq: 0, duration: 1.33, volume: 0, intensity: 0 }
         ];
 
         let noteIndex = 0;
@@ -957,16 +958,16 @@ export class SoundManager {
             if (!this.musicPlaying || !this.audioContext) {return;}
 
             const note = melody[noteIndex];
-            
+
             // Handle REST (freq 0)
             if (note.freq === 0) {
                 noteIndex = (noteIndex + 1) % melody.length;
                 return;
             }
-            
+
             // Get dynamic volume for this note
             const noteVolume = this.musicVolume * (note.volume || 1.0);
-            
+
             // Create oscillator for melody (square wave for classic 8-bit sound)
             const oscillator = this.audioContext.createOscillator();
             const gainNode = this.audioContext.createGain();
@@ -988,56 +989,57 @@ export class SoundManager {
             // Add bass based on intensity and bass type
             const intensity = note.intensity !== undefined ? note.intensity : 1;
             const bassType = note.bass || 'single';
-            
+
             if (intensity > 0 && noteIndex % 2 === 0) {
                 const bassVolume = noteVolume * 0.25 * intensity;
                 const rootFreq = note.freq / 2;
-                
+
                 // Frequency ratios for chord tones
                 const major3rd = rootFreq * 1.26;
                 const minor3rd = rootFreq * 1.189;
                 const perfect5th = rootFreq * 1.498;
-                
+
                 // Dark theme: Always use minor 3rd for darker sound
                 const thirdFreq = minor3rd;
-                
+
                 const createBassOsc = (freq, startTime, duration, type = 'sawtooth') => {
                     const osc = this.audioContext.createOscillator();
                     const gain = this.audioContext.createGain();
-                    
+
                     osc.connect(gain);
                     gain.connect(this.audioContext.destination);
-                    
+
                     osc.type = type;
                     osc.frequency.setValueAtTime(freq, startTime);
-                    
+
                     gain.gain.setValueAtTime(bassVolume, startTime);
                     gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration * 0.8);
-                    
+
                     osc.start(startTime);
                     osc.stop(startTime + duration);
                 };
-                
+
                 switch (bassType) {
-                    case 'chord2':
-                        createBassOsc(rootFreq, this.audioContext.currentTime, noteTime);
-                        createBassOsc(perfect5th, this.audioContext.currentTime, noteTime);
-                        break;
-                    case 'chord3':
-                        createBassOsc(rootFreq, this.audioContext.currentTime, noteTime);
-                        createBassOsc(thirdFreq, this.audioContext.currentTime, noteTime);
-                        createBassOsc(perfect5th, this.audioContext.currentTime, noteTime);
-                        break;
-                    case 'arp':
-                        const arpDuration = noteTime / 3;
-                        createBassOsc(rootFreq, this.audioContext.currentTime, arpDuration);
-                        createBassOsc(thirdFreq, this.audioContext.currentTime + arpDuration, arpDuration);
-                        createBassOsc(perfect5th, this.audioContext.currentTime + arpDuration * 2, arpDuration);
-                        break;
-                    case 'single':
-                    default:
-                        createBassOsc(rootFreq, this.audioContext.currentTime, noteTime);
-                        break;
+                case 'chord2':
+                    createBassOsc(rootFreq, this.audioContext.currentTime, noteTime);
+                    createBassOsc(perfect5th, this.audioContext.currentTime, noteTime);
+                    break;
+                case 'chord3':
+                    createBassOsc(rootFreq, this.audioContext.currentTime, noteTime);
+                    createBassOsc(thirdFreq, this.audioContext.currentTime, noteTime);
+                    createBassOsc(perfect5th, this.audioContext.currentTime, noteTime);
+                    break;
+                case 'arp': {
+                    const arpDuration = noteTime / 3;
+                    createBassOsc(rootFreq, this.audioContext.currentTime, arpDuration);
+                    createBassOsc(thirdFreq, this.audioContext.currentTime + arpDuration, arpDuration);
+                    createBassOsc(perfect5th, this.audioContext.currentTime + arpDuration * 2, arpDuration);
+                    break;
+                }
+                case 'single':
+                default:
+                    createBassOsc(rootFreq, this.audioContext.currentTime, noteTime);
+                    break;
                 }
             }
 
@@ -1049,7 +1051,7 @@ export class SoundManager {
         let lastNoteDuration = melody[0].duration * beatDuration * 1000;
         const scheduleNextNote = () => {
             if (!this.musicPlaying) {return;}
-            
+
             playMelodyNote();
             const currentNoteDuration = melody[noteIndex === 0 ? melody.length - 1 : noteIndex - 1].duration * beatDuration * 1000;
             this.musicInterval = setTimeout(scheduleNextNote, currentNoteDuration);
@@ -1076,7 +1078,7 @@ export class SoundManager {
         // Key: D major (D4 = 293.66 Hz as root)
         // Tempo: 100 BPM - relaxed, not hectic
         // Focus: Steady groove, catchy patterns, space to breathe
-        
+
         const melody = [
             // ============================================
             // GROOVE INTRO (0:00-0:25) - Establish the beat
@@ -1086,13 +1088,13 @@ export class SoundManager {
             { freq: 0, duration: 0.5, volume: 0, intensity: 0 },  // REST
             { freq: 587.33, duration: 0.5, volume: 0.6, intensity: 1, bass: 'chord2' },
             { freq: 0, duration: 0.5, volume: 0, intensity: 0 },  // REST
-            
+
             { freq: 659.25, duration: 0.5, volume: 0.65, intensity: 1, bass: 'chord2' },  // E5
             { freq: 587.33, duration: 0.25, volume: 0.6, intensity: 1, bass: 'single' },
             { freq: 0, duration: 0.25, volume: 0, intensity: 0 },  // REST
             { freq: 739.99, duration: 0.5, volume: 0.65, intensity: 1, bass: 'chord2' },  // F#5
             { freq: 0, duration: 0.5, volume: 0, intensity: 0 },  // REST
-            
+
             // ============================================
             // MAIN GROOVE A (0:25-1:10) - The catchy pattern
             // ============================================
@@ -1101,40 +1103,40 @@ export class SoundManager {
             { freq: 0, duration: 0.25, volume: 0, intensity: 0 },  // REST
             { freq: 659.25, duration: 0.25, volume: 0.7, intensity: 1, bass: 'single' },  // E5
             { freq: 587.33, duration: 0.25, volume: 0.7, intensity: 1, bass: 'chord2' },
-            
+
             { freq: 739.99, duration: 0.5, volume: 0.75, intensity: 1, bass: 'chord2' },  // F#5
             { freq: 659.25, duration: 0.25, volume: 0.7, intensity: 1, bass: 'single' },
             { freq: 0, duration: 0.25, volume: 0, intensity: 0 },  // REST
-            
+
             // Bar 2 - variation
             { freq: 587.33, duration: 0.25, volume: 0.7, intensity: 1, bass: 'chord2' },
             { freq: 0, duration: 0.25, volume: 0, intensity: 0 },
             { freq: 880.00, duration: 0.25, volume: 0.75, intensity: 1, bass: 'chord2' },  // A5
             { freq: 739.99, duration: 0.25, volume: 0.7, intensity: 1, bass: 'single' },
-            
+
             { freq: 659.25, duration: 0.5, volume: 0.7, intensity: 1, bass: 'chord2' },
             { freq: 587.33, duration: 0.25, volume: 0.7, intensity: 1, bass: 'single' },
             { freq: 0, duration: 0.25, volume: 0, intensity: 0 },
-            
+
             // Bar 3
             { freq: 587.33, duration: 0.25, volume: 0.7, intensity: 1, bass: 'chord2' },
             { freq: 0, duration: 0.25, volume: 0, intensity: 0 },
             { freq: 659.25, duration: 0.25, volume: 0.7, intensity: 1, bass: 'single' },
             { freq: 739.99, duration: 0.25, volume: 0.7, intensity: 1, bass: 'chord2' },
-            
+
             { freq: 880.00, duration: 0.5, volume: 0.75, intensity: 1, bass: 'chord2' },
             { freq: 739.99, duration: 0.25, volume: 0.7, intensity: 1, bass: 'single' },
             { freq: 0, duration: 0.25, volume: 0, intensity: 0 },
-            
+
             // Bar 4 - resolution
             { freq: 659.25, duration: 0.25, volume: 0.7, intensity: 1, bass: 'chord2' },
             { freq: 587.33, duration: 0.25, volume: 0.7, intensity: 1, bass: 'single' },
             { freq: 0, duration: 0.25, volume: 0, intensity: 0 },
             { freq: 739.99, duration: 0.25, volume: 0.75, intensity: 1, bass: 'chord2' },
-            
+
             { freq: 587.33, duration: 0.5, volume: 0.7, intensity: 1, bass: 'chord3' },
             { freq: 0, duration: 0.5, volume: 0, intensity: 0 },  // REST
-            
+
             // ============================================
             // BRIDGE B (1:10-1:55) - Slight variation
             // ============================================
@@ -1143,40 +1145,40 @@ export class SoundManager {
             { freq: 0, duration: 0.25, volume: 0, intensity: 0 },
             { freq: 880.00, duration: 0.25, volume: 0.75, intensity: 1, bass: 'single' },  // A5
             { freq: 739.99, duration: 0.25, volume: 0.75, intensity: 1, bass: 'chord2' },
-            
+
             { freq: 987.77, duration: 0.5, volume: 0.8, intensity: 1, bass: 'chord2' },  // B5
             { freq: 880.00, duration: 0.25, volume: 0.75, intensity: 1, bass: 'single' },
             { freq: 0, duration: 0.25, volume: 0, intensity: 0 },
-            
+
             // Bar 2
             { freq: 739.99, duration: 0.25, volume: 0.75, intensity: 1, bass: 'chord2' },
             { freq: 0, duration: 0.25, volume: 0, intensity: 0 },
             { freq: 1174.66, duration: 0.25, volume: 0.8, intensity: 1, bass: 'chord2' },  // D6
             { freq: 987.77, duration: 0.25, volume: 0.75, intensity: 1, bass: 'single' },
-            
+
             { freq: 880.00, duration: 0.5, volume: 0.75, intensity: 1, bass: 'chord2' },
             { freq: 739.99, duration: 0.25, volume: 0.75, intensity: 1, bass: 'single' },
             { freq: 0, duration: 0.25, volume: 0, intensity: 0 },
-            
+
             // Bar 3
             { freq: 739.99, duration: 0.25, volume: 0.75, intensity: 1, bass: 'chord2' },
             { freq: 0, duration: 0.25, volume: 0, intensity: 0 },
             { freq: 880.00, duration: 0.25, volume: 0.75, intensity: 1, bass: 'single' },
             { freq: 987.77, duration: 0.25, volume: 0.8, intensity: 1, bass: 'chord2' },
-            
+
             { freq: 1174.66, duration: 0.5, volume: 0.85, intensity: 1, bass: 'chord2' },
             { freq: 987.77, duration: 0.25, volume: 0.8, intensity: 1, bass: 'single' },
             { freq: 0, duration: 0.25, volume: 0, intensity: 0 },
-            
+
             // Bar 4 - back to root
             { freq: 880.00, duration: 0.25, volume: 0.75, intensity: 1, bass: 'chord2' },
             { freq: 739.99, duration: 0.25, volume: 0.75, intensity: 1, bass: 'single' },
             { freq: 0, duration: 0.25, volume: 0, intensity: 0 },
             { freq: 659.25, duration: 0.25, volume: 0.75, intensity: 1, bass: 'chord2' },
-            
+
             { freq: 587.33, duration: 0.5, volume: 0.75, intensity: 1, bass: 'chord3' },
             { freq: 0, duration: 0.5, volume: 0, intensity: 0 },  // REST
-            
+
             // ============================================
             // GROOVE C (1:55-2:40) - Main groove returns
             // ============================================
@@ -1185,40 +1187,40 @@ export class SoundManager {
             { freq: 0, duration: 0.25, volume: 0, intensity: 0 },
             { freq: 659.25, duration: 0.25, volume: 0.8, intensity: 1, bass: 'single' },
             { freq: 587.33, duration: 0.25, volume: 0.8, intensity: 1, bass: 'chord2' },
-            
+
             { freq: 739.99, duration: 0.5, volume: 0.85, intensity: 1, bass: 'chord2' },
             { freq: 659.25, duration: 0.25, volume: 0.8, intensity: 1, bass: 'single' },
             { freq: 0, duration: 0.25, volume: 0, intensity: 0 },
-            
+
             // Bar 2
             { freq: 587.33, duration: 0.25, volume: 0.8, intensity: 1, bass: 'chord2' },
             { freq: 0, duration: 0.25, volume: 0, intensity: 0 },
             { freq: 880.00, duration: 0.25, volume: 0.85, intensity: 1, bass: 'chord2' },
             { freq: 739.99, duration: 0.25, volume: 0.8, intensity: 1, bass: 'single' },
-            
+
             { freq: 659.25, duration: 0.5, volume: 0.8, intensity: 1, bass: 'chord2' },
             { freq: 587.33, duration: 0.25, volume: 0.8, intensity: 1, bass: 'single' },
             { freq: 0, duration: 0.25, volume: 0, intensity: 0 },
-            
+
             // Bar 3
             { freq: 587.33, duration: 0.25, volume: 0.8, intensity: 1, bass: 'chord2' },
             { freq: 0, duration: 0.25, volume: 0, intensity: 0 },
             { freq: 659.25, duration: 0.25, volume: 0.8, intensity: 1, bass: 'single' },
             { freq: 739.99, duration: 0.25, volume: 0.8, intensity: 1, bass: 'chord2' },
-            
+
             { freq: 880.00, duration: 0.5, volume: 0.85, intensity: 1, bass: 'chord2' },
             { freq: 739.99, duration: 0.25, volume: 0.8, intensity: 1, bass: 'single' },
             { freq: 0, duration: 0.25, volume: 0, intensity: 0 },
-            
+
             // Bar 4
             { freq: 659.25, duration: 0.25, volume: 0.8, intensity: 1, bass: 'chord2' },
             { freq: 587.33, duration: 0.25, volume: 0.8, intensity: 1, bass: 'single' },
             { freq: 0, duration: 0.25, volume: 0, intensity: 0 },
             { freq: 739.99, duration: 0.25, volume: 0.85, intensity: 1, bass: 'chord2' },
-            
+
             { freq: 587.33, duration: 0.5, volume: 0.8, intensity: 1, bass: 'chord3' },
             { freq: 0, duration: 0.5, volume: 0, intensity: 0 },  // REST
-            
+
             // ============================================
             // BREAKDOWN D (2:40-3:25) - Minimal groove
             // ============================================
@@ -1227,27 +1229,27 @@ export class SoundManager {
             { freq: 0, duration: 0.5, volume: 0, intensity: 0 },
             { freq: 587.33, duration: 0.5, volume: 0.5, intensity: 0.5, bass: 'single' },
             { freq: 0, duration: 0.5, volume: 0, intensity: 0 },
-            
+
             { freq: 659.25, duration: 0.5, volume: 0.55, intensity: 0.7, bass: 'single' },
             { freq: 0, duration: 0.5, volume: 0, intensity: 0 },
             { freq: 739.99, duration: 0.5, volume: 0.55, intensity: 0.7, bass: 'single' },
             { freq: 0, duration: 0.5, volume: 0, intensity: 0 },
-            
+
             // Building back
             { freq: 587.33, duration: 0.25, volume: 0.6, intensity: 0.8, bass: 'chord2' },
             { freq: 0, duration: 0.25, volume: 0, intensity: 0 },
             { freq: 659.25, duration: 0.25, volume: 0.6, intensity: 0.8, bass: 'single' },
             { freq: 0, duration: 0.25, volume: 0, intensity: 0 },
-            
+
             { freq: 739.99, duration: 0.25, volume: 0.65, intensity: 0.9, bass: 'chord2' },
             { freq: 0, duration: 0.25, volume: 0, intensity: 0 },
             { freq: 880.00, duration: 0.25, volume: 0.7, intensity: 1, bass: 'chord2' },
             { freq: 0, duration: 0.25, volume: 0, intensity: 0 },
-            
+
             { freq: 739.99, duration: 0.5, volume: 0.75, intensity: 1, bass: 'chord2' },
             { freq: 659.25, duration: 0.25, volume: 0.7, intensity: 1, bass: 'single' },
             { freq: 0, duration: 0.25, volume: 0, intensity: 0 },
-            
+
             // ============================================
             // GROOVE A RETURN (3:25-4:10) - Full energy
             // ============================================
@@ -1255,40 +1257,40 @@ export class SoundManager {
             { freq: 0, duration: 0.25, volume: 0, intensity: 0 },
             { freq: 659.25, duration: 0.25, volume: 0.85, intensity: 1, bass: 'single' },
             { freq: 587.33, duration: 0.25, volume: 0.85, intensity: 1, bass: 'chord2' },
-            
+
             { freq: 739.99, duration: 0.5, volume: 0.9, intensity: 1, bass: 'chord2' },
             { freq: 659.25, duration: 0.25, volume: 0.85, intensity: 1, bass: 'single' },
             { freq: 0, duration: 0.25, volume: 0, intensity: 0 },
-            
+
             // Bar 2
             { freq: 587.33, duration: 0.25, volume: 0.85, intensity: 1, bass: 'chord2' },
             { freq: 0, duration: 0.25, volume: 0, intensity: 0 },
             { freq: 880.00, duration: 0.25, volume: 0.9, intensity: 1, bass: 'chord2' },
             { freq: 739.99, duration: 0.25, volume: 0.85, intensity: 1, bass: 'single' },
-            
+
             { freq: 659.25, duration: 0.5, volume: 0.85, intensity: 1, bass: 'chord2' },
             { freq: 587.33, duration: 0.25, volume: 0.85, intensity: 1, bass: 'single' },
             { freq: 0, duration: 0.25, volume: 0, intensity: 0 },
-            
+
             // Bar 3
             { freq: 587.33, duration: 0.25, volume: 0.85, intensity: 1, bass: 'chord2' },
             { freq: 0, duration: 0.25, volume: 0, intensity: 0 },
             { freq: 659.25, duration: 0.25, volume: 0.85, intensity: 1, bass: 'single' },
             { freq: 739.99, duration: 0.25, volume: 0.85, intensity: 1, bass: 'chord2' },
-            
+
             { freq: 880.00, duration: 0.5, volume: 0.9, intensity: 1, bass: 'chord2' },
             { freq: 739.99, duration: 0.25, volume: 0.85, intensity: 1, bass: 'single' },
             { freq: 0, duration: 0.25, volume: 0, intensity: 0 },
-            
+
             // Bar 4
             { freq: 659.25, duration: 0.25, volume: 0.85, intensity: 1, bass: 'chord2' },
             { freq: 587.33, duration: 0.25, volume: 0.85, intensity: 1, bass: 'single' },
             { freq: 0, duration: 0.25, volume: 0, intensity: 0 },
             { freq: 739.99, duration: 0.25, volume: 0.9, intensity: 1, bass: 'chord2' },
-            
+
             { freq: 587.33, duration: 0.5, volume: 0.85, intensity: 1, bass: 'chord3' },
             { freq: 0, duration: 0.5, volume: 0, intensity: 0 },  // REST
-            
+
             // ============================================
             // OUTRO (4:10-4:30) - Wind down
             // ============================================
@@ -1296,12 +1298,12 @@ export class SoundManager {
             { freq: 0, duration: 0.5, volume: 0, intensity: 0 },
             { freq: 659.25, duration: 0.5, volume: 0.7, intensity: 1, bass: 'chord2' },
             { freq: 0, duration: 0.5, volume: 0, intensity: 0 },
-            
+
             { freq: 739.99, duration: 1.0, volume: 0.75, intensity: 1, bass: 'chord3' },
             { freq: 587.33, duration: 1.0, volume: 0.8, intensity: 1, bass: 'chord3' },
-            
+
             // Brief silence before loop
-            { freq: 0, duration: 1.0, volume: 0, intensity: 0 },
+            { freq: 0, duration: 1.0, volume: 0, intensity: 0 }
         ];
 
         let noteIndex = 0;
@@ -1313,16 +1315,16 @@ export class SoundManager {
             if (!this.musicPlaying || !this.audioContext) {return;}
 
             const note = melody[noteIndex];
-            
+
             // Handle REST (freq 0)
             if (note.freq === 0) {
                 noteIndex = (noteIndex + 1) % melody.length;
                 return;
             }
-            
+
             // Get dynamic volume for this note
             const noteVolume = this.musicVolume * (note.volume || 1.0);
-            
+
             // Create oscillator for melody (square wave for classic 8-bit sound)
             const oscillator = this.audioContext.createOscillator();
             const gainNode = this.audioContext.createGain();
@@ -1344,47 +1346,47 @@ export class SoundManager {
             // Add bass based on intensity and bass type
             const intensity = note.intensity !== undefined ? note.intensity : 1;
             const bassType = note.bass || 'single';
-            
+
             if (intensity > 0 && noteIndex % 2 === 0) {
                 const bassVolume = noteVolume * 0.25 * intensity;
                 const rootFreq = note.freq / 2;
-                
+
                 // Frequency ratios for chord tones
                 const major3rd = rootFreq * 1.26;
                 const perfect5th = rootFreq * 1.498;
-                
+
                 const createBassOsc = (freq, startTime, duration, type = 'sawtooth') => {
                     const osc = this.audioContext.createOscillator();
                     const gain = this.audioContext.createGain();
-                    
+
                     osc.connect(gain);
                     gain.connect(this.audioContext.destination);
-                    
+
                     osc.type = type;
                     osc.frequency.setValueAtTime(freq, startTime);
-                    
+
                     // Smooth envelope for relaxed feel
                     gain.gain.setValueAtTime(bassVolume, startTime);
                     gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration * 0.75);
-                    
+
                     osc.start(startTime);
                     osc.stop(startTime + duration);
                 };
-                
+
                 switch (bassType) {
-                    case 'chord2':
-                        createBassOsc(rootFreq, this.audioContext.currentTime, noteTime);
-                        createBassOsc(perfect5th, this.audioContext.currentTime, noteTime);
-                        break;
-                    case 'chord3':
-                        createBassOsc(rootFreq, this.audioContext.currentTime, noteTime);
-                        createBassOsc(major3rd, this.audioContext.currentTime, noteTime);
-                        createBassOsc(perfect5th, this.audioContext.currentTime, noteTime);
-                        break;
-                    case 'single':
-                    default:
-                        createBassOsc(rootFreq, this.audioContext.currentTime, noteTime);
-                        break;
+                case 'chord2':
+                    createBassOsc(rootFreq, this.audioContext.currentTime, noteTime);
+                    createBassOsc(perfect5th, this.audioContext.currentTime, noteTime);
+                    break;
+                case 'chord3':
+                    createBassOsc(rootFreq, this.audioContext.currentTime, noteTime);
+                    createBassOsc(major3rd, this.audioContext.currentTime, noteTime);
+                    createBassOsc(perfect5th, this.audioContext.currentTime, noteTime);
+                    break;
+                case 'single':
+                default:
+                    createBassOsc(rootFreq, this.audioContext.currentTime, noteTime);
+                    break;
                 }
             }
 
@@ -1396,7 +1398,7 @@ export class SoundManager {
         let lastNoteDuration = melody[0].duration * beatDuration * 1000;
         const scheduleNextNote = () => {
             if (!this.musicPlaying) {return;}
-            
+
             playMelodyNote();
             const currentNoteDuration = melody[noteIndex === 0 ? melody.length - 1 : noteIndex - 1].duration * beatDuration * 1000;
             this.musicInterval = setTimeout(scheduleNextNote, currentNoteDuration);

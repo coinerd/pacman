@@ -42,7 +42,7 @@ export default class GameModel {
      * @param {number} config.highScore - High score
      * @param {Array<Array<number>>} config.maze - Optional maze override
      * @param {Array<Array<number>>} config.pelletGrid - Optional pellet grid override
-     * @param {MazePreset} [config.mazePreset='default'] - Maze-Preset für Generierung
+     * @param {MazePreset} [config.mazePreset='easy'] - Maze-Preset für Generierung
      * @param {SeedMode} [config.seedMode='level_sequence'] - Seed-Modus für Randomisierung
      * @param {number} [config.overrideSeed] - Optionaler manueller Seed (für Replay)
      */
@@ -64,7 +64,7 @@ export default class GameModel {
 
         // Spawning System (Phase 3: mit Maze-Konfiguration)
         this.spawningSystem = new SpawningSystem(this.levelSystem, {
-            preset: config.mazePreset || 'default',
+            preset: config.mazePreset || 'easy',
             seedMode: config.seedMode || 'full_random',
             overrideSeed: config.overrideSeed || null
         });
