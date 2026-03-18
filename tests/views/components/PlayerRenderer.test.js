@@ -15,6 +15,7 @@ const createMockScene = () => ({
             clear: jest.fn(),
             destroy: jest.fn(),
             fillStyle: jest.fn(),
+            fillCircle: jest.fn(),
             lineStyle: jest.fn(),
             beginPath: jest.fn(),
             moveTo: jest.fn(),
@@ -156,7 +157,7 @@ describe('PlayerRenderer', () => {
             renderer.sync();
 
             const eye = mockScene.add.circle.mock.results[0].value;
-            expect(eye.x).toBe(100); // Center
+            expect(eye.y).toBeLessThan(200); // Eye above center
         });
 
         it('should update eye position for down direction', () => {
@@ -167,7 +168,7 @@ describe('PlayerRenderer', () => {
             renderer.sync();
 
             const eye = mockScene.add.circle.mock.results[0].value;
-            expect(eye.x).toBe(100); // Center
+            expect(eye.y).toBeGreaterThan(200); // Eye below center
         });
 
         it('should set alpha during dying state', () => {
@@ -267,13 +268,14 @@ describe('PlayerRenderer', () => {
             expect(graphics.closePath).toHaveBeenCalled();
         });
 
-        it('should fill and stroke the path', () => {
+        it('should fill circles for starburst pattern', () => {
             const graphics = mockScene.add.graphics.mock.results[0].value;
 
             renderer.drawPlayer(100, 200, { x: 1, y: 0 });
 
-            expect(graphics.fillPath).toHaveBeenCalled();
-            expect(graphics.strokePath).toHaveBeenCalled();
+            // New design uses fillCircle for constellation/starburst pattern
+            expect(graphics.fillCircle).toHaveBeenCalled();
+            expect(graphics.fillStyle).toHaveBeenCalled();
         });
     });
 

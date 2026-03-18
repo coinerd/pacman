@@ -24,13 +24,15 @@ export class PlayerRenderer {
         const radius = gameConfig.tileSize * 0.4;
         const cyanColor = 0x00ced1;
 
-        // Use scene.add.circle() for eye (only if playerState exists)
+        // Use scene.add.circle() for eye (direction indicator)
         if (playerState && playerState.x !== undefined && playerState.y !== undefined) {
+            // Eye starts in facing direction
+            const eyeRadius = radius * 0.55;
             this.eye = scene.add.circle(
-                playerState.x,
-                playerState.y - radius * 0.3,
-                radius * 0.15,
-                0x000000
+                playerState.x + eyeRadius,
+                playerState.y,
+                radius * 0.06,
+                0xffffff
             );
             this.eye.setDepth(101);
 
@@ -49,44 +51,83 @@ export class PlayerRenderer {
     }
 
     /**
-	 * Draw player hexagon with eye
+	 * Draw player as hexagonal starburst/constellation pattern
+	 * 5 layers of 6 circles each, with alternating offsets
 	 */
     drawPlayer(x, y, _direction) {
-        const radius = gameConfig.tileSize * 0.4;
-
         // Clear previous frame
         this.graphics.clear();
 
-        // Debug: verify graphics is still valid
         if (!this.graphics || !this.graphics.scene) {
             console.error('[PlayerRenderer.drawPlayer] Graphics object is invalid!');
             return;
         }
 
-        // Set fill style with explicit alpha
-        this.graphics.fillStyle(this.currentColor, 1);
-        this.graphics.lineStyle(3, this.currentColor, 1);
+        const baseRadius = gameConfig.tileSize * 0.4;
 
-        // Calculate hexagon points (centered at x, y)
-        const points = [];
-        for (let i = 0; i < 6; i++) {
-            const angle = (i * 60 - 90) * (Math.PI / 180);
-            const px = x + radius * Math.cos(angle);
-            const py = y + radius * Math.sin(angle);
-            points.push(px, py);
+        // Define 5 layers: [radius multiplier, circle size, angle offset]
+        // Each layer is slightly offset to create starburst effect
+        const layers = [
+            { radiusMult: 0.25, size: 0.18, offset: 0 },      // Layer 1: Innermost - largest
+            { radiusMult: 0.40, size: 0.14, offset: 30 },     // Layer 2: Slightly smaller, offset
+            { radiusMult: 0.55, size: 0.11, offset: 0 },      // Layer 3: Even smaller
+            { radiusMult: 0.70, size: 0.08, offset: 30 },     // Layer 4: Small
+            { radiusMult: 0.85, size: 0.05, offset: 0 }       // Layer 5: Outermost - tiny dots
+        ];
+
+        // Primary color (cyan) and accent
+        const primaryColor = 0x00ced1;
+        const accentColor = 0x00ffff;
+
+        // Draw center point
+        this.graphics.fillStyle(accentColor, 1);
+        this.graphics.fillCircle(x, y, baseRadius * 0.12);
+
+        // Draw each layer
+        layers.forEach((layer, layerIndex) => {
+            const layerRadius = baseRadius * layer.radiusMult;
+            const circleSize = baseRadius * layer.size;
+
+            // Alternate colors for depth
+            const color = layerIndex % 2 === 0 ? primaryColor : accentColor;
+            const alpha = 1 - (layerIndex * 0.1); // Slight fade for outer layers
+
+            this.graphics.fillStyle(color, alpha);
+
+            // Draw 6 circles in hexagonal arrangement
+            for (let i = 0; i < 6; i++) {
+                const angle = ((i * 60) + layer.offset - 90) * (Math.PI / 180);
+                const cx = x + layerRadius * Math.cos(angle);
+                const cy = y + layerRadius * Math.sin(angle);
+
+                this.graphics.fillCircle(cx, cy, circleSize);
+            }
+        });
+
+        // Add connecting lines for molecule/constellation effect
+        this.graphics.lineStyle(1, primaryColor, 0.3);
+
+        // Connect inner layers
+        for (let layerIdx = 0; layerIdx < 3; layerIdx++) {
+            const layer = layers[layerIdx];
+            const layerRadius = baseRadius * layer.radiusMult;
+
+            // Draw hexagon outline for this layer
+            this.graphics.beginPath();
+            for (let i = 0; i < 6; i++) {
+                const angle = ((i * 60) + layer.offset - 90) * (Math.PI / 180);
+                const cx = x + layerRadius * Math.cos(angle);
+                const cy = y + layerRadius * Math.sin(angle);
+
+                if (i === 0) {
+                    this.graphics.moveTo(cx, cy);
+                } else {
+                    this.graphics.lineTo(cx, cy);
+                }
+            }
+            this.graphics.closePath();
+            this.graphics.strokePath();
         }
-
-        // Draw path explicitly
-        this.graphics.beginPath();
-        this.graphics.moveTo(points[0], points[1]);
-        for (let i = 1; i < 6; i++) {
-            this.graphics.lineTo(points[i * 2], points[i * 2 + 1]);
-        }
-        this.graphics.closePath();
-
-        // Fill AND stroke for visibility
-        this.graphics.fillPath();
-        this.graphics.strokePath();
     }
 
 
@@ -107,11 +148,12 @@ export class PlayerRenderer {
         // Create eye if not exists and we have valid position
         const radius = gameConfig.tileSize * 0.4;
         if (!this.eye && data.x !== undefined && data.y !== undefined) {
+            const eyeRadius = radius * 0.55;
             this.eye = this.scene.add.circle(
-                data.x,
-                data.y - radius * 0.3,
-                radius * 0.15,
-                0x000000
+                data.x + eyeRadius,
+                data.y,
+                radius * 0.06,
+                0xffffff
             );
             this.eye.setDepth(101);
         }
@@ -138,27 +180,17 @@ export class PlayerRenderer {
 
         this.pulsePhase += 0.05;
 
-        // Update eye position if eye exists
+        // Update eye position if eye exists (subtle direction indicator)
         if (this.eye) {
-            const eyeOffset = radius * 0.3;
-            const angle = this.state.direction?.angle ?? 0;
+            // Position eye in the direction the player is facing
+            const eyeRadius = radius * 0.55; // Just beyond layer 3
+            const angle = (this.state.direction?.angle ?? 0) * (Math.PI / 180);
 
-            if (angle === 0) {
-                this.eye.x = this.state.x + eyeOffset;
-                this.eye.y = this.state.y - eyeOffset;
-            } else if (angle === 180) {
-                this.eye.x = this.state.x - eyeOffset;
-                this.eye.y = this.state.y - eyeOffset;
-            } else if (angle === 270) {
-                this.eye.x = this.state.x;
-                this.eye.y = this.state.y - eyeOffset * 1.5;
-            } else if (angle === 90) {
-                this.eye.x = this.state.x;
-                this.eye.y = this.state.y - eyeOffset * 0.5;
-            } else {
-                this.eye.x = this.state.x + eyeOffset;
-                this.eye.y = this.state.y - eyeOffset;
-            }
+            // Game angle: 0=right, 90=down, 180=left, 270=up
+            // Canvas: same orientation, just convert to radians
+            this.eye.x = this.state.x + eyeRadius * Math.cos(angle);
+            this.eye.y = this.state.y + eyeRadius * Math.sin(angle);
+            this.eye.radius = radius * 0.06; // Smaller, subtle eye
         }
 
         // Draw player hexagon

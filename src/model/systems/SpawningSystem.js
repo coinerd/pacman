@@ -9,7 +9,7 @@
  */
 
 import MazeGenerator from '../../utils/MazeGenerator.js';
-import { countPellets, createMazeData, PELLET_TYPES } from '../../utils/MazeLayout.js';
+import { countPellets, PELLET_TYPES } from '../../utils/MazeLayout.js';
 import { gameConfig, enemyStartPositions, playerStartPosition, virusCore } from '../../config/gameConfig.js';
 import { mazeConfigLoader } from '../../utils/MazeConfigLoader.js';
 import { mazeSeedManager } from '../../utils/MazeSeedManager.js';
