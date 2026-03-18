@@ -134,18 +134,13 @@ export class SpawningSystem {
 
         // Generiere Maze
         const result = mazeGenerator.generate();
-        const { maze, stats, validationResult } = result;
+        const { maze, pelletGrid, spawnPoints, stats, validationResult } = result;
 
-        // Erstelle vollständiges MazeData-Objekt
-        const mazeData = createMazeData(maze, {
-            virusCore: virusCore,
-            playerStart: playerStartPosition,
-            enemyStarts: enemyStartPositions
-        });
-
+        // Nutze die bereits generierten Daten vom MazeGenerator
+        // (pelletGrid enthält bereits die korrekten Power-Pellets!)
         this.maze = maze;
-        this.pelletGrid = mazeData.pelletGrid;
-        this.spawnPoints = mazeData.spawnPoints;
+        this.pelletGrid = pelletGrid;
+        this.spawnPoints = spawnPoints;
         this.totalPellets = countPellets(this.pelletGrid);
         this.pelletsRemaining = this.totalPellets;
 
