@@ -53,15 +53,25 @@ export const mazeLayout = [
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 ];
 
-export function createMazeData() {
+/**
+ * Creates maze data from either a provided maze or the default hardcoded layout
+ * @param {Array<Array<number>>} [inputMaze] - Optional maze to use instead of hardcoded layout
+ * @param {Object} [options] - Optional configuration
+ * @param {Object} [options.virusCore] - Virus core position
+ * @param {Object} [options.playerStart] - Player start position
+ * @param {Object} [options.enemyStarts] - Enemy start positions
+ * @returns {Object} { maze, pelletGrid, spawnPoints }
+ */
+export function createMazeData(inputMaze, options = {}) {
+    const sourceMaze = inputMaze || mazeLayout;
     const maze = [];
     const pelletGrid = [];
 
-    for (let y = 0; y < mazeLayout.length; y++) {
+    for (let y = 0; y < sourceMaze.length; y++) {
         const row = [];
         const pelletRow = [];
-        for (let x = 0; x < mazeLayout[y].length; x++) {
-            const tile = mazeLayout[y][x];
+        for (let x = 0; x < sourceMaze[y].length; x++) {
+            const tile = sourceMaze[y][x];
 
             if (tile === TILE_TYPES.WALL) {
                 row.push(TILE_TYPES.WALL);
@@ -91,10 +101,10 @@ export function createMazeData() {
         pelletGrid.push(pelletRow);
     }
 
-    // Standard Spawn-Punkte
+    // Use provided spawn points or defaults
     const spawnPoints = {
-        player: { x: 13, y: 27 },
-        ghosts: {
+        player: options.playerStart || { x: 13, y: 27 },
+        ghosts: options.enemyStarts || {
             alpha: { x: 1, y: 1 },
             beta: { x: 23, y: 1 },
             gamma: { x: 1, y: 26 },
