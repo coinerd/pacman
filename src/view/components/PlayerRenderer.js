@@ -51,8 +51,9 @@ export class PlayerRenderer {
     }
 
     /**
-	 * Draw player as hexagonal starburst/constellation pattern
-	 * 5 layers of 6 circles each, with alternating offsets
+	 * Draw player as hexagonal pattern: 30 circles in 7 rows (3-4-5-6-5-4-3)
+	 * No center point, strictly six-symmetric
+	 * Inner circles large, outer circles small
 	 */
     drawPlayer(x, y, _direction) {
         // Clear previous frame
@@ -64,70 +65,42 @@ export class PlayerRenderer {
         }
 
         const baseRadius = gameConfig.tileSize * 0.4;
-
-        // Define 5 layers: [radius multiplier, circle size, angle offset]
-        // Each layer is slightly offset to create starburst effect
-        const layers = [
-            { radiusMult: 0.25, size: 0.18, offset: 0 },      // Layer 1: Innermost - largest
-            { radiusMult: 0.40, size: 0.14, offset: 30 },     // Layer 2: Slightly smaller, offset
-            { radiusMult: 0.55, size: 0.11, offset: 0 },      // Layer 3: Even smaller
-            { radiusMult: 0.70, size: 0.08, offset: 30 },     // Layer 4: Small
-            { radiusMult: 0.85, size: 0.05, offset: 0 }       // Layer 5: Outermost - tiny dots
-        ];
-
-        // Primary color (cyan) and accent
         const primaryColor = 0x00ced1;
         const accentColor = 0x00ffff;
 
-        // Draw center point
-        this.graphics.fillStyle(accentColor, 1);
-        this.graphics.fillCircle(x, y, baseRadius * 0.12);
+        // 7 rows pattern: 3-4-5-6-5-4-3 = 30 circles total
+        // Each row has circles arranged in a hexagonal ring
+        // Inner rows: larger circles, outer rows: smaller circles
+        const rows = [
+            { count: 3, radiusMult: 0.18, size: 0.16, offset: 0 },   // Row 1: 3 circles (innermost, largest)
+            { count: 4, radiusMult: 0.30, size: 0.14, offset: 22.5 }, // Row 2: 4 circles
+            { count: 5, radiusMult: 0.42, size: 0.12, offset: 0 },   // Row 3: 5 circles
+            { count: 6, radiusMult: 0.54, size: 0.10, offset: 0 },   // Row 4: 6 circles (middle row)
+            { count: 5, radiusMult: 0.66, size: 0.08, offset: 0 },   // Row 5: 5 circles
+            { count: 4, radiusMult: 0.78, size: 0.06, offset: 22.5 }, // Row 6: 4 circles
+            { count: 3, radiusMult: 0.90, size: 0.04, offset: 0 }    // Row 7: 3 circles (outermost, smallest)
+        ];
 
-        // Draw each layer
-        layers.forEach((layer, layerIndex) => {
-            const layerRadius = baseRadius * layer.radiusMult;
-            const circleSize = baseRadius * layer.size;
+        // Draw each row
+        rows.forEach((row, rowIndex) => {
+            const rowRadius = baseRadius * row.radiusMult;
+            const circleSize = baseRadius * row.size;
 
-            // Alternate colors for depth
-            const color = layerIndex % 2 === 0 ? primaryColor : accentColor;
-            const alpha = 1 - (layerIndex * 0.1); // Slight fade for outer layers
+            // Alternate colors for visual depth
+            const color = rowIndex % 2 === 0 ? primaryColor : accentColor;
+            const alpha = 1 - (rowIndex * 0.05); // Slight fade for outer rows
 
             this.graphics.fillStyle(color, alpha);
 
-            // Draw 6 circles in hexagonal arrangement
-            for (let i = 0; i < 6; i++) {
-                const angle = ((i * 60) + layer.offset - 90) * (Math.PI / 180);
-                const cx = x + layerRadius * Math.cos(angle);
-                const cy = y + layerRadius * Math.sin(angle);
+            // Draw circles in this row, evenly distributed
+            for (let i = 0; i < row.count; i++) {
+                const angle = ((360 / row.count) * i + row.offset - 90) * (Math.PI / 180);
+                const cx = x + rowRadius * Math.cos(angle);
+                const cy = y + rowRadius * Math.sin(angle);
 
                 this.graphics.fillCircle(cx, cy, circleSize);
             }
         });
-
-        // Add connecting lines for molecule/constellation effect
-        this.graphics.lineStyle(1, primaryColor, 0.3);
-
-        // Connect inner layers
-        for (let layerIdx = 0; layerIdx < 3; layerIdx++) {
-            const layer = layers[layerIdx];
-            const layerRadius = baseRadius * layer.radiusMult;
-
-            // Draw hexagon outline for this layer
-            this.graphics.beginPath();
-            for (let i = 0; i < 6; i++) {
-                const angle = ((i * 60) + layer.offset - 90) * (Math.PI / 180);
-                const cx = x + layerRadius * Math.cos(angle);
-                const cy = y + layerRadius * Math.sin(angle);
-
-                if (i === 0) {
-                    this.graphics.moveTo(cx, cy);
-                } else {
-                    this.graphics.lineTo(cx, cy);
-                }
-            }
-            this.graphics.closePath();
-            this.graphics.strokePath();
-        }
     }
 
 

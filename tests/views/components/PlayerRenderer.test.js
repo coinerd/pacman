@@ -239,7 +239,7 @@ describe('PlayerRenderer', () => {
             expect(graphics.clear).toHaveBeenCalled();
         });
 
-        it('should set fill style', () => {
+        it('should set fill style for circles', () => {
             const graphics = mockScene.add.graphics.mock.results[0].value;
             graphics.fillStyle.mockClear();
 
@@ -248,32 +248,21 @@ describe('PlayerRenderer', () => {
             expect(graphics.fillStyle).toHaveBeenCalled();
         });
 
-        it('should set line style', () => {
+        it('should draw 30 circles in 7-row pattern', () => {
             const graphics = mockScene.add.graphics.mock.results[0].value;
-            graphics.lineStyle.mockClear();
+            graphics.fillCircle.mockClear();
 
             renderer.drawPlayer(100, 200, { x: 1, y: 0 });
 
-            expect(graphics.lineStyle).toHaveBeenCalled();
+            // Pattern: 3+4+5+6+5+4+3 = 30 circles
+            expect(graphics.fillCircle).toHaveBeenCalledTimes(30);
         });
 
-        it('should draw hexagon path', () => {
+        it('should fill circles for hexagonal pattern', () => {
             const graphics = mockScene.add.graphics.mock.results[0].value;
 
             renderer.drawPlayer(100, 200, { x: 1, y: 0 });
 
-            expect(graphics.beginPath).toHaveBeenCalled();
-            expect(graphics.moveTo).toHaveBeenCalled();
-            expect(graphics.lineTo).toHaveBeenCalled();
-            expect(graphics.closePath).toHaveBeenCalled();
-        });
-
-        it('should fill circles for starburst pattern', () => {
-            const graphics = mockScene.add.graphics.mock.results[0].value;
-
-            renderer.drawPlayer(100, 200, { x: 1, y: 0 });
-
-            // New design uses fillCircle for constellation/starburst pattern
             expect(graphics.fillCircle).toHaveBeenCalled();
             expect(graphics.fillStyle).toHaveBeenCalled();
         });
