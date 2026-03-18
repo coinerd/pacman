@@ -51,8 +51,8 @@ export class PlayerRenderer {
     }
 
     /**
-	 * Draw player as hexagonal pattern: 30 circles in 7 rows (3-4-5-6-5-4-3)
-	 * No center point, strictly six-symmetric
+	 * Draw player as radial starburst pattern (Cardano-style)
+	 * 30 circles, 12 rays, no center point
 	 * Inner circles large, outer circles small
 	 */
     drawPlayer(x, y, _direction) {
@@ -68,37 +68,49 @@ export class PlayerRenderer {
         const primaryColor = 0x00ced1;
         const accentColor = 0x00ffff;
 
-        // 7 rows pattern: 3-4-5-6-5-4-3 = 30 circles total
-        // Each row has circles arranged in a hexagonal ring
-        // Inner rows: larger circles, outer rows: smaller circles
-        const rows = [
-            { count: 3, radiusMult: 0.18, size: 0.16, offset: 0 },   // Row 1: 3 circles (innermost, largest)
-            { count: 4, radiusMult: 0.30, size: 0.14, offset: 22.5 }, // Row 2: 4 circles
-            { count: 5, radiusMult: 0.42, size: 0.12, offset: 0 },   // Row 3: 5 circles
-            { count: 6, radiusMult: 0.54, size: 0.10, offset: 0 },   // Row 4: 6 circles (middle row)
-            { count: 5, radiusMult: 0.66, size: 0.08, offset: 0 },   // Row 5: 5 circles
-            { count: 4, radiusMult: 0.78, size: 0.06, offset: 22.5 }, // Row 6: 4 circles
-            { count: 3, radiusMult: 0.90, size: 0.04, offset: 0 }    // Row 7: 3 circles (outermost, smallest)
-        ];
+        // 12 rays at 0°, 30°, 60°, 90°, 120°, 150°, 180°, 210°, 240°, 270°, 300°, 330°
+        // Primary rays (0°, 60°, 120°, 180°, 240°, 300°) have 3 dots = 18 dots
+        // Secondary rays (30°, 90°, 150°, 210°, 270°, 330°) have 2 dots = 12 dots
+        // Total = 30 dots
 
-        // Draw each row
-        rows.forEach((row, rowIndex) => {
-            const rowRadius = baseRadius * row.radiusMult;
-            const circleSize = baseRadius * row.size;
+        const rays = [];
+        for (let i = 0; i < 12; i++) {
+            const angle = i * 30; // 0°, 30°, 60°, ...
+            const isPrimary = i % 2 === 0; // 0°, 60°, 120°, ... are primary
+            const dotCount = isPrimary ? 3 : 2;
 
-            // Alternate colors for visual depth
-            const color = rowIndex % 2 === 0 ? primaryColor : accentColor;
-            const alpha = 1 - (rowIndex * 0.05); // Slight fade for outer rows
+            // Dot distances from center (as multipliers of baseRadius)
+            const distances = isPrimary
+                ? [0.25, 0.50, 0.80]  // Primary rays: inner, middle, outer
+                : [0.35, 0.65];       // Secondary rays: middle positions
 
-            this.graphics.fillStyle(color, alpha);
+            // Dot sizes (as multipliers of baseRadius)
+            const sizes = isPrimary
+                ? [0.12, 0.09, 0.06]  // Large → small
+                : [0.10, 0.07];
 
-            // Draw circles in this row, evenly distributed
-            for (let i = 0; i < row.count; i++) {
-                const angle = ((360 / row.count) * i + row.offset - 90) * (Math.PI / 180);
-                const cx = x + rowRadius * Math.cos(angle);
-                const cy = y + rowRadius * Math.sin(angle);
+            rays.push({ angle, dotCount, distances, sizes, isPrimary });
+        }
 
-                this.graphics.fillCircle(cx, cy, circleSize);
+        // Draw all dots
+        let dotIndex = 0;
+        rays.forEach((ray) => {
+            const angleRad = (ray.angle - 90) * (Math.PI / 180); // -90 to start from top
+
+            for (let i = 0; i < ray.dotCount; i++) {
+                const distance = baseRadius * ray.distances[i];
+                const size = baseRadius * ray.sizes[i];
+                const cx = x + distance * Math.cos(angleRad);
+                const cy = y + distance * Math.sin(angleRad);
+
+                // Alternate colors for visual depth
+                const color = dotIndex % 2 === 0 ? primaryColor : accentColor;
+                const alpha = 1 - (i * 0.1); // Outer dots slightly more transparent
+
+                this.graphics.fillStyle(color, alpha);
+                this.graphics.fillCircle(cx, cy, size);
+
+                dotIndex++;
             }
         });
     }
