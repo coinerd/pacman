@@ -261,11 +261,11 @@ describe('ReplaySystem', () => {
             );
         });
 
-        test('should limit recordings to 10', () => {
+        test('should limit recordings to 5 (keeps most recent)', () => {
             const timestamp = Date.now();
 
-            // Create 10 existing recordings
-            for (let i = 0; i < 10; i++) {
+            // Create 5 existing recordings
+            for (let i = 0; i < 5; i++) {
                 mockLocalStorage.store[`player_replay_${timestamp + i}`] = '{}';
             }
 
@@ -273,11 +273,11 @@ describe('ReplaySystem', () => {
             system.recording.timestamp = timestamp + 10;
             system.saveRecording();
 
-            // Should have removed the oldest recording
+            // Should have removed the oldest recording, keeping 5 most recent
             const keys = Object.keys(mockLocalStorage.store).filter((k) =>
                 k.startsWith('player_replay_')
             );
-            expect(keys.length).toBe(10);
+            expect(keys.length).toBe(5);
         });
 
         test('should stringify recording when saving', () => {

@@ -85,13 +85,44 @@ export class ReplaySystem {
 
     /**
 	 * Save recording to localStorage
+	 * Cleans up old replays to avoid quota errors
 	 */
     saveRecording() {
-        const recording = JSON.stringify(this.recording);
         const timestamp = this.recording.timestamp;
+        const key = `player_replay_${timestamp}`;
+        const recording = JSON.stringify(this.recording);
 
-        this.storage.setItem(`player_replay_${timestamp}`, recording);
+        try {
+            this.storage.setItem(key, recording);
+            // Clean up after successful save (keep only 5)
+            this.cleanupOldReplays(5);
+        } catch (error) {
+            if (error.name === 'QuotaExceededError') {
+                // Clean up aggressively and retry
+                this.cleanupOldReplays(2);
+                try {
+                    this.storage.setItem(key, recording);
+                } catch {
+                    // Clear all replays and try once more
+                    this.clearAllReplays();
+                    try {
+                        this.storage.setItem(key, recording);
+                    } catch {
+                        // Give up silently - replay storage is not critical
+                        console.warn('ReplaySystem: Could not save replay - storage quota exceeded');
+                    }
+                }
+            } else {
+                throw error;
+            }
+        }
+    }
 
+    /**
+	 * Clean up old replays, keeping only the N most recent
+	 * @param {number} keepCount - Number of replays to keep
+	 */
+    cleanupOldReplays(keepCount) {
         const keys = this.storage.store
             ? Object.keys(this.storage.store)
             : Object.keys(this.storage);
@@ -100,10 +131,23 @@ export class ReplaySystem {
             .filter((k) => k.startsWith('player_replay_'))
             .sort();
 
-        if (replayKeys.length > 10) {
-            const oldestKey = replayKeys[0];
+        // Remove oldest replays if we have more than keepCount
+        while (replayKeys.length > keepCount) {
+            const oldestKey = replayKeys.shift();
             this.storage.removeItem(oldestKey);
         }
+    }
+
+    /**
+	 * Clear all saved replays
+	 */
+    clearAllReplays() {
+        const keys = this.storage.store
+            ? Object.keys(this.storage.store)
+            : Object.keys(this.storage);
+
+        const replayKeys = keys.filter((k) => k.startsWith('player_replay_'));
+        replayKeys.forEach((key) => this.storage.removeItem(key));
     }
 
     /**
