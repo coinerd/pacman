@@ -193,21 +193,8 @@ export default class GameModelDI {
             })
         );
 
-        // PELLET_MAGNET_EAT - Data Magnet Power-Up effect
-        this.eventUnsubscribers.push(
-            gameEvents.on(GAME_EVENTS.PELLET_MAGNET_EAT, (data) => {
-                const result = this.eatPelletAt(data.x, data.y);
-                if (result) {
-                    this.score += 10;
-                    gameEvents.emit(GAME_EVENTS.PELLET_EATEN, {
-                        score: 10,
-                        pelletsRemaining: this.pelletsRemaining,
-                        gridX: data.x,
-                        gridY: data.y
-                    });
-                }
-            })
-        );
+        // Note: PELLET_MAGNET_EAT handling moved to GameModelStep.applyDataMagnet()
+        // which now directly emits PELLET_EATEN for visual updates
 
         // Register gameState in entityRegistry
         this.entityRegistry.registerEntity('gameState', {
